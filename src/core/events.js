@@ -9,6 +9,7 @@ import { render } from "./render.js";
 import { toggleTheme, setTheme } from "./theme.js";
 import { SB } from "./session.js";
 import { iso, today } from "./helpers.js";
+import { upsertStick } from "./sticks-repo.js";
 import { renderCharts } from "../ui/charts.js";
 import { closeModal } from "../ui/modal.js";
 import { instArr } from "../views/settings.js";
@@ -25,7 +26,7 @@ document.addEventListener("click",e=>{const t=e.target;
   if(t.dataset.campus){state.activeCampus=t.dataset.campus;save();render();}
   if(t.dataset.inst){state.institution.activeInstitution=t.dataset.inst;save();render();}
   if(t.dataset.tab){state.settingsTab=t.dataset.tab;save();render();}
-  if(t.dataset.seen){const p=state.people.find(x=>x.id===t.dataset.seen);if(p){p.lastSeen=iso(today());p.followup=false;save();render();}}
+  if(t.dataset.seen){const p=state.people.find(x=>x.id===t.dataset.seen);if(p){p.lastSeen=iso(today());p.followup=false;upsertStick(p);save();render();}}
   if(t.dataset.edit){const p=state.people.find(x=>x.id===t.dataset.edit);if(p)personModal(p);}
   if(t.dataset.toggle){const x=state.tasks.find(z=>z.id===t.dataset.toggle);if(x){x.done=!x.done;save();render();}}
   if(t.dataset.deltask){state.tasks=state.tasks.filter(z=>z.id!==t.dataset.deltask);save();render();}
