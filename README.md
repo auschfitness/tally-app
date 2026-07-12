@@ -88,3 +88,9 @@ cada `git push`):
 A chave em `src/config.js` é a **anon key** do Supabase — pública por design e
 protegida pelo RLS (Row Level Security). Pode ir para o GitHub sem risco. A
 `service_role` key **nunca** deve aparecer no front-end.
+
+## Auto-push (hook local)
+
+Há um hook `post-commit` em `.git/hooks/` que faz `git push origin HEAD`
+automaticamente a cada commit. Hooks não são versionados, então ele existe só
+nesta máquina. Para pausar o auto-push, apague `.git/hooks/post-commit`.
