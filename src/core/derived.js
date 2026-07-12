@@ -5,6 +5,7 @@
 import { state } from "./state.js";
 import { save } from "./persist.js";
 import { weeksSince, agoLabel, iso, today, esc, MSTYPE, relLabel, relCls, isLeader } from "./helpers.js";
+import { deletePrayer } from "./prayer-repo.js";
 
 export function careReasons(p){const r=[];if(weeksSince(p.lastSeen)>=state.careWeeks)r.push({t:agoLabel(p.lastSeen),full:"Sem aparecer "+agoLabel(p.lastSeen)});if(!p.group)r.push({t:"sem grupo",full:"Ainda não está em um grupo"});if(p.followup)r.push({t:"follow-up",full:"Follow-up em aberto"});return r;}
 export const inCampus=p=>p.campus===state.activeCampus;
@@ -50,7 +51,7 @@ export function prayerCloudData(){
   return arr.slice(0,28);
 }
 export function prayerMatch(p,f){if(!f)return true;if(f.cat==="topic")return (p.topics||[]).indexOf(f.val)>=0;if(f.cat==="group")return p.group===f.val;if(f.cat==="name")return p.author===f.val;return true;}
-export function prunePrayers(){var t=today();var b=state.prayers.length;state.prayers=state.prayers.filter(function(p){if(!p.answered||!p.answeredDate)return true;return (t-new Date(p.answeredDate))/(1000*60*60*24)<30;});if(state.prayers.length!==b)save();}
+export function prunePrayers(){var t=today();var b=state.prayers.length;var gone=[];state.prayers=state.prayers.filter(function(p){if(!p.answered||!p.answeredDate)return true;var keep=(t-new Date(p.answeredDate))/(1000*60*60*24)<30;if(!keep)gone.push(p.id);return keep;});if(state.prayers.length!==b){gone.forEach(function(id){deletePrayer(id);});save();}}
 export function ansLeft(p){if(!p.answeredDate)return"";var d=Math.ceil(30-(today()-new Date(p.answeredDate))/(1000*60*60*24));return d>0?("some em "+d+" dia"+(d>1?"s":"")):"some em breve";}
 
 export function stickBy(id){return (state.people||[]).find(function(p){return p.id===id;});}

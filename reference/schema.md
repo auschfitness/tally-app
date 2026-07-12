@@ -25,7 +25,7 @@ Regra de ouro: toda tabela operacional tem `org_id` (o RLS filtra por org sozinh
 
 ### Gotchas por entidade
 - **care.assignedTo:** o app guarda um NOME; `care_items.assigned_to` espera um `uuid` de `auth.users`. Enquanto não houver conta por pessoa, guarde o nome em `next_action`/nota (ou peça uma coluna `assigned_to_name`). Mesmo caso em `care_contacts.contacted_by`.
-- **prayer.title:** o card tem "Nome do pedido" (título), mas `prayer_requests` não tem coluna `title` — guarde no início de `request` ou peça a coluna.
+- **prayer.title:** o card tem "Nome do pedido" (título) → coluna `title` (text, nullable) em `prayer_requests`. Migrado na Fase 2.
 - **journeyStage:** o app usa códigos fixos (`first_visit, returned, connected, group, serving, leadership`); `journey_stages` guarda `name`+`position` por org → garanta as 6 linhas e mapeie código → `journey_stages.id` em `sticks.journey_stage_id`.
 - **finance:** dá para gravar `category_name`/`fund_name` (texto) direto e resolver `category_id`/`fund_id` depois — as duas colunas existem.
 - **groups.leader:** não é coluna de `groups`; o líder vira `group_members` com `role='leader'`.
@@ -68,7 +68,7 @@ Mapa app → grupos: a `group` (string) de uma Stick vira relação em `group_me
 Nota: Signals podem continuar calculados no client no começo (lendo os dados relacionais). Care exige permissão `care.view` no RLS. Timeline é a memória (Regra 4 do DNA: toda ação vira `timeline_events`).
 
 ## Oração e finanças
-- **prayer_requests**: id, org_id, campus_id, stick_id, author_name, request, topics[], privacy (enum), group_id, praying_count, answered, answered_on, created_at
+- **prayer_requests**: id, org_id, campus_id, stick_id, author_name, title, request, topics[], privacy (enum), group_id, praying_count, answered, answered_on, created_at
 - **funds**: id, org_id, name, created_at
 - **finance_categories**: id, org_id, type (enum), name, created_at
 - **finance_entries**: id, org_id, campus_id, type (enum), description, category_id, category_name, fund_id, fund_name, amount, entry_date, created_by, created_at

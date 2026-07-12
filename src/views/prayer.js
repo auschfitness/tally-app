@@ -5,6 +5,7 @@ import { state } from "../core/state.js";
 import { esc, initials, iso, today, uid } from "../core/helpers.js";
 import { prayerCloudData, prayerMatch, prunePrayers, ansLeft } from "../core/derived.js";
 import { save } from "../core/persist.js";
+import { upsertPrayer } from "../core/prayer-repo.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
 
@@ -42,13 +43,13 @@ export function layoutPrayerCloud(){
 export function prayerModal(){
   openModal('<h3>Novo pedido de oração</h3><div class="field"><label>Nome do pedido</label><input id="pr-title" placeholder="Ex.: Saúde da mãe da Ruth"></div><div class="field"><label>Pedido</label><input id="pr-text" placeholder="Escreva o pedido..."></div><div class="mrow"><div class="field"><label>Quem vê</label><select id="pr-priv"><option value="church">Igreja toda</option><option value="group">Só o grupo</option><option value="leader">Só líderes</option></select></div><div class="field"><label>Grupo (opcional)</label><input id="pr-group" placeholder="Ex.: Mulheres"></div></div><div class="field"><label>Temas (separados por vírgula)</label><input id="pr-topics" placeholder="Ex.: saúde, família"></div><div class="field"><label>Nome</label><input id="pr-author" value="'+esc(state.account.name||"")+'" placeholder="Seu nome ou Anônimo"></div><div class="actions"><button class="btn ghost" id="pr-cancel">Cancelar</button><button class="btn" id="pr-save">Publicar</button></div>');
   document.getElementById("pr-cancel").onclick=closeModal;
-  document.getElementById("pr-save").onclick=function(){var tx=document.getElementById("pr-text").value.trim();if(!tx)return;var tp=(document.getElementById("pr-topics").value||"").split(",").map(function(s){return s.trim();}).filter(Boolean);state.prayers.unshift({id:uid(),title:document.getElementById("pr-title").value.trim(),author:document.getElementById("pr-author").value.trim()||"Anônimo",request:tx,privacy:document.getElementById("pr-priv").value,group:document.getElementById("pr-group").value.trim(),topics:tp,praying:0,answered:false,date:iso(today())});state.prayerFilter=null;save();closeModal();render();};
+  document.getElementById("pr-save").onclick=function(){var tx=document.getElementById("pr-text").value.trim();if(!tx)return;var tp=(document.getElementById("pr-topics").value||"").split(",").map(function(s){return s.trim();}).filter(Boolean);var np={id:uid(),title:document.getElementById("pr-title").value.trim(),author:document.getElementById("pr-author").value.trim()||"Anônimo",request:tx,privacy:document.getElementById("pr-priv").value,group:document.getElementById("pr-group").value.trim(),topics:tp,praying:0,answered:false,date:iso(today())};state.prayers.unshift(np);upsertPrayer(np).then(function(newId){if(newId&&newId!==np.id){np.id=newId;save();}});state.prayerFilter=null;save();closeModal();render();};
 }
 document.addEventListener("click",function(e){var t=e.target;
   if(t.dataset&&t.dataset.cat){if(t.dataset.cat==="__all__"){state.prayerFilter=null;}else{state.prayerFilter={cat:t.dataset.cat,val:t.dataset.val};}save();render();}
-  if(t.dataset&&t.dataset.pray){var pp=(state.prayers||[]).find(function(x){return x.id===t.dataset.pray;});if(pp){pp.praying=(pp.praying||0)+1;save();render();}}
-  if(t.dataset&&t.dataset.answered){var pa=(state.prayers||[]).find(function(x){return x.id===t.dataset.answered;});if(pa){pa.answered=true;pa.answeredDate=iso(today());save();render();}}
-  if(t.dataset&&t.dataset.restore){var prr=(state.prayers||[]).find(function(x){return x.id===t.dataset.restore;});if(prr){prr.answered=false;prr.answeredDate=null;save();render();}}
+  if(t.dataset&&t.dataset.pray){var pp=(state.prayers||[]).find(function(x){return x.id===t.dataset.pray;});if(pp){pp.praying=(pp.praying||0)+1;upsertPrayer(pp);save();render();}}
+  if(t.dataset&&t.dataset.answered){var pa=(state.prayers||[]).find(function(x){return x.id===t.dataset.answered;});if(pa){pa.answered=true;pa.answeredDate=iso(today());upsertPrayer(pa);save();render();}}
+  if(t.dataset&&t.dataset.restore){var prr=(state.prayers||[]).find(function(x){return x.id===t.dataset.restore;});if(prr){prr.answered=false;prr.answeredDate=null;upsertPrayer(prr);save();render();}}
   if(t.id==="addPrayer")prayerModal();
   if(t.id==="toggleAns"){state.showAnswered=!state.showAnswered;save();render();}
 });
