@@ -7,6 +7,7 @@ import { esc, initials, agoLabel, iso, today, uid, ageOf, journeyLabel, journeyS
 import { riskDist, unaccounted, inCampus, careReasons, signalsFor, relChip, stickBy, householdOf, stickTimeline, groupOptions } from "../core/derived.js";
 import { save } from "../core/persist.js";
 import { upsertStick, archiveStick } from "../core/sticks-repo.js";
+import { upsertSession } from "../core/attendance-repo.js";
 import { openModal, openWide, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
 
@@ -76,7 +77,7 @@ export function checkinModal(){
   renderChk("");
   document.getElementById("chk-search").addEventListener("input",ev=>renderChk(ev.target.value));
   document.getElementById("chk-cancel").onclick=closeModal;
-  document.getElementById("chk-save").onclick=()=>{const d=iso(today());state.people.forEach(p=>{if(checkinSel.has(p.id)){p.lastSeen=d;p.followup=false;upsertStick(p);}});if(checkinSel.size){if(!state.sessions)state.sessions=[];state.sessions.push({id:uid(),campus:state.activeCampus,group:"",date:d,attendees:Array.from(checkinSel),photo:null});}save();closeModal();render();};
+  document.getElementById("chk-save").onclick=()=>{const d=iso(today());state.people.forEach(p=>{if(checkinSel.has(p.id)){p.lastSeen=d;p.followup=false;upsertStick(p);}});if(checkinSel.size){if(!state.sessions)state.sessions=[];var ns={id:uid(),campus:state.activeCampus,group:"",date:d,attendees:Array.from(checkinSel),photo:null};state.sessions.push(ns);upsertSession(ns).then(function(newId){if(newId&&newId!==ns.id){ns.id=newId;save();}});}save();closeModal();render();};
 }
 
 // Marcar/desmarcar quem veio, dentro do modal de presença
