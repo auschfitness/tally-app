@@ -5,6 +5,7 @@ import { state } from "../core/state.js";
 import { esc, uid, initials, agoLabel } from "../core/helpers.js";
 import { groupsHealth, inCampus, careReasons, relChip } from "../core/derived.js";
 import { save } from "../core/persist.js";
+import { upsertGroup } from "../core/groups-repo.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
 
@@ -31,7 +32,7 @@ export function newGroupModal(){
   var ppl=state.people.filter(inCampus);
   openModal('<h3>Novo grupo</h3><div class="field"><label>Nome do grupo</label><input id="g-name" placeholder="Ex.: Jovens"></div><div class="mrow"><div class="field"><label>Líder</label><select id="g-leader"><option value="">(sem líder)</option>'+ppl.map(function(p){return '<option>'+esc(p.name)+'</option>';}).join("")+'</select></div><div class="field"><label>Campus</label><select id="g-campus">'+state.institution.campuses.map(function(c){return '<option '+(c===state.activeCampus?'selected':'')+'>'+esc(c)+'</option>';}).join("")+'</select></div></div><div class="mrow"><div class="field"><label>Dia</label><input id="g-day" placeholder="Ex.: Quarta"></div><div class="field"><label>Horário</label><input id="g-time" placeholder="Ex.: 20h"></div></div><div class="actions"><button class="btn ghost" id="g-cancel">Cancelar</button><button class="btn" id="g-save">Criar grupo</button></div>');
   document.getElementById("g-cancel").onclick=closeModal;
-  document.getElementById("g-save").onclick=function(){var n=document.getElementById("g-name").value.trim();if(!n)return;state.groups.push({id:uid(),name:n,leader:document.getElementById("g-leader").value,campus:document.getElementById("g-campus").value,day:document.getElementById("g-day").value.trim(),time:document.getElementById("g-time").value.trim()});save();closeModal();render();};
+  document.getElementById("g-save").onclick=function(){var n=document.getElementById("g-name").value.trim();if(!n)return;var ng={id:uid(),name:n,leader:document.getElementById("g-leader").value,campus:document.getElementById("g-campus").value,day:document.getElementById("g-day").value.trim(),time:document.getElementById("g-time").value.trim()};state.groups.push(ng);upsertGroup(ng).then(function(newId){if(newId&&newId!==ng.id){ng.id=newId;save();}});save();closeModal();render();};
 }
 
 // Navegação de grupos + limpar filtros (grupos, risco do dashboard, categoria de finanças)

@@ -7,6 +7,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../config.js";
 import { setSB, setOrg, setUser, SB, USER } from "./session.js";
 import { setState, blankState, state } from "./state.js";
 import { hydratePeople } from "./sticks-repo.js";
+import { hydrateGroups } from "./groups-repo.js";
 import { render } from "./render.js";
 import { esc } from "./helpers.js";
 
@@ -44,9 +45,9 @@ function createOrg(name,campusName,currency){
 function loadOrg(orgId){setOrg(orgId);
   SB.from("app_state").select("data").eq("org_id",orgId).maybeSingle().then(function(r){
    if(r.error){gateError(r.error.message);return;}
-   if(r.data&&r.data.data&&r.data.data.institution){setState(r.data.data);hydratePeople(state).then(function(){render();hideGate();});return;}
+   if(r.data&&r.data.data&&r.data.data.institution){setState(r.data.data);Promise.all([hydratePeople(state),hydrateGroups(state)]).then(function(){render();hideGate();});return;}
    SB.from("organizations").select("name,currency").eq("id",orgId).single().then(function(o){
     SB.from("campuses").select("name").eq("org_id",orgId).then(function(cs){
      var org=(o.data)||{name:"Minha igreja",currency:"BRL"};var camps=((cs.data)||[]).map(function(x){return x.name;});if(!camps.length)camps=["Sede"];
      var s=blankState(org.name,camps[0],org.currency);s.institution.campuses=camps;s.institution.institutions=[org.name];setState(s);
-     SB.from("app_state").upsert({org_id:orgId,data:s,updated_by:USER.id}).then(function(){hydratePeople(state).then(function(){render();hideGate();});});});});});}
+     SB.from("app_state").upsert({org_id:orgId,data:s,updated_by:USER.id}).then(function(){Promise.all([hydratePeople(state),hydrateGroups(state)]).then(function(){render();hideGate();});});});});});}
