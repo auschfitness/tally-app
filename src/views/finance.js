@@ -6,6 +6,7 @@ import { esc, uid, iso, today, isThisMonth, FINPAL } from "../core/helpers.js";
 import { money } from "../core/format.js";
 import { allFunds, expenseByCat } from "../core/derived.js";
 import { save } from "../core/persist.js";
+import { upsertEntry } from "../core/finance-repo.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
 
@@ -37,7 +38,7 @@ export function entryModal(){
   document.getElementById("e-seg").addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;entryType=b.dataset.t;document.querySelectorAll("#e-seg button").forEach(x=>x.classList.toggle("on",x===b));fillCats();});
   document.getElementById("e-cat").addEventListener("change",ev=>{if(ev.target.value==="__new__"){const nc=(prompt("Nova categoria:")||"").trim();const list=entryType==="in"?state.institution.catIn:state.institution.catOut;if(nc&&!list.includes(nc)){list.push(nc);save();}fillCats();if(nc)ev.target.value=nc;else ev.target.selectedIndex=0;}});
   document.getElementById("e-cancel").onclick=closeModal;
-  document.getElementById("e-save").onclick=()=>{const desc=document.getElementById("e-desc").value.trim();const amount=parseFloat(document.getElementById("e-amount").value);const cat=document.getElementById("e-cat").value;if(!desc||!(amount>0)||cat==="__new__")return;state.entries.push({id:uid(),type:entryType,desc,cat,fund:document.getElementById("e-fund").value,amount,date:document.getElementById("e-date").value,campus:document.getElementById("e-campus").value});save();closeModal();render();};
+  document.getElementById("e-save").onclick=()=>{const desc=document.getElementById("e-desc").value.trim();const amount=parseFloat(document.getElementById("e-amount").value);const cat=document.getElementById("e-cat").value;if(!desc||!(amount>0)||cat==="__new__")return;var ne={id:uid(),type:entryType,desc,cat,fund:document.getElementById("e-fund").value,amount,date:document.getElementById("e-date").value,campus:document.getElementById("e-campus").value};state.entries.push(ne);upsertEntry(ne).then(function(newId){if(newId&&newId!==ne.id){ne.id=newId;save();}});save();closeModal();render();};
 }
 
 // Filtro por categoria de despesa (donut clicável / legenda)

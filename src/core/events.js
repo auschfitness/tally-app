@@ -10,6 +10,7 @@ import { toggleTheme, setTheme } from "./theme.js";
 import { SB } from "./session.js";
 import { iso, today } from "./helpers.js";
 import { upsertStick } from "./sticks-repo.js";
+import { deleteEntry } from "./finance-repo.js";
 import { renderCharts } from "../ui/charts.js";
 import { closeModal } from "../ui/modal.js";
 import { instArr } from "../views/settings.js";
@@ -30,7 +31,7 @@ document.addEventListener("click",e=>{const t=e.target;
   if(t.dataset.edit){const p=state.people.find(x=>x.id===t.dataset.edit);if(p)personModal(p);}
   if(t.dataset.toggle){const x=state.tasks.find(z=>z.id===t.dataset.toggle);if(x){x.done=!x.done;save();render();}}
   if(t.dataset.deltask){state.tasks=state.tasks.filter(z=>z.id!==t.dataset.deltask);save();render();}
-  if(t.dataset.delentry){state.entries=state.entries.filter(z=>z.id!==t.dataset.delentry);save();render();}
+  if(t.dataset.delentry){deleteEntry(t.dataset.delentry);state.entries=state.entries.filter(z=>z.id!==t.dataset.delentry);save();render();}
   if(t.dataset.rm){const arr=instArr(t.dataset.rm);const i=arr.indexOf(t.dataset.val);if(i>=0)arr.splice(i,1);if(!state.institution.campuses.includes(state.activeCampus))state.activeCampus=state.institution.campuses[0]||"";save();render();}
   if(t.dataset.add){const v=(prompt("Adicionar:")||"").trim();if(v){const arr=instArr(t.dataset.add);if(!arr.includes(v))arr.push(v);save();render();}}
   if(t.id==="sw-multi"){state.institution.multiInstitution=!state.institution.multiInstitution;save();render();}
