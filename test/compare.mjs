@@ -283,6 +283,17 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "teams"; s.scheduleView = true; s.scheduleAnchor = "2026-03-01"; s.schedule = []; s.teams = [];
     setState(s); return teamsView.viewTeams();
   }, ["Escala", 'id="schedAdd"', 'data-schedadd=']],
+  // team-health (Step 7 · Fase 4) — painel de saúde do time: observações operacionais
+  // (tamanho, líder, papel descoberto), NÃO um score. Sem escala → nota honesta.
+  ["team-health", () => {
+    const s = clone(seedData); s.view = "teams";
+    const pid = s.people[0].id;
+    s.teams = [{ id: "tk-1", ministry_id: null, name: "Banda", campus: s.activeCampus, leader_id: null, serving_roles: ["Vocal", "Bateria"], status: "active" }];
+    s.teamMembers = [{ id: "tmr-1", team_id: "tk-1", stick_id: pid, role: "Vocal", status: "active", availability: "", joined_at: "", notes: "" }];
+    s.schedule = [];
+    s.teamDetail = "tk-1";
+    setState(s); return teamsView.viewTeams();
+  }, ["Saúde do time", "consciência operacional, não nota", "Sem líder definido", "Papel sem ninguém: Bateria", "Ainda sem escalações"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {

@@ -32,6 +32,39 @@ function campusPeople() { return (state.people || []).filter(inCampus).filter(fu
 function bar(n, max, band) { var pct = max ? Math.round(n / max * 100) : 0; return '<div class="gbar" style="margin-top:4px"><i class="' + (band || "healthy") + '" style="width:' + pct + '%"></i></div>'; }
 function activeMembersOf(teamId) { return membersOf(teamId).filter(function (m) { return m.status === "active"; }); }
 
+// Team Health (Fase 4, §7-8): OBSERVAÇÕES operacionais, nunca um score. Tamanho,
+// líder, papéis descobertos e concentração da escala ("depende de poucos"). Só dado real.
+function teamHealth(teamId) {
+  var t = teamById(teamId); if (!t) return { obs: [] };
+  var active = activeMembersOf(teamId);
+  var obs = [];
+  if (active.length === 0) obs.push({ band: "risk", text: "Ninguém serve neste time ainda." });
+  else if (active.length < 3) obs.push({ band: "attention", text: "Time pequeno: " + active.length + " pessoa" + (active.length > 1 ? "s" : "") + " servindo." });
+  else obs.push({ band: "healthy", text: active.length + " pessoas servindo." });
+  if (!t.leader_id) obs.push({ band: "attention", text: "Sem líder definido." });
+  var paused = membersOf(teamId).filter(function (m) { return m.status === "paused"; }).length;
+  if (paused) obs.push({ band: "attention", text: paused + " pessoa" + (paused > 1 ? "s" : "") + " em pausa." });
+  var covered = {}; active.forEach(function (m) { if (m.role) covered[m.role] = 1; });
+  var uncov = (t.serving_roles || []).filter(function (r) { return !covered[r]; });
+  if (uncov.length) obs.push({ band: "attention", text: "Papel sem ninguém: " + uncov.join(", ") + "." });
+  // Concentração de escala nas últimas 8 semanas (poucos cobrindo muito?).
+  var from = iso(addDays(today(), -56)), to = iso(today());
+  var asg = (state.schedule || []).filter(function (a) { return a.team_id === teamId && a.stick_id && a.assignment_date >= from && a.assignment_date <= to; });
+  if (asg.length) {
+    var byStick = {}; asg.forEach(function (a) { byStick[a.stick_id] = (byStick[a.stick_id] || 0) + 1; });
+    var counts = Object.keys(byStick).map(function (k) { return byStick[k]; }).sort(function (a, b) { return b - a; });
+    var total = asg.length, people = counts.length, acc = 0, need = 0;
+    for (var i = 0; i < counts.length; i++) { acc += counts[i]; need++; if (acc / total >= 0.7) break; }
+    var pct = Math.round(acc / total * 100);
+    if (people > 1 && need <= Math.ceil(people / 2)) obs.push({ band: "risk", text: need + " pessoa" + (need > 1 ? "s" : "") + " cobriram " + pct + "% das escalações das últimas 8 semanas — depende de poucos." });
+    else obs.push({ band: "healthy", text: people + " pessoa" + (people > 1 ? "s" : "") + " dividiram " + total + " escalação" + (total > 1 ? "ões" : "") + " nas últimas 8 semanas." });
+  } else {
+    obs.push({ band: "muted", text: "Ainda sem escalações recentes para avaliar distribuição." });
+  }
+  return { obs: obs };
+}
+function healthDot(band) { var c = band === "risk" ? "#EA5B4C" : band === "attention" ? "#E8833A" : band === "healthy" ? "#1FA97A" : "var(--text-2)"; return '<span style="width:8px;height:8px;border-radius:50%;background:' + c + ';display:inline-block;margin-right:9px;flex:none"></span>'; }
+
 export function viewTeams() {
   if (state.scheduleView) return scheduleBoard();
   if (state.teamDetail) return teamDetailView(state.teamDetail);
@@ -106,7 +139,9 @@ function teamDetailView(id) {
     '<div style="display:flex;align-items:flex-start;margin:10px 0 18px"><div><h1 class="page">' + esc(t.name || "(sem nome)") + '</h1><p class="sub" style="margin:0">' + (min ? '<span data-ministrydetail="' + min.id + '" style="cursor:pointer;text-decoration:underline">' + esc(min.name) + '</span> · ' : '') + (t.campus ? esc(t.campus) + ' · ' : '') + (TEAM_STATUS_LBL[t.status] || t.status) + '</p></div><button class="btn ghost" id="editTeam" data-team="' + id + '" style="margin-left:auto">Editar time</button></div>' +
     '<div class="row2"><div class="panel"><div class="ph"><h3>Quem serve</h3><span class="muted" style="margin-left:auto">' + mem.filter(function (m) { return m.status !== "inactive"; }).length + '</span></div>' + memList + addCtl + '</div>' +
     '<div class="panel"><div class="ph"><h3>Papéis de serviço</h3></div>' + rolesHtml + (t.description ? '<div class="field" style="margin-top:14px"><label>Sobre</label><div>' + esc(t.description) + '</div></div>' : '') + '<div class="field" style="margin-top:14px"><label>Líder</label><div>' + (leadName ? esc(leadName) : '<span class="muted">Sem líder</span>') + '</div></div></div></div>' +
-    '<div class="panel" style="margin-top:16px"><div class="ph"><h3>Distribuição de serviço</h3></div>' + statusRow + '<div style="margin-top:12px">' + roleDist + '</div></div>';
+    '<div class="panel" style="margin-top:16px"><div class="ph"><h3>Distribuição de serviço</h3></div>' + statusRow + '<div style="margin-top:12px">' + roleDist + '</div></div>' +
+    '<div class="panel" style="margin-top:16px"><div class="ph"><h3>Saúde do time</h3><span class="muted" style="margin-left:auto">consciência operacional, não nota</span></div>' +
+    teamHealth(id).obs.map(function (o) { return '<div class="li" style="align-items:center">' + healthDot(o.band) + '<div style="flex:1">' + esc(o.text) + '</div></div>'; }).join("") + '</div>';
 }
 
 // Dashboard do ministério (Fase 2, §16-17): consciência operacional do ministério —
