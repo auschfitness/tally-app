@@ -16,6 +16,7 @@ import { hydrateGroupMembers } from "./group-members-repo.js";
 import { hydrateTracks } from "./tracks-repo.js";
 import { hydrateSermons } from "./sermons-repo.js";
 import { hydrateSeries } from "./series-repo.js";
+import { hydrateScriptures } from "./scriptures-repo.js";
 import { render } from "./render.js";
 import { esc } from "./helpers.js";
 
@@ -53,9 +54,9 @@ function createOrg(name,campusName,currency){
 function loadOrg(orgId){setOrg(orgId);
   SB.from("app_state").select("data").eq("org_id",orgId).maybeSingle().then(function(r){
    if(r.error){gateError(r.error.message);return;}
-   if(r.data&&r.data.data&&r.data.data.institution){setState(r.data.data);Promise.all([hydratePeople(state),hydrateGroups(state),hydratePrayers(state),hydrateEntries(state)]).then(function(){return hydrateAttendance(state);}).then(function(){return hydrateGroupMembers(state);}).then(function(){return hydrateJourney(state);}).then(function(){return hydrateTracks(state);}).then(function(){return hydrateSeries(state);}).then(function(){return hydrateSermons(state);}).then(function(){render();hideGate();});return;}
+   if(r.data&&r.data.data&&r.data.data.institution){setState(r.data.data);Promise.all([hydratePeople(state),hydrateGroups(state),hydratePrayers(state),hydrateEntries(state)]).then(function(){return hydrateAttendance(state);}).then(function(){return hydrateGroupMembers(state);}).then(function(){return hydrateJourney(state);}).then(function(){return hydrateTracks(state);}).then(function(){return hydrateSeries(state);}).then(function(){return hydrateSermons(state);}).then(function(){return hydrateScriptures(state);}).then(function(){render();hideGate();});return;}
    SB.from("organizations").select("name,currency").eq("id",orgId).single().then(function(o){
     SB.from("campuses").select("name").eq("org_id",orgId).then(function(cs){
      var org=(o.data)||{name:"Minha igreja",currency:"BRL"};var camps=((cs.data)||[]).map(function(x){return x.name;});if(!camps.length)camps=["Sede"];
      var s=blankState(org.name,camps[0],org.currency);s.institution.campuses=camps;s.institution.institutions=[org.name];setState(s);
-     SB.from("app_state").upsert({org_id:orgId,data:s,updated_by:USER.id}).then(function(){Promise.all([hydratePeople(state),hydrateGroups(state),hydratePrayers(state),hydrateEntries(state)]).then(function(){return hydrateAttendance(state);}).then(function(){return hydrateGroupMembers(state);}).then(function(){return hydrateJourney(state);}).then(function(){return hydrateTracks(state);}).then(function(){return hydrateSeries(state);}).then(function(){return hydrateSermons(state);}).then(function(){render();hideGate();});});});});});}
+     SB.from("app_state").upsert({org_id:orgId,data:s,updated_by:USER.id}).then(function(){Promise.all([hydratePeople(state),hydrateGroups(state),hydratePrayers(state),hydrateEntries(state)]).then(function(){return hydrateAttendance(state);}).then(function(){return hydrateGroupMembers(state);}).then(function(){return hydrateJourney(state);}).then(function(){return hydrateTracks(state);}).then(function(){return hydrateSeries(state);}).then(function(){return hydrateSermons(state);}).then(function(){return hydrateScriptures(state);}).then(function(){render();hideGate();});});});});});}

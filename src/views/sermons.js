@@ -9,6 +9,10 @@ import { save } from "../core/persist.js";
 import { esc } from "../core/helpers.js";
 import { createSermon, updateSermon } from "../core/sermons-repo.js";
 import { createSeries, updateSeries, setSermonSeries } from "../core/series-repo.js";
+import { syncSermonScriptures } from "../core/scriptures-repo.js";
+import { parseRefs } from "../core/scripture-parse.js";
+import { fetchPassage } from "../core/bible-source.js";
+import { BOOKS, bookName } from "../core/bible-books.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
 
@@ -48,13 +52,21 @@ function collectSermon() {
     series_id: val("se-series") || null, content: content,
   };
 }
+// Passagens do sermão atual: a passagem principal SEMPRE conta; o texto das seções
+// só é varrido quando o reconhecimento está ligado (toggle do dono).
+function refsForCurrent() {
+  var txt = val("se-passage");
+  if (state.scriptureOn !== false) { SECTIONS.forEach(function (sec) { txt += "\n" + val(sec.id); }); }
+  return parseRefs(txt);
+}
+function syncCurrent(id) { if (id) syncSermonScriptures(id, refsForCurrent()).then(refreshDetected); }
 function doAutosave() {
   var data = collectSermon();
   if (!data.title) { setStatus("untitled"); return; }
-  if (editingId) { setStatus("saving"); updateSermon(editingId, data).then(function () { setStatus("saved"); }); return; }
+  if (editingId) { setStatus("saving"); updateSermon(editingId, data).then(function () { setStatus("saved"); syncCurrent(editingId); }); return; }
   if (creating) return;
   creating = true; setStatus("saving");
-  createSermon(data).then(function (nid) { creating = false; if (nid) { editingId = nid; state.sermonEdit = nid; setStatus("saved"); } else setStatus("error"); });
+  createSermon(data).then(function (nid) { creating = false; if (nid) { editingId = nid; state.sermonEdit = nid; setStatus("saved"); syncCurrent(nid); } else setStatus("error"); });
 }
 function scheduleSave() { setStatus("editing"); clearTimeout(saveTimer); saveTimer = setTimeout(doAutosave, 900); }
 function flushSave() { clearTimeout(saveTimer); doAutosave(); }
@@ -64,9 +76,88 @@ export function sizeSermonDocs() {
 }
 function showDrawer(open) { var d = gid("sd-drawer"), o = gid("sd-drawer-ov"); if (d) d.style.display = open ? "block" : "none"; if (o) o.style.display = open ? "block" : "none"; }
 
+// ——— Zona direita: assistente de estudo (painel de escritura da Fase 3) ———
+var detectedRefs = [];
+// Sermões que já pregaram esta passagem (mesmo livro+capítulo), fora o atual.
+function sermonsUsing(ref) {
+  var ids = {};
+  (state.scriptures || []).forEach(function (x) { if (x.book === ref.book && x.chapter === ref.chapter && x.sermon_id !== editingId) ids[x.sermon_id] = 1; });
+  return Object.keys(ids).map(function (id) { return (state.sermons || []).find(function (s) { return s.id === id; }); }).filter(Boolean);
+}
+// Recalcula os chips de referências detectadas (lê o DOM, sem re-render).
+export function refreshDetected() {
+  var box = gid("sd-detected"); if (!box) return;
+  detectedRefs = refsForCurrent();
+  if (state.scriptureOn === false) { box.innerHTML = '<div class="muted">Reconhecimento desligado. A passagem principal ainda é registrada.</div>'; return; }
+  if (!detectedRefs.length) { box.innerHTML = '<div class="muted">Nenhuma referência reconhecida ainda. Escreva "João 10:1-18", "Rm 8:28"…</div>'; return; }
+  box.innerHTML = detectedRefs.map(function (r, i) { return '<button class="chip sd-ref" style="background:rgba(43,92,230,.10);color:var(--blue);border:none;cursor:pointer" data-refi="' + i + '">' + esc(r.reference) + '</button>'; }).join(" ");
+}
+// Abre o painel de uma referência: texto (via API, erro honesto) + histórico da igreja.
+function openScripturePanel(ref) {
+  var box = gid("sd-panel"); if (!box || !ref) return;
+  var hist = sermonsUsing(ref);
+  var histHtml = hist.length ? '<div class="sd-h" style="margin-top:16px">Você já pregou sobre isto</div>' + hist.map(function (s) { return '<button class="li" data-sermon="' + s.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer;padding:8px 0"><div style="flex:1"><b>' + esc(s.title || "(sem título)") + '</b>' + (s.sermon_date ? ' <span class="muted">· ' + brDate(s.sermon_date) + '</span>' : '') + '</div></button>'; }).join("") : '<div class="muted" style="margin-top:14px">Primeira vez que a igreja aborda esta passagem por aqui.</div>';
+  box.innerHTML = '<div class="sd-h">' + esc(ref.reference) + '</div><div class="muted" id="sd-passage-text">Carregando o texto…</div>' + histHtml;
+  fetchPassage(ref).then(function (res) {
+    var t = gid("sd-passage-text"); if (!t) return;
+    if (res && res.ok) {
+      t.className = ""; t.style.lineHeight = "1.7"; t.style.fontSize = "14px";
+      t.innerHTML = res.verses.map(function (v) { return '<sup style="color:var(--text-2);margin-right:3px">' + v.n + '</sup>' + esc(v.text); }).join(" ") + '<div class="muted" style="margin-top:8px">Versão: ' + esc(res.translationId || "") + '</div>';
+    } else {
+      t.textContent = (res && res.error) || "Não foi possível carregar a versão agora.";
+    }
+  });
+}
+function toggleAssistant(open) {
+  var body = gid("sd-body-el"), z = gid("sd-asst");
+  if (!body || !z) return;
+  var show = open === undefined ? z.style.display === "none" : open;
+  z.style.display = show ? "block" : "none";
+  if (show) body.classList.add("asst"); else body.classList.remove("asst");
+  if (show) { refreshDetected(); requestAnimationFrame(sizeSermonDocs); }
+}
+
+// ——— Scripture Map: cobertura dos 66 livros por uso real em sermões ———
+function coverage() {
+  var by = {}; // code → set de sermon_ids
+  (state.scriptures || []).forEach(function (x) { (by[x.book] || (by[x.book] = {}))[x.sermon_id] = 1; });
+  var out = {}, max = 0;
+  Object.keys(by).forEach(function (code) { var n = Object.keys(by[code]).length; out[code] = n; if (n > max) max = n; });
+  return { count: out, max: max };
+}
+function scriptureMapView() {
+  var cov = coverage();
+  var total = Object.keys(cov.count).length;
+  var grid = BOOKS.map(function (b) {
+    var n = cov.count[b.code] || 0;
+    var alpha = n ? (0.14 + 0.66 * (n / (cov.max || 1))) : 0;
+    var bg = n ? "rgba(43,92,230," + alpha.toFixed(2) + ")" : "var(--surface-2)";
+    var col = n && alpha > 0.5 ? "#fff" : "var(--text)";
+    var sel = state.scriptureMapBook === b.code ? ";outline:2px solid var(--blue)" : "";
+    return '<button class="smap-cell" data-mapbook="' + b.code + '" title="' + esc(b.pt) + (n ? ' · ' + n + ' sermão' + (n !== 1 ? 'es' : '') : ' · sem uso') + '" style="background:' + bg + ';color:' + col + sel + '">' + esc(b.pt) + (n ? '<span class="smap-n">' + n + '</span>' : '') + '</button>';
+  }).join("");
+
+  var detail = "";
+  if (state.scriptureMapBook) {
+    var code = state.scriptureMapBook;
+    var rows = (state.scriptures || []).filter(function (x) { return x.book === code; });
+    var bySermon = {}; rows.forEach(function (x) { (bySermon[x.sermon_id] || (bySermon[x.sermon_id] = [])).push(x.reference); });
+    var items = Object.keys(bySermon).map(function (id) {
+      var s = (state.sermons || []).find(function (x) { return x.id === id; }); if (!s) return "";
+      return '<button class="li" data-sermon="' + id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer"><div style="flex:1"><b>' + esc(s.title || "(sem título)") + '</b>' + (s.sermon_date ? ' <span class="muted">· ' + brDate(s.sermon_date) + '</span>' : '') + '<div class="meta">' + esc(bySermon[id].join(" · ")) + '</div></div></button>';
+    }).join("");
+    detail = '<div class="panel" style="margin-top:16px"><div class="ph"><h3>' + esc(bookName(code)) + '</h3><span class="muted" style="margin-left:auto">' + Object.keys(bySermon).length + ' sermão' + (Object.keys(bySermon).length !== 1 ? 'es' : '') + '</span></div>' + (items || '<div class="empty">Nenhum sermão usou este livro ainda.</div>') + '</div>';
+  }
+
+  var body = total ? '<div class="smap">' + grid + '</div>' + detail : '<div class="empty">Nenhuma passagem registrada ainda. O mapa se preenche conforme você escreve sermões com referências.</div>';
+  return '<button class="link" id="mapBack">&#8592; Voltar à biblioteca</button>' +
+    '<div style="margin:10px 0 16px"><h1 class="page">Mapa de Escrituras</h1><p class="sub" style="margin:0">A história de ensino da igreja: quais livros já foram pregados, e com que intensidade. Dados reais dos sermões.</p></div>' + body;
+}
+
 export function viewSermons() {
   if (state.seriesDetail) return seriesWorkspace(state.seriesDetail);
   if (state.sermonEdit) return sermonEditor(state.sermonEdit);
+  if (state.scriptureMap) return scriptureMapView();
   var all = state.sermons || [];
   var series = state.series || [];
   var f = state.sermonFilter || {};
@@ -110,7 +201,7 @@ export function viewSermons() {
     cardsHtml = groups.map(function (g) { return '<div class="ph" style="margin:4px 0 6px"><h3 class="muted" style="margin:0;font-size:13px;font-weight:600">' + esc(g.label) + '</h3></div><div class="gcards" style="margin-bottom:16px">' + g.items.map(card).join("") + '</div>'; }).join("");
   }
 
-  return '<div style="display:flex;align-items:flex-start;margin-bottom:16px"><div><h1 class="page">Estudo</h1><p class="sub" style="margin:0">Onde a igreja prepara e preserva o ensino. A Bíblia é a fundação; o Tally organiza.</p></div><button class="btn" id="newSermon" style="margin-left:auto">+ Novo sermão</button></div>' +
+  return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px"><div><h1 class="page">Estudo</h1><p class="sub" style="margin:0">Onde a igreja prepara e preserva o ensino. A Bíblia é a fundação; o Tally organiza.</p></div><button class="btn ghost" id="openMap" style="margin-left:auto">Mapa de Escrituras</button><button class="btn" id="newSermon">+ Novo sermão</button></div>' +
     seriesBlock +
     '<div class="ph" style="margin-bottom:14px">' + statusChips + campusSel + seriesFilt + '</div>' +
     cardsHtml;
@@ -157,9 +248,18 @@ function sermonEditor(id) {
     '<div class="field"><label>Série</label>' + seriesSel + '</div>' +
     '</aside>';
 
-  var bar = '<div class="sd-bar"><button class="link" id="sermonBack">&#8592; Biblioteca</button><span class="sd-status" id="sd-status">' + (isNew ? "Novo sermão" : "Salvo") + '</span><span style="flex:1"></span><button class="btn ghost sm" id="sd-props-open">Propriedades</button></div>';
+  // Zona direita — assistente de estudo (painel de escritura). Oculta por padrão.
+  var asst = '<aside class="sd-asst" id="sd-asst" style="display:none">' +
+    '<div class="ph" style="margin-bottom:10px"><h3 style="font-size:14px">Assistente de estudo</h3></div>' +
+    '<label class="sd-recog"><input type="checkbox" id="sd-recog"' + (state.scriptureOn === false ? "" : " checked") + '> Reconhecer escrituras</label>' +
+    '<div class="sd-h" style="margin-top:16px">Referências</div>' +
+    '<div id="sd-detected"></div>' +
+    '<div id="sd-panel" style="margin-top:16px"></div>' +
+    '</aside>';
 
-  return '<div class="sd-editor">' + bar + '<div class="sd-body">' + rail + canvas + '</div>' + drawer + '</div>';
+  var bar = '<div class="sd-bar"><button class="link" id="sermonBack">&#8592; Biblioteca</button><span class="sd-status" id="sd-status">' + (isNew ? "Novo sermão" : "Salvo") + '</span><span style="flex:1"></span><button class="btn ghost sm" id="sd-asst-toggle">Escrituras</button><button class="btn ghost sm" id="sd-props-open">Propriedades</button></div>';
+
+  return '<div class="sd-editor">' + bar + '<div class="sd-body" id="sd-body-el">' + rail + canvas + asst + '</div>' + drawer + '</div>';
 }
 
 // Workspace da série: visão/tema, escrituras-chave (derivadas das passagens reais
@@ -229,14 +329,21 @@ document.addEventListener("change", function (e) {
   var t = e.target;
   if (t && t.id === "sermon-fcampus") { state.sermonFilter = Object.assign({}, state.sermonFilter, { campus: t.value || null }); save(); render(); return; }
   if (t && t.id === "sermon-fseries") { state.sermonFilter = Object.assign({}, state.sermonFilter, { series: t.value || null }); save(); render(); return; }
+  // Toggle de reconhecimento de escritura (visão do dono: desligável).
+  if (t && t.id === "sd-recog") { state.scriptureOn = t.checked; save(); refreshDetected(); scheduleSave(); return; }
   // Propriedades (status/visibilidade/campus/série/data) → autosave.
   if (t && t.id && t.id.indexOf("se-") === 0 && state.sermonEdit) { scheduleSave(); return; }
 });
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-goto],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
+  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-goto],[data-refi],[data-mapbook],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#sd-asst-toggle,#openMap,#mapBack,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
   if (t.getAttribute("data-series-remove")) { e.stopPropagation(); setSermonSeries(t.getAttribute("data-series-remove"), null).then(function () { render(); }); return; }
   if (t.getAttribute("data-goto")) { var el = gid(t.getAttribute("data-goto")); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (t.getAttribute("data-refi")) { var ri = parseInt(t.getAttribute("data-refi"), 10); if (detectedRefs[ri]) openScripturePanel(detectedRefs[ri]); return; }
+  if (t.getAttribute("data-mapbook")) { var mb = t.getAttribute("data-mapbook"); state.scriptureMapBook = state.scriptureMapBook === mb ? null : mb; save(); render(); return; }
+  if (t.id === "sd-asst-toggle") { toggleAssistant(); return; }
+  if (t.id === "openMap") { state.scriptureMap = true; state.scriptureMapBook = null; save(); render(); return; }
+  if (t.id === "mapBack") { state.scriptureMap = false; state.scriptureMapBook = null; save(); render(); return; }
   if (t.id === "sd-props-open") { showDrawer(true); return; }
   if (t.id === "sd-props-close" || t.id === "sd-drawer-ov") { showDrawer(false); return; }
   if (t.getAttribute("data-sermonstatus")) { var v = t.getAttribute("data-sermonstatus"); state.sermonFilter = Object.assign({}, state.sermonFilter, { status: v === "__all__" ? null : v }); save(); render(); return; }

@@ -4,7 +4,7 @@
 
 import { USER } from "./session.js";
 
-export function emptyState(){return {view:"dashboard",settingsTab:"inst",activeCampus:"",careWeeks:3,institution:{name:"",currency:"BRL",campuses:[],funds:[],catIn:[],catOut:[],multiInstitution:false,institutions:[],activeInstitution:""},account:{name:"",role:"owner",language:"pt",timezone:"America/Sao_Paulo"},groups:[],prayers:[],prayerFilter:null,people:[],households:[],posts:[],tasks:[],entries:[],sessions:[],careItems:[],signalOverrides:{},journey:null,journeyFocus:null,tracks:[],trackEnrollments:[],trackDetail:null,sermons:[],sermonEdit:null,sermonFilter:null,series:[],seriesDetail:null};}
+export function emptyState(){return {view:"dashboard",settingsTab:"inst",activeCampus:"",careWeeks:3,institution:{name:"",currency:"BRL",campuses:[],funds:[],catIn:[],catOut:[],multiInstitution:false,institutions:[],activeInstitution:""},account:{name:"",role:"owner",language:"pt",timezone:"America/Sao_Paulo"},groups:[],prayers:[],prayerFilter:null,people:[],households:[],posts:[],tasks:[],entries:[],sessions:[],careItems:[],signalOverrides:{},journey:null,journeyFocus:null,tracks:[],trackEnrollments:[],trackDetail:null,sermons:[],sermonEdit:null,sermonFilter:null,series:[],seriesDetail:null,scriptures:[],scriptureOn:true,scriptureMap:false,scriptureMapBook:null};}
 
 export let state = emptyState();
 export function setState(s) { state = s; }

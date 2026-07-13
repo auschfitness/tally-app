@@ -148,7 +148,7 @@ const FEATURE_VIEWS = [
     ["Trilhas", 'id="newTrack"', "Nenhuma trilha ainda"]],
   // sermons (Study — Sermon Library + editor + Séries) é tela nova — só smoke.
   ["sermons", () => { const s = clone(seedData); s.view = "sermons"; setState(s); return sermonsView.viewSermons(); },
-    ["Estudo", 'id="newSermon"', "Nenhum sermão ainda", 'data-sermonstatus="ready"', "Séries", 'id="newSeries"', "Nenhuma série ainda"]],
+    ["Estudo", 'id="newSermon"', "Nenhum sermão ainda", 'data-sermonstatus="ready"', "Séries", 'id="newSeries"', "Nenhuma série ainda", 'id="openMap"']],
   // series-workspace (Study · Fase 2) — visão/tema, escrituras-chave derivadas das
   // passagens reais, cronograma dos sermões da série. Semeia série + sermão vinculado.
   ["series-workspace", () => {
@@ -163,7 +163,18 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "sermons";
     s.sermons = [{ id: "sm-e", title: "O Bom Pastor", subtitle: "", main_passage: "John 10:1-18", big_idea: "Ele conhece as ovelhas", status: "preparing", visibility: "church", campus: "", sermon_date: "", series_id: null, content: { outline: "1. A porta", notes: "", illustrations: "", application: "", prayer_response: "" } }];
     s.sermonEdit = "sm-e"; setState(s); return sermonsView.viewSermons();
-  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", "Resposta de oração", 'id="sd-props-open"', 'data-goto="sec-outline"', 'id="se-prayer"']],
+  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", "Resposta de oração", 'id="sd-props-open"', 'data-goto="sec-outline"', 'id="se-prayer"', 'id="sd-asst-toggle"', 'id="sd-recog"']],
+  // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
+  // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
+  ["scripture-map", () => {
+    const s = clone(seedData); s.view = "sermons";
+    s.sermons = [{ id: "sm-1", title: "O Bom Pastor", sermon_date: "2026-03-01", content: {} }];
+    s.scriptures = [
+      { id: "sc-1", sermon_id: "sm-1", book: "JHN", chapter: 10, verse_start: 1, verse_end: 18, reference: "João 10:1-18" },
+      { id: "sc-2", sermon_id: "sm-1", book: "ROM", chapter: 8, verse_start: 28, verse_end: null, reference: "Romanos 8:28" },
+    ];
+    s.scriptureMap = true; setState(s); return sermonsView.viewSermons();
+  }, ["Mapa de Escrituras", '<div class="smap">', 'data-mapbook="JHN"', 'data-mapbook="ROM"', "João", 'id="mapBack"']],
 ];
 console.log("\n=== Smoke de render (telas-feature) ===");
 let sok = 0, sfail = 0;

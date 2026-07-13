@@ -135,7 +135,14 @@
   .sd-doc{display:block;width:100%;border:none;background:transparent;font-family:inherit;font-size:15.5px;line-height:1.7;color:var(--text);padding:0;resize:none;overflow:hidden;min-height:28px}
   .sd-doc::placeholder{color:var(--text-2);opacity:.5}
   .sd-props .field{margin-bottom:14px}
-  @media(max-width:880px){.sd-body,.sd-body.asst{grid-template-columns:1fr}.sd-rail{display:none}.sd-title{font-size:27px}}
+  .sd-asst{position:sticky;top:70px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;max-height:calc(100vh - 90px);overflow:auto}
+  .sd-recog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);font-weight:500}
+  .sd-recog input{width:auto}
+  #sd-detected{display:flex;flex-wrap:wrap;gap:6px}
+  .smap{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:7px}
+  .smap-cell{position:relative;border:1px solid var(--border);border-radius:9px;padding:9px 10px;font-size:12px;font-weight:600;text-align:left;line-height:1.2}
+  .smap-n{position:absolute;top:5px;right:7px;font-size:10px;opacity:.85}
+  @media(max-width:880px){.sd-body,.sd-body.asst{grid-template-columns:1fr}.sd-rail,.sd-asst{display:none}.sd-title{font-size:27px}}
   .seg{display:flex;gap:6px}
   .seg button{flex:1;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);padding:9px;border-radius:9px;font-weight:600;font-size:13px}
   .seg button.on[data-t="in"]{background:rgba(31,169,122,.16);color:var(--green);border-color:rgba(31,169,122,.4)}
