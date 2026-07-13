@@ -175,7 +175,7 @@ function toggleAssistant(open) {
   var show = open === undefined ? z.style.display === "none" : open;
   z.style.display = show ? "block" : "none";
   if (show) body.classList.add("asst"); else body.classList.remove("asst");
-  if (show) { refreshDetected(); requestAnimationFrame(sizeSermonDocs); }
+  if (show) { refreshDetected(); refreshRelated(); requestAnimationFrame(sizeSermonDocs); }
 }
 
 // ——— Scripture Map: cobertura dos 66 livros por uso real em sermões ———
@@ -307,8 +307,10 @@ function studyChrome(tab) {
     ? '<button class="btn" id="newNote" style="margin-left:auto">+ Nova nota</button>'
     : tab === "resources"
       ? '<button class="btn" id="newResource" style="margin-left:auto">+ Novo recurso</button>'
-      : '<button class="btn ghost" id="openMap" style="margin-left:auto">Mapa de Escrituras</button><button class="btn" id="newSermon">+ Novo sermão</button>';
-  var tabs = [["library", "Biblioteca"], ["notes", "Notas"], ["resources", "Recursos"]]
+      : tab === "search"
+        ? ''
+        : '<button class="btn ghost" id="openMap" style="margin-left:auto">Mapa de Escrituras</button><button class="btn" id="newSermon">+ Novo sermão</button>';
+  var tabs = [["library", "Biblioteca"], ["notes", "Notas"], ["resources", "Recursos"], ["search", "Buscar"]]
     .map(function (t) { return '<button class="fchip' + (tab === t[0] ? " on" : "") + '" data-studytab="' + t[0] + '">' + t[1] + '</button>'; }).join("");
   return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px"><div><h1 class="page">Estudo</h1><p class="sub" style="margin:0">Onde a igreja prepara e preserva o ensino. A Bíblia é a fundação; o Tally organiza.</p></div>' + actions + '</div>' +
     '<div class="filtchips" style="margin-bottom:16px">' + tabs + '</div>';
@@ -321,6 +323,7 @@ export function viewSermons() {
   var tab = state.studyTab || "library";
   if (tab === "notes") return studyChrome("notes") + notesBody();
   if (tab === "resources") return studyChrome("resources") + resourcesBody();
+  if (tab === "search") return studyChrome("search") + searchBody();
   return studyChrome("library") + libraryBody();
 }
 
@@ -480,6 +483,80 @@ function resourceModal(r) {
 
 function opts(map, sel) { return Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (sel === k ? " selected" : "") + '>' + map[k] + '</option>'; }).join(""); }
 
+// ——— Busca do Estudo (Fase 5): textual/relevância no client. Sem embeddings —
+// grátis e simples. Tokeniza a query e soma matches por campo (título pesa mais).
+function norm(s) { return (s || "").toString().toLowerCase(); }
+function tokens(q) { return norm(q).split(/\s+/).map(function (t) { return t.trim(); }).filter(function (t) { return t.length >= 2; }); }
+function scoreText(text, toks, weight) { var t = norm(text), sc = 0; toks.forEach(function (tok) { if (t.indexOf(tok) >= 0) sc += weight; }); return sc; }
+function sermonSearchText(s) { var c = s.content || {}; return [c.outline, c.notes, c.illustrations, c.application, c.prayer_response].filter(Boolean).join(" "); }
+function studySearch(q) {
+  var toks = tokens(q);
+  var res = { sermons: [], notes: [], scriptures: [], series: [] };
+  if (!toks.length) return res;
+  (state.sermons || []).forEach(function (s) {
+    var sc = scoreText(s.title, toks, 3) + scoreText(s.main_passage, toks, 2) + scoreText(s.big_idea, toks, 2) + scoreText(s.subtitle, toks, 1) + scoreText(sermonSearchText(s), toks, 1);
+    if (sc > 0) res.sermons.push({ item: s, score: sc });
+  });
+  (state.notes || []).forEach(function (n) {
+    var sc = scoreText(n.title, toks, 3) + scoreText(n.content, toks, 1) + scoreText(n.topic, toks, 2) + scoreText(n.scripture_ref, toks, 2) + scoreText((n.tags || []).join(" "), toks, 1);
+    if (sc > 0) res.notes.push({ item: n, score: sc });
+  });
+  (state.scriptures || []).forEach(function (x) { var sc = scoreText(x.reference, toks, 3); if (sc > 0) res.scriptures.push({ item: x, score: sc }); });
+  (state.series || []).forEach(function (se) {
+    var sc = scoreText(se.title, toks, 3) + scoreText(se.theme, toks, 2) + scoreText(se.description, toks, 1);
+    if (sc > 0) res.series.push({ item: se, score: sc });
+  });
+  ["sermons", "notes", "scriptures", "series"].forEach(function (k) { res[k].sort(function (a, b) { return b.score - a.score; }); });
+  return res;
+}
+function searchGroup(label, n) { return '<div class="ph" style="margin:8px 0 4px"><h3 class="muted" style="margin:0;font-size:13px;font-weight:600">' + label + '</h3><span class="muted" style="margin-left:auto">' + n + '</span></div>'; }
+function searchResultsHtml(q) {
+  if (!q || !q.trim()) return '<div class="empty">Escreva para buscar em todo o Estudo — sermões, notas, referências bíblicas e séries.</div>';
+  var r = studySearch(q);
+  var total = r.sermons.length + r.notes.length + r.scriptures.length + r.series.length;
+  if (!total) return '<div class="empty">Nada encontrado para “' + esc(q.trim()) + '”.</div>';
+  var out = "";
+  if (r.sermons.length) out += searchGroup("Sermões", r.sermons.length) + r.sermons.map(function (h) { var s = h.item; return '<button class="li" data-sermon="' + s.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer"><div style="flex:1"><b>' + esc(s.title || "(sem título)") + '</b>' + (s.main_passage ? ' <span class="muted">· ' + esc(s.main_passage) + '</span>' : '') + (s.big_idea ? '<div class="meta">' + esc(s.big_idea) + '</div>' : '') + '</div></button>'; }).join("");
+  if (r.notes.length) out += searchGroup("Notas", r.notes.length) + r.notes.map(function (h) { var n = h.item; return '<button class="li" data-noteedit="' + n.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer"><div style="flex:1"><b>' + esc(n.title || "(sem título)") + '</b> <span class="hb ' + (n.scope === "shared" ? "healthy" : "attention") + '">' + (NOTE_SCOPE_LBL[n.scope] || "Pessoal") + '</span>' + (n.topic ? '<div class="meta">' + esc(n.topic) + '</div>' : '') + '</div></button>'; }).join("");
+  if (r.scriptures.length) out += searchGroup("Referências", r.scriptures.length) + r.scriptures.map(function (h) { var x = h.item; var s = sermonById(x.sermon_id); return '<button class="li" data-sermon="' + x.sermon_id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer"><div style="flex:1"><b>' + esc(x.reference) + '</b>' + (s ? ' <span class="muted">· ' + esc(s.title || "(sem título)") + '</span>' : '') + '</div></button>'; }).join("");
+  if (r.series.length) out += searchGroup("Séries", r.series.length) + r.series.map(function (h) { var se = h.item; return '<button class="li" data-seriesdetail="' + se.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer"><div style="flex:1"><b>' + esc(se.title || "(sem título)") + '</b>' + (se.theme ? ' <span class="muted">· ' + esc(se.theme) + '</span>' : '') + '</div></button>'; }).join("");
+  return out;
+}
+function searchBody() {
+  var q = state.studySearchQuery || "";
+  return '<div class="ph" style="margin-bottom:14px"><input id="study-search" value="' + esc(q) + '" placeholder="Buscar em sermões, notas, referências e séries…" style="width:100%;max-width:520px" autocomplete="off"></div>' +
+    '<div id="study-results">' + searchResultsHtml(q) + '</div>';
+}
+
+// ——— Memória de sermão (Fase 5): enquanto o pastor escreve, sugere sermões
+// passados relacionados — por passagem (mesmo livro+capítulo) e por palavras-chave
+// (título/ideia central/passagem). Toggle próprio (state.memoryOn), distinto do de
+// reconhecimento de escritura. Só sugere; nunca decide.
+function relatedSermons() {
+  if (state.memoryOn === false) return [];
+  var curId = editingId;
+  var refs = refsForCurrent();
+  var kw = tokens(val("se-title") + " " + val("se-bigidea") + " " + val("se-passage"));
+  var scores = {};
+  var chapKeys = {}; refs.forEach(function (r) { chapKeys[r.book + ":" + r.chapter] = 1; });
+  (state.scriptures || []).forEach(function (x) { if (x.sermon_id === curId) return; if (chapKeys[x.book + ":" + x.chapter]) scores[x.sermon_id] = (scores[x.sermon_id] || 0) + 3; });
+  if (kw.length) (state.sermons || []).forEach(function (s) {
+    if (s.id === curId) return;
+    var sc = scoreText(s.title, kw, 2) + scoreText(s.big_idea, kw, 1) + scoreText(s.main_passage, kw, 1);
+    if (sc > 0) scores[s.id] = (scores[s.id] || 0) + sc;
+  });
+  var out = Object.keys(scores).map(function (id) { var s = sermonById(id); return s ? { s: s, score: scores[id] } : null; }).filter(Boolean);
+  out.sort(function (a, b) { return b.score - a.score; });
+  return out.slice(0, 5).map(function (x) { return x.s; });
+}
+export function refreshRelated() {
+  var box = gid("sd-related"); if (!box) return;
+  if (state.memoryOn === false) { box.innerHTML = '<div class="muted">Sugestão desligada.</div>'; return; }
+  var rel = relatedSermons();
+  if (!rel.length) { box.innerHTML = '<div class="muted">Nenhum sermão relacionado ainda. Conforme você escreve a passagem e a ideia central, sugestões aparecem.</div>'; return; }
+  box.innerHTML = rel.map(function (s) { return '<button class="li" data-sermon="' + s.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer;padding:8px 0"><div style="flex:1"><b>' + esc(s.title || "(sem título)") + '</b>' + (s.sermon_date ? ' <span class="muted">· ' + brDate(s.sermon_date) + '</span>' : '') + (s.main_passage ? '<div class="meta">' + esc(s.main_passage) + '</div>' : '') + '</div></button>'; }).join("");
+}
+
 // Editor de sermão como CANVAS (spec §6-7, §24): título como H1 de documento,
 // passagem + ideia central como subcabeçalho leve, seções como blocos no fluxo. Metadados
 // recolhidos num drawer de Propriedades. Autosave discreto. A zona direita (assistente
@@ -535,6 +612,9 @@ function sermonEditor(id) {
     '<div class="sd-h" style="margin-top:16px">Referências</div>' +
     '<div id="sd-detected"></div>' +
     '<div id="sd-panel" style="margin-top:16px"></div>' +
+    '<div class="sd-h" style="margin-top:20px">Memória de sermão</div>' +
+    '<label class="sd-recog"><input type="checkbox" id="sd-memory"' + (state.memoryOn === false ? "" : " checked") + '> Sugerir sermões relacionados</label>' +
+    '<div id="sd-related" style="margin-top:10px"></div>' +
     linkedHtml +
     '</aside>';
 
@@ -600,11 +680,16 @@ function seriesModal(se) {
 
 // Autosave do canvas: digitar cresce a textarea e agenda o salvamento (sem re-render).
 document.addEventListener("input", function (e) {
-  var t = e.target; if (!t || !t.id || !state.sermonEdit) return;
+  var t = e.target; if (!t || !t.id) return;
+  // Busca do Estudo: atualiza só o container de resultados (preserva o foco/cursor).
+  if (t.id === "study-search") { state.studySearchQuery = t.value; save(); var rb = gid("study-results"); if (rb) rb.innerHTML = searchResultsHtml(t.value); return; }
+  if (!state.sermonEdit) return;
   if (t.id.indexOf("se-") !== 0) return;
   if (t.classList && t.classList.contains("sd-doc")) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }
   // Chips de referência ao vivo (a passagem sempre conta; seções, se o toggle estiver on).
   if (gid("sd-detected") && (t.id === "se-passage" || state.scriptureOn !== false)) refreshDetected();
+  // Memória de sermão: título/ideia/passagem realimentam as sugestões.
+  if (gid("sd-related") && (t.id === "se-title" || t.id === "se-bigidea" || t.id === "se-passage")) refreshRelated();
   scheduleSave();
 });
 
@@ -615,6 +700,8 @@ document.addEventListener("change", function (e) {
   if (t && t.id === "res-ftopic") { state.resourceFilter = Object.assign({}, state.resourceFilter, { topic: t.value || null }); save(); render(); return; }
   // Toggle de reconhecimento de escritura (visão do dono: desligável).
   if (t && t.id === "sd-recog") { state.scriptureOn = t.checked; save(); refreshDetected(); scheduleSave(); return; }
+  // Toggle de memória de sermão (sugestão de relacionados — desligável).
+  if (t && t.id === "sd-memory") { state.memoryOn = t.checked; save(); refreshRelated(); return; }
   // Comparação: livro/versões (a língua é botão, tratada no click).
   if (t && t.id === "cmp-book") { readPassageInputs(); renderCompare(); return; }
   if (t && t.getAttribute && t.getAttribute("data-cmpver")) { var vid = t.getAttribute("data-cmpver"); readPassageInputs(); var idx = cmpState.picks.indexOf(vid); if (idx >= 0) cmpState.picks.splice(idx, 1); else cmpState.picks.push(vid); renderCompare(); return; }

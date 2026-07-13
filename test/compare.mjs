@@ -163,7 +163,7 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "sermons";
     s.sermons = [{ id: "sm-e", title: "O Bom Pastor", subtitle: "", main_passage: "John 10:1-18", big_idea: "Ele conhece as ovelhas", status: "preparing", visibility: "church", campus: "", sermon_date: "", series_id: null, content: { outline: "1. A porta", notes: "", illustrations: "", application: "", prayer_response: "" } }];
     s.sermonEdit = "sm-e"; setState(s); return sermonsView.viewSermons();
-  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", 'id="se-notes"', "sd-body-doc", 'id="sec-outline"', 'data-addsec="prayer_response"', "Resposta de oração", 'id="sd-props-open"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"']],
+  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", 'id="se-notes"', "sd-body-doc", 'id="sec-outline"', 'data-addsec="prayer_response"', "Resposta de oração", 'id="sd-props-open"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"', 'id="sd-memory"', 'id="sd-related"']],
   // study-notes (Study · Fase 4) — sub-nav do Estudo + lista de notas com escopo e
   // vínculos leves. Semeia uma nota compartilhada vinculada a um sermão.
   ["study-notes", () => {
@@ -188,6 +188,21 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "sermons"; s.studyTab = "resources"; s.resources = [];
     setState(s); return sermonsView.viewSermons();
   }, ['id="newResource"', "Nenhum recurso ainda"]],
+  // study-search (Study · Fase 5) — busca no client agrupada por tipo. Semeia dados
+  // e uma query que casa com sermão + nota + referência + série.
+  ["study-search", () => {
+    const s = clone(seedData); s.view = "sermons"; s.studyTab = "search"; s.studySearchQuery = "pastor";
+    s.sermons = [{ id: "sm-1", title: "O Bom Pastor", main_passage: "João 10:1-18", big_idea: "Ele conhece", content: {} }];
+    s.notes = [{ id: "nt-1", title: "Pastoreio", content: "cuidado", scope: "shared", topic: "pastor", tags: [] }];
+    s.scriptures = [{ id: "sc-1", sermon_id: "sm-1", book: "JHN", chapter: 10, reference: "João 10:1-18" }];
+    s.series = [{ id: "se-1", title: "O Pastor", theme: "pastoreio" }];
+    setState(s); return sermonsView.viewSermons();
+  }, ['data-studytab="search"', 'id="study-search"', 'id="study-results"', "Sermões", "Notas", "Séries", "O Bom Pastor"]],
+  // study-search vazio (sem query) — prompt honesto.
+  ["study-search-empty", () => {
+    const s = clone(seedData); s.view = "sermons"; s.studyTab = "search"; s.studySearchQuery = "";
+    setState(s); return sermonsView.viewSermons();
+  }, ['id="study-search"', "Escreva para buscar"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
