@@ -128,6 +128,7 @@ const journeyView = await import("../src/views/journey.js");
 const inboxView = await import("../src/views/inbox.js");
 const groupsView = await import("../src/views/groups.js");
 const studyView = await import("../src/views/study.js");
+const sermonsView = await import("../src/views/sermons.js");
 const homeView = await import("../src/views/home.js");
 const FEATURE_VIEWS = [
   // dashboard graduou na Fase 6: ganhou Community Insights + movimento de Journey/Groups.
@@ -145,6 +146,9 @@ const FEATURE_VIEWS = [
   // study (Trilhas / Discipleship Tracks) é tela nova — não existe no monólito, só smoke.
   ["study", () => { const s = clone(seedData); s.view = "study"; setState(s); return studyView.viewStudy(); },
     ["Trilhas", 'id="newTrack"', "Nenhuma trilha ainda"]],
+  // sermons (Study — Sermon Library + editor) é tela nova — só smoke.
+  ["sermons", () => { const s = clone(seedData); s.view = "sermons"; setState(s); return sermonsView.viewSermons(); },
+    ["Estudo", 'id="newSermon"', "Nenhum sermão ainda", 'data-sermonstatus="ready"']],
 ];
 console.log("\n=== Smoke de render (telas-feature) ===");
 let sok = 0, sfail = 0;

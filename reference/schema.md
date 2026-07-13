@@ -66,6 +66,9 @@ Mapa app → grupos: a `group` (string) de uma Stick vira relação em `group_me
 - **track_steps**: id, org_id, track_id (fk tracks cascade), name, description, position (int), materials (jsonb default []), created_at. Estágios como LINHAS. RLS `is_org_member`.
 - **track_enrollments**: id, org_id, track_id, stick_id (fk sticks), current_step_id (fk track_steps, on delete set null), progress (int), status (default 'in_progress'), started_at, completed_at, created_at, updated_at. UNIQUE (track_id, stick_id). RLS `is_org_member`. Conclusão cria `milestone` (code='completed_track') + `timeline_event`; Journey só se configurado (não força).
 
+## Study (Step 5 · Fase 1 — aplicado 2026-07-12, migração m15)
+- **sermons**: id, org_id, title, subtitle, description, preacher_id (uuid nullable, SEM FK), series_id (uuid nullable, SEM FK — series é Fase 2), campus_id (fk campuses set null), service_id (uuid nullable, SEM FK — Step 6), sermon_date, status (enum `sermon_status`: draft/preparing/ready/preached/archived, default draft), visibility (enum `sermon_visibility`: private/leadership/church/public, default church), main_passage (text), big_idea (text), content (jsonb default {} — seções: outline/notes/illustrations/application/prayer_response/references/media), created_at, updated_at. RLS `is_org_member`. Corpo do sermão é DOCUMENTO → jsonb (aqui é o certo). Visibilidade fina é fase futura.
+
 ## Inteligência (Signals, Care, Timeline)
 - **signals**: id, org_id, campus_id, type, category, title, description, source_module, source_record_id, related_stick_id, related_group_id, priority (enum), status (enum), assigned_to, detected_at, resolved_at, resolved_by, resolution_note, dismissed_reason, metadata (jsonb), created_at
 - **signal_overrides**: id, org_id, signal_key, status, updated_at
@@ -89,6 +92,10 @@ Mapa app → oração: "nome do pedido" (o título) → `request` começa com o 
 - **track_steps**: id, org_id, track_id, name, description, position, materials (jsonb), created_at. Estágios como linhas.
 - **track_enrollments**: id, org_id, track_id, stick_id, current_step_id, progress, status (default 'in_progress'), started_at, completed_at, created_at, updated_at. UNIQUE (track_id, stick_id). RLS `is_org_member`.
 - Conclusão (status='completed') → cria milestone + timeline_event, e move a Journey só se configurado. Sem seed no `create_org` (trilhas são conteúdo da igreja).
+
+## Study — Sermões (Step 5 · Fase 1 — aplicado 2026-07-12, migração m15)
+- **sermons**: id, org_id, title, subtitle, description, preacher_id (nullable, sem FK), series_id (nullable, sem FK — series na Fase 2), campus_id (fk), service_id (nullable, sem FK — Step 6), sermon_date, status (enum sermon_status), visibility (enum sermon_visibility), main_passage, big_idea, content (jsonb: outline/notes/illustrations/application/prayer_response/references/media), created_at, updated_at. RLS `is_org_member`.
+- Enums: `sermon_status` (draft/preparing/ready/preached/archived), `sermon_visibility` (private/leadership/church/public). Visibilidade fina é refinamento futuro (hoje RLS por org). Sem seed em create_org.
 
 ## Coordenação (Basecamp-lite)
 - **coordination_posts**: id, org_id, campus_id, title, body, team, posted_on, created_by, created_at

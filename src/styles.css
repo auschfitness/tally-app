@@ -108,7 +108,8 @@
   .modal .msub{font-size:12.5px;color:var(--text-2);margin-bottom:14px}
   .field{margin-bottom:13px}
   .field label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:5px}
-  .field input,.field select{width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:13.5px;color:var(--text);background:var(--surface-2)}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:13.5px;color:var(--text);background:var(--surface-2)}
+  .field textarea{resize:vertical;line-height:1.5}
   .field.check{display:flex;align-items:center;gap:8px}
   .field.check input{width:auto}.field.check label{margin:0}
   .mrow{display:flex;gap:10px}.mrow .field{flex:1}
