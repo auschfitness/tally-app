@@ -41,9 +41,13 @@ Regra de ouro: toda tabela operacional tem `org_id` (o RLS filtra por org sozinh
 - **sticks**: id, org_id, primary_campus_id, full_name, preferred_name, first_name, last_name, profile_photo, birth_date, gender, primary_language, email, phone, whatsapp, address_line_1, address_line_2, city, state, postal_code, country, relationship_status (enum), is_leader, first_visit_date, membership_date, conversion_date, baptism_date, assigned_pastor_id, assigned_care_leader_id, journey_stage_id, source, source_detail, tags[], preferred_contact_method, email_allowed, sms_allowed, whatsapp_allowed, last_seen_at, followup_open, archived, archive_reason, archived_at, created_at, updated_at
 - **households**: id, org_id, name, campus_id, address, photo, created_at
 - **household_members**: id, household_id, stick_id, relationship_type, is_primary_contact
-- **journey_stages**: id, org_id, name, position, created_at
+- **journey_stages**: id, org_id, journey_id, name, position, description, color, required_milestones[], recommended_actions (jsonb), created_at
 - **milestone_types**: id, org_id, code, name, is_system, auto, created_at
 - **milestones**: id, org_id, stick_id, milestone_type_id, code, occurred_on, title, description, source_module, source_record_id, visibility, created_by, created_at
+
+### Journey (Step 4 · Fase 1 — aplicado 2026-07-12, migração m13)
+- **journeys**: id, org_id, name, description, is_default, created_at · uma journey padrão por org (índice único parcial `where is_default`). RLS `is_org_member`. `create_org` agora semeia 1 journey padrão + 6 estágios em orgs novas.
+- **stick_journey_records**: id, org_id, stick_id, journey_id, current_stage_id, previous_stage_id, entered_stage_at, completed_stages[], notes, created_at, updated_at · UNIQUE (stick_id, journey_id). É o vínculo pessoa↔journey (posição atual, anterior, histórico). RLS `is_org_member`.
 
 Mapa app → sticks: `relationship` → `relationship_status`; `lastSeen` → `last_seen_at`; `leader`/`isLeader` → `is_leader`; `photo` → `profile_photo`; `name` → `full_name`.
 
