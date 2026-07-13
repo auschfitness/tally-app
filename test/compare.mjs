@@ -268,6 +268,21 @@ const FEATURE_VIEWS = [
     s.teamDetail = "tk-1";
     setState(s); return teamsView.viewTeams();
   }, ["Distribuição de serviço", "Vocal", "Guitarra", "ninguém ainda", "servindo", "em pausa"]],
+  // schedule-board (Step 7 · Fase 3) — board semanal com avatares; escalação por data
+  // com status. Semeia uma escalação na semana da âncora.
+  ["schedule-board", () => {
+    const s = clone(seedData); s.view = "teams"; s.scheduleView = true; s.scheduleAnchor = "2026-03-01";
+    const pid = s.people[0].id;
+    s.teams = [{ id: "tk-1", ministry_id: null, name: "Banda", campus: s.activeCampus, leader_id: null, serving_roles: ["Vocal"], status: "active" }];
+    s.teamMembers = [];
+    s.schedule = [{ id: "as-1", team_id: "tk-1", role: "Vocal", stick_id: pid, assignment_date: "2026-03-04", status: "assigned", service_id: null, event_id: null, confirmed_at: null }];
+    setState(s); return teamsView.viewTeams();
+  }, ["Escala", 'id="schedPrev"', 'id="schedNext"', 'id="schedAdd"', "Banda", "Vocal", "Escalado", 'data-asgstatus="as-1"']],
+  // schedule-empty (Fase 3) — board sem escalações mostra os dias vazios ("—").
+  ["schedule-empty", () => {
+    const s = clone(seedData); s.view = "teams"; s.scheduleView = true; s.scheduleAnchor = "2026-03-01"; s.schedule = []; s.teams = [];
+    setState(s); return teamsView.viewTeams();
+  }, ["Escala", 'id="schedAdd"', 'data-schedadd=']],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {

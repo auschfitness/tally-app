@@ -5,10 +5,11 @@
 
 import { state } from "../core/state.js";
 import { save } from "../core/persist.js";
-import { esc, initials } from "../core/helpers.js";
+import { esc, initials, iso, today } from "../core/helpers.js";
 import { inCampus } from "../core/derived.js";
 import { createMinistry, updateMinistry, deleteMinistry } from "../core/ministries-repo.js";
 import { createTeam, updateTeam, deleteTeam, addTeamMember, updateTeamMember, removeTeamMember, setTeamLeader } from "../core/teams-repo.js";
+import { createAssignment, setAssignmentStatus, deleteAssignment } from "../core/schedule-repo.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
 
@@ -32,6 +33,7 @@ function bar(n, max, band) { var pct = max ? Math.round(n / max * 100) : 0; retu
 function activeMembersOf(teamId) { return membersOf(teamId).filter(function (m) { return m.status === "active"; }); }
 
 export function viewTeams() {
+  if (state.scheduleView) return scheduleBoard();
   if (state.teamDetail) return teamDetailView(state.teamDetail);
   if (state.ministryDetail) return ministryDashboard(state.ministryDetail);
   var teams = state.teams || [];
@@ -57,7 +59,7 @@ export function viewTeams() {
     if (loose.length) body += '<div class="ph" style="margin:4px 0 6px"><h3 class="muted" style="margin:0;font-size:13px;font-weight:600">Sem ministério</h3></div><div class="gcards">' + loose.map(teamCard).join("") + '</div>';
   }
 
-  return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px"><div><h1 class="page">Times</h1><p class="sub" style="margin:0">Quem serve e onde. Times são onde a pessoa serve; ministérios agrupam times. Consciência operacional, não nota.</p></div><button class="btn ghost" id="newMinistry" style="margin-left:auto">+ Ministério</button><button class="btn" id="newTeam">+ Novo time</button></div>' + body;
+  return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px"><div><h1 class="page">Times</h1><p class="sub" style="margin:0">Quem serve e onde. Times são onde a pessoa serve; ministérios agrupam times. Consciência operacional, não nota.</p></div><button class="btn ghost" id="openSchedule" style="margin-left:auto">Escala</button><button class="btn ghost" id="newMinistry">+ Ministério</button><button class="btn" id="newTeam">+ Novo time</button></div>' + body;
 }
 
 function teamDetailView(id) {
@@ -136,6 +138,71 @@ function ministryDashboard(id) {
     '<div class="panel"><div class="ph"><h3>Distribuição de serviço</h3><span class="muted" style="margin-left:auto">por time</span></div>' + dist + '</div>';
 }
 
+// ——— Escala de serviço (Fase 3, §11-13): board semanal com avatares (evita cara de
+// planilha). Serviço/Evento → Time → Papel → Stick numa data, com status. Como
+// serviços/eventos são Step 6, a escala é por data (gancho service_id/event_id pronto).
+var ASG_STATUS_LBL = { assigned: "Escalado", confirmed: "Confirmado", declined: "Recusou", replacement_needed: "Precisa cobertura", completed: "Concluído" };
+var ASG_STATUS_BAND = { assigned: "attention", confirmed: "healthy", declined: "risk", replacement_needed: "risk", completed: "healthy" };
+var ASG_CYCLE = ["assigned", "confirmed", "declined", "replacement_needed", "completed"];
+var WD = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+function parseIso(s) { var p = (s || "").split("-"); return new Date(+p[0], (+p[1]) - 1, +p[2]); }
+function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function weekStart(anchorIso) { var d = anchorIso ? parseIso(anchorIso) : today(); var x = new Date(d); x.setDate(x.getDate() - x.getDay()); x.setHours(0, 0, 0, 0); return x; }
+function ddmm(d) { return ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2); }
+
+function scheduleBoard() {
+  var ws = weekStart(state.scheduleAnchor);
+  var todayIso = iso(today());
+  var sched = state.schedule || [];
+  var days = [];
+  for (var i = 0; i < 7; i++) {
+    var d = addDays(ws, i); var di = iso(d);
+    var items = sched.filter(function (a) { return a.assignment_date === di; });
+    // agrupa por time
+    var byTeam = {}; items.forEach(function (a) { (byTeam[a.team_id] || (byTeam[a.team_id] = [])).push(a); });
+    var inner = Object.keys(byTeam).map(function (tid) {
+      var team = teamById(tid);
+      var chips = byTeam[tid].map(function (a) {
+        var nm = personName(a.stick_id) || "—";
+        return '<div class="li" style="padding:5px 0"><div class="av" style="width:28px;height:28px;font-size:11px">' + initials(nm) + '</div><div style="flex:1"><div><b>' + esc(nm) + '</b>' + (a.role ? ' <span class="muted">· ' + esc(a.role) + '</span>' : '') + '</div></div><div class="right"><button class="hb ' + (ASG_STATUS_BAND[a.status] || "attention") + '" data-asgstatus="' + a.id + '" title="Clique para avançar o status" style="cursor:pointer;border:0">' + (ASG_STATUS_LBL[a.status] || a.status) + '</button><button class="link" data-asgremove="' + a.id + '">×</button></div></div>';
+      }).join("");
+      return '<div style="margin-top:6px"><div class="mi-k" style="font-size:11px">' + esc(team ? team.name : "Time removido") + '</div>' + chips + '</div>';
+    }).join("") || '<div class="muted" style="padding:4px 0">—</div>';
+    days.push('<div class="panel" style="margin-bottom:10px' + (di === todayIso ? ';outline:2px solid var(--blue)' : '') + '"><div class="ph" style="margin-bottom:4px"><h3 style="font-size:14px">' + WD[d.getDay()] + ' ' + ddmm(d) + '</h3><button class="link" data-schedadd="' + di + '" style="margin-left:auto">+ Escalar</button></div>' + inner + '</div>');
+  }
+  var wkLabel = ddmm(ws) + " – " + ddmm(addDays(ws, 6));
+  return '<button class="link" id="teamsBack">&#8592; Voltar aos times</button>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin:10px 0 16px"><div><h1 class="page">Escala</h1><p class="sub" style="margin:0">Quem serve em cada data. Confirme, recuse ou peça cobertura. Serviços e eventos chegam no próximo passo.</p></div>' +
+    '<div style="margin-left:auto;display:flex;align-items:center;gap:8px"><button class="btn ghost sm" id="schedPrev">‹</button><b>' + wkLabel + '</b><button class="btn ghost sm" id="schedNext">›</button><button class="btn ghost sm" id="schedToday">Hoje</button></div>' +
+    '<button class="btn" id="schedAdd">+ Escalar</button></div>' +
+    days.join("");
+}
+
+function assignModal(dateIso) {
+  var teams = (state.teams || []).filter(function (t) { return t.status !== "archived"; });
+  if (!teams.length) { openModal('<h3>Escalar</h3><div class="empty">Crie um time primeiro para montar a escala.</div><div class="actions"><button class="btn" id="as-cancel">Fechar</button></div>'); document.getElementById("as-cancel").onclick = closeModal; return; }
+  var teamOpts = teams.map(function (t) { return '<option value="' + t.id + '">' + esc(t.name) + '</option>'; }).join("");
+  var ppl = campusPeople();
+  var stickOpts = ppl.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join("");
+  openModal('<h3>Escalar serviço</h3>' +
+    '<div class="mrow"><div class="field"><label>Data</label><input id="as-date" type="date" value="' + esc(dateIso || iso(today())) + '"></div><div class="field"><label>Time</label><select id="as-team">' + teamOpts + '</select></div></div>' +
+    '<div class="mrow"><div class="field"><label>Pessoa</label><select id="as-stick">' + stickOpts + '</select></div><div class="field"><label>Papel</label><input id="as-role" placeholder="Ex.: Vocal" list="as-roles"><datalist id="as-roles"></datalist></div></div>' +
+    '<div class="actions"><button class="btn ghost" id="as-cancel">Cancelar</button><button class="btn" id="as-save">Escalar</button></div>');
+  document.getElementById("as-cancel").onclick = closeModal;
+  // papéis sugeridos conforme o time escolhido
+  function fillRoles() {
+    var t = teamById(val("as-team")); var dl = document.getElementById("as-roles");
+    if (dl) dl.innerHTML = ((t && t.serving_roles) || []).map(function (r) { return '<option value="' + esc(r) + '">'; }).join("");
+  }
+  fillRoles();
+  var teamSel = document.getElementById("as-team"); if (teamSel) teamSel.onchange = fillRoles;
+  document.getElementById("as-save").onclick = function () {
+    var data = { team_id: val("as-team"), stick_id: val("as-stick"), role: val("as-role").trim(), assignment_date: val("as-date"), status: "assigned" };
+    if (!data.team_id || !data.stick_id || !data.assignment_date) return;
+    createAssignment(data).then(function () { closeModal(); render(); });
+  };
+}
+
 function ministryModal(m) {
   var isNew = !m; m = m || { status: "active" };
   var leaderOpts = '<option value="">Sem líder</option>' + campusPeople().map(function (p) { return '<option value="' + p.id + '"' + (m.leader_id === p.id ? " selected" : "") + '>' + esc(p.name) + '</option>'; }).join("");
@@ -197,7 +264,15 @@ function memberRoleModal(memberId) {
 }
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-teamdetail],[data-ministrydetail],[data-ministryedit],[data-memrole],[data-makelead],[data-memremove],#newMinistry,#newTeam,#teamsBack,#editTeam,#tm-add") : null; if (!t) return;
+  var t = e.target.closest ? e.target.closest("[data-teamdetail],[data-ministrydetail],[data-ministryedit],[data-memrole],[data-makelead],[data-memremove],[data-asgstatus],[data-asgremove],[data-schedadd],#newMinistry,#newTeam,#teamsBack,#editTeam,#tm-add,#openSchedule,#schedAdd,#schedPrev,#schedNext,#schedToday") : null; if (!t) return;
+  if (t.id === "openSchedule") { state.scheduleView = true; state.teamDetail = null; state.ministryDetail = null; state.scheduleAnchor = state.scheduleAnchor || iso(today()); save(); render(); return; }
+  if (t.id === "schedAdd") { assignModal(null); return; }
+  if (t.getAttribute("data-schedadd")) { assignModal(t.getAttribute("data-schedadd")); return; }
+  if (t.id === "schedPrev") { state.scheduleAnchor = iso(addDays(weekStart(state.scheduleAnchor), -7)); save(); render(); return; }
+  if (t.id === "schedNext") { state.scheduleAnchor = iso(addDays(weekStart(state.scheduleAnchor), 7)); save(); render(); return; }
+  if (t.id === "schedToday") { state.scheduleAnchor = iso(today()); save(); render(); return; }
+  if (t.getAttribute("data-asgstatus")) { var aid = t.getAttribute("data-asgstatus"); var a = (state.schedule || []).find(function (x) { return x.id === aid; }); if (a) { var ni = (ASG_CYCLE.indexOf(a.status) + 1) % ASG_CYCLE.length; setAssignmentStatus(aid, ASG_CYCLE[ni]).then(function () { render(); }); } return; }
+  if (t.getAttribute("data-asgremove")) { if (!window.confirm("Remover esta escalação?")) return; deleteAssignment(t.getAttribute("data-asgremove")).then(function () { render(); }); return; }
   if (t.getAttribute("data-teamdetail")) { state.teamDetail = t.getAttribute("data-teamdetail"); state.ministryDetail = null; save(); render(); return; }
   if (t.getAttribute("data-ministrydetail")) { state.ministryDetail = t.getAttribute("data-ministrydetail"); state.teamDetail = null; save(); render(); return; }
   if (t.getAttribute("data-ministryedit")) { ministryModal(ministryById(t.getAttribute("data-ministryedit"))); return; }
@@ -207,7 +282,7 @@ document.addEventListener("click", function (e) {
   if (t.id === "newMinistry") { ministryModal(null); return; }
   if (t.id === "newTeam") { teamModal(null); return; }
   if (t.id === "editTeam") { teamModal(teamById(t.getAttribute("data-team"))); return; }
-  if (t.id === "teamsBack") { state.teamDetail = null; state.ministryDetail = null; save(); render(); return; }
+  if (t.id === "teamsBack") { state.teamDetail = null; state.ministryDetail = null; state.scheduleView = false; save(); render(); return; }
   if (t.id === "tm-add") {
     var sel = document.getElementById("tm-stick"); if (!sel || !sel.value) return;
     addTeamMember(t.getAttribute("data-team"), sel.value, { role: val("tm-role") }).then(function () { render(); });

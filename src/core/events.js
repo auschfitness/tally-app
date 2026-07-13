@@ -18,7 +18,7 @@ import { personModal, checkinModal } from "../views/sticks.js";
 import { postModal, taskModal } from "../views/coordination.js";
 import { entryModal } from "../views/finance.js";
 
-document.querySelectorAll(".navitem").forEach(n=>n.onclick=()=>{state.view=n.dataset.view;state.stickDetail=null;state.groupDetail=null;state.teamDetail=null;state.ministryDetail=null;save();render();});
+document.querySelectorAll(".navitem").forEach(n=>n.onclick=()=>{state.view=n.dataset.view;state.stickDetail=null;state.groupDetail=null;state.teamDetail=null;state.ministryDetail=null;state.scheduleView=false;save();render();});
 document.getElementById("themeBtn").onclick=toggleTheme;
 
 var _lo=document.getElementById("logout");if(_lo)_lo.onclick=function(){if(SB)SB.auth.signOut().then(function(){location.reload();});};
