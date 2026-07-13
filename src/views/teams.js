@@ -27,8 +27,13 @@ function parseRoles(s) { return (s || "").split(",").map(function (t) { return t
 function opts(map, sel) { return Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (sel === k ? " selected" : "") + '>' + map[k] + '</option>'; }).join(""); }
 function campusPeople() { return (state.people || []).filter(inCampus).filter(function (p) { return !p.archived; }); }
 
+// Barra proporcional simples (maior contagem = 100%). Só dado real.
+function bar(n, max, band) { var pct = max ? Math.round(n / max * 100) : 0; return '<div class="gbar" style="margin-top:4px"><i class="' + (band || "healthy") + '" style="width:' + pct + '%"></i></div>'; }
+function activeMembersOf(teamId) { return membersOf(teamId).filter(function (m) { return m.status === "active"; }); }
+
 export function viewTeams() {
   if (state.teamDetail) return teamDetailView(state.teamDetail);
+  if (state.ministryDetail) return ministryDashboard(state.ministryDetail);
   var teams = state.teams || [];
   var mins = state.ministries || [];
 
@@ -46,7 +51,7 @@ export function viewTeams() {
     mins.forEach(function (m) {
       var mine = teams.filter(function (t) { return t.ministry_id === m.id; });
       var cards = mine.length ? '<div class="gcards" style="margin-bottom:16px">' + mine.map(teamCard).join("") + '</div>' : '<div class="empty" style="margin-bottom:16px">Sem times neste ministério ainda.</div>';
-      body += '<div class="ph" style="margin:4px 0 6px"><h3 style="margin:0">' + esc(m.name) + '</h3><span class="hb ' + (m.status === "active" ? "healthy" : "attention") + '" style="margin-left:8px">' + (MIN_STATUS_LBL[m.status] || m.status) + '</span><button class="link" data-ministryedit="' + m.id + '" style="margin-left:auto">editar</button></div>' + cards;
+      body += '<div class="ph" style="margin:4px 0 6px"><h3 style="margin:0;cursor:pointer" data-ministrydetail="' + m.id + '">' + esc(m.name) + '</h3><span class="hb ' + (m.status === "active" ? "healthy" : "attention") + '" style="margin-left:8px">' + (MIN_STATUS_LBL[m.status] || m.status) + '</span><button class="link" data-ministrydetail="' + m.id + '" style="margin-left:auto">painel</button><button class="link" data-ministryedit="' + m.id + '">editar</button></div>' + cards;
     });
     var loose = teams.filter(function (t) { return !t.ministry_id; });
     if (loose.length) body += '<div class="ph" style="margin:4px 0 6px"><h3 class="muted" style="margin:0;font-size:13px;font-weight:600">Sem ministério</h3></div><div class="gcards">' + loose.map(teamCard).join("") + '</div>';
@@ -82,10 +87,53 @@ function teamDetailView(id) {
 
   var rolesHtml = roleList.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px">' + roleList.map(function (r) { return '<span class="chip" style="background:rgba(43,92,230,.10);color:var(--blue)">' + esc(r) + '</span>'; }).join("") + '</div>' : '<div class="muted">Sem papéis definidos. Defina em “Editar time” (ex.: Vocal, Guitarra, Mesa).</div>';
 
+  // Distribuição de serviço (Fase 2): por papel e por status. Só dado real; ajuda a
+  // enxergar concentração ("poucos cobrindo muito") sem julgar ninguém.
+  var active = mem.filter(function (m) { return m.status === "active"; });
+  var byRole = {}; active.forEach(function (m) { var r = m.role || "Sem papel"; byRole[r] = (byRole[r] || 0) + 1; });
+  (t.serving_roles || []).forEach(function (r) { if (byRole[r] === undefined) byRole[r] = 0; });
+  var roleKeys = Object.keys(byRole);
+  var maxRole = roleKeys.reduce(function (a, k) { return Math.max(a, byRole[k]); }, 0);
+  var roleDist = roleKeys.length ? roleKeys.map(function (k) {
+    return '<div class="li" style="display:block;padding:6px 0"><div><b>' + esc(k) + '</b> <span class="muted">· ' + byRole[k] + (byRole[k] === 0 ? ' (ninguém ainda)' : '') + '</span></div>' + bar(byRole[k], maxRole, byRole[k] === 0 ? "attention" : "healthy") + '</div>';
+  }).join("") : '<div class="empty">Sem papéis para distribuir ainda.</div>';
+  var nActive = active.length, nPaused = mem.filter(function (m) { return m.status === "paused"; }).length, nInact = mem.filter(function (m) { return m.status === "inactive"; }).length;
+  var statusRow = '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:4px"><span><b style="color:var(--green)">' + nActive + '</b> <span class="muted">servindo</span></span><span><b style="color:#E8833A">' + nPaused + '</b> <span class="muted">em pausa</span></span><span><b class="muted">' + nInact + '</b> <span class="muted">inativos</span></span></div>';
+
   return '<button class="link" id="teamsBack">&#8592; Voltar aos times</button>' +
-    '<div style="display:flex;align-items:flex-start;margin:10px 0 18px"><div><h1 class="page">' + esc(t.name || "(sem nome)") + '</h1><p class="sub" style="margin:0">' + (min ? esc(min.name) + ' · ' : '') + (t.campus ? esc(t.campus) + ' · ' : '') + (TEAM_STATUS_LBL[t.status] || t.status) + '</p></div><button class="btn ghost" id="editTeam" data-team="' + id + '" style="margin-left:auto">Editar time</button></div>' +
+    '<div style="display:flex;align-items:flex-start;margin:10px 0 18px"><div><h1 class="page">' + esc(t.name || "(sem nome)") + '</h1><p class="sub" style="margin:0">' + (min ? '<span data-ministrydetail="' + min.id + '" style="cursor:pointer;text-decoration:underline">' + esc(min.name) + '</span> · ' : '') + (t.campus ? esc(t.campus) + ' · ' : '') + (TEAM_STATUS_LBL[t.status] || t.status) + '</p></div><button class="btn ghost" id="editTeam" data-team="' + id + '" style="margin-left:auto">Editar time</button></div>' +
     '<div class="row2"><div class="panel"><div class="ph"><h3>Quem serve</h3><span class="muted" style="margin-left:auto">' + mem.filter(function (m) { return m.status !== "inactive"; }).length + '</span></div>' + memList + addCtl + '</div>' +
-    '<div class="panel"><div class="ph"><h3>Papéis de serviço</h3></div>' + rolesHtml + (t.description ? '<div class="field" style="margin-top:14px"><label>Sobre</label><div>' + esc(t.description) + '</div></div>' : '') + '<div class="field" style="margin-top:14px"><label>Líder</label><div>' + (leadName ? esc(leadName) : '<span class="muted">Sem líder</span>') + '</div></div></div></div>';
+    '<div class="panel"><div class="ph"><h3>Papéis de serviço</h3></div>' + rolesHtml + (t.description ? '<div class="field" style="margin-top:14px"><label>Sobre</label><div>' + esc(t.description) + '</div></div>' : '') + '<div class="field" style="margin-top:14px"><label>Líder</label><div>' + (leadName ? esc(leadName) : '<span class="muted">Sem líder</span>') + '</div></div></div></div>' +
+    '<div class="panel" style="margin-top:16px"><div class="ph"><h3>Distribuição de serviço</h3></div>' + statusRow + '<div style="margin-top:12px">' + roleDist + '</div></div>';
+}
+
+// Dashboard do ministério (Fase 2, §16-17): consciência operacional do ministério —
+// times, pessoas servindo (únicas), times sem líder, distribuição por time. Sem score.
+function ministryDashboard(id) {
+  var m = ministryById(id);
+  if (!m) return '<button class="link" id="teamsBack">&#8592; Voltar aos times</button><div class="empty">Ministério não encontrado.</div>';
+  var teams = (state.teams || []).filter(function (t) { return t.ministry_id === id; });
+  // pessoas únicas servindo no ministério (status active), sem dupla contagem.
+  var uniq = {}; teams.forEach(function (t) { activeMembersOf(t.id).forEach(function (mm) { uniq[mm.stick_id] = 1; }); });
+  var peopleServing = Object.keys(uniq).length;
+  var noLeader = teams.filter(function (t) { return !t.leader_id; }).length;
+  var counts = teams.map(function (t) { return { t: t, n: activeMembersOf(t.id).length }; });
+  var max = counts.reduce(function (a, b) { return Math.max(a, b.n); }, 0);
+
+  var dist = counts.length ? counts.map(function (c) {
+    return '<button class="li" data-teamdetail="' + c.t.id + '" style="width:100%;text-align:left;background:none;border:0;cursor:pointer;padding:8px 0"><div style="flex:1"><div><b>' + esc(c.t.name) + '</b> <span class="muted">· ' + c.n + ' servindo</span>' + (c.t.leader_id ? '' : ' <span class="hb attention">sem líder</span>') + '</div>' + bar(c.n, max, "healthy") + '</div></button>';
+  }).join("") : '<div class="empty">Sem times neste ministério ainda. Crie um em “+ Novo time”.</div>';
+
+  var stat = '<div class="panel" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap;align-items:center"><div class="mi-k">' + esc(m.name) + '</div>' +
+    '<div><b style="color:var(--blue);font-size:16px">' + teams.length + '</b> <span class="muted">time' + (teams.length !== 1 ? 's' : '') + '</span></div>' +
+    '<div><b style="color:var(--green);font-size:16px">' + peopleServing + '</b> <span class="muted">servindo</span></div>' +
+    '<div><b style="color:#E8833A;font-size:16px">' + noLeader + '</b> <span class="muted">sem líder</span></div>' +
+    (m.leader_id ? '<div><span class="muted">Líder do ministério:</span> <b>' + esc(personName(m.leader_id)) + '</b></div>' : '') + '</div>';
+
+  return '<button class="link" id="teamsBack">&#8592; Voltar aos times</button>' +
+    '<div style="display:flex;align-items:flex-start;margin:10px 0 18px"><div><h1 class="page">' + esc(m.name) + '</h1><p class="sub" style="margin:0">' + (m.description ? esc(m.description) : 'Ministério') + '</p></div><button class="btn ghost" data-ministryedit="' + id + '" style="margin-left:auto">Editar ministério</button></div>' +
+    stat +
+    '<div class="panel"><div class="ph"><h3>Distribuição de serviço</h3><span class="muted" style="margin-left:auto">por time</span></div>' + dist + '</div>';
 }
 
 function ministryModal(m) {
@@ -149,8 +197,9 @@ function memberRoleModal(memberId) {
 }
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-teamdetail],[data-ministryedit],[data-memrole],[data-makelead],[data-memremove],#newMinistry,#newTeam,#teamsBack,#editTeam,#tm-add") : null; if (!t) return;
-  if (t.getAttribute("data-teamdetail")) { state.teamDetail = t.getAttribute("data-teamdetail"); save(); render(); return; }
+  var t = e.target.closest ? e.target.closest("[data-teamdetail],[data-ministrydetail],[data-ministryedit],[data-memrole],[data-makelead],[data-memremove],#newMinistry,#newTeam,#teamsBack,#editTeam,#tm-add") : null; if (!t) return;
+  if (t.getAttribute("data-teamdetail")) { state.teamDetail = t.getAttribute("data-teamdetail"); state.ministryDetail = null; save(); render(); return; }
+  if (t.getAttribute("data-ministrydetail")) { state.ministryDetail = t.getAttribute("data-ministrydetail"); state.teamDetail = null; save(); render(); return; }
   if (t.getAttribute("data-ministryedit")) { ministryModal(ministryById(t.getAttribute("data-ministryedit"))); return; }
   if (t.getAttribute("data-memrole")) { memberRoleModal(t.getAttribute("data-memrole")); return; }
   if (t.getAttribute("data-makelead")) { setTeamLeader(t.getAttribute("data-team"), t.getAttribute("data-makelead")).then(function () { render(); }); return; }
@@ -158,7 +207,7 @@ document.addEventListener("click", function (e) {
   if (t.id === "newMinistry") { ministryModal(null); return; }
   if (t.id === "newTeam") { teamModal(null); return; }
   if (t.id === "editTeam") { teamModal(teamById(t.getAttribute("data-team"))); return; }
-  if (t.id === "teamsBack") { state.teamDetail = null; save(); render(); return; }
+  if (t.id === "teamsBack") { state.teamDetail = null; state.ministryDetail = null; save(); render(); return; }
   if (t.id === "tm-add") {
     var sel = document.getElementById("tm-stick"); if (!sel || !sel.value) return;
     addTeamMember(t.getAttribute("data-team"), sel.value, { role: val("tm-role") }).then(function () { render(); });

@@ -243,6 +243,31 @@ const FEATURE_VIEWS = [
     s.teamDetail = "tk-1";
     setState(s); return teamsView.viewTeams();
   }, ["Voltar aos times", "Quem serve", "Papéis de serviço", "Vocal", 'data-memremove="tmr-1"', "líder", 'id="editTeam"']],
+  // ministry-dashboard (Step 7 · Fase 2) — consciência operacional do ministério.
+  ["ministry-dashboard", () => {
+    const s = clone(seedData); s.view = "teams"; s.teamDetail = null;
+    const pid = s.people[0].id;
+    s.ministries = [{ id: "mn-1", name: "Louvor", description: "Adoração", campus: "", leader_id: null, status: "active" }];
+    s.teams = [
+      { id: "tk-1", ministry_id: "mn-1", name: "Banda", campus: "", leader_id: pid, serving_roles: ["Vocal"], status: "active" },
+      { id: "tk-2", ministry_id: "mn-1", name: "Mídia", campus: "", leader_id: null, serving_roles: [], status: "active" },
+    ];
+    s.teamMembers = [{ id: "tmr-1", team_id: "tk-1", stick_id: pid, role: "Vocal", status: "active", availability: "", joined_at: "", notes: "" }];
+    s.ministryDetail = "mn-1";
+    setState(s); return teamsView.viewTeams();
+  }, ["Louvor", "Distribuição de serviço", 'data-teamdetail="tk-1"', "Banda", "Mídia", "sem líder", "servindo"]],
+  // team-detail-dist (Fase 2) — painel de distribuição por papel + status no time.
+  ["team-detail-dist", () => {
+    const s = clone(seedData); s.view = "teams";
+    const pid = s.people[0].id, pid2 = s.people[1].id;
+    s.teams = [{ id: "tk-1", ministry_id: null, name: "Banda", campus: s.activeCampus, leader_id: pid, serving_roles: ["Vocal", "Guitarra"], status: "active" }];
+    s.teamMembers = [
+      { id: "tmr-1", team_id: "tk-1", stick_id: pid, role: "Vocal", status: "active", availability: "", joined_at: "", notes: "" },
+      { id: "tmr-2", team_id: "tk-1", stick_id: pid2, role: "Vocal", status: "paused", availability: "", joined_at: "", notes: "" },
+    ];
+    s.teamDetail = "tk-1";
+    setState(s); return teamsView.viewTeams();
+  }, ["Distribuição de serviço", "Vocal", "Guitarra", "ninguém ainda", "servindo", "em pausa"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
