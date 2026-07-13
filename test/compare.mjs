@@ -130,6 +130,7 @@ const groupsView = await import("../src/views/groups.js");
 const studyView = await import("../src/views/study.js");
 const sermonsView = await import("../src/views/sermons.js");
 const homeView = await import("../src/views/home.js");
+const teamsView = await import("../src/views/teams.js");
 const FEATURE_VIEWS = [
   // dashboard graduou na Fase 6: ganhou Community Insights + movimento de Journey/Groups.
   ["dashboard", () => { const s = clone(seedData); s.view = "dashboard"; setState(s); return homeView.viewDashboard(); },
@@ -220,6 +221,28 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "sermons"; s.studyTab = "search"; s.studySearchQuery = "";
     setState(s); return sermonsView.viewSermons();
   }, ['id="study-search"', "Escreva para buscar"]],
+  // teams-empty (Step 7 · Fase 1) — módulo Serviço vazio honesto.
+  ["teams-empty", () => {
+    const s = clone(seedData); s.view = "teams"; s.ministries = []; s.teams = []; s.teamMembers = []; s.teamDetail = null;
+    setState(s); return teamsView.viewTeams();
+  }, ["Times", 'id="newTeam"', 'id="newMinistry"', "Nenhum time ainda"]],
+  // teams-list (Fase 1) — ministérios como seções + cards de time.
+  ["teams-list", () => {
+    const s = clone(seedData); s.view = "teams"; s.teamDetail = null;
+    s.ministries = [{ id: "mn-1", name: "Louvor", description: "", campus: "", leader_id: null, status: "active" }];
+    s.teams = [{ id: "tk-1", ministry_id: "mn-1", name: "Banda", description: "Música ao vivo", campus: "", leader_id: null, serving_roles: ["Vocal", "Guitarra"], status: "active" }];
+    s.teamMembers = [];
+    setState(s); return teamsView.viewTeams();
+  }, ["Times", "Louvor", 'data-teamdetail="tk-1"', "Banda", "0 servindo"]],
+  // team-detail (Fase 1) — quem serve + papéis + adicionar pessoa. Semeia membro real.
+  ["team-detail", () => {
+    const s = clone(seedData); s.view = "teams";
+    const pid = s.people[0].id;
+    s.teams = [{ id: "tk-1", ministry_id: null, name: "Banda", description: "", campus: s.activeCampus, leader_id: pid, serving_roles: ["Vocal", "Guitarra"], status: "active" }];
+    s.teamMembers = [{ id: "tmr-1", team_id: "tk-1", stick_id: pid, role: "Vocal", status: "active", availability: "quinzenal", joined_at: "2026-01-01", notes: "" }];
+    s.teamDetail = "tk-1";
+    setState(s); return teamsView.viewTeams();
+  }, ["Voltar aos times", "Quem serve", "Papéis de serviço", "Vocal", 'data-memremove="tmr-1"', "líder", 'id="editTeam"']],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
