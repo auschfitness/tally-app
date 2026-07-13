@@ -146,9 +146,17 @@ const FEATURE_VIEWS = [
   // study (Trilhas / Discipleship Tracks) é tela nova — não existe no monólito, só smoke.
   ["study", () => { const s = clone(seedData); s.view = "study"; setState(s); return studyView.viewStudy(); },
     ["Trilhas", 'id="newTrack"', "Nenhuma trilha ainda"]],
-  // sermons (Study — Sermon Library + editor) é tela nova — só smoke.
+  // sermons (Study — Sermon Library + editor + Séries) é tela nova — só smoke.
   ["sermons", () => { const s = clone(seedData); s.view = "sermons"; setState(s); return sermonsView.viewSermons(); },
-    ["Estudo", 'id="newSermon"', "Nenhum sermão ainda", 'data-sermonstatus="ready"']],
+    ["Estudo", 'id="newSermon"', "Nenhum sermão ainda", 'data-sermonstatus="ready"', "Séries", 'id="newSeries"', "Nenhuma série ainda"]],
+  // series-workspace (Study · Fase 2) — visão/tema, escrituras-chave derivadas das
+  // passagens reais, cronograma dos sermões da série. Semeia série + sermão vinculado.
+  ["series-workspace", () => {
+    const s = clone(seedData); s.view = "sermons";
+    s.series = [{ id: "se-1", title: "O Bom Pastor", theme: "Confiança", description: "Quem é o Pastor.", status: "active", start_date: "", end_date: "" }];
+    s.sermons = [{ id: "sm-1", title: "A voz que conhece", series_id: "se-1", status: "ready", sermon_date: "2026-03-01", main_passage: "John 10:1-18", campus: "", big_idea: "", content: {} }];
+    s.seriesDetail = "se-1"; setState(s); return sermonsView.viewSermons();
+  }, ["O Bom Pastor", "Cronograma", "Escrituras-chave", "John 10:1-18", "A voz que conhece", 'id="editSeries"']],
 ];
 console.log("\n=== Smoke de render (telas-feature) ===");
 let sok = 0, sfail = 0;
