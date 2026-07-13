@@ -46,10 +46,24 @@ export async function hydrateGroupMembers(st) {
   try {
     if (!SB || !ORG_ID) return;
     const maps = await groupMaps();
-    const res = await SB.from("group_members").select("group_id,stick_id,role,status,left_at");
+    const res = await SB.from("group_members").select("group_id,stick_id,role,status,left_at,joined_at");
     if (res.error) { console.warn("hydrateGroupMembers:", res.error.message); return; }
-    const rows = (res.data || []).filter(r => r.status !== "inactive" && !r.left_at);
+    const all = res.data || [];
+    const rows = all.filter(r => r.status !== "inactive" && !r.left_at);
     const prev = st.people || [];
+
+    // metadados por grupo p/ Group Health/Signals (Fase 4): contagem, novos membros
+    // (joined_at <=30d) e saídas recentes (left_at <=30d). Só dado real.
+    const t = today();
+    const daysAgo = (d) => d ? Math.floor((t - new Date(d)) / 86400000) : Infinity;
+    const meta = {};
+    all.forEach(r => {
+      const gname = maps.byId[r.group_id]; if (!gname) return;
+      const m = meta[gname] || (meta[gname] = { count: 0, newMembers: 0, leftRecently: 0 });
+      if (r.status !== "inactive" && !r.left_at) { m.count++; if (daysAgo(r.joined_at) <= 30) m.newMembers++; }
+      else if (r.left_at && daysAgo(r.left_at) <= 30) { m.leftRecently++; }
+    });
+    st.groupMembers = meta;
 
     if (rows.length === 0) {
       // backfill: cada Stick com p.group casando com um grupo real vira um member

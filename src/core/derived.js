@@ -18,7 +18,7 @@ export function relChip(p){if(careReasons(p).length>0)return '<span class="chip 
 export function groupOptions(sel){var o='<option value="">(nenhum)</option>';(state.groups||[]).forEach(function(g){o+='<option '+(sel===g.name?'selected':'')+'>'+esc(g.name)+'</option>';});return o;}
 export function groupsHealth(){
   var gs=(state.groups||[]).filter(function(g){return g.campus===state.activeCampus;});
-  return gs.map(function(g){var members=state.people.filter(function(p){return p.group===g.name&&p.campus===state.activeCampus;});var acc=members.filter(function(p){return careReasons(p).length===0;}).length;var rate=members.length?Math.round(acc/members.length*100):0;var band=members.length===0?"attention":(rate>=85?"healthy":(rate>=70?"attention":"risk"));return {name:g.name,leader:g.leader,count:members.length,acc:acc,rate:rate,band:band};}).sort(function(a,b){return a.rate-b.rate;});
+  return gs.map(function(g){var members=state.people.filter(function(p){return p.group===g.name&&p.campus===state.activeCampus;});var acc=members.filter(function(p){return careReasons(p).length===0;}).length;var rate=members.length?Math.round(acc/members.length*100):0;var band=members.length===0?"attention":(rate>=85?"healthy":(rate>=70?"attention":"risk"));var gm=(state.groupMembers&&state.groupMembers[g.name])||{};return {name:g.name,leader:g.leader,count:members.length,acc:acc,rate:rate,band:band,newMembers:gm.newMembers||0,leftRecently:gm.leftRecently||0,noLeader:!g.leader};}).sort(function(a,b){return a.rate-b.rate;});
 }
 
 export function riskDist(){var em=0,at=0,ri=0;state.people.filter(inCampus).forEach(function(p){var n=careReasons(p).length;if(n===0)em++;else if(n===1)at++;else ri++;});return {em:em,at:at,ri:ri};}
@@ -115,7 +115,14 @@ export function signals(){
     else if(p.followup){out.push({key:"fu-"+p.id,type:"care",level:"attention",stickId:p.id,stickName:p.name,title:p.name+" tem follow-up em aberto",why:["Follow-up pendente"],date:iso(today()),category:"Care"});}
     (p.milestones||[]).forEach(function(m){var dd=Math.round((today()-new Date(m.date))/(1000*60*60*24));if(dd>=0&&dd<=21)out.push({key:"ms-"+p.id+"-"+m.type,type:"milestone",level:"celebration",stickId:p.id,stickName:p.name,title:p.name+" · "+(MSTYPE[m.type]||m.type),why:[],date:m.date,category:"Celebration"});});
   });
-  (typeof groupsHealth==="function"?groupsHealth():[]).forEach(function(g){if(g.band==="risk")out.push({key:"gh-"+g.name,type:"group_health",level:"attention",groupName:g.name,title:"Grupo "+g.name+" com saúde baixa",why:[g.rate+"% dos membros em dia"],date:iso(today()),category:"Groups"});});
+  (typeof groupsHealth==="function"?groupsHealth():[]).forEach(function(g){
+    if(g.band==="risk")out.push({key:"gh-"+g.name,type:"group_health",level:"attention",groupName:g.name,title:"Grupo "+g.name+" com saúde baixa",why:[g.rate+"% dos membros em dia"],date:iso(today()),category:"Groups"});
+    // Group Signals (Fase 4) — só dado real. "Sem líder atribuído" (g.leader vazio;
+    // não afirmamos "atividade do líder"). Novos membros e saídas vêm de group_members.
+    if(g.noLeader)out.push({key:"gl-"+g.name,type:"group_leader",level:"notice",groupName:g.name,title:"Grupo "+g.name+" sem líder atribuído",why:["Nenhum líder definido"],date:iso(today()),category:"Groups"});
+    if(g.newMembers>0)out.push({key:"gn-"+g.name,type:"group_growth",level:"celebration",groupName:g.name,title:"Grupo "+g.name+" recebeu "+g.newMembers+" novo"+(g.newMembers>1?"s":"")+" membro"+(g.newMembers>1?"s":""),why:[],date:iso(today()),category:"Groups"});
+    if(g.leftRecently>0)out.push({key:"gx-"+g.name,type:"group_movement",level:"attention",groupName:g.name,title:"Grupo "+g.name+": "+g.leftRecently+" saída"+(g.leftRecently>1?"s":"")+" recente"+(g.leftRecently>1?"s":""),why:[],date:iso(today()),category:"Groups"});
+  });
   state.tasks.filter(function(t){return !t.done&&t.who;}).forEach(function(t){out.push({key:"task-"+t.id,type:"team",level:"notice",title:esc(t.who)+" foi designado: "+esc(t.text),why:[],date:iso(today()),category:"Teams",stickName:t.who});});
   return out;
 }

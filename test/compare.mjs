@@ -30,8 +30,8 @@ globalThis.getComputedStyle = window.getComputedStyle;
 // afirma que não lança e que contém os elementos-chave. As demais telas seguem
 // na paridade normal até serem tocadas. Trocamos "idêntica ao original" por
 // "renderiza certo e tem o que precisa ter" — o teste adequado pra uma tela que evolui.
-// Graduadas até agora: journey (Journey Map).
-const VIEWS = ["dashboard", "inbox", "people", "care", "groups", "coord", "prayer", "finance", "settings"];
+// Graduadas até agora: journey (Journey Map), inbox (Group Signals da Fase 4).
+const VIEWS = ["dashboard", "people", "care", "groups", "coord", "prayer", "finance", "settings"];
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 // --- MONÓLITO: extrai o script inline do original e roda numa função ---
@@ -125,9 +125,13 @@ try {
 // Cada entrada: [nome, () => html, [trechos-chave que PRECISAM aparecer]].
 // Renderiza com o seed, afirma que (a) não lança e (b) tem os elementos-chave.
 const journeyView = await import("../src/views/journey.js");
+const inboxView = await import("../src/views/inbox.js");
 const FEATURE_VIEWS = [
   ["journey", () => { const s = clone(seedData); s.view = "journey"; setState(s); return journeyView.viewJourney(); },
     ["Journey Map", 'data-jstage="first_visit"', 'data-jstage="leadership"', "Primeira visita", "Liderança", "jmap-row"]],
+  // inbox graduou na Fase 4: passou a emitir Group Signals (ex.: grupos sem líder no seed).
+  ["inbox", () => { const s = clone(seedData); s.view = "inbox"; setState(s); return inboxView.viewInbox(); },
+    ["Inbox", 'data-inboxcat="Groups"', "sem líder atribuído", "filtchips"]],
 ];
 console.log("\n=== Smoke de render (telas-feature) ===");
 let sok = 0, sfail = 0;
