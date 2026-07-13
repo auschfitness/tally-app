@@ -23,7 +23,10 @@ globalThis.HTMLElement = window.HTMLElement;
 globalThis.requestAnimationFrame = undefined;
 globalThis.getComputedStyle = window.getComputedStyle;
 
-const VIEWS = ["dashboard", "inbox", "people", "care", "journey", "groups", "coord", "prayer", "finance", "settings"];
+// `journey` saiu da paridade a partir do Step 4 · Fase 2: a tela virou o Journey
+// Map (feature nova), então diverge de propósito do monólito original. As demais
+// 9 telas seguem cobertas byte a byte.
+const VIEWS = ["dashboard", "inbox", "people", "care", "groups", "coord", "prayer", "finance", "settings"];
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 // --- MONÓLITO: extrai o script inline do original e roda numa função ---

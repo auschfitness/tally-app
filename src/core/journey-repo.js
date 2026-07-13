@@ -50,7 +50,7 @@ export async function hydrateJourney(st) {
     if (sres.error) { console.warn("hydrateJourney(stages):", sres.error.message); return; }
     st.journey = { id: journey.id, name: journey.name, stages: sres.data || [] };
 
-    const rres = await SB.from("stick_journey_records").select("id,stick_id,current_stage_id").eq("journey_id", journey.id);
+    const rres = await SB.from("stick_journey_records").select("stick_id,current_stage_id,entered_stage_at").eq("journey_id", journey.id);
     if (rres.error) { console.warn("hydrateJourney(records):", rres.error.message); return; }
     const recByStick = {};
     (rres.data || []).forEach(r => { recByStick[r.stick_id] = r; });
@@ -63,16 +63,28 @@ export async function hydrateJourney(st) {
       if (stageId) toInsert.push({ org_id: ORG_ID, stick_id: p.id, journey_id: journey.id, current_stage_id: stageId, completed_stages: [] });
     });
     if (toInsert.length) {
-      const ins = await SB.from("stick_journey_records").insert(toInsert).select("id,stick_id,current_stage_id");
+      const ins = await SB.from("stick_journey_records").insert(toInsert).select("stick_id,current_stage_id,entered_stage_at");
       if (ins.error) console.warn("hydrateJourney(backfill):", ins.error.message);
       else (ins.data || []).forEach(r => { recByStick[r.stick_id] = r; });
     }
 
-    // sincroniza p.journeyStage a partir do registro (fonte durável)
+    // sincroniza p.journeyStage a partir do registro (fonte durável) e expõe o
+    // entered_stage_at por Stick no state (o Journey Map calcula tempo-no-estágio).
+    const records = {};
     (st.people || []).forEach(p => {
       const rec = recByStick[p.id];
-      if (rec) { const code = codeForStageId(rec.current_stage_id); if (code) p.journeyStage = code; }
+      if (rec) {
+        const code = codeForStageId(rec.current_stage_id);
+        if (code) p.journeyStage = code;
+        records[p.id] = { stageId: rec.current_stage_id, enteredAt: rec.entered_stage_at || null };
+      }
     });
+    st.journey.records = records;
+
+    // histórico de movimento (mudanças de estágio) p/ a tendência — pode vir vazio.
+    const eres = await SB.from("timeline_events").select("stick_id,occurred_at").eq("event_type", "journey_stage_change");
+    if (eres.error) { console.warn("hydrateJourney(events):", eres.error.message); st.journey.events = []; }
+    else st.journey.events = (eres.data || []).map(e => ({ stickId: e.stick_id, occurredAt: e.occurred_at || "" }));
   } catch (e) {
     console.warn("hydrateJourney(exceção):", e && e.message);
   }
