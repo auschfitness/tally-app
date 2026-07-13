@@ -65,26 +65,27 @@ export async function hydrateGroupMembers(st) {
     });
     st.groupMembers = meta;
 
-    // --- MEMBROS: backfill se vazio; senão restaura p.group das linhas ativas ---
-    if (rows.length === 0) {
-      const toInsert = [];
-      prev.forEach(p => {
-        if (!isUuid(p.id) || !p.group) return;
-        const gid = maps.byName[p.group];
-        if (!gid) { console.warn("hydrateGroupMembers(backfill): grupo não encontrado:", p.group); return; }
-        toInsert.push({ group_id: gid, stick_id: p.id, role: "member" });
-      });
-      if (toInsert.length) {
-        const ins = await SB.from("group_members").insert(toInsert);
-        if (ins.error) console.warn("hydrateGroupMembers(backfill insert):", ins.error.message);
-      }
-      // p.group já está correto (veio do app_state e foi semeado)
-    } else {
-      // 1 grupo/Stick; só SETA quando há linha (nunca limpa o que não tem linha).
-      const byStick = {};
-      rows.forEach(r => { const gname = maps.byId[r.group_id]; if (gname && !byStick[r.stick_id]) byStick[r.stick_id] = gname; });
-      prev.forEach(p => { if (byStick[p.id]) p.group = byStick[p.id]; });
+    // --- MEMBROS: reconcilia TODO load (idempotente), não só quando a tabela está
+    // vazia. Garante uma member row p/ cada Stick com p.group casável que ainda não
+    // tem linha ativa. `ignoreDuplicates` evita rebaixar líder ou colidir com linha
+    // inativa (a UNIQUE group_id+stick_id barra). Corrige o backfill one-shot antigo,
+    // que pulava membros quando linhas de líder já existiam.
+    const activeKey = new Set(all.filter(r => r.status !== "inactive" && !r.left_at).map(r => r.group_id + "|" + r.stick_id));
+    const ensure = [];
+    prev.forEach(p => {
+      if (!isUuid(p.id) || !p.group) return;
+      const gid = maps.byName[p.group];
+      if (!gid) { console.warn("hydrateGroupMembers: grupo não encontrado:", p.group); return; }
+      if (!activeKey.has(gid + "|" + p.id)) ensure.push({ group_id: gid, stick_id: p.id, role: "member" });
+    });
+    if (ensure.length) {
+      const ins = await SB.from("group_members").upsert(ensure, { onConflict: "group_id,stick_id", ignoreDuplicates: true });
+      if (ins.error) console.warn("hydrateGroupMembers(ensure members):", ins.error.message);
     }
+    // restaura p.group das linhas ativas (1 grupo/Stick; só SETA quando há linha).
+    const byStick = {};
+    rows.forEach(r => { const gname = maps.byId[r.group_id]; if (gname && !byStick[r.stick_id]) byStick[r.stick_id] = gname; });
+    prev.forEach(p => { if (byStick[p.id]) p.group = byStick[p.id]; });
 
     // --- LÍDER: backfill de g.leader se ainda não há role='leader'; senão restaura g.leader ---
     const leaderRows = rows.filter(r => r.role === "leader");
