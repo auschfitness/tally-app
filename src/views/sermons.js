@@ -56,6 +56,9 @@ function collectSermon() {
   var existing = editingId ? (state.sermons || []).find(function (x) { return x.id === editingId; }) : null;
   var content = Object.assign({}, existing ? existing.content : {});
   SECTIONS.forEach(function (s) { content[s.key] = val(s.id); });
+  // Vínculo leve com Trilha (material de ensino): guardado no jsonb `content` — sem
+  // coluna/tabela nova. (Gancho futuro: content.journey_stage / service_id no Step 6.)
+  var trEl = gid("se-track"); if (trEl) content.track_id = trEl.value || null;
   return {
     title: val("se-title").trim(), subtitle: val("se-subtitle").trim(),
     main_passage: val("se-passage").trim(), big_idea: val("se-bigidea").trim(),
@@ -587,12 +590,15 @@ function sermonEditor(id) {
   // Propriedades (drawer): metadados fora do caminho de escrita.
   var campusSel = '<select id="se-campus">' + state.institution.campuses.map(function (cp) { return '<option' + (s.campus === cp ? " selected" : "") + '>' + esc(cp) + '</option>'; }).join("") + '</select>';
   var seriesSel = '<select id="se-series"><option value="">Sem série</option>' + (state.series || []).map(function (se) { return '<option value="' + se.id + '"' + (s.series_id === se.id ? " selected" : "") + '>' + esc(se.title || "(sem título)") + '</option>'; }).join("") + '</select>';
+  var curTrack = (s.content && s.content.track_id) || "";
+  var trackSel = '<select id="se-track"><option value="">Nenhuma</option>' + (state.tracks || []).map(function (tr) { return '<option value="' + tr.id + '"' + (curTrack === tr.id ? " selected" : "") + '>' + esc(tr.name || "(sem nome)") + '</option>'; }).join("") + '</select>';
   var drawer = '<div class="drawer-ov" id="sd-drawer-ov" style="display:none"></div>' +
     '<aside class="drawer sd-props" id="sd-drawer" style="display:none"><div class="ph"><h3>Propriedades</h3><button class="link" id="sd-props-close" style="margin-left:auto">Fechar</button></div>' +
     '<div class="field"><label>Subtítulo</label><input id="se-subtitle" value="' + esc(s.subtitle) + '" placeholder="Opcional"></div>' +
     '<div class="mrow"><div class="field"><label>Status</label><select id="se-status">' + opts(STATUS_LBL, s.status) + '</select></div><div class="field"><label>Quem vê</label><select id="se-vis">' + opts(VIS_LBL, s.visibility) + '</select></div></div>' +
     '<div class="mrow"><div class="field"><label>Campus</label>' + campusSel + '</div><div class="field"><label>Data</label><input id="se-date" type="date" value="' + esc(s.sermon_date) + '"></div></div>' +
     '<div class="field"><label>Série</label>' + seriesSel + '</div>' +
+    '<div class="field"><label>Trilha (material de ensino)</label>' + trackSel + '</div>' +
     '</aside>';
 
   // Notas e recursos vinculados a este sermão (conexão leve — Fase 4). Só quando já salvo.

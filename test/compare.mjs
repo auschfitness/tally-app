@@ -134,6 +134,14 @@ const FEATURE_VIEWS = [
   // dashboard graduou na Fase 6: ganhou Community Insights + movimento de Journey/Groups.
   ["dashboard", () => { const s = clone(seedData); s.view = "dashboard"; setState(s); return homeView.viewDashboard(); },
     ["Hoje no Tally", "Comunidade", "sem comunidade", "Pessoas sem comunidade"]],
+  // dashboard-study (Fase 6): painel de Estudo na Home aparece com dado real de ensino.
+  ["dashboard-study", () => {
+    const s = clone(seedData); s.view = "dashboard";
+    s.sermons = [{ id: "sm-1", title: "O Bom Pastor", main_passage: "João 10:1-18", status: "preached", sermon_date: "2026-03-01", content: {} }];
+    s.series = [{ id: "se-1", title: "Confiança", theme: "Deus cuida", status: "active" }];
+    s.notes = [{ id: "nt-1", title: "Pastoreio", scope: "shared", content: "", tags: [] }];
+    setState(s); return homeView.viewDashboard();
+  }, ["Estudo", 'data-studyopen="library"', "Último sermão", "O Bom Pastor", "Série atual", "Confiança", "Atividade recente de estudo", "Pastoreio"]],
   ["journey", () => { const s = clone(seedData); s.view = "journey"; setState(s); return journeyView.viewJourney(); },
     ["Journey Map", 'data-jstage="first_visit"', 'data-jstage="leadership"', "Primeira visita", "Liderança", "jmap-row"]],
   // inbox graduou na Fase 4: passou a emitir Group Signals (ex.: grupos sem líder no seed).
@@ -146,6 +154,15 @@ const FEATURE_VIEWS = [
   // study (Trilhas / Discipleship Tracks) é tela nova — não existe no monólito, só smoke.
   ["study", () => { const s = clone(seedData); s.view = "study"; setState(s); return studyView.viewStudy(); },
     ["Trilhas", 'id="newTrack"', "Nenhuma trilha ainda"]],
+  // track-teaching (Fase 6): detalhe da trilha lista sermões vinculados como material
+  // de ensino (content.track_id). Semeia trilha + sermão vinculado.
+  ["track-teaching", () => {
+    const s = clone(seedData); s.view = "study";
+    s.tracks = [{ id: "tr-1", name: "Fundamentos da Fé", description: "", steps: [] }];
+    s.trackEnrollments = [];
+    s.sermons = [{ id: "sm-1", title: "O Bom Pastor", main_passage: "João 10:1-18", content: { track_id: "tr-1" } }];
+    s.trackDetail = "tr-1"; setState(s); return studyView.viewStudy();
+  }, ["Fundamentos da Fé", "Material de ensino", 'data-sermonlink="sm-1"', "O Bom Pastor"]],
   // sermons (Study — Sermon Library + editor + Séries) é tela nova — só smoke.
   ["sermons", () => { const s = clone(seedData); s.view = "sermons"; setState(s); return sermonsView.viewSermons(); },
     ["Estudo", 'id="newSermon"', "Nenhum sermão ainda", 'data-sermonstatus="ready"', "Séries", 'id="newSeries"', "Nenhuma série ainda", 'id="openMap"']],
@@ -163,7 +180,7 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "sermons";
     s.sermons = [{ id: "sm-e", title: "O Bom Pastor", subtitle: "", main_passage: "John 10:1-18", big_idea: "Ele conhece as ovelhas", status: "preparing", visibility: "church", campus: "", sermon_date: "", series_id: null, content: { outline: "1. A porta", notes: "", illustrations: "", application: "", prayer_response: "" } }];
     s.sermonEdit = "sm-e"; setState(s); return sermonsView.viewSermons();
-  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", 'id="se-notes"', "sd-body-doc", 'id="sec-outline"', 'data-addsec="prayer_response"', "Resposta de oração", 'id="sd-props-open"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"', 'id="sd-memory"', 'id="sd-related"']],
+  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", 'id="se-notes"', "sd-body-doc", 'id="sec-outline"', 'data-addsec="prayer_response"', "Resposta de oração", 'id="sd-props-open"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"', 'id="sd-memory"', 'id="sd-related"', 'id="se-track"']],
   // study-notes (Study · Fase 4) — sub-nav do Estudo + lista de notas com escopo e
   // vínculos leves. Semeia uma nota compartilhada vinculada a um sermão.
   ["study-notes", () => {

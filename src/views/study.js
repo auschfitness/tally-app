@@ -39,9 +39,16 @@ function viewTrackDetail(id){
   var enrolledIds=enr.map(function(e){return e.stick_id;});
   var ppl=(state.people||[]).filter(inCampus).filter(function(p){return enrolledIds.indexOf(p.id)<0;});
   var enrollCtl=ppl.length?('<div class="mrow"><div class="field"><label>Matricular pessoa</label><select id="tr-enroll">'+ppl.map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>';}).join("")+'</select></div><div class="field" style="display:flex;align-items:flex-end"><button class="btn ghost" id="tr-enroll-btn" data-track="'+id+'">Matricular</button></div></div>'):'<div class="muted">Todos do campus já estão matriculados.</div>';
+  // Material de ensino (Step 5 · Fase 6): sermões vinculados a esta trilha via
+  // content.track_id (vínculo leve, sem tabela nova). Clicar abre o sermão no Study.
+  var teaching=(state.sermons||[]).filter(function(s){return s.content&&s.content.track_id===id;});
+  var teachList=teaching.map(function(s){
+    return '<button class="li" data-sermonlink="'+s.id+'" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer"><div style="flex:1"><b>'+esc(s.title||"(sem título)")+'</b>'+(s.main_passage?' <span class="muted">· '+esc(s.main_passage)+'</span>':'')+'</div></button>';
+  }).join("")||'<div class="empty">Nenhum sermão vinculado como material desta trilha. Vincule pelo editor de sermão (Propriedades → Trilha).</div>';
   return '<button class="link" id="studyBack">&#8592; Voltar às trilhas</button><div style="margin:10px 0 18px"><h1 class="page">'+esc(t.name)+'</h1><p class="sub" style="margin:0">'+(t.description?esc(t.description):'Trilha de discipulado')+'</p></div>'
     +'<div class="row2"><div class="panel"><div class="ph"><h3>Etapas</h3></div>'+stepList+'<div class="mrow" style="margin-top:12px"><div class="field"><label>Nova etapa</label><input id="tr-step-name" placeholder="Ex.: Batismo"></div><div class="field" style="display:flex;align-items:flex-end"><button class="btn ghost" id="tr-step-btn" data-track="'+id+'">Adicionar etapa</button></div></div></div>'
-    +'<div class="panel"><div class="ph"><h3>Matriculados</h3></div>'+enrList+'<div style="margin-top:12px">'+enrollCtl+'</div></div></div>';
+    +'<div class="panel"><div class="ph"><h3>Matriculados</h3></div>'+enrList+'<div style="margin-top:12px">'+enrollCtl+'</div></div></div>'
+    +'<div class="panel" style="margin-top:16px"><div class="ph"><h3>Material de ensino</h3><span class="muted" style="margin-left:auto">'+teaching.length+' sermã'+(teaching.length===1?'o':'os')+'</span></div>'+teachList+'</div>';
 }
 
 function newTrackModal(){
@@ -51,7 +58,8 @@ function newTrackModal(){
 }
 
 document.addEventListener("click",function(e){
-  var t=e.target.closest?e.target.closest("[data-trackdetail],#studyBack,#newTrack,[data-advance],#tr-step-btn,#tr-enroll-btn"):null;if(!t)return;
+  var t=e.target.closest?e.target.closest("[data-trackdetail],#studyBack,#newTrack,[data-advance],#tr-step-btn,#tr-enroll-btn,[data-sermonlink]"):null;if(!t)return;
+  if(t.getAttribute("data-sermonlink")){state.view="sermons";state.studyTab="library";state.seriesDetail=null;state.scriptureMap=false;state.sermonEdit=t.getAttribute("data-sermonlink");save();render();return;}
   if(t.getAttribute("data-trackdetail")){state.trackDetail=t.getAttribute("data-trackdetail");save();render();return;}
   if(t.id==="studyBack"){state.trackDetail=null;save();render();return;}
   if(t.id==="newTrack"){newTrackModal();return;}
