@@ -122,6 +122,11 @@ export function signals(){
     if(g.noLeader)out.push({key:"gl-"+g.name,type:"group_leader",level:"notice",groupName:g.name,title:"Grupo "+g.name+" sem líder atribuído",why:["Nenhum líder definido"],date:iso(today()),category:"Groups"});
     if(g.newMembers>0)out.push({key:"gn-"+g.name,type:"group_growth",level:"celebration",groupName:g.name,title:"Grupo "+g.name+" recebeu "+g.newMembers+" novo"+(g.newMembers>1?"s":"")+" membro"+(g.newMembers>1?"s":""),why:[],date:iso(today()),category:"Groups"});
     if(g.leftRecently>0)out.push({key:"gx-"+g.name,type:"group_movement",level:"attention",groupName:g.name,title:"Grupo "+g.name+": "+g.leftRecently+" saída"+(g.leftRecently>1?"s":"")+" recente"+(g.leftRecently>1?"s":""),why:[],date:iso(today()),category:"Groups"});
+    // Sinal de presença de grupo (destravado nesta fase): só p/ grupo que JÁ registrou
+    // presença mas parou (>21 dias). Grupo que nunca registrou NÃO é sinalizado (evita
+    // flood e número inventado). "Presença caiu" (tendência) fica p/ quando houver histórico.
+    var gss=(state.sessions||[]).filter(function(s){return s.group===g.name;});
+    if(gss.length>0){var last=gss.map(function(s){return s.date||"";}).sort().pop();var dd=Math.round((today()-new Date(last))/(1000*60*60*24));if(dd>21)out.push({key:"ga-"+g.name,type:"group_attendance",level:"attention",groupName:g.name,title:"Grupo "+g.name+" sem registro de presença",why:["Última presença há "+dd+" dias"],date:iso(today()),category:"Groups"});}
   });
   state.tasks.filter(function(t){return !t.done&&t.who;}).forEach(function(t){out.push({key:"task-"+t.id,type:"team",level:"notice",title:esc(t.who)+" foi designado: "+esc(t.text),why:[],date:iso(today()),category:"Teams",stickName:t.who});});
   return out;

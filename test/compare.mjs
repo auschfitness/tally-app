@@ -126,12 +126,17 @@ try {
 // Renderiza com o seed, afirma que (a) não lança e (b) tem os elementos-chave.
 const journeyView = await import("../src/views/journey.js");
 const inboxView = await import("../src/views/inbox.js");
+const groupsView = await import("../src/views/groups.js");
 const FEATURE_VIEWS = [
   ["journey", () => { const s = clone(seedData); s.view = "journey"; setState(s); return journeyView.viewJourney(); },
     ["Journey Map", 'data-jstage="first_visit"', 'data-jstage="leadership"', "Primeira visita", "Liderança", "jmap-row"]],
   // inbox graduou na Fase 4: passou a emitir Group Signals (ex.: grupos sem líder no seed).
   ["inbox", () => { const s = clone(seedData); s.view = "inbox"; setState(s); return inboxView.viewInbox(); },
     ["Inbox", 'data-inboxcat="Groups"', "sem líder atribuído", "filtchips"]],
+  // detalhe de grupo ganhou presença de grupo + gestão de líder (fase Groups completo).
+  // A LISTA de grupos segue na paridade (VIEWS); o detalhe não era coberto — smoke aqui.
+  ["group-detail", () => { setState(clone(seedData)); return groupsView.viewGroupDetail("Célula Norte"); },
+    ["Registrar presença", "Presença recente", 'id="gd-leader"', "Líder"]],
 ];
 console.log("\n=== Smoke de render (telas-feature) ===");
 let sok = 0, sfail = 0;

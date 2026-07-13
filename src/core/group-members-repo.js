@@ -65,8 +65,8 @@ export async function hydrateGroupMembers(st) {
     });
     st.groupMembers = meta;
 
+    // --- MEMBROS: backfill se vazio; senão restaura p.group das linhas ativas ---
     if (rows.length === 0) {
-      // backfill: cada Stick com p.group casando com um grupo real vira um member
       const toInsert = [];
       prev.forEach(p => {
         if (!isUuid(p.id) || !p.group) return;
@@ -78,15 +78,34 @@ export async function hydrateGroupMembers(st) {
         const ins = await SB.from("group_members").insert(toInsert);
         if (ins.error) console.warn("hydrateGroupMembers(backfill insert):", ins.error.message);
       }
-      return; // p.group já está correto (veio do app_state e foi semeado)
+      // p.group já está correto (veio do app_state e foi semeado)
+    } else {
+      // 1 grupo/Stick; só SETA quando há linha (nunca limpa o que não tem linha).
+      const byStick = {};
+      rows.forEach(r => { const gname = maps.byId[r.group_id]; if (gname && !byStick[r.stick_id]) byStick[r.stick_id] = gname; });
+      prev.forEach(p => { if (byStick[p.id]) p.group = byStick[p.id]; });
     }
 
-    // restaura p.group a partir dos membros ativos (1 grupo/Stick; se houver mais de
-    // um, o primeiro por ordem de chegada). Só SETA quando há linha; nunca limpa o
-    // que não tem linha (setStickGroup mantém o app_state em dia nas remoções).
-    const byStick = {};
-    rows.forEach(r => { const gname = maps.byId[r.group_id]; if (gname && !byStick[r.stick_id]) byStick[r.stick_id] = gname; });
-    prev.forEach(p => { if (byStick[p.id]) p.group = byStick[p.id]; });
+    // --- LÍDER: backfill de g.leader se ainda não há role='leader'; senão restaura g.leader ---
+    const leaderRows = rows.filter(r => r.role === "leader");
+    if (leaderRows.length === 0) {
+      for (const g of (st.groups || [])) {
+        if (!g.leader) continue;
+        const gid = maps.byName[g.name]; if (!gid) continue;
+        const ls = prev.find(x => x.name === g.leader && isUuid(x.id));
+        if (!ls) { console.warn("hydrateGroupMembers(leader backfill): stick não encontrada:", g.leader); continue; }
+        const up = await SB.from("group_members").upsert(
+          { group_id: gid, stick_id: ls.id, role: "leader", status: "active", left_at: null },
+          { onConflict: "group_id,stick_id" }
+        );
+        if (up.error) console.warn("hydrateGroupMembers(leader backfill):", up.error.message);
+      }
+      // g.leader já está correto no app_state
+    } else {
+      const leaderByGroup = {};
+      leaderRows.forEach(r => { const gname = maps.byId[r.group_id]; if (gname && !leaderByGroup[gname]) leaderByGroup[gname] = r.stick_id; });
+      (st.groups || []).forEach(g => { const sid = leaderByGroup[g.name]; if (sid) { const p = prev.find(x => x.id === sid); if (p) g.leader = p.name; } });
+    }
   } catch (e) {
     console.warn("hydrateGroupMembers(exceção):", e && e.message);
   }
@@ -125,4 +144,38 @@ export async function setStickGroup(stickId, groupName) {
 
   const p = (state.people || []).find(x => x.id === stickId);
   if (p) { p.group = groupName || ""; save(); }
+}
+
+// Define/troca o líder de um grupo: rebaixa o líder anterior a 'member' e põe o novo
+// como role='leader' (upsert). Gera timeline. Mantém `g.leader` (nome) sincronizado.
+// `leaderName` vazio = grupo sem líder. Sem login, é no-op.
+export async function setGroupLeader(groupName, leaderName) {
+  if (!SB || !ORG_ID) return;
+  const maps = await groupMaps();
+  const gid = maps.byName[groupName]; if (!gid) { console.warn("setGroupLeader: grupo não encontrado:", groupName); return; }
+
+  // rebaixa os líderes atuais deste grupo
+  const cur = await SB.from("group_members").select("id,role").eq("group_id", gid);
+  if (cur.error) { console.warn("setGroupLeader(read):", cur.error.message); return; }
+  for (const r of (cur.data || [])) {
+    if (r.role !== "leader") continue;
+    const upd = await SB.from("group_members").update({ role: "member" }).eq("id", r.id);
+    if (upd.error) console.warn("setGroupLeader(demote):", upd.error.message);
+  }
+
+  // promove o novo líder (se houver), reusando a linha de membro pela UNIQUE
+  if (leaderName) {
+    const ls = (state.people || []).find(x => x.name === leaderName && isUuid(x.id));
+    if (ls) {
+      const up = await SB.from("group_members").upsert(
+        { group_id: gid, stick_id: ls.id, role: "leader", status: "active", left_at: null, joined_at: iso(today()) },
+        { onConflict: "group_id,stick_id" }
+      );
+      if (up.error) console.warn("setGroupLeader(promote):", up.error.message);
+      else await addTimeline(ls.id, "group_leader_set", "Tornou-se líder", "Líder de " + groupName);
+    } else { console.warn("setGroupLeader: stick não encontrada:", leaderName); }
+  }
+
+  const g = (state.groups || []).find(x => x.name === groupName);
+  if (g) { g.leader = leaderName || ""; save(); }
 }
