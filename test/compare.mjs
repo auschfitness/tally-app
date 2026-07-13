@@ -164,6 +164,30 @@ const FEATURE_VIEWS = [
     s.sermons = [{ id: "sm-e", title: "O Bom Pastor", subtitle: "", main_passage: "John 10:1-18", big_idea: "Ele conhece as ovelhas", status: "preparing", visibility: "church", campus: "", sermon_date: "", series_id: null, content: { outline: "1. A porta", notes: "", illustrations: "", application: "", prayer_response: "" } }];
     s.sermonEdit = "sm-e"; setState(s); return sermonsView.viewSermons();
   }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", 'id="se-notes"', "sd-body-doc", 'id="sec-outline"', 'data-addsec="prayer_response"', "Resposta de oração", 'id="sd-props-open"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"']],
+  // study-notes (Study · Fase 4) — sub-nav do Estudo + lista de notas com escopo e
+  // vínculos leves. Semeia uma nota compartilhada vinculada a um sermão.
+  ["study-notes", () => {
+    const s = clone(seedData); s.view = "sermons"; s.studyTab = "notes";
+    s.sermons = [{ id: "sm-1", title: "O Bom Pastor", content: {} }];
+    s.notes = [{ id: "nt-1", title: "Pastoreio", content: "Reflexão sobre cuidado.", scope: "shared", sermon_id: "sm-1", series_id: null, scripture_ref: "João 10:1-18", topic: "Cuidado", tags: ["graça"] }];
+    setState(s); return sermonsView.viewSermons();
+  }, ["Estudo", 'data-studytab="notes"', 'id="newNote"', "Pastoreio", "Compartilhada", "João 10:1-18"]],
+  // study-notes vazio — vazio honesto.
+  ["study-notes-empty", () => {
+    const s = clone(seedData); s.view = "sermons"; s.studyTab = "notes"; s.notes = [];
+    setState(s); return sermonsView.viewSermons();
+  }, ['id="newNote"', "Nenhuma nota ainda"]],
+  // study-resources (Study · Fase 4) — acervo com filtro por tipo/tópico. Semeia recurso.
+  ["study-resources", () => {
+    const s = clone(seedData); s.view = "sermons"; s.studyTab = "resources";
+    s.resources = [{ id: "rs-1", title: "O Conhecimento do Santo", author: "A. W. Tozer", type: "book", url: "", description: "Sobre os atributos de Deus.", topic: "Teologia", tags: ["Deus"], sermon_id: null }];
+    setState(s); return sermonsView.viewSermons();
+  }, ["Estudo", 'data-studytab="resources"', 'id="newResource"', 'data-restype="book"', "O Conhecimento do Santo", "A. W. Tozer"]],
+  // study-resources vazio — vazio honesto.
+  ["study-resources-empty", () => {
+    const s = clone(seedData); s.view = "sermons"; s.studyTab = "resources"; s.resources = [];
+    setState(s); return sermonsView.viewSermons();
+  }, ['id="newResource"', "Nenhum recurso ainda"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {

@@ -9,6 +9,8 @@ import { save } from "../core/persist.js";
 import { esc } from "../core/helpers.js";
 import { createSermon, updateSermon } from "../core/sermons-repo.js";
 import { createSeries, updateSeries, setSermonSeries } from "../core/series-repo.js";
+import { createNote, updateNote, deleteNote } from "../core/notes-repo.js";
+import { createResource, updateResource, deleteResource } from "../core/resources-repo.js";
 import { syncSermonScriptures } from "../core/scriptures-repo.js";
 import { parseRefs } from "../core/scripture-parse.js";
 import { fetchPassage, listTranslations } from "../core/bible-source.js";
@@ -21,6 +23,8 @@ var VIS_LBL = { private: "Privado", leadership: "Liderança", church: "Igreja", 
 var STATUS_BAND = { draft: "attention", preparing: "attention", ready: "healthy", preached: "healthy", archived: "risk" };
 var SERIES_LBL = { planning: "Planejando", active: "Ativa", completed: "Concluída", archived: "Arquivada" };
 var SERIES_BAND = { planning: "attention", active: "healthy", completed: "healthy", archived: "risk" };
+var NOTE_SCOPE_LBL = { personal: "Pessoal", shared: "Compartilhada" };
+var RES_TYPE_LBL = { book: "Livro", article: "Artigo", pdf: "PDF", link: "Link", video: "Vídeo", quote: "Citação", doc: "Documento", other: "Outro" };
 
 var SECTIONS = [
   { key: "outline", id: "se-outline", label: "Esboço", ph: "Introdução, pontos, sub-pontos…" },
@@ -40,6 +44,9 @@ function gid(id) { return document.getElementById(id); }
 function blankSermon() { return { id: null, title: "", subtitle: "", main_passage: "", big_idea: "", status: "draft", visibility: "church", campus: state.activeCampus, sermon_date: "", series_id: null, content: {} }; }
 function brDate(d) { return d ? d.split("-").reverse().join("/") : ""; }
 function seriesById(id) { return (state.series || []).find(function (x) { return x.id === id; }) || null; }
+function sermonById(id) { return (state.sermons || []).find(function (x) { return x.id === id; }) || null; }
+function noteById(id) { return (state.notes || []).find(function (x) { return x.id === id; }) || null; }
+function parseTags(s) { return (s || "").split(",").map(function (t) { return t.trim(); }).filter(Boolean); }
 
 // ——— Editor canvas: autosave discreto (sem re-render, preserva o cursor) ———
 var editingId = null, saveTimer = null, creating = false;
@@ -292,10 +299,32 @@ function cmpAddToSermon(id) {
   closeModal();
 }
 
+// Sub-nav do Estudo: Biblioteca (sermões+séries) · Notas · Recursos. As telas
+// profundas (editor, workspace de série, mapa) não mostram o chrome — têm seu
+// próprio voltar. Cada aba traz seu botão de ação à direita do título.
+function studyChrome(tab) {
+  var actions = tab === "notes"
+    ? '<button class="btn" id="newNote" style="margin-left:auto">+ Nova nota</button>'
+    : tab === "resources"
+      ? '<button class="btn" id="newResource" style="margin-left:auto">+ Novo recurso</button>'
+      : '<button class="btn ghost" id="openMap" style="margin-left:auto">Mapa de Escrituras</button><button class="btn" id="newSermon">+ Novo sermão</button>';
+  var tabs = [["library", "Biblioteca"], ["notes", "Notas"], ["resources", "Recursos"]]
+    .map(function (t) { return '<button class="fchip' + (tab === t[0] ? " on" : "") + '" data-studytab="' + t[0] + '">' + t[1] + '</button>'; }).join("");
+  return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px"><div><h1 class="page">Estudo</h1><p class="sub" style="margin:0">Onde a igreja prepara e preserva o ensino. A Bíblia é a fundação; o Tally organiza.</p></div>' + actions + '</div>' +
+    '<div class="filtchips" style="margin-bottom:16px">' + tabs + '</div>';
+}
+
 export function viewSermons() {
   if (state.seriesDetail) return seriesWorkspace(state.seriesDetail);
   if (state.sermonEdit) return sermonEditor(state.sermonEdit);
   if (state.scriptureMap) return scriptureMapView();
+  var tab = state.studyTab || "library";
+  if (tab === "notes") return studyChrome("notes") + notesBody();
+  if (tab === "resources") return studyChrome("resources") + resourcesBody();
+  return studyChrome("library") + libraryBody();
+}
+
+function libraryBody() {
   var all = state.sermons || [];
   var series = state.series || [];
   var f = state.sermonFilter || {};
@@ -339,10 +368,114 @@ export function viewSermons() {
     cardsHtml = groups.map(function (g) { return '<div class="ph" style="margin:4px 0 6px"><h3 class="muted" style="margin:0;font-size:13px;font-weight:600">' + esc(g.label) + '</h3></div><div class="gcards" style="margin-bottom:16px">' + g.items.map(card).join("") + '</div>'; }).join("");
   }
 
-  return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px"><div><h1 class="page">Estudo</h1><p class="sub" style="margin:0">Onde a igreja prepara e preserva o ensino. A Bíblia é a fundação; o Tally organiza.</p></div><button class="btn ghost" id="openMap" style="margin-left:auto">Mapa de Escrituras</button><button class="btn" id="newSermon">+ Novo sermão</button></div>' +
-    seriesBlock +
+  return seriesBlock +
     '<div class="ph" style="margin-bottom:14px">' + statusChips + campusSel + seriesFilt + '</div>' +
     cardsHtml;
+}
+
+// ——— Notas (Fase 4): lista + editor em modal. Vínculos leves (sermão/série/
+// escritura/tópico) — a nota não é ilha. Escopo pessoal/compartilhada. Vazio honesto.
+function noteLinks(n) {
+  var bits = [];
+  var sm = n.sermon_id ? sermonById(n.sermon_id) : null; if (sm) bits.push("Sermão: " + esc(sm.title || "(sem título)"));
+  var se = n.series_id ? seriesById(n.series_id) : null; if (se) bits.push("Série: " + esc(se.title || "(sem título)"));
+  if (n.scripture_ref) bits.push(esc(n.scripture_ref));
+  if (n.topic) bits.push(esc(n.topic));
+  return bits.length ? '<div class="meta" style="margin-top:6px">' + bits.join(" · ") + '</div>' : "";
+}
+function tagsHtml(tags) {
+  return (tags && tags.length) ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + tags.map(function (t) { return '<span class="chip" style="background:var(--surface-2)">' + esc(t) + '</span>'; }).join("") + '</div>' : "";
+}
+function notesBody() {
+  var notes = state.notes || [];
+  if (!notes.length) return '<div class="empty">Nenhuma nota ainda. Guarde uma ideia, um estudo ou uma observação em “+ Nova nota”.</div>';
+  var cards = notes.map(function (n) {
+    var preview = (n.content || "").trim();
+    if (preview.length > 220) preview = preview.slice(0, 220) + "…";
+    return '<button class="gcard" data-noteedit="' + n.id + '" style="text-align:left"><div class="gc-top"><span class="gc-name">' + esc(n.title || "(sem título)") + '</span><span class="hb ' + (n.scope === "shared" ? "healthy" : "attention") + '">' + (NOTE_SCOPE_LBL[n.scope] || "Pessoal") + '</span></div>' +
+      (preview ? '<div class="gc-foot" style="white-space:pre-wrap">' + esc(preview) + '</div>' : '') + noteLinks(n) + tagsHtml(n.tags) + '</button>';
+  }).join("");
+  return '<div class="gcards">' + cards + '</div>';
+}
+
+// ——— Recursos (Fase 4): acervo de apoio ao ensino. Filtro por tipo/tópico.
+function resourcesBody() {
+  var all = state.resources || [];
+  var f = state.resourceFilter || {};
+  var list = all.filter(function (r) {
+    return (!f.type || r.type === f.type) && (!f.topic || (r.topic || "") === f.topic);
+  });
+  var topics = []; all.forEach(function (r) { if (r.topic && topics.indexOf(r.topic) < 0) topics.push(r.topic); });
+  var typeChips = '<div class="filtchips"><button class="fchip' + (!f.type ? " on" : "") + '" data-restype="__all__">Todos</button>' +
+    Object.keys(RES_TYPE_LBL).map(function (ty) { return '<button class="fchip' + (f.type === ty ? " on" : "") + '" data-restype="' + ty + '">' + RES_TYPE_LBL[ty] + '</button>'; }).join("") + '</div>';
+  var topicSel = topics.length ? '<select id="res-ftopic" style="margin-left:auto"><option value="">Todos os tópicos</option>' +
+    topics.map(function (tp) { return '<option value="' + esc(tp) + '"' + (f.topic === tp ? " selected" : "") + '>' + esc(tp) + '</option>'; }).join("") + '</select>' : '';
+  var filters = '<div class="ph" style="margin-bottom:14px">' + typeChips + topicSel + '</div>';
+
+  if (!all.length) return filters + '<div class="empty">Nenhum recurso ainda. Adicione livros, artigos, links ou citações em “+ Novo recurso”.</div>';
+  if (!list.length) return filters + '<div class="empty">Nenhum recurso com esse filtro.</div>';
+
+  var cards = list.map(function (r) {
+    var sm = r.sermon_id ? sermonById(r.sermon_id) : null;
+    var meta = [];
+    if (r.author) meta.push(esc(r.author));
+    if (r.topic) meta.push(esc(r.topic));
+    if (sm) meta.push("Sermão: " + esc(sm.title || "(sem título)"));
+    var link = r.url ? '<div style="margin-top:6px"><a href="' + esc(r.url) + '" target="_blank" rel="noopener" class="link" data-noedit="1">Abrir link</a></div>' : '';
+    return '<button class="gcard" data-resedit="' + r.id + '" style="text-align:left"><div class="gc-top"><span class="gc-name">' + esc(r.title || "(sem título)") + '</span><span class="hb attention">' + (RES_TYPE_LBL[r.type] || "Outro") + '</span></div>' +
+      (meta.length ? '<div class="gc-sub">' + meta.join(" · ") + '</div>' : '') +
+      (r.description ? '<div class="gc-foot">' + esc(r.description) + '</div>' : '') + link + tagsHtml(r.tags) + '</button>';
+  }).join("");
+  return filters + '<div class="gcards">' + cards + '</div>';
+}
+
+// Editor de nota (modal). Vínculos opcionais e escopo. Excluir quando já existe.
+function noteModal(n) {
+  var isNew = !n; n = n || { scope: "personal", tags: [] };
+  var sermonOpts = '<option value="">Nenhum</option>' + (state.sermons || []).map(function (s) { return '<option value="' + s.id + '"' + (n.sermon_id === s.id ? " selected" : "") + '>' + esc(s.title || "(sem título)") + '</option>'; }).join("");
+  var seriesOpts = '<option value="">Nenhuma</option>' + (state.series || []).map(function (s) { return '<option value="' + s.id + '"' + (n.series_id === s.id ? " selected" : "") + '>' + esc(s.title || "(sem título)") + '</option>'; }).join("");
+  openModal('<h3>' + (isNew ? 'Nova nota' : 'Editar nota') + '</h3>' +
+    '<div class="field"><label>Título</label><input id="nt-title" value="' + esc(n.title || "") + '" placeholder="Ex.: Reflexão sobre João 10"></div>' +
+    '<div class="field"><label>Conteúdo</label><textarea id="nt-content" rows="6" placeholder="Escreva livremente…">' + esc(n.content || "") + '</textarea></div>' +
+    '<div class="mrow"><div class="field"><label>Escopo</label><select id="nt-scope">' + opts(NOTE_SCOPE_LBL, n.scope || "personal") + '</select></div><div class="field"><label>Tópico</label><input id="nt-topic" value="' + esc(n.topic || "") + '" placeholder="Opcional"></div></div>' +
+    '<div class="mrow"><div class="field"><label>Sermão</label><select id="nt-sermon">' + sermonOpts + '</select></div><div class="field"><label>Série</label><select id="nt-series">' + seriesOpts + '</select></div></div>' +
+    '<div class="mrow"><div class="field"><label>Escritura</label><input id="nt-scripture" value="' + esc(n.scripture_ref || "") + '" placeholder="Ex.: João 10:1-18"></div><div class="field"><label>Tags (vírgula)</label><input id="nt-tags" value="' + esc((n.tags || []).join(", ")) + '" placeholder="graça, pastoreio"></div></div>' +
+    '<div class="actions">' + (isNew ? '' : '<button class="btn ghost" id="nt-del" data-id="' + n.id + '" style="margin-right:auto;color:var(--danger,#c0392b)">Excluir</button>') + '<button class="btn ghost" id="nt-cancel">Cancelar</button><button class="btn" id="nt-save" data-id="' + (n.id || "") + '">' + (isNew ? 'Criar nota' : 'Salvar') + '</button></div>');
+  document.getElementById("nt-cancel").onclick = closeModal;
+  var del = document.getElementById("nt-del");
+  if (del) del.onclick = function () { if (!window.confirm("Excluir esta nota?")) return; deleteNote(this.getAttribute("data-id")).then(function () { closeModal(); render(); }); };
+  document.getElementById("nt-save").onclick = function () {
+    var title = val("nt-title").trim();
+    if (!title && !val("nt-content").trim()) { var el = document.getElementById("nt-title"); if (el) el.focus(); return; }
+    var data = { title: title, content: val("nt-content").trim(), scope: val("nt-scope"), topic: val("nt-topic").trim(), sermon_id: val("nt-sermon") || null, series_id: val("nt-series") || null, scripture_ref: val("nt-scripture").trim(), tags: parseTags(val("nt-tags")) };
+    var id = this.getAttribute("data-id");
+    if (id) { updateNote(id, data).then(function () { closeModal(); render(); }); }
+    else { createNote(data).then(function () { closeModal(); render(); }); }
+  };
+}
+
+// Editor de recurso (modal). Tipo, autor, url, descrição, tópico, tags, sermão.
+function resourceModal(r) {
+  var isNew = !r; r = r || { type: "book", tags: [] };
+  var sermonOpts = '<option value="">Nenhum</option>' + (state.sermons || []).map(function (s) { return '<option value="' + s.id + '"' + (r.sermon_id === s.id ? " selected" : "") + '>' + esc(s.title || "(sem título)") + '</option>'; }).join("");
+  openModal('<h3>' + (isNew ? 'Novo recurso' : 'Editar recurso') + '</h3>' +
+    '<div class="field"><label>Título</label><input id="rs-title" value="' + esc(r.title || "") + '" placeholder="Ex.: O Conhecimento do Santo"></div>' +
+    '<div class="mrow"><div class="field"><label>Autor</label><input id="rs-author" value="' + esc(r.author || "") + '" placeholder="Opcional"></div><div class="field"><label>Tipo</label><select id="rs-type">' + opts(RES_TYPE_LBL, r.type || "book") + '</select></div></div>' +
+    '<div class="field"><label>URL</label><input id="rs-url" value="' + esc(r.url || "") + '" placeholder="https://… (opcional)"></div>' +
+    '<div class="field"><label>Descrição</label><textarea id="rs-desc" rows="3" placeholder="Por que importa / do que trata">' + esc(r.description || "") + '</textarea></div>' +
+    '<div class="mrow"><div class="field"><label>Tópico</label><input id="rs-topic" value="' + esc(r.topic || "") + '" placeholder="Opcional"></div><div class="field"><label>Tags (vírgula)</label><input id="rs-tags" value="' + esc((r.tags || []).join(", ")) + '" placeholder="graça, teologia"></div></div>' +
+    '<div class="field"><label>Sermão relacionado</label><select id="rs-sermon">' + sermonOpts + '</select></div>' +
+    '<div class="actions">' + (isNew ? '' : '<button class="btn ghost" id="rs-del" data-id="' + r.id + '" style="margin-right:auto;color:var(--danger,#c0392b)">Excluir</button>') + '<button class="btn ghost" id="rs-cancel">Cancelar</button><button class="btn" id="rs-save" data-id="' + (r.id || "") + '">' + (isNew ? 'Adicionar' : 'Salvar') + '</button></div>');
+  document.getElementById("rs-cancel").onclick = closeModal;
+  var del = document.getElementById("rs-del");
+  if (del) del.onclick = function () { if (!window.confirm("Excluir este recurso?")) return; deleteResource(this.getAttribute("data-id")).then(function () { closeModal(); render(); }); };
+  document.getElementById("rs-save").onclick = function () {
+    var title = val("rs-title").trim(); if (!title) { var el = document.getElementById("rs-title"); if (el) el.focus(); return; }
+    var data = { title: title, author: val("rs-author").trim(), type: val("rs-type"), url: val("rs-url").trim(), description: val("rs-desc").trim(), topic: val("rs-topic").trim(), tags: parseTags(val("rs-tags")), sermon_id: val("rs-sermon") || null };
+    var id = this.getAttribute("data-id");
+    if (id) { updateResource(id, data).then(function () { closeModal(); render(); }); }
+    else { createResource(data).then(function () { closeModal(); render(); }); }
+  };
 }
 
 function opts(map, sel) { return Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (sel === k ? " selected" : "") + '>' + map[k] + '</option>'; }).join(""); }
@@ -385,6 +518,16 @@ function sermonEditor(id) {
     '<div class="field"><label>Série</label>' + seriesSel + '</div>' +
     '</aside>';
 
+  // Notas e recursos vinculados a este sermão (conexão leve — Fase 4). Só quando já salvo.
+  var linkedNotes = isNew ? [] : (state.notes || []).filter(function (n) { return n.sermon_id === s.id; });
+  var linkedRes = isNew ? [] : (state.resources || []).filter(function (r) { return r.sermon_id === s.id; });
+  var linkedHtml = "";
+  if (linkedNotes.length || linkedRes.length) {
+    linkedHtml = '<div class="sd-h" style="margin-top:20px">Vinculados a este sermão</div>' +
+      linkedNotes.map(function (n) { return '<button class="li" data-noteedit="' + n.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer;padding:7px 0"><div style="flex:1"><span class="muted" style="font-size:11px">Nota</span><div><b>' + esc(n.title || "(sem título)") + '</b></div></div></button>'; }).join("") +
+      linkedRes.map(function (r) { return '<button class="li" data-resedit="' + r.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer;padding:7px 0"><div style="flex:1"><span class="muted" style="font-size:11px">' + (RES_TYPE_LBL[r.type] || "Recurso") + '</span><div><b>' + esc(r.title || "(sem título)") + '</b></div></div></button>'; }).join("");
+  }
+
   // Zona direita — assistente de estudo (painel de escritura). Oculta por padrão.
   var asst = '<aside class="sd-asst" id="sd-asst" style="display:none">' +
     '<div class="ph" style="margin-bottom:10px"><h3 style="font-size:14px">Assistente de estudo</h3><button class="link" id="sd-compare-open" style="margin-left:auto">Comparar Bíblia</button></div>' +
@@ -392,6 +535,7 @@ function sermonEditor(id) {
     '<div class="sd-h" style="margin-top:16px">Referências</div>' +
     '<div id="sd-detected"></div>' +
     '<div id="sd-panel" style="margin-top:16px"></div>' +
+    linkedHtml +
     '</aside>';
 
   var bar = '<div class="sd-bar"><button class="link" id="sermonBack">&#8592; Biblioteca</button><span class="sd-status" id="sd-status">' + (isNew ? "Novo sermão" : "Salvo") + '</span><span style="flex:1"></span><button class="btn ghost sm" id="sd-asst-toggle">Escrituras</button><button class="btn ghost sm" id="sd-props-open">Propriedades</button></div>';
@@ -468,6 +612,7 @@ document.addEventListener("change", function (e) {
   var t = e.target;
   if (t && t.id === "sermon-fcampus") { state.sermonFilter = Object.assign({}, state.sermonFilter, { campus: t.value || null }); save(); render(); return; }
   if (t && t.id === "sermon-fseries") { state.sermonFilter = Object.assign({}, state.sermonFilter, { series: t.value || null }); save(); render(); return; }
+  if (t && t.id === "res-ftopic") { state.resourceFilter = Object.assign({}, state.resourceFilter, { topic: t.value || null }); save(); render(); return; }
   // Toggle de reconhecimento de escritura (visão do dono: desligável).
   if (t && t.id === "sd-recog") { state.scriptureOn = t.checked; save(); refreshDetected(); scheduleSave(); return; }
   // Comparação: livro/versões (a língua é botão, tratada no click).
@@ -478,7 +623,15 @@ document.addEventListener("change", function (e) {
 });
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-refi],[data-mapbook],[data-cmpcopy],[data-cmpadd],[data-addsec],[data-secdel],[data-cmplang],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#sd-asst-toggle,#sd-compare,#sd-compare-open,#sd-readchap,#cmp-close,#cmp-go,#cmp-wholechap,#openMap,#mapBack,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
+  // Links dentro de cards (ex.: "Abrir link" de recurso) navegam normalmente.
+  if (e.target.closest && e.target.closest("[data-noedit]")) return;
+  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-refi],[data-mapbook],[data-cmpcopy],[data-cmpadd],[data-addsec],[data-secdel],[data-cmplang],[data-studytab],[data-noteedit],[data-resedit],[data-restype],#newSermon,#newNote,#newResource,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#sd-asst-toggle,#sd-compare,#sd-compare-open,#sd-readchap,#cmp-close,#cmp-go,#cmp-wholechap,#openMap,#mapBack,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
+  if (t.getAttribute("data-studytab")) { state.studyTab = t.getAttribute("data-studytab"); save(); render(); return; }
+  if (t.getAttribute("data-noteedit")) { noteModal(noteById(t.getAttribute("data-noteedit"))); return; }
+  if (t.getAttribute("data-resedit")) { resourceModal((state.resources || []).find(function (x) { return x.id === t.getAttribute("data-resedit"); })); return; }
+  if (t.getAttribute("data-restype")) { var rt = t.getAttribute("data-restype"); state.resourceFilter = Object.assign({}, state.resourceFilter, { type: rt === "__all__" ? null : rt }); save(); render(); return; }
+  if (t.id === "newNote") { noteModal(null); return; }
+  if (t.id === "newResource") { resourceModal(null); return; }
   if (t.getAttribute("data-series-remove")) { e.stopPropagation(); setSermonSeries(t.getAttribute("data-series-remove"), null).then(function () { render(); }); return; }
   if (t.getAttribute("data-cmpcopy")) { var cc = cmpState.results[t.getAttribute("data-cmpcopy")]; if (cc && cc.status === "ok" && navigator.clipboard) navigator.clipboard.writeText(cmpRefLabel() + "\n" + cc.verses.map(function (v) { return v.n + " " + v.text; }).join(" ")); return; }
   if (t.getAttribute("data-cmpadd")) { cmpAddToSermon(t.getAttribute("data-cmpadd")); return; }
