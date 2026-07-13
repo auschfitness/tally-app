@@ -113,6 +113,29 @@
   .field.check{display:flex;align-items:center;gap:8px}
   .field.check input{width:auto}.field.check label{margin:0}
   .mrow{display:flex;gap:10px}.mrow .field{flex:1}
+  /* Editor de sermão — CANVAS (Step 5): a escrita é a estrela; laterais sob demanda. */
+  .sd-editor{max-width:1180px;margin:0 auto}
+  .sd-bar{display:flex;align-items:center;gap:12px;padding:2px 2px 16px}
+  .sd-status{font-size:12px;color:var(--text-2)}
+  .sd-body{display:grid;grid-template-columns:186px minmax(0,1fr);gap:28px;align-items:start}
+  .sd-body.asst{grid-template-columns:186px minmax(0,1fr) 320px}
+  .sd-rail{position:sticky;top:70px;display:flex;flex-direction:column;gap:2px}
+  .sd-rail-h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);margin:0 0 8px;padding-left:10px}
+  .sd-nav{text-align:left;border:none;background:transparent;color:var(--text-2);font-size:13px;font-weight:500;padding:7px 10px;border-radius:8px;width:100%}
+  .sd-nav:hover{background:var(--surface-2);color:var(--text)}
+  .sd-canvas{max-width:760px;width:100%;margin:0 auto;padding:2px 4px 90px}
+  .sd-title{width:100%;border:none;background:transparent;color:var(--text);font-size:34px;font-weight:600;line-height:1.2;font-family:inherit;padding:0;margin:0 0 10px}
+  .sd-title::placeholder{color:var(--text-2);opacity:.45}
+  .sd-title:focus,.sd-passage:focus,.sd-bigidea:focus,.sd-doc:focus{outline:none}
+  .sd-subhead{display:flex;flex-direction:column;gap:5px;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+  .sd-passage{border:none;background:transparent;font-family:inherit;font-size:15px;font-weight:600;color:var(--blue);padding:0;width:100%}
+  .sd-bigidea{border:none;background:transparent;font-family:inherit;font-size:15px;color:var(--text-2);font-style:italic;padding:0;width:100%}
+  .sd-block{margin-bottom:30px}
+  .sd-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px}
+  .sd-doc{display:block;width:100%;border:none;background:transparent;font-family:inherit;font-size:15.5px;line-height:1.7;color:var(--text);padding:0;resize:none;overflow:hidden;min-height:28px}
+  .sd-doc::placeholder{color:var(--text-2);opacity:.5}
+  .sd-props .field{margin-bottom:14px}
+  @media(max-width:880px){.sd-body,.sd-body.asst{grid-template-columns:1fr}.sd-rail{display:none}.sd-title{font-size:27px}}
   .seg{display:flex;gap:6px}
   .seg button{flex:1;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);padding:9px;border-radius:9px;font-weight:600;font-size:13px}
   .seg button.on[data-t="in"]{background:rgba(31,169,122,.16);color:var(--green);border-color:rgba(31,169,122,.4)}

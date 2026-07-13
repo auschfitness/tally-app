@@ -157,6 +157,13 @@ const FEATURE_VIEWS = [
     s.sermons = [{ id: "sm-1", title: "A voz que conhece", series_id: "se-1", status: "ready", sermon_date: "2026-03-01", main_passage: "John 10:1-18", campus: "", big_idea: "", content: {} }];
     s.seriesDetail = "se-1"; setState(s); return sermonsView.viewSermons();
   }, ["O Bom Pastor", "Cronograma", "Escrituras-chave", "John 10:1-18", "A voz que conhece", 'id="editSeries"']],
+  // sermon-editor (Study — redesign CANVAS): título H1, subcabeçalho passagem+big idea,
+  // seções como blocos no fluxo, rail de estrutura, drawer de Propriedades. Semeia sermão.
+  ["sermon-editor", () => {
+    const s = clone(seedData); s.view = "sermons";
+    s.sermons = [{ id: "sm-e", title: "O Bom Pastor", subtitle: "", main_passage: "John 10:1-18", big_idea: "Ele conhece as ovelhas", status: "preparing", visibility: "church", campus: "", sermon_date: "", series_id: null, content: { outline: "1. A porta", notes: "", illustrations: "", application: "", prayer_response: "" } }];
+    s.sermonEdit = "sm-e"; setState(s); return sermonsView.viewSermons();
+  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", "Resposta de oração", 'id="sd-props-open"', 'data-goto="sec-outline"', 'id="se-prayer"']],
 ];
 console.log("\n=== Smoke de render (telas-feature) ===");
 let sok = 0, sfail = 0;

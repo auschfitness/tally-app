@@ -18,10 +18,51 @@ var STATUS_BAND = { draft: "attention", preparing: "attention", ready: "healthy"
 var SERIES_LBL = { planning: "Planejando", active: "Ativa", completed: "Concluída", archived: "Arquivada" };
 var SERIES_BAND = { planning: "attention", active: "healthy", completed: "healthy", archived: "risk" };
 
+var SECTIONS = [
+  { key: "outline", id: "se-outline", label: "Outline", ph: "Introdução, pontos, sub-pontos…" },
+  { key: "notes", id: "se-notes", label: "Notas", ph: "Texto livre de estudo" },
+  { key: "illustrations", id: "se-illus", label: "Ilustrações", ph: "Histórias, exemplos, imagens" },
+  { key: "application", id: "se-appl", label: "Aplicação", ph: "Como isso toca a vida da igreja" },
+  { key: "prayer_response", id: "se-prayer", label: "Resposta de oração", ph: "Como responder a Deus a partir deste texto" },
+];
+
 function val(id) { var el = document.getElementById(id); return el ? el.value : ""; }
+function gid(id) { return document.getElementById(id); }
 function blankSermon() { return { id: null, title: "", subtitle: "", main_passage: "", big_idea: "", status: "draft", visibility: "church", campus: state.activeCampus, sermon_date: "", series_id: null, content: {} }; }
 function brDate(d) { return d ? d.split("-").reverse().join("/") : ""; }
 function seriesById(id) { return (state.series || []).find(function (x) { return x.id === id; }) || null; }
+
+// ——— Editor canvas: autosave discreto (sem re-render, preserva o cursor) ———
+var editingId = null, saveTimer = null, creating = false;
+var STATUS_TXT = { editing: "Editando…", saving: "Salvando…", saved: "Salvo", untitled: "Dê um título para salvar", error: "Não foi possível salvar" };
+function setStatus(k) { var el = gid("sd-status"); if (el) el.textContent = STATUS_TXT[k] || k; }
+function collectSermon() {
+  var existing = editingId ? (state.sermons || []).find(function (x) { return x.id === editingId; }) : null;
+  var content = Object.assign({}, existing ? existing.content : {});
+  SECTIONS.forEach(function (s) { content[s.key] = val(s.id); });
+  return {
+    title: val("se-title").trim(), subtitle: val("se-subtitle").trim(),
+    main_passage: val("se-passage").trim(), big_idea: val("se-bigidea").trim(),
+    status: val("se-status") || "draft", visibility: val("se-vis") || "church",
+    campus: val("se-campus"), sermon_date: val("se-date"),
+    series_id: val("se-series") || null, content: content,
+  };
+}
+function doAutosave() {
+  var data = collectSermon();
+  if (!data.title) { setStatus("untitled"); return; }
+  if (editingId) { setStatus("saving"); updateSermon(editingId, data).then(function () { setStatus("saved"); }); return; }
+  if (creating) return;
+  creating = true; setStatus("saving");
+  createSermon(data).then(function (nid) { creating = false; if (nid) { editingId = nid; state.sermonEdit = nid; setStatus("saved"); } else setStatus("error"); });
+}
+function scheduleSave() { setStatus("editing"); clearTimeout(saveTimer); saveTimer = setTimeout(doAutosave, 900); }
+function flushSave() { clearTimeout(saveTimer); doAutosave(); }
+// Cresce as textareas do canvas conforme o conteúdo (chamado no mount via render.js).
+export function sizeSermonDocs() {
+  var docs = document.querySelectorAll(".sd-doc"); for (var i = 0; i < docs.length; i++) { var d = docs[i]; d.style.height = "auto"; d.style.height = d.scrollHeight + "px"; }
+}
+function showDrawer(open) { var d = gid("sd-drawer"), o = gid("sd-drawer-ov"); if (d) d.style.display = open ? "block" : "none"; if (o) o.style.display = open ? "block" : "none"; }
 
 export function viewSermons() {
   if (state.seriesDetail) return seriesWorkspace(state.seriesDetail);
@@ -77,28 +118,48 @@ export function viewSermons() {
 
 function opts(map, sel) { return Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (sel === k ? " selected" : "") + '>' + map[k] + '</option>'; }).join(""); }
 
+// Editor de sermão como CANVAS (spec §6-7, §24): título como H1 de documento,
+// passagem + big idea como subcabeçalho leve, seções como blocos no fluxo. Metadados
+// recolhidos num drawer de Propriedades. Autosave discreto. A zona direita (assistente
+// de estudo) nasce vazia aqui e recebe o painel de escritura na Fase 3.
 function sermonEditor(id) {
-  var s = id === "__new__" ? blankSermon() : ((state.sermons || []).find(function (x) { return x.id === id; }) || blankSermon());
+  var isNew = id === "__new__";
+  var s = isNew ? blankSermon() : ((state.sermons || []).find(function (x) { return x.id === id; }) || blankSermon());
+  editingId = isNew ? null : s.id; creating = false; clearTimeout(saveTimer);
   var c = s.content || {};
+
+  var rail = '<aside class="sd-rail"><div class="sd-rail-h">Estrutura</div>' +
+    '<button class="sd-nav" data-goto="sec-top">Título &amp; ideia</button>' +
+    SECTIONS.map(function (sec) { return '<button class="sd-nav" data-goto="sec-' + sec.key + '">' + sec.label + '</button>'; }).join("") +
+    '</aside>';
+
+  var blocks = SECTIONS.map(function (sec) {
+    return '<section class="sd-block" id="sec-' + sec.key + '"><div class="sd-h">' + sec.label + '</div>' +
+      '<textarea id="' + sec.id + '" class="sd-doc" placeholder="' + sec.ph + '">' + esc(c[sec.key] || "") + '</textarea></section>';
+  }).join("");
+
+  var canvas = '<main class="sd-canvas">' +
+    '<div id="sec-top">' +
+    '<input id="se-title" class="sd-title" value="' + esc(s.title) + '" placeholder="Sem título">' +
+    '<div class="sd-subhead">' +
+    '<input id="se-passage" class="sd-passage" value="' + esc(s.main_passage) + '" placeholder="Passagem principal — ex.: John 10:1-18">' +
+    '<input id="se-bigidea" class="sd-bigidea" value="' + esc(s.big_idea) + '" placeholder="Big idea — a ideia central em uma frase">' +
+    '</div></div>' + blocks + '</main>';
+
+  // Propriedades (drawer): metadados fora do caminho de escrita.
   var campusSel = '<select id="se-campus">' + state.institution.campuses.map(function (cp) { return '<option' + (s.campus === cp ? " selected" : "") + '>' + esc(cp) + '</option>'; }).join("") + '</select>';
   var seriesSel = '<select id="se-series"><option value="">Sem série</option>' + (state.series || []).map(function (se) { return '<option value="' + se.id + '"' + (s.series_id === se.id ? " selected" : "") + '>' + esc(se.title || "(sem título)") + '</option>'; }).join("") + '</select>';
-  function ta(idf, label, v, ph) { return '<div class="field"><label>' + label + '</label><textarea id="' + idf + '" rows="4" placeholder="' + ph + '">' + esc(v || "") + '</textarea></div>'; }
-  return '<button class="link" id="sermonBack">&#8592; Voltar à biblioteca</button>' +
-    '<div style="margin:10px 0 16px"><h1 class="page">' + (id === "__new__" ? "Novo sermão" : esc(s.title || "(sem título)")) + '</h1><p class="sub" style="margin:0">Editor — título, passagem, big idea e as seções do sermão.</p></div>' +
-    '<div class="row2"><div class="panel">' +
-    '<div class="field"><label>Título</label><input id="se-title" value="' + esc(s.title) + '" placeholder="Ex.: O Bom Pastor"></div>' +
+  var drawer = '<div class="drawer-ov" id="sd-drawer-ov" style="display:none"></div>' +
+    '<aside class="drawer sd-props" id="sd-drawer" style="display:none"><div class="ph"><h3>Propriedades</h3><button class="link" id="sd-props-close" style="margin-left:auto">Fechar</button></div>' +
     '<div class="field"><label>Subtítulo</label><input id="se-subtitle" value="' + esc(s.subtitle) + '" placeholder="Opcional"></div>' +
-    '<div class="mrow"><div class="field"><label>Passagem principal</label><input id="se-passage" value="' + esc(s.main_passage) + '" placeholder="Ex.: John 10:1-18"></div><div class="field"><label>Data</label><input id="se-date" type="date" value="' + esc(s.sermon_date) + '"></div></div>' +
-    '<div class="field"><label>Big idea</label><input id="se-bigidea" value="' + esc(s.big_idea) + '" placeholder="A ideia central em uma frase"></div>' +
     '<div class="mrow"><div class="field"><label>Status</label><select id="se-status">' + opts(STATUS_LBL, s.status) + '</select></div><div class="field"><label>Quem vê</label><select id="se-vis">' + opts(VIS_LBL, s.visibility) + '</select></div></div>' +
-    '<div class="mrow"><div class="field"><label>Campus</label>' + campusSel + '</div><div class="field"><label>Série</label>' + seriesSel + '</div></div>' +
-    '</div><div class="panel">' +
-    ta("se-outline", "Outline (introdução, pontos)", c.outline, "1. ...\n2. ...") +
-    ta("se-notes", "Notas", c.notes, "Texto livre de estudo") +
-    ta("se-illus", "Ilustrações", c.illustrations, "Histórias, exemplos") +
-    ta("se-appl", "Aplicação", c.application, "Como isso toca a vida da igreja") +
-    '<div class="actions"><button class="btn ghost" id="se-cancel">Cancelar</button><button class="btn" id="se-save" data-id="' + (s.id || "") + '">Salvar sermão</button></div>' +
-    '</div></div>';
+    '<div class="mrow"><div class="field"><label>Campus</label>' + campusSel + '</div><div class="field"><label>Data</label><input id="se-date" type="date" value="' + esc(s.sermon_date) + '"></div></div>' +
+    '<div class="field"><label>Série</label>' + seriesSel + '</div>' +
+    '</aside>';
+
+  var bar = '<div class="sd-bar"><button class="link" id="sermonBack">&#8592; Biblioteca</button><span class="sd-status" id="sd-status">' + (isNew ? "Novo sermão" : "Salvo") + '</span><span style="flex:1"></span><button class="btn ghost sm" id="sd-props-open">Propriedades</button></div>';
+
+  return '<div class="sd-editor">' + bar + '<div class="sd-body">' + rail + canvas + '</div>' + drawer + '</div>';
 }
 
 // Workspace da série: visão/tema, escrituras-chave (derivadas das passagens reais
@@ -156,15 +217,28 @@ function seriesModal(se) {
   };
 }
 
+// Autosave do canvas: digitar cresce a textarea e agenda o salvamento (sem re-render).
+document.addEventListener("input", function (e) {
+  var t = e.target; if (!t || !t.id || !state.sermonEdit) return;
+  if (t.id.indexOf("se-") !== 0) return;
+  if (t.classList && t.classList.contains("sd-doc")) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }
+  scheduleSave();
+});
+
 document.addEventListener("change", function (e) {
   var t = e.target;
   if (t && t.id === "sermon-fcampus") { state.sermonFilter = Object.assign({}, state.sermonFilter, { campus: t.value || null }); save(); render(); return; }
   if (t && t.id === "sermon-fseries") { state.sermonFilter = Object.assign({}, state.sermonFilter, { series: t.value || null }); save(); render(); return; }
+  // Propriedades (status/visibilidade/campus/série/data) → autosave.
+  if (t && t.id && t.id.indexOf("se-") === 0 && state.sermonEdit) { scheduleSave(); return; }
 });
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],#newSermon,#sermonBack,#se-cancel,#se-save,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
+  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-goto],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
   if (t.getAttribute("data-series-remove")) { e.stopPropagation(); setSermonSeries(t.getAttribute("data-series-remove"), null).then(function () { render(); }); return; }
+  if (t.getAttribute("data-goto")) { var el = gid(t.getAttribute("data-goto")); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (t.id === "sd-props-open") { showDrawer(true); return; }
+  if (t.id === "sd-props-close" || t.id === "sd-drawer-ov") { showDrawer(false); return; }
   if (t.getAttribute("data-sermonstatus")) { var v = t.getAttribute("data-sermonstatus"); state.sermonFilter = Object.assign({}, state.sermonFilter, { status: v === "__all__" ? null : v }); save(); render(); return; }
   if (t.id === "newSermon") { state.sermonEdit = "__new__"; save(); render(); return; }
   if (t.id === "newSeries") { seriesModal(null); return; }
@@ -172,15 +246,6 @@ document.addEventListener("click", function (e) {
   if (t.id === "series-add-btn") { var sel = document.getElementById("series-add-sel"); if (!sel || !sel.value) return; setSermonSeries(sel.value, t.getAttribute("data-series")).then(function () { render(); }); return; }
   if (t.getAttribute("data-seriesdetail")) { state.seriesDetail = t.getAttribute("data-seriesdetail"); save(); render(); return; }
   if (t.getAttribute("data-sermon")) { state.sermonEdit = t.getAttribute("data-sermon"); save(); render(); return; }
-  if (t.id === "sermonBack" || t.id === "se-cancel") { state.sermonEdit = null; save(); render(); return; }
+  if (t.id === "sermonBack") { flushSave(); state.sermonEdit = null; editingId = null; save(); render(); return; }
   if (t.id === "seriesBack") { state.seriesDetail = null; save(); render(); return; }
-  if (t.id === "se-save") {
-    var title = val("se-title").trim(); if (!title) { var el = document.getElementById("se-title"); if (el) el.focus(); return; }
-    var id = t.getAttribute("data-id");
-    var existing = id ? (state.sermons || []).find(function (x) { return x.id === id; }) : null;
-    var content = Object.assign({}, existing ? existing.content : {}, { outline: val("se-outline"), notes: val("se-notes"), illustrations: val("se-illus"), application: val("se-appl") });
-    var data = { title: title, subtitle: val("se-subtitle").trim(), main_passage: val("se-passage").trim(), big_idea: val("se-bigidea").trim(), status: val("se-status"), visibility: val("se-vis"), campus: val("se-campus"), sermon_date: val("se-date"), series_id: val("se-series") || null, content: content };
-    if (id) { updateSermon(id, data); } else { createSermon(data).then(function (newId) { if (newId) { /* já entrou no state */ } }); }
-    state.sermonEdit = null; save(); render();
-  }
 });

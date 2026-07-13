@@ -17,7 +17,7 @@ import { viewCare } from "../views/care.js";
 import { viewJourney } from "../views/journey.js";
 import { viewInbox } from "../views/inbox.js";
 import { viewStudy } from "../views/study.js";
-import { viewSermons } from "../views/sermons.js";
+import { viewSermons, sizeSermonDocs } from "../views/sermons.js";
 
 export function render(){
   document.querySelectorAll(".navitem").forEach(n=>n.classList.toggle("active",n.dataset.view===state.view));
@@ -30,5 +30,6 @@ export function render(){
   document.getElementById("campus").innerHTML=state.institution.campuses.map(cp=>'<button class="'+(cp===state.activeCampus?'on':'')+'" data-campus="'+esc(cp)+'">'+esc(cp)+'</button>').join("");
   document.getElementById("content").innerHTML=({dashboard:viewDashboard,people:viewPeople,coord:viewCoord,finance:viewFinance,settings:viewSettings,prayer:viewPrayer,groups:viewGroups,care:viewCare,journey:viewJourney,inbox:viewInbox,study:viewStudy,sermons:viewSermons}[state.view])();
   if(state.view==="prayer"&&window.requestAnimationFrame)requestAnimationFrame(layoutPrayerCloud);
+  if(state.view==="sermons"&&state.sermonEdit&&window.requestAnimationFrame)requestAnimationFrame(sizeSermonDocs);
   if(window.requestAnimationFrame)requestAnimationFrame(renderCharts);
 }
