@@ -23,7 +23,7 @@ var SERIES_LBL = { planning: "Planejando", active: "Ativa", completed: "Concluí
 var SERIES_BAND = { planning: "attention", active: "healthy", completed: "healthy", archived: "risk" };
 
 var SECTIONS = [
-  { key: "outline", id: "se-outline", label: "Outline", ph: "Introdução, pontos, sub-pontos…" },
+  { key: "outline", id: "se-outline", label: "Esboço", ph: "Introdução, pontos, sub-pontos…" },
   { key: "notes", id: "se-notes", label: "Notas", ph: "Texto livre de estudo" },
   { key: "illustrations", id: "se-illus", label: "Ilustrações", ph: "Histórias, exemplos, imagens" },
   { key: "application", id: "se-appl", label: "Aplicação", ph: "Como isso toca a vida da igreja" },
@@ -348,7 +348,7 @@ export function viewSermons() {
 function opts(map, sel) { return Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (sel === k ? " selected" : "") + '>' + map[k] + '</option>'; }).join(""); }
 
 // Editor de sermão como CANVAS (spec §6-7, §24): título como H1 de documento,
-// passagem + big idea como subcabeçalho leve, seções como blocos no fluxo. Metadados
+// passagem + ideia central como subcabeçalho leve, seções como blocos no fluxo. Metadados
 // recolhidos num drawer de Propriedades. Autosave discreto. A zona direita (assistente
 // de estudo) nasce vazia aqui e recebe o painel de escritura na Fase 3.
 function sermonEditor(id) {
@@ -366,8 +366,8 @@ function sermonEditor(id) {
   var canvas = '<main class="sd-canvas">' +
     '<input id="se-title" class="sd-title" value="' + esc(s.title) + '" placeholder="Sem título">' +
     '<div class="sd-subhead">' +
-    '<input id="se-passage" class="sd-passage" value="' + esc(s.main_passage) + '" placeholder="Passagem principal — ex.: John 10:1-18">' +
-    '<input id="se-bigidea" class="sd-bigidea" value="' + esc(s.big_idea) + '" placeholder="Big idea — a ideia central em uma frase">' +
+    '<input id="se-passage" class="sd-passage" value="' + esc(s.main_passage) + '" placeholder="Passagem principal — ex.: João 10:1-18">' +
+    '<input id="se-bigidea" class="sd-bigidea" value="' + esc(s.big_idea) + '" placeholder="Ideia central — a mensagem em uma frase">' +
     '</div>' +
     '<textarea id="se-notes" class="sd-doc sd-body-doc" placeholder="Comece a escrever…">' + esc(c.notes || "") + '</textarea>' +
     '<div id="sd-sections">' + blocks + '</div>' +

@@ -38,7 +38,7 @@ function viewStickProfile(id){
   var tab=state.stickTab||"overview";
   var age=ageOf(p);var hh=householdOf(p);
   var head='<button class="link" id="stickBack">&#8592; Voltar para Sticks</button><div class="dh" style="margin:12px 0 6px"><div class="av">'+initials(p.name)+'</div><div><div class="nm">'+esc(p.name)+'</div><div class="rl">'+relLabelFull(p)+(isLeader(p)?" · Líder":"")+' · '+esc(p.campus)+' · Jornada: '+journeyLabel(p.journeyStage)+'</div></div><button class="btn ghost" id="addMs" data-stick="'+p.id+'" style="margin-left:auto">+ Milestone</button></div>';
-  var tabs='<div class="tabs2"><button class="tab2 '+(tab==="overview"?"on":"")+'" data-stab="overview">Overview</button><button class="tab2 '+(tab==="timeline"?"on":"")+'" data-stab="timeline">Timeline</button><button class="tab2 '+(tab==="attendance"?"on":"")+'" data-stab="attendance">Presença</button></div>';
+  var tabs='<div class="tabs2"><button class="tab2 '+(tab==="overview"?"on":"")+'" data-stab="overview">Visão geral</button><button class="tab2 '+(tab==="timeline"?"on":"")+'" data-stab="timeline">Timeline</button><button class="tab2 '+(tab==="attendance"?"on":"")+'" data-stab="attendance">Presença</button></div>';
   var body="";
   if(tab==="overview"){
     var ev=stickTimeline(p).slice(0,6);

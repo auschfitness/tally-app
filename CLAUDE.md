@@ -84,7 +84,10 @@ Recomendado: repositório no GitHub ligado ao Vercel (auto-deploy a cada push). 
 
 ## Convenções
 - Preserve o sistema visual atual (claro, interativo, gráficos clicáveis, drill-down, densidade organizada).
+- A interface é em **português (PT-BR)**. Traduza qualquer inglês que vaze na UI, exceto os termos abaixo.
 - Termos de produto (não traduzir): Stick(s), Signal, Care, Journey, Milestone, Pulse, Inbox. Rótulo do botão de adicionar pessoa: "Nova pessoa". Use "Campus" (não "Campi").
+- **Nomes de feature intencionalmente em inglês** (usados assim no material de marca do dono — manter): Finance Lite, Care Radar, Journey Map. "Timeline" é tratada como conceito do Tally (a memória da igreja) e fica em inglês.
+- **Glossário PT-BR de termos do Study** (traduções fixadas — não regredir): Outline → **Esboço**; Big idea → **Ideia central**; Overview (aba da Stick) → **Visão geral**. Seções do sermão: Esboço, Notas, Ilustrações, Aplicação, Resposta de oração. Exemplos de passagem na UI em PT ("João 10:1-18", não "John").
 - Rode `npm test` (ou `/verify-app`) e teste no navegador antes de dar por pronto. Valide antes de fazer deploy.
 - Ao dividir/mover código, mantenha os corpos das funções idênticos; o teste de paridade é a rede de segurança.
 
