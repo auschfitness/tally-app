@@ -11,7 +11,7 @@ import { createSermon, updateSermon } from "../core/sermons-repo.js";
 import { createSeries, updateSeries, setSermonSeries } from "../core/series-repo.js";
 import { syncSermonScriptures } from "../core/scriptures-repo.js";
 import { parseRefs } from "../core/scripture-parse.js";
-import { fetchPassage } from "../core/bible-source.js";
+import { fetchPassage, listTranslations } from "../core/bible-source.js";
 import { BOOKS, bookName } from "../core/bible-books.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
@@ -78,6 +78,7 @@ function showDrawer(open) { var d = gid("sd-drawer"), o = gid("sd-drawer-ov"); i
 
 // ——— Zona direita: assistente de estudo (painel de escritura da Fase 3) ———
 var detectedRefs = [];
+var panelRef = null;
 // Sermões que já pregaram esta passagem (mesmo livro+capítulo), fora o atual.
 function sermonsUsing(ref) {
   var ids = {};
@@ -95,9 +96,10 @@ export function refreshDetected() {
 // Abre o painel de uma referência: texto (via API, erro honesto) + histórico da igreja.
 function openScripturePanel(ref) {
   var box = gid("sd-panel"); if (!box || !ref) return;
+  panelRef = ref;
   var hist = sermonsUsing(ref);
   var histHtml = hist.length ? '<div class="sd-h" style="margin-top:16px">Você já pregou sobre isto</div>' + hist.map(function (s) { return '<button class="li" data-sermon="' + s.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer;padding:8px 0"><div style="flex:1"><b>' + esc(s.title || "(sem título)") + '</b>' + (s.sermon_date ? ' <span class="muted">· ' + brDate(s.sermon_date) + '</span>' : '') + '</div></button>'; }).join("") : '<div class="muted" style="margin-top:14px">Primeira vez que a igreja aborda esta passagem por aqui.</div>';
-  box.innerHTML = '<div class="sd-h">' + esc(ref.reference) + '</div><div class="muted" id="sd-passage-text">Carregando o texto…</div>' + histHtml;
+  box.innerHTML = '<div class="ph" style="margin-bottom:6px"><div class="sd-h" style="margin:0">' + esc(ref.reference) + '</div><button class="link" id="sd-compare" style="margin-left:auto">Comparar versões</button></div><div class="muted" id="sd-passage-text">Carregando o texto…</div>' + histHtml;
   fetchPassage(ref).then(function (res) {
     var t = gid("sd-passage-text"); if (!t) return;
     if (res && res.ok) {
@@ -152,6 +154,94 @@ function scriptureMapView() {
   var body = total ? '<div class="smap">' + grid + '</div>' + detail : '<div class="empty">Nenhuma passagem registrada ainda. O mapa se preenche conforme você escreve sermões com referências.</div>';
   return '<button class="link" id="mapBack">&#8592; Voltar à biblioteca</button>' +
     '<div style="margin:10px 0 16px"><h1 class="page">Mapa de Escrituras</h1><p class="sub" style="margin:0">A história de ensino da igreja: quais livros já foram pregados, e com que intensidade. Dados reais dos sermões.</p></div>' + body;
+}
+
+// ——— Comparação bíblica (Fase 3b): livro→cap→versículo, versões lado a lado ———
+// Gate de licença: só exibimos versões que temos direito de mostrar. O catálogo da
+// helloao é de uso livre/comercial (por isso foi escolhido) → todas passam. Este é o
+// ponto único onde uma fonte licenciada futura (ESV/NIV) seria barrada sem direito.
+function isDisplayable(tr) { return !!tr && !!tr.id; }
+var cmpState = { ref: null, lang: "por", picks: [], results: {} };
+var cmpTranslations = null;
+
+function uniqueLangs(list) {
+  var seen = {}, out = [];
+  list.forEach(function (t) { var c = (t.language || "").toLowerCase(); if (c && !seen[c]) { seen[c] = 1; out.push({ code: c, name: t.languageName || t.languageEnglishName || c }); } });
+  out.sort(function (a, b) { var pri = { por: 0, eng: 1 }; return (pri[a.code] != null ? pri[a.code] : 9) - (pri[b.code] != null ? pri[b.code] : 9) || a.code.localeCompare(b.code); });
+  return out;
+}
+function cmpVersionsForLang() { return (cmpTranslations || []).filter(function (t) { return (t.language || "").toLowerCase() === cmpState.lang; }); }
+function readPassageInputs() {
+  var bk = val("cmp-book") || cmpState.ref.book;
+  var ch = parseInt(val("cmp-chap"), 10); var vs = parseInt(val("cmp-vs"), 10); var ve = parseInt(val("cmp-ve"), 10);
+  cmpState.ref = { book: bk, chapter: ch || cmpState.ref.chapter, verse_start: vs || null, verse_end: ve || null };
+}
+function cmpRefLabel() { var r = cmpState.ref; return bookName(r.book) + " " + r.chapter + (r.verse_start ? ":" + r.verse_start + (r.verse_end && r.verse_end !== r.verse_start ? "-" + r.verse_end : "") : ""); }
+
+function renderCompare() {
+  var r = cmpState.ref;
+  var books = BOOKS.map(function (b) { return '<option value="' + b.code + '"' + (b.code === r.book ? " selected" : "") + '>' + esc(b.pt) + '</option>'; }).join("");
+  var langs = cmpTranslations ? uniqueLangs(cmpTranslations) : [];
+  var langSel = langs.map(function (l) { return '<option value="' + l.code + '"' + (l.code === cmpState.lang ? " selected" : "") + '>' + esc(l.name) + " (" + l.code + ")</option>"; }).join("");
+  var vers = cmpVersionsForLang();
+  var verChips = cmpTranslations ? (vers.length ? vers.map(function (t) { var on = cmpState.picks.indexOf(t.id) >= 0; return '<label class="cmp-ver' + (on ? " on" : "") + '"><input type="checkbox" data-cmpver="' + t.id + '"' + (on ? " checked" : "") + '> ' + esc(t.shortName || t.id) + '</label>'; }).join("") : '<span class="muted">Sem versões nesta língua.</span>') : '<span class="muted">Carregando versões…</span>';
+
+  var cols = cmpState.picks.length ? '<div class="cmp-cols" style="grid-template-columns:repeat(' + Math.min(cmpState.picks.length, 3) + ',1fr)">' + cmpState.picks.map(function (id) {
+    var tr = (cmpTranslations || []).find(function (t) { return t.id === id; }) || { id: id, shortName: id };
+    var res = cmpState.results[id];
+    var inner;
+    if (!res || res.status === "loading") inner = '<div class="muted">Carregando…</div>';
+    else if (res.status === "error") inner = '<div class="muted">' + esc(res.error || "Não foi possível carregar.") + '</div>';
+    else inner = '<div class="cmp-text">' + res.verses.map(function (v) { return '<sup style="color:var(--text-2);margin-right:3px">' + v.n + '</sup>' + esc(v.text); }).join(" ") + '</div><div class="cmp-actions"><button class="link" data-cmpcopy="' + id + '">Copiar</button>' + (state.sermonEdit ? '<button class="link" data-cmpadd="' + id + '">Adicionar ao sermão</button>' : "") + '</div>';
+    return '<div class="cmp-col"><div class="cmp-colh">' + esc(tr.name || tr.shortName || id) + '</div>' + inner + '</div>';
+  }).join("") + '</div>' : '<div class="empty">Escolha ao menos uma versão e clique em Comparar.</div>';
+
+  var html = '<div class="ph"><h3>Comparar Bíblia</h3><button class="link" id="cmp-close" style="margin-left:auto">Fechar</button></div>' +
+    '<div class="msub">Versões de um catálogo de uso livre. Passagem: <b>' + esc(cmpRefLabel()) + '</b></div>' +
+    '<div class="cmp-sel"><select id="cmp-book">' + books + '</select>' +
+    '<input id="cmp-chap" type="number" min="1" placeholder="cap" value="' + (r.chapter || "") + '" style="width:70px">' +
+    '<input id="cmp-vs" type="number" min="1" placeholder="v. ini" value="' + (r.verse_start || "") + '" style="width:70px">' +
+    '<input id="cmp-ve" type="number" min="1" placeholder="v. fim" value="' + (r.verse_end || "") + '" style="width:70px">' +
+    '<select id="cmp-lang">' + langSel + '</select>' +
+    '<button class="btn" id="cmp-go">Comparar</button></div>' +
+    '<div class="cmp-vers">' + verChips + '</div>' + cols;
+
+  openModal(html);
+  var m = document.querySelector("#ov .modal"); if (m) m.classList.add("cmp");
+}
+function runCompare() {
+  readPassageInputs();
+  cmpState.picks.forEach(function (id) { cmpState.results[id] = { status: "loading" }; });
+  renderCompare();
+  cmpState.picks.forEach(function (id) {
+    fetchPassage(cmpState.ref, id).then(function (res) {
+      cmpState.results[id] = res && res.ok ? { status: "ok", verses: res.verses } : { status: "error", error: res && res.error };
+      renderCompare();
+    });
+  });
+}
+function openCompare(ref) {
+  cmpState.ref = ref ? { book: ref.book, chapter: ref.chapter, verse_start: ref.verse_start, verse_end: ref.verse_end } : { book: "JHN", chapter: 3, verse_start: 16, verse_end: null };
+  cmpState.results = {};
+  renderCompare();
+  listTranslations().then(function (list) {
+    cmpTranslations = (list || []).filter(isDisplayable);
+    var langs = uniqueLangs(cmpTranslations);
+    if (!langs.some(function (l) { return l.code === cmpState.lang; })) cmpState.lang = langs.length ? langs[0].code : "";
+    if (!cmpState.picks.length) cmpState.picks = cmpVersionsForLang().slice(0, 2).map(function (t) { return t.id; });
+    runCompare();
+  }).catch(function () { cmpTranslations = []; renderCompare(); });
+}
+function cmpAddToSermon(id) {
+  var res = cmpState.results[id]; if (!res || res.status !== "ok") return;
+  var tr = (cmpTranslations || []).find(function (t) { return t.id === id; }) || { shortName: id };
+  var text = res.verses.map(function (v) { return v.n + " " + v.text; }).join(" ");
+  var note = gid("se-notes"); if (!note) return;
+  var block = cmpRefLabel() + " (" + (tr.shortName || id) + ")\n" + text;
+  note.value = (note.value ? note.value.replace(/\s+$/, "") + "\n\n" : "") + block;
+  note.style.height = "auto"; note.style.height = note.scrollHeight + "px";
+  scheduleSave();
+  closeModal();
 }
 
 export function viewSermons() {
@@ -250,7 +340,7 @@ function sermonEditor(id) {
 
   // Zona direita — assistente de estudo (painel de escritura). Oculta por padrão.
   var asst = '<aside class="sd-asst" id="sd-asst" style="display:none">' +
-    '<div class="ph" style="margin-bottom:10px"><h3 style="font-size:14px">Assistente de estudo</h3></div>' +
+    '<div class="ph" style="margin-bottom:10px"><h3 style="font-size:14px">Assistente de estudo</h3><button class="link" id="sd-compare-open" style="margin-left:auto">Comparar Bíblia</button></div>' +
     '<label class="sd-recog"><input type="checkbox" id="sd-recog"' + (state.scriptureOn === false ? "" : " checked") + '> Reconhecer escrituras</label>' +
     '<div class="sd-h" style="margin-top:16px">Referências</div>' +
     '<div id="sd-detected"></div>' +
@@ -331,17 +421,27 @@ document.addEventListener("change", function (e) {
   if (t && t.id === "sermon-fseries") { state.sermonFilter = Object.assign({}, state.sermonFilter, { series: t.value || null }); save(); render(); return; }
   // Toggle de reconhecimento de escritura (visão do dono: desligável).
   if (t && t.id === "sd-recog") { state.scriptureOn = t.checked; save(); refreshDetected(); scheduleSave(); return; }
+  // Comparação: livro/língua/versões.
+  if (t && t.id === "cmp-lang") { readPassageInputs(); cmpState.lang = t.value; cmpState.picks = cmpVersionsForLang().slice(0, 2).map(function (x) { return x.id; }); cmpState.results = {}; renderCompare(); return; }
+  if (t && t.id === "cmp-book") { readPassageInputs(); renderCompare(); return; }
+  if (t && t.getAttribute && t.getAttribute("data-cmpver")) { var vid = t.getAttribute("data-cmpver"); readPassageInputs(); var idx = cmpState.picks.indexOf(vid); if (idx >= 0) cmpState.picks.splice(idx, 1); else cmpState.picks.push(vid); renderCompare(); return; }
   // Propriedades (status/visibilidade/campus/série/data) → autosave.
   if (t && t.id && t.id.indexOf("se-") === 0 && state.sermonEdit) { scheduleSave(); return; }
 });
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-goto],[data-refi],[data-mapbook],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#sd-asst-toggle,#openMap,#mapBack,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
+  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-goto],[data-refi],[data-mapbook],[data-cmpcopy],[data-cmpadd],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#sd-asst-toggle,#sd-compare,#sd-compare-open,#cmp-close,#cmp-go,#openMap,#mapBack,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
   if (t.getAttribute("data-series-remove")) { e.stopPropagation(); setSermonSeries(t.getAttribute("data-series-remove"), null).then(function () { render(); }); return; }
+  if (t.getAttribute("data-cmpcopy")) { var cc = cmpState.results[t.getAttribute("data-cmpcopy")]; if (cc && cc.status === "ok" && navigator.clipboard) navigator.clipboard.writeText(cmpRefLabel() + "\n" + cc.verses.map(function (v) { return v.n + " " + v.text; }).join(" ")); return; }
+  if (t.getAttribute("data-cmpadd")) { cmpAddToSermon(t.getAttribute("data-cmpadd")); return; }
   if (t.getAttribute("data-goto")) { var el = gid(t.getAttribute("data-goto")); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
   if (t.getAttribute("data-refi")) { var ri = parseInt(t.getAttribute("data-refi"), 10); if (detectedRefs[ri]) openScripturePanel(detectedRefs[ri]); return; }
   if (t.getAttribute("data-mapbook")) { var mb = t.getAttribute("data-mapbook"); state.scriptureMapBook = state.scriptureMapBook === mb ? null : mb; save(); render(); return; }
   if (t.id === "sd-asst-toggle") { toggleAssistant(); return; }
+  if (t.id === "sd-compare") { openCompare(panelRef); return; }
+  if (t.id === "sd-compare-open") { openCompare(panelRef); return; }
+  if (t.id === "cmp-close") { closeModal(); return; }
+  if (t.id === "cmp-go") { runCompare(); return; }
   if (t.id === "openMap") { state.scriptureMap = true; state.scriptureMapBook = null; save(); render(); return; }
   if (t.id === "mapBack") { state.scriptureMap = false; state.scriptureMapBook = null; save(); render(); return; }
   if (t.id === "sd-props-open") { showDrawer(true); return; }

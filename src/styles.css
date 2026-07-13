@@ -104,6 +104,19 @@
   .overlay{position:fixed;inset:0;background:rgba(6,10,20,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
   .modal{background:var(--surface);border-radius:16px;padding:24px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
   .modal.wide{max-width:540px}
+  .modal.cmp{max-width:920px}
+  .cmp-sel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .cmp-sel select,.cmp-sel input{border:1px solid var(--border);border-radius:9px;padding:8px 10px;background:var(--surface-2);color:var(--text);font-family:inherit;font-size:13px}
+  .cmp-vers{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+  .cmp-ver{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-2);border:1px solid var(--border);border-radius:20px;padding:5px 11px;cursor:pointer}
+  .cmp-ver.on{background:rgba(43,92,230,.12);color:var(--blue);border-color:transparent}
+  .cmp-ver input{width:auto}
+  .cmp-cols{display:grid;gap:12px}
+  .cmp-col{border:1px solid var(--border);border-radius:12px;padding:13px;background:var(--surface-2)}
+  .cmp-colh{font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px}
+  .cmp-text{font-size:14px;line-height:1.65;color:var(--text)}
+  .cmp-actions{display:flex;gap:12px;margin-top:10px}
+  @media(max-width:720px){.cmp-cols{grid-template-columns:1fr !important}}
   .modal h3{font-size:18px;font-weight:600;margin-bottom:4px;color:var(--text)}
   .modal .msub{font-size:12.5px;color:var(--text-2);margin-bottom:14px}
   .field{margin-bottom:13px}

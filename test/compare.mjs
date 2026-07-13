@@ -163,7 +163,7 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "sermons";
     s.sermons = [{ id: "sm-e", title: "O Bom Pastor", subtitle: "", main_passage: "John 10:1-18", big_idea: "Ele conhece as ovelhas", status: "preparing", visibility: "church", campus: "", sermon_date: "", series_id: null, content: { outline: "1. A porta", notes: "", illustrations: "", application: "", prayer_response: "" } }];
     s.sermonEdit = "sm-e"; setState(s); return sermonsView.viewSermons();
-  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", "Resposta de oração", 'id="sd-props-open"', 'data-goto="sec-outline"', 'id="se-prayer"', 'id="sd-asst-toggle"', 'id="sd-recog"']],
+  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", "Resposta de oração", 'id="sd-props-open"', 'data-goto="sec-outline"', 'id="se-prayer"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"']],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
