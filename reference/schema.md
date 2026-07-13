@@ -61,6 +61,11 @@ Mapa app → sticks: `relationship` → `relationship_status`; `lastSeen` → `l
 
 Mapa app → grupos: a `group` (string) de uma Stick vira relação em `group_members` (group_id + stick_id).
 
+### Discipleship Tracks (Step 4 · Fase 5 — aplicado 2026-07-12, migração m14)
+- **tracks**: id, org_id, name, description, type, status (default 'active'), created_at. RLS `is_org_member`.
+- **track_steps**: id, org_id, track_id (fk tracks cascade), name, description, position (int), materials (jsonb default []), created_at. Estágios como LINHAS. RLS `is_org_member`.
+- **track_enrollments**: id, org_id, track_id, stick_id (fk sticks), current_step_id (fk track_steps, on delete set null), progress (int), status (default 'in_progress'), started_at, completed_at, created_at, updated_at. UNIQUE (track_id, stick_id). RLS `is_org_member`. Conclusão cria `milestone` (code='completed_track') + `timeline_event`; Journey só se configurado (não força).
+
 ## Inteligência (Signals, Care, Timeline)
 - **signals**: id, org_id, campus_id, type, category, title, description, source_module, source_record_id, related_stick_id, related_group_id, priority (enum), status (enum), assigned_to, detected_at, resolved_at, resolved_by, resolution_note, dismissed_reason, metadata (jsonb), created_at
 - **signal_overrides**: id, org_id, signal_key, status, updated_at
@@ -78,6 +83,12 @@ Nota: Signals podem continuar calculados no client no começo (lendo os dados re
 - **finance_entries**: id, org_id, campus_id, type (enum), description, category_id, category_name, fund_id, fund_name, amount, entry_date, created_by, created_at
 
 Mapa app → oração: "nome do pedido" (o título) → `request` começa com o texto do pedido; o campo de título do card mapeia melhor em `metadata`/`author_name` conforme a UI atual — conferir no código antes de migrar.
+
+## Discipleship Tracks (Step 4 · Fase 5 — aplicado 2026-07-12, migração m14)
+- **tracks**: id, org_id, name, description, type, status (default 'active'), created_at. RLS `is_org_member`.
+- **track_steps**: id, org_id, track_id, name, description, position, materials (jsonb), created_at. Estágios como linhas.
+- **track_enrollments**: id, org_id, track_id, stick_id, current_step_id, progress, status (default 'in_progress'), started_at, completed_at, created_at, updated_at. UNIQUE (track_id, stick_id). RLS `is_org_member`.
+- Conclusão (status='completed') → cria milestone + timeline_event, e move a Journey só se configurado. Sem seed no `create_org` (trilhas são conteúdo da igreja).
 
 ## Coordenação (Basecamp-lite)
 - **coordination_posts**: id, org_id, campus_id, title, body, team, posted_on, created_by, created_at
