@@ -146,6 +146,53 @@ export function signals(){
     if(gss.length>0){var last=gss.map(function(s){return s.date||"";}).sort().pop();var dd=Math.round((today()-new Date(last))/(1000*60*60*24));if(dd>21)out.push({key:"ga-"+g.name,type:"group_attendance",level:"attention",groupName:g.name,title:"Grupo "+g.name+" sem registro de presença",why:["Última presença há "+dd+" dias"],date:iso(today()),category:"Groups"});}
   });
   state.tasks.filter(function(t){return !t.done&&t.who;}).forEach(function(t){out.push({key:"task-"+t.id,type:"team",level:"notice",title:esc(t.who)+" foi designado: "+esc(t.text),why:[],date:iso(today()),category:"Teams",stickName:t.who});});
+  out=out.concat(serviceSignals());
+  return out;
+}
+
+// --- Signals de serviço (Step 7 · Fase 5, §9/§20/§10/§21) — só dado real. Alimentam
+// Inbox (categorias Serviço/Care) e Home. Nada de score; contexto e oportunidade. ---
+function weekNum(dateIso){ return Math.floor(new Date(dateIso+"T00:00:00").getTime()/(7*86400000)); }
+function consecutiveWeekStreak(dates){
+  var weeks={}; dates.forEach(function(d){ weeks[weekNum(d)]=1; });
+  var curW=Math.floor(today().getTime()/(7*86400000));
+  var served=Object.keys(weeks).map(Number).filter(function(w){return w<=curW;}).sort(function(a,b){return b-a;});
+  if(!served.length) return 0;
+  var streak=0,w=served[0]; while(weeks[w]){ streak++; w--; } return streak;
+}
+export function serviceSignals(){
+  var out=[];
+  var teams=(state.teams||[]).filter(function(t){return t.status==="active"&&(t.campus===state.activeCampus||!t.campus);});
+  var actByTeam={}; (state.teamMembers||[]).forEach(function(m){ if(m.status==="active"){(actByTeam[m.team_id]||(actByTeam[m.team_id]=[])).push(m);} });
+  var servingIds={}; (state.teamMembers||[]).forEach(function(m){ if(m.status==="active") servingIds[m.stick_id]=1; });
+
+  teams.forEach(function(t){
+    var act=actByTeam[t.id]||[];
+    if(act.length===0) out.push({key:"tm-empty-"+t.id,type:"team_health",level:"attention",title:"Time "+t.name+" está sem ninguém servindo",why:["Nenhuma pessoa ativa no time"],date:iso(today()),category:"Teams"});
+    else if(act.length<=3) out.push({key:"tm-few-"+t.id,type:"team_health",level:"attention",title:"Time "+t.name+" depende de poucas pessoas",why:[act.length+" pessoa"+(act.length>1?"s":"")+" servindo"],date:iso(today()),category:"Teams"});
+    if(!t.leader_id) out.push({key:"tm-noleader-"+t.id,type:"team_health",level:"notice",title:"Time "+t.name+" sem líder",why:["Nenhum líder definido"],date:iso(today()),category:"Teams"});
+  });
+
+  // Oportunidade (§20): conectados (em grupo) que ainda não servem.
+  var cns=(state.people||[]).filter(inCampus).filter(function(p){return !p.archived&&p.group&&!servingIds[p.id];});
+  if(cns.length) out.push({key:"tm-connns",type:"serving_opportunity",level:"notice",title:cns.length+" pessoa"+(cns.length>1?"s":"")+" conectada"+(cns.length>1?"s":"")+" ainda não serve"+(cns.length>1?"m":""),why:["Estão em grupo, mas não em nenhum time"],date:iso(today()),category:"Teams"});
+
+  // Começou a servir (§10): joined_at recente → sugere marcar Journey 'Servindo' (humano confirma).
+  (state.teamMembers||[]).forEach(function(m){
+    if(m.status!=="active"||!m.joined_at) return;
+    var dd=Math.round((today()-new Date(m.joined_at))/(1000*60*60*24)); if(dd<0||dd>21) return;
+    var p=(state.people||[]).find(function(x){return x.id===m.stick_id;}); if(!p||!inCampus(p)) return;
+    var t=(state.teams||[]).find(function(x){return x.id===m.team_id;});
+    out.push({key:"tm-start-"+m.id,type:"serving_start",level:"celebration",stickId:p.id,stickName:p.name,title:p.name+" começou a servir"+(t?" em "+t.name:""),why:["Considere marcar como Servindo na Journey"],date:m.joined_at,category:"Teams"});
+  });
+
+  // Cuidado (§21): quem serve há muitas semanas seguidas — atenção ao cansaço.
+  var byStick={}; (state.schedule||[]).forEach(function(a){ if(a.stick_id&&a.assignment_date)(byStick[a.stick_id]||(byStick[a.stick_id]=[])).push(a.assignment_date); });
+  Object.keys(byStick).forEach(function(sid){
+    var streak=consecutiveWeekStreak(byStick[sid]); if(streak<10) return;
+    var p=(state.people||[]).find(function(x){return x.id===sid;}); if(!p||!inCampus(p)) return;
+    out.push({key:"tm-streak-"+sid,type:"serving_care",level:"notice",stickId:p.id,stickName:p.name,title:p.name+" serve há "+streak+" semanas seguidas",why:["Atenção ao descanso — evite o cansaço"],date:iso(today()),category:"Care"});
+  });
   return out;
 }
 export function sigStatus(k){var o=(state.signalOverrides||{})[k];return o?o.status:"new";}

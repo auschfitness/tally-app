@@ -294,6 +294,19 @@ const FEATURE_VIEWS = [
     s.teamDetail = "tk-1";
     setState(s); return teamsView.viewTeams();
   }, ["Saúde do time", "consciência operacional, não nota", "Sem líder definido", "Papel sem ninguém: Bateria", "Ainda sem escalações"]],
+  // inbox-teams (Step 7 · Fase 5) — signals de serviço na aba Serviço do Inbox.
+  ["inbox-teams", () => {
+    const s = clone(seedData); s.view = "inbox"; s.inboxCat = "Teams";
+    const c = s.activeCampus;
+    const p1 = s.people[0], p2 = s.people[1]; p1.campus = c; p2.campus = c;
+    s.teams = [{ id: "tk-1", ministry_id: null, name: "Banda", campus: c, leader_id: null, serving_roles: [], status: "active" }];
+    s.teamMembers = [
+      { id: "tmr-1", team_id: "tk-1", stick_id: p1.id, role: "", status: "active", availability: "", joined_at: "", notes: "" },
+      { id: "tmr-2", team_id: "tk-1", stick_id: p2.id, role: "", status: "active", availability: "", joined_at: "", notes: "" },
+    ];
+    s.schedule = [];
+    setState(s); return inboxView.viewInbox();
+  }, ['data-inboxcat="Teams"', "depende de poucas pessoas", "sem líder"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {

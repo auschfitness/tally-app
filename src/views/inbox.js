@@ -6,7 +6,7 @@ import { activeSignals, sigStatus, setSig } from "../core/derived.js";
 import { render } from "../core/render.js";
 
 export function viewInbox(){
-  var cats=[["all","Todos"],["Care","Care"],["Journey","Pessoas"],["Groups","Grupos"],["Celebration","Celebrações"]];
+  var cats=[["all","Todos"],["Care","Care"],["Journey","Pessoas"],["Groups","Grupos"],["Teams","Serviço"],["Celebration","Celebrações"]];
   var cf=state.inboxCat||"all";var rank={attention:0,notice:1,celebration:2};
   var sigs=activeSignals().filter(function(s){return sigStatus(s.key)!=="snoozed"&&sigStatus(s.key)!=="assigned";}).filter(function(s){return cf==="all"||s.category===cf;}).slice().sort(function(a,b){return (rank[a.level]||0)-(rank[b.level]||0);});
   var tabs='<div class="filtchips">'+cats.map(function(c){return '<button class="fchip'+(cf===c[0]?" on":"")+'" data-inboxcat="'+c[0]+'">'+c[1]+'</button>';}).join("")+'</div>';
