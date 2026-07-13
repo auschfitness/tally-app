@@ -23,9 +23,14 @@ globalThis.HTMLElement = window.HTMLElement;
 globalThis.requestAnimationFrame = undefined;
 globalThis.getComputedStyle = window.getComputedStyle;
 
-// `journey` saiu da paridade a partir do Step 4 · Fase 2: a tela virou o Journey
-// Map (feature nova), então diverge de propósito do monólito original. As demais
-// 9 telas seguem cobertas byte a byte.
+// POLÍTICA DE COBERTURA (Step 4 · Fase 2 em diante):
+// Toda tela que GRADUA de "migração fiel" para "feature nova" sai da paridade
+// byte a byte (ela passa a divergir do monólito de propósito) e ganha um SMOKE
+// TEST de render em FEATURE_VIEWS (abaixo): renderiza com dados de exemplo,
+// afirma que não lança e que contém os elementos-chave. As demais telas seguem
+// na paridade normal até serem tocadas. Trocamos "idêntica ao original" por
+// "renderiza certo e tem o que precisa ter" — o teste adequado pra uma tela que evolui.
+// Graduadas até agora: journey (Journey Map).
 const VIEWS = ["dashboard", "inbox", "people", "care", "groups", "coord", "prayer", "finance", "settings"];
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
@@ -116,8 +121,30 @@ try {
   console.log("  ✓ stickTimeline(): " + tl.length + " eventos");
 } catch (e) { console.log("  ✗ motores ERRO: " + e.message); fail++; }
 
+// --- smoke test das telas-feature (fora da paridade; ver POLÍTICA acima) ---
+// Cada entrada: [nome, () => html, [trechos-chave que PRECISAM aparecer]].
+// Renderiza com o seed, afirma que (a) não lança e (b) tem os elementos-chave.
+const journeyView = await import("../src/views/journey.js");
+const FEATURE_VIEWS = [
+  ["journey", () => { const s = clone(seedData); s.view = "journey"; setState(s); return journeyView.viewJourney(); },
+    ["Journey Map", 'data-jstage="first_visit"', 'data-jstage="leadership"', "Primeira visita", "Liderança", "jmap-row"]],
+];
+console.log("\n=== Smoke de render (telas-feature) ===");
+let sok = 0, sfail = 0;
+for (const [name, renderFn, must] of FEATURE_VIEWS) {
+  try {
+    const html = renderFn();
+    if (!html || !html.length) throw new Error("render vazio");
+    const missing = must.filter((frag) => !html.includes(frag));
+    if (missing.length) throw new Error("faltam elementos-chave: " + JSON.stringify(missing));
+    console.log("  ✓ " + name + "  (render OK, " + html.length + " chars, " + must.length + " âncoras)");
+    sok++;
+  } catch (e) { console.log("  ✗ " + name + "  " + e.message); sfail++; }
+}
+
 console.log("\n=== Resumo ===");
 console.log("  Telas idênticas: " + ok + "/" + VIEWS.length + (fail ? "  (" + fail + " DIFEREM)" : ""));
 console.log("  Modais OK: " + mok + "/" + modals.length + (mfail ? "  (" + mfail + " falharam)" : ""));
-if (fail || mfail) { console.log("\nRESULTADO: FALHOU"); process.exit(1); }
-console.log("\nRESULTADO: OK — paridade total");
+console.log("  Smoke feature: " + sok + "/" + FEATURE_VIEWS.length + (sfail ? "  (" + sfail + " falharam)" : ""));
+if (fail || mfail || sfail) { console.log("\nRESULTADO: FALHOU"); process.exit(1); }
+console.log("\nRESULTADO: OK — paridade das telas migradas + smoke das telas-feature");
