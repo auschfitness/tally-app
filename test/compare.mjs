@@ -307,6 +307,20 @@ const FEATURE_VIEWS = [
     s.schedule = [];
     setState(s); return inboxView.viewInbox();
   }, ['data-inboxcat="Teams"', "depende de poucas pessoas", "sem líder"]],
+  // team-leadership (Step 7 · Fase 6) — escada de desenvolvimento de liderança no time.
+  ["team-leadership", () => {
+    const s = clone(seedData); s.view = "teams";
+    const p1 = s.people[0].id, p2 = s.people[1].id, p3 = s.people[2].id;
+    s.teams = [{ id: "tk-1", ministry_id: null, name: "Banda", campus: s.activeCampus, leader_id: p1, serving_roles: ["Vocal"], status: "active" }];
+    s.teamMembers = [
+      { id: "tmr-1", team_id: "tk-1", stick_id: p1, role: "Vocal", status: "active", availability: "", joined_at: "", notes: "" },
+      { id: "tmr-2", team_id: "tk-1", stick_id: p2, role: "Vocal", status: "active", availability: "", joined_at: "", notes: "" },
+      { id: "tmr-3", team_id: "tk-1", stick_id: p3, role: "Vocal", status: "active", availability: "", joined_at: "", notes: "" },
+    ];
+    s.leadershipDev = { "tmr-2": "apprentice", "tmr-3": "co_leader" };
+    s.teamDetail = "tk-1";
+    setState(s); return teamsView.viewTeams();
+  }, ["Desenvolvimento de liderança", "um caminho de crescimento, não uma nota", "Aprendiz", "Co-líder", "Servindo", "Líder"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {

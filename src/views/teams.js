@@ -18,6 +18,12 @@ var TEAM_STATUS_BAND = { active: "healthy", inactive: "attention", archived: "ri
 var MIN_STATUS_LBL = { active: "Ativo", inactive: "Inativo", archived: "Arquivado" };
 var MEMBER_STATUS_LBL = { active: "Servindo", paused: "Em pausa", inactive: "Inativo" };
 var MEMBER_STATUS_BAND = { active: "healthy", paused: "attention", inactive: "risk" };
+// Desenvolvimento de liderança (Fase 6, §18): caminho leve, sem score.
+var DEV_LBL = { serving: "Servindo", apprentice: "Aprendiz", co_leader: "Co-líder", leader: "Líder" };
+var DEV_SETTABLE = { serving: "Servindo", apprentice: "Aprendiz", co_leader: "Co-líder" };
+// Estágio de um membro: Líder vem de teams.leader_id; os demais do app_state (leadershipDev).
+function devStage(m, team) { if (team && team.leader_id === m.stick_id) return "leader"; return (state.leadershipDev || {})[m.id] || "serving"; }
+function setMemberDev(memberId, stage) { if (!state.leadershipDev) state.leadershipDev = {}; if (stage === "serving") delete state.leadershipDev[memberId]; else state.leadershipDev[memberId] = stage; save(); }
 
 function val(id) { var el = document.getElementById(id); return el ? el.value : ""; }
 function personName(id) { var p = (state.people || []).find(function (x) { return x.id === id; }); return p ? p.name : ""; }
@@ -105,8 +111,10 @@ function teamDetailView(id) {
   var memList = mem.map(function (m) {
     var nm = personName(m.stick_id) || "—";
     var isLead = t.leader_id === m.stick_id;
+    var dev = devStage(m, t);
+    var devBadge = isLead ? ' <span class="chip member">líder</span>' : (dev !== "serving" ? ' <span class="chip leader">' + DEV_LBL[dev] + '</span>' : '');
     var right = '<button class="btn ghost sm" data-memrole="' + m.id + '">Papel</button>' + (isLead ? '' : '<button class="btn ghost sm" data-makelead="' + m.stick_id + '" data-team="' + id + '">Tornar líder</button>') + '<button class="link" data-memremove="' + m.id + '">remover</button>';
-    return '<div class="li"><div class="av' + (m.status === "active" ? "" : " c") + '">' + initials(nm) + '</div><div style="flex:1"><div><b>' + esc(nm) + '</b>' + (isLead ? ' <span class="chip member">líder</span>' : '') + '</div><div class="meta">' + (m.role ? esc(m.role) + ' · ' : '') + (MEMBER_STATUS_LBL[m.status] || m.status) + (m.availability ? ' · ' + esc(m.availability) : '') + '</div></div><div class="right">' + right + '</div></div>';
+    return '<div class="li"><div class="av' + (m.status === "active" ? "" : " c") + '">' + initials(nm) + '</div><div style="flex:1"><div><b>' + esc(nm) + '</b>' + devBadge + '</div><div class="meta">' + (m.role ? esc(m.role) + ' · ' : '') + (MEMBER_STATUS_LBL[m.status] || m.status) + (m.availability ? ' · ' + esc(m.availability) : '') + '</div></div><div class="right">' + right + '</div></div>';
   }).join("") || '<div class="empty">Ninguém serve neste time ainda. Ligue uma pessoa abaixo.</div>';
 
   // Adicionar quem serve: pessoas do campus que ainda não estão no time.
@@ -141,7 +149,22 @@ function teamDetailView(id) {
     '<div class="panel"><div class="ph"><h3>Papéis de serviço</h3></div>' + rolesHtml + (t.description ? '<div class="field" style="margin-top:14px"><label>Sobre</label><div>' + esc(t.description) + '</div></div>' : '') + '<div class="field" style="margin-top:14px"><label>Líder</label><div>' + (leadName ? esc(leadName) : '<span class="muted">Sem líder</span>') + '</div></div></div></div>' +
     '<div class="panel" style="margin-top:16px"><div class="ph"><h3>Distribuição de serviço</h3></div>' + statusRow + '<div style="margin-top:12px">' + roleDist + '</div></div>' +
     '<div class="panel" style="margin-top:16px"><div class="ph"><h3>Saúde do time</h3><span class="muted" style="margin-left:auto">consciência operacional, não nota</span></div>' +
-    teamHealth(id).obs.map(function (o) { return '<div class="li" style="align-items:center">' + healthDot(o.band) + '<div style="flex:1">' + esc(o.text) + '</div></div>'; }).join("") + '</div>';
+    teamHealth(id).obs.map(function (o) { return '<div class="li" style="align-items:center">' + healthDot(o.band) + '<div style="flex:1">' + esc(o.text) + '</div></div>'; }).join("") +
+    '</div>' + leadershipPanel(id, mem, t);
+}
+
+// Painel de Desenvolvimento de liderança (Fase 6, §18): a escada Servindo → Aprendiz →
+// Co-líder → Líder, com nomes por estágio. É um caminho de crescimento, não uma nota.
+function leadershipPanel(id, mem, t) {
+  var stages = ["serving", "apprentice", "co_leader", "leader"];
+  var byStage = { serving: [], apprentice: [], co_leader: [], leader: [] };
+  mem.filter(function (m) { return m.status !== "inactive"; }).forEach(function (m) { byStage[devStage(m, t)].push(personName(m.stick_id) || "—"); });
+  var cols = stages.map(function (s) {
+    var names = byStage[s];
+    var list = names.length ? names.map(function (n) { return '<div class="li" style="padding:4px 0"><div class="av" style="width:26px;height:26px;font-size:10px">' + initials(n) + '</div><div style="flex:1"><b>' + esc(n) + '</b></div></div>'; }).join("") : '<div class="muted" style="font-size:13px">—</div>';
+    return '<div class="panel" style="margin:0"><div class="ph" style="margin-bottom:6px"><h3 style="font-size:13px">' + DEV_LBL[s] + '</h3><span class="muted" style="margin-left:auto">' + names.length + '</span></div>' + list + '</div>';
+  }).join("");
+  return '<div style="margin-top:16px"><div class="ph" style="margin-bottom:8px"><h3 style="margin:0">Desenvolvimento de liderança</h3><span class="muted" style="margin-left:auto">um caminho de crescimento, não uma nota</span></div><div class="row2" style="grid-template-columns:repeat(4,1fr)">' + cols + '</div></div>';
 }
 
 // Dashboard do ministério (Fase 2, §16-17): consciência operacional do ministério —
@@ -288,13 +311,21 @@ function memberRoleModal(memberId) {
   var roleInput = roleList.length
     ? '<select id="mr-role"><option value="">Nenhum</option>' + roleList.map(function (r) { return '<option value="' + esc(r) + '"' + (m.role === r ? " selected" : "") + '>' + esc(r) + '</option>'; }).join("") + (roleList.indexOf(m.role) < 0 && m.role ? '<option value="' + esc(m.role) + '" selected>' + esc(m.role) + '</option>' : '') + '</select>'
     : '<input id="mr-role" value="' + esc(m.role || "") + '" placeholder="Ex.: Vocal">';
+  var curDev = devStage(m, team);
+  var devDisabled = curDev === "leader";
+  var devField = devDisabled
+    ? '<div class="field"><label>Estágio de liderança</label><div><span class="chip member">Líder</span> <span class="muted">(defina outro líder para mudar)</span></div></div>'
+    : '<div class="field"><label>Estágio de liderança</label><select id="mr-dev">' + opts(DEV_SETTABLE, curDev) + '</select></div>';
   openModal('<h3>' + esc(personName(m.stick_id)) + ' — serviço</h3>' +
     '<div class="field"><label>Papel</label>' + roleInput + '</div>' +
     '<div class="mrow"><div class="field"><label>Status</label><select id="mr-status">' + opts(MEMBER_STATUS_LBL, m.status) + '</select></div><div class="field"><label>Disponibilidade</label><input id="mr-avail" value="' + esc(m.availability || "") + '" placeholder="Ex.: manhãs, quinzenal"></div></div>' +
+    devField +
     '<div class="actions"><button class="btn ghost" id="mr-cancel">Cancelar</button><button class="btn" id="mr-save" data-id="' + m.id + '">Salvar</button></div>');
   document.getElementById("mr-cancel").onclick = closeModal;
   document.getElementById("mr-save").onclick = function () {
-    updateTeamMember(this.getAttribute("data-id"), { role: val("mr-role"), status: val("mr-status"), availability: val("mr-avail").trim() }).then(function () { closeModal(); render(); });
+    var mid = this.getAttribute("data-id");
+    if (!devDisabled) setMemberDev(mid, val("mr-dev") || "serving");
+    updateTeamMember(mid, { role: val("mr-role"), status: val("mr-status"), availability: val("mr-avail").trim() }).then(function () { closeModal(); render(); });
   };
 }
 
