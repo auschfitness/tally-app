@@ -29,6 +29,11 @@ var SECTIONS = [
   { key: "application", id: "se-appl", label: "Aplicação", ph: "Como isso toca a vida da igreja" },
   { key: "prayer_response", id: "se-prayer", label: "Resposta de oração", ph: "Como responder a Deus a partir deste texto" },
 ];
+// O corpo aberto do canvas é a escrita livre (content.notes). As demais seções são
+// ESTRUTURA OPCIONAL: só aparecem se já têm conteúdo ou quando o pastor as adiciona.
+var BODY = { key: "notes", id: "se-notes" };
+var OPTIONAL = SECTIONS.filter(function (s) { return s.key !== "notes"; });
+function sectionMeta(key) { return SECTIONS.filter(function (s) { return s.key === key; })[0]; }
 
 function val(id) { var el = document.getElementById(id); return el ? el.value : ""; }
 function gid(id) { return document.getElementById(id); }
@@ -74,6 +79,36 @@ function flushSave() { clearTimeout(saveTimer); doAutosave(); }
 export function sizeSermonDocs() {
   var docs = document.querySelectorAll(".sd-doc"); for (var i = 0; i < docs.length; i++) { var d = docs[i]; d.style.height = "auto"; d.style.height = d.scrollHeight + "px"; }
 }
+// Bloco de seção opcional (cabeçalho discreto + textarea aberta). Removível.
+function sectionBlockHtml(sec, value) {
+  return '<section class="sd-block" id="sec-' + sec.key + '"><div class="sd-sech"><span class="sd-seclabel">' + sec.label + '</span><button class="link sd-secdel" data-secdel="' + sec.key + '">remover</button></div>' +
+    '<textarea id="' + sec.id + '" class="sd-doc" placeholder="' + sec.ph + '">' + esc(value || "") + '</textarea></section>';
+}
+// Menu "+ Seção": só oferece as seções que ainda não estão no canvas.
+function refreshAddMenu() {
+  var box = gid("sd-addsec"); if (!box) return;
+  var avail = OPTIONAL.filter(function (sec) { return !gid("sec-" + sec.key); });
+  box.innerHTML = avail.map(function (sec) { return '<button class="sd-addbtn" data-addsec="' + sec.key + '">+ ' + sec.label + '</button>'; }).join("");
+}
+function addSection(key) {
+  var sec = sectionMeta(key); if (!sec) return;
+  var ex = gid(sec.id); if (ex) { ex.focus(); return; }
+  var host = gid("sd-sections"); if (!host) return;
+  host.insertAdjacentHTML("beforeend", sectionBlockHtml(sec, ""));
+  var ta = gid(sec.id); if (ta) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; ta.focus(); }
+  refreshAddMenu();
+}
+function removeSection(key) {
+  var el = gid("sec-" + key); if (el && el.parentNode) el.parentNode.removeChild(el);
+  refreshAddMenu(); scheduleSave();
+}
+var focusNew = false;
+// Montagem do editor (via render.js): dimensiona as textareas, popula o menu de
+// seções e, num sermão novo, põe o cursor no título (sensação Notion).
+export function mountSermonEditor() {
+  sizeSermonDocs(); refreshAddMenu();
+  if (focusNew) { var t = gid("se-title"); if (t) t.focus(); focusNew = false; }
+}
 function showDrawer(open) { var d = gid("sd-drawer"), o = gid("sd-drawer-ov"); if (d) d.style.display = open ? "block" : "none"; if (o) o.style.display = open ? "block" : "none"; }
 
 // ——— Zona direita: assistente de estudo (painel de escritura da Fase 3) ———
@@ -94,19 +129,33 @@ export function refreshDetected() {
   box.innerHTML = detectedRefs.map(function (r, i) { return '<button class="chip sd-ref" style="background:rgba(43,92,230,.10);color:var(--blue);border:none;cursor:pointer" data-refi="' + i + '">' + esc(r.reference) + '</button>'; }).join(" ");
 }
 // Abre o painel de uma referência: texto (via API, erro honesto) + histórico da igreja.
+var panelWhole = false;
 function openScripturePanel(ref) {
   var box = gid("sd-panel"); if (!box || !ref) return;
-  panelRef = ref;
+  panelRef = ref; panelWhole = false;
   var hist = sermonsUsing(ref);
   var histHtml = hist.length ? '<div class="sd-h" style="margin-top:16px">Você já pregou sobre isto</div>' + hist.map(function (s) { return '<button class="li" data-sermon="' + s.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer;padding:8px 0"><div style="flex:1"><b>' + esc(s.title || "(sem título)") + '</b>' + (s.sermon_date ? ' <span class="muted">· ' + brDate(s.sermon_date) + '</span>' : '') + '</div></button>'; }).join("") : '<div class="muted" style="margin-top:14px">Primeira vez que a igreja aborda esta passagem por aqui.</div>';
-  box.innerHTML = '<div class="ph" style="margin-bottom:6px"><div class="sd-h" style="margin:0">' + esc(ref.reference) + '</div><button class="link" id="sd-compare" style="margin-left:auto">Comparar versões</button></div><div class="muted" id="sd-passage-text">Carregando o texto…</div>' + histHtml;
-  fetchPassage(ref).then(function (res) {
-    var t = gid("sd-passage-text"); if (!t) return;
+  box.innerHTML = '<div class="ph" style="margin-bottom:6px;gap:8px"><div class="sd-h" style="margin:0">' + esc(ref.reference) + '</div><button class="link" id="sd-readchap" style="margin-left:auto">Capítulo inteiro</button><button class="link" id="sd-compare">Comparar</button></div><div class="muted" id="sd-passage-text">Carregando o texto…</div>' + histHtml;
+  renderPanelText();
+}
+// Carrega o texto no painel: só o(s) versículo(s), ou o capítulo inteiro (destacando
+// a passagem). Estado de erro honesto quando a rede/versão falha.
+function renderPanelText() {
+  var t = gid("sd-passage-text"); if (!t || !panelRef) return;
+  t.className = "muted"; t.style.maxHeight = ""; t.style.overflow = ""; t.textContent = "Carregando o texto…";
+  var q = panelWhole ? { book: panelRef.book, chapter: panelRef.chapter, verse_start: null, verse_end: null } : panelRef;
+  fetchPassage(q).then(function (res) {
+    var el = gid("sd-passage-text"); if (!el) return;
     if (res && res.ok) {
-      t.className = ""; t.style.lineHeight = "1.7"; t.style.fontSize = "14px";
-      t.innerHTML = res.verses.map(function (v) { return '<sup style="color:var(--text-2);margin-right:3px">' + v.n + '</sup>' + esc(v.text); }).join(" ") + '<div class="muted" style="margin-top:8px">Versão: ' + esc(res.translationId || "") + '</div>';
+      el.className = ""; el.style.lineHeight = "1.7"; el.style.fontSize = "14px";
+      var vs = panelRef.verse_start, ve = panelRef.verse_end || panelRef.verse_start;
+      el.innerHTML = res.verses.map(function (v) {
+        var seg = '<sup style="color:var(--text-2);margin-right:3px">' + v.n + '</sup>' + esc(v.text);
+        return (panelWhole && vs && v.n >= vs && v.n <= ve) ? '<mark style="background:rgba(43,92,230,.16);color:inherit">' + seg + '</mark>' : seg;
+      }).join(" ") + '<div class="muted" style="margin-top:8px">Versão: ' + esc(res.translationName || res.translationId || "") + '</div>';
+      if (panelWhole) { el.style.display = "block"; el.style.maxHeight = "300px"; el.style.overflow = "auto"; }
     } else {
-      t.textContent = (res && res.error) || "Não foi possível carregar a versão agora.";
+      el.textContent = (res && res.error) || "Não foi possível carregar a versão agora.";
     }
   });
 }
@@ -161,16 +210,13 @@ function scriptureMapView() {
 // helloao é de uso livre/comercial (por isso foi escolhido) → todas passam. Este é o
 // ponto único onde uma fonte licenciada futura (ESV/NIV) seria barrada sem direito.
 function isDisplayable(tr) { return !!tr && !!tr.id; }
-var cmpState = { ref: null, lang: "por", picks: [], results: {} };
+// Só as línguas do público do Tally, com a abreviação como se usa (não "por"/"eng").
+var APP_LANGS = [{ app: "pt", code: "por", label: "PT-BR" }, { app: "en", code: "eng", label: "EN" }, { app: "es", code: "spa", label: "ES" }];
+function appLangCode() { var a = (state.account && state.account.language) || "pt"; var m = APP_LANGS.filter(function (x) { return x.app === a; })[0]; return m ? m.code : "por"; }
+var cmpState = { ref: null, lang: null, picks: [], results: {} };
 var cmpTranslations = null;
-
-function uniqueLangs(list) {
-  var seen = {}, out = [];
-  list.forEach(function (t) { var c = (t.language || "").toLowerCase(); if (c && !seen[c]) { seen[c] = 1; out.push({ code: c, name: t.languageName || t.languageEnglishName || c }); } });
-  out.sort(function (a, b) { var pri = { por: 0, eng: 1 }; return (pri[a.code] != null ? pri[a.code] : 9) - (pri[b.code] != null ? pri[b.code] : 9) || a.code.localeCompare(b.code); });
-  return out;
-}
 function cmpVersionsForLang() { return (cmpTranslations || []).filter(function (t) { return (t.language || "").toLowerCase() === cmpState.lang; }); }
+function cmpVerLabel(t) { return esc(t.name || t.shortName || t.id) + (t.shortName ? " (" + esc(t.shortName) + ")" : ""); }
 function readPassageInputs() {
   var bk = val("cmp-book") || cmpState.ref.book;
   var ch = parseInt(val("cmp-chap"), 10); var vs = parseInt(val("cmp-vs"), 10); var ve = parseInt(val("cmp-ve"), 10);
@@ -181,10 +227,9 @@ function cmpRefLabel() { var r = cmpState.ref; return bookName(r.book) + " " + r
 function renderCompare() {
   var r = cmpState.ref;
   var books = BOOKS.map(function (b) { return '<option value="' + b.code + '"' + (b.code === r.book ? " selected" : "") + '>' + esc(b.pt) + '</option>'; }).join("");
-  var langs = cmpTranslations ? uniqueLangs(cmpTranslations) : [];
-  var langSel = langs.map(function (l) { return '<option value="' + l.code + '"' + (l.code === cmpState.lang ? " selected" : "") + '>' + esc(l.name) + " (" + l.code + ")</option>"; }).join("");
+  var langSeg = APP_LANGS.map(function (l) { return '<button class="cmp-lang' + (cmpState.lang === l.code ? " on" : "") + '" data-cmplang="' + l.code + '">' + l.label + '</button>'; }).join("");
   var vers = cmpVersionsForLang();
-  var verChips = cmpTranslations ? (vers.length ? vers.map(function (t) { var on = cmpState.picks.indexOf(t.id) >= 0; return '<label class="cmp-ver' + (on ? " on" : "") + '"><input type="checkbox" data-cmpver="' + t.id + '"' + (on ? " checked" : "") + '> ' + esc(t.shortName || t.id) + '</label>'; }).join("") : '<span class="muted">Sem versões nesta língua.</span>') : '<span class="muted">Carregando versões…</span>';
+  var verChips = cmpTranslations ? (vers.length ? vers.map(function (t) { var on = cmpState.picks.indexOf(t.id) >= 0; return '<label class="cmp-ver' + (on ? " on" : "") + '"><input type="checkbox" data-cmpver="' + t.id + '"' + (on ? " checked" : "") + '> ' + cmpVerLabel(t) + '</label>'; }).join("") : '<span class="muted">Sem versões de domínio público nesta língua.</span>') : '<span class="muted">Carregando versões…</span>';
 
   var cols = cmpState.picks.length ? '<div class="cmp-cols" style="grid-template-columns:repeat(' + Math.min(cmpState.picks.length, 3) + ',1fr)">' + cmpState.picks.map(function (id) {
     var tr = (cmpTranslations || []).find(function (t) { return t.id === id; }) || { id: id, shortName: id };
@@ -193,17 +238,18 @@ function renderCompare() {
     if (!res || res.status === "loading") inner = '<div class="muted">Carregando…</div>';
     else if (res.status === "error") inner = '<div class="muted">' + esc(res.error || "Não foi possível carregar.") + '</div>';
     else inner = '<div class="cmp-text">' + res.verses.map(function (v) { return '<sup style="color:var(--text-2);margin-right:3px">' + v.n + '</sup>' + esc(v.text); }).join(" ") + '</div><div class="cmp-actions"><button class="link" data-cmpcopy="' + id + '">Copiar</button>' + (state.sermonEdit ? '<button class="link" data-cmpadd="' + id + '">Adicionar ao sermão</button>' : "") + '</div>';
-    return '<div class="cmp-col"><div class="cmp-colh">' + esc(tr.name || tr.shortName || id) + '</div>' + inner + '</div>';
+    return '<div class="cmp-col"><div class="cmp-colh">' + cmpVerLabel(tr) + '</div>' + inner + '</div>';
   }).join("") + '</div>' : '<div class="empty">Escolha ao menos uma versão e clique em Comparar.</div>';
 
   var html = '<div class="ph"><h3>Comparar Bíblia</h3><button class="link" id="cmp-close" style="margin-left:auto">Fechar</button></div>' +
-    '<div class="msub">Versões de um catálogo de uso livre. Passagem: <b>' + esc(cmpRefLabel()) + '</b></div>' +
+    '<div class="msub">Versões de domínio público. Passagem: <b>' + esc(cmpRefLabel()) + '</b></div>' +
     '<div class="cmp-sel"><select id="cmp-book">' + books + '</select>' +
-    '<input id="cmp-chap" type="number" min="1" placeholder="cap" value="' + (r.chapter || "") + '" style="width:70px">' +
-    '<input id="cmp-vs" type="number" min="1" placeholder="v. ini" value="' + (r.verse_start || "") + '" style="width:70px">' +
-    '<input id="cmp-ve" type="number" min="1" placeholder="v. fim" value="' + (r.verse_end || "") + '" style="width:70px">' +
-    '<select id="cmp-lang">' + langSel + '</select>' +
-    '<button class="btn" id="cmp-go">Comparar</button></div>' +
+    '<input id="cmp-chap" type="number" min="1" placeholder="cap" value="' + (r.chapter || "") + '" style="width:64px">' +
+    '<input id="cmp-vs" type="number" min="1" placeholder="v. ini" value="' + (r.verse_start || "") + '" style="width:64px">' +
+    '<input id="cmp-ve" type="number" min="1" placeholder="v. fim" value="' + (r.verse_end || "") + '" style="width:64px">' +
+    '<button class="btn" id="cmp-go">Comparar</button>' +
+    '<button class="link" id="cmp-wholechap">Capítulo inteiro</button>' +
+    '<span style="flex:1"></span><span class="cmp-langseg">' + langSeg + '</span></div>' +
     '<div class="cmp-vers">' + verChips + '</div>' + cols;
 
   openModal(html);
@@ -222,13 +268,12 @@ function runCompare() {
 }
 function openCompare(ref) {
   cmpState.ref = ref ? { book: ref.book, chapter: ref.chapter, verse_start: ref.verse_start, verse_end: ref.verse_end } : { book: "JHN", chapter: 3, verse_start: 16, verse_end: null };
-  cmpState.results = {};
+  cmpState.lang = appLangCode();  // idioma do usuário; PT-BR vê só português, etc.
+  cmpState.picks = []; cmpState.results = {};
   renderCompare();
   listTranslations().then(function (list) {
     cmpTranslations = (list || []).filter(isDisplayable);
-    var langs = uniqueLangs(cmpTranslations);
-    if (!langs.some(function (l) { return l.code === cmpState.lang; })) cmpState.lang = langs.length ? langs[0].code : "";
-    if (!cmpState.picks.length) cmpState.picks = cmpVersionsForLang().slice(0, 2).map(function (t) { return t.id; });
+    cmpState.picks = cmpVersionsForLang().slice(0, 2).map(function (t) { return t.id; });
     runCompare();
   }).catch(function () { cmpTranslations = []; renderCompare(); });
 }
@@ -306,26 +351,25 @@ function opts(map, sel) { return Object.keys(map).map(function (k) { return '<op
 function sermonEditor(id) {
   var isNew = id === "__new__";
   var s = isNew ? blankSermon() : ((state.sermons || []).find(function (x) { return x.id === id; }) || blankSermon());
-  editingId = isNew ? null : s.id; creating = false; clearTimeout(saveTimer);
+  editingId = isNew ? null : s.id; creating = false; focusNew = isNew; clearTimeout(saveTimer);
   var c = s.content || {};
 
-  var rail = '<aside class="sd-rail"><div class="sd-rail-h">Estrutura</div>' +
-    '<button class="sd-nav" data-goto="sec-top">Título &amp; ideia</button>' +
-    SECTIONS.map(function (sec) { return '<button class="sd-nav" data-goto="sec-' + sec.key + '">' + sec.label + '</button>'; }).join("") +
-    '</aside>';
-
-  var blocks = SECTIONS.map(function (sec) {
-    return '<section class="sd-block" id="sec-' + sec.key + '"><div class="sd-h">' + sec.label + '</div>' +
-      '<textarea id="' + sec.id + '" class="sd-doc" placeholder="' + sec.ph + '">' + esc(c[sec.key] || "") + '</textarea></section>';
-  }).join("");
+  // Só as seções opcionais COM conteúdo aparecem ao abrir; o resto vira "+ Seção".
+  var present = OPTIONAL.filter(function (sec) { return (c[sec.key] || "").trim(); });
+  var blocks = present.map(function (sec) { return sectionBlockHtml(sec, c[sec.key]); }).join("");
+  var addBtns = OPTIONAL.filter(function (sec) { return !(c[sec.key] || "").trim(); })
+    .map(function (sec) { return '<button class="sd-addbtn" data-addsec="' + sec.key + '">+ ' + sec.label + '</button>'; }).join("");
 
   var canvas = '<main class="sd-canvas">' +
-    '<div id="sec-top">' +
     '<input id="se-title" class="sd-title" value="' + esc(s.title) + '" placeholder="Sem título">' +
     '<div class="sd-subhead">' +
     '<input id="se-passage" class="sd-passage" value="' + esc(s.main_passage) + '" placeholder="Passagem principal — ex.: John 10:1-18">' +
     '<input id="se-bigidea" class="sd-bigidea" value="' + esc(s.big_idea) + '" placeholder="Big idea — a ideia central em uma frase">' +
-    '</div></div>' + blocks + '</main>';
+    '</div>' +
+    '<textarea id="se-notes" class="sd-doc sd-body-doc" placeholder="Comece a escrever…">' + esc(c.notes || "") + '</textarea>' +
+    '<div id="sd-sections">' + blocks + '</div>' +
+    '<div id="sd-addsec" class="sd-addsec">' + addBtns + '</div>' +
+    '</main>';
 
   // Propriedades (drawer): metadados fora do caminho de escrita.
   var campusSel = '<select id="se-campus">' + state.institution.campuses.map(function (cp) { return '<option' + (s.campus === cp ? " selected" : "") + '>' + esc(cp) + '</option>'; }).join("") + '</select>';
@@ -349,7 +393,7 @@ function sermonEditor(id) {
 
   var bar = '<div class="sd-bar"><button class="link" id="sermonBack">&#8592; Biblioteca</button><span class="sd-status" id="sd-status">' + (isNew ? "Novo sermão" : "Salvo") + '</span><span style="flex:1"></span><button class="btn ghost sm" id="sd-asst-toggle">Escrituras</button><button class="btn ghost sm" id="sd-props-open">Propriedades</button></div>';
 
-  return '<div class="sd-editor">' + bar + '<div class="sd-body" id="sd-body-el">' + rail + canvas + asst + '</div>' + drawer + '</div>';
+  return '<div class="sd-editor">' + bar + '<div class="sd-body" id="sd-body-el">' + canvas + asst + '</div>' + drawer + '</div>';
 }
 
 // Workspace da série: visão/tema, escrituras-chave (derivadas das passagens reais
@@ -412,6 +456,8 @@ document.addEventListener("input", function (e) {
   var t = e.target; if (!t || !t.id || !state.sermonEdit) return;
   if (t.id.indexOf("se-") !== 0) return;
   if (t.classList && t.classList.contains("sd-doc")) { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }
+  // Chips de referência ao vivo (a passagem sempre conta; seções, se o toggle estiver on).
+  if (gid("sd-detected") && (t.id === "se-passage" || state.scriptureOn !== false)) refreshDetected();
   scheduleSave();
 });
 
@@ -421,8 +467,7 @@ document.addEventListener("change", function (e) {
   if (t && t.id === "sermon-fseries") { state.sermonFilter = Object.assign({}, state.sermonFilter, { series: t.value || null }); save(); render(); return; }
   // Toggle de reconhecimento de escritura (visão do dono: desligável).
   if (t && t.id === "sd-recog") { state.scriptureOn = t.checked; save(); refreshDetected(); scheduleSave(); return; }
-  // Comparação: livro/língua/versões.
-  if (t && t.id === "cmp-lang") { readPassageInputs(); cmpState.lang = t.value; cmpState.picks = cmpVersionsForLang().slice(0, 2).map(function (x) { return x.id; }); cmpState.results = {}; renderCompare(); return; }
+  // Comparação: livro/versões (a língua é botão, tratada no click).
   if (t && t.id === "cmp-book") { readPassageInputs(); renderCompare(); return; }
   if (t && t.getAttribute && t.getAttribute("data-cmpver")) { var vid = t.getAttribute("data-cmpver"); readPassageInputs(); var idx = cmpState.picks.indexOf(vid); if (idx >= 0) cmpState.picks.splice(idx, 1); else cmpState.picks.push(vid); renderCompare(); return; }
   // Propriedades (status/visibilidade/campus/série/data) → autosave.
@@ -430,18 +475,22 @@ document.addEventListener("change", function (e) {
 });
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-goto],[data-refi],[data-mapbook],[data-cmpcopy],[data-cmpadd],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#sd-asst-toggle,#sd-compare,#sd-compare-open,#cmp-close,#cmp-go,#openMap,#mapBack,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
+  var t = e.target.closest ? e.target.closest("[data-sermon],[data-sermonstatus],[data-seriesdetail],[data-series-remove],[data-refi],[data-mapbook],[data-cmpcopy],[data-cmpadd],[data-addsec],[data-secdel],[data-cmplang],#newSermon,#sermonBack,#sd-props-open,#sd-props-close,#sd-drawer-ov,#sd-asst-toggle,#sd-compare,#sd-compare-open,#sd-readchap,#cmp-close,#cmp-go,#cmp-wholechap,#openMap,#mapBack,#newSeries,#seriesBack,#editSeries,#series-add-btn") : null; if (!t) return;
   if (t.getAttribute("data-series-remove")) { e.stopPropagation(); setSermonSeries(t.getAttribute("data-series-remove"), null).then(function () { render(); }); return; }
   if (t.getAttribute("data-cmpcopy")) { var cc = cmpState.results[t.getAttribute("data-cmpcopy")]; if (cc && cc.status === "ok" && navigator.clipboard) navigator.clipboard.writeText(cmpRefLabel() + "\n" + cc.verses.map(function (v) { return v.n + " " + v.text; }).join(" ")); return; }
   if (t.getAttribute("data-cmpadd")) { cmpAddToSermon(t.getAttribute("data-cmpadd")); return; }
-  if (t.getAttribute("data-goto")) { var el = gid(t.getAttribute("data-goto")); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (t.getAttribute("data-addsec")) { addSection(t.getAttribute("data-addsec")); return; }
+  if (t.getAttribute("data-secdel")) { removeSection(t.getAttribute("data-secdel")); return; }
+  if (t.getAttribute("data-cmplang")) { readPassageInputs(); cmpState.lang = t.getAttribute("data-cmplang"); cmpState.picks = cmpVersionsForLang().slice(0, 2).map(function (x) { return x.id; }); cmpState.results = {}; renderCompare(); return; }
   if (t.getAttribute("data-refi")) { var ri = parseInt(t.getAttribute("data-refi"), 10); if (detectedRefs[ri]) openScripturePanel(detectedRefs[ri]); return; }
   if (t.getAttribute("data-mapbook")) { var mb = t.getAttribute("data-mapbook"); state.scriptureMapBook = state.scriptureMapBook === mb ? null : mb; save(); render(); return; }
   if (t.id === "sd-asst-toggle") { toggleAssistant(); return; }
   if (t.id === "sd-compare") { openCompare(panelRef); return; }
   if (t.id === "sd-compare-open") { openCompare(panelRef); return; }
+  if (t.id === "sd-readchap") { panelWhole = !panelWhole; t.textContent = panelWhole ? "Só o versículo" : "Capítulo inteiro"; renderPanelText(); return; }
   if (t.id === "cmp-close") { closeModal(); return; }
   if (t.id === "cmp-go") { runCompare(); return; }
+  if (t.id === "cmp-wholechap") { readPassageInputs(); var vsEl = gid("cmp-vs"), veEl = gid("cmp-ve"); if (vsEl) vsEl.value = ""; if (veEl) veEl.value = ""; runCompare(); return; }
   if (t.id === "openMap") { state.scriptureMap = true; state.scriptureMapBook = null; save(); render(); return; }
   if (t.id === "mapBack") { state.scriptureMap = false; state.scriptureMapBook = null; save(); render(); return; }
   if (t.id === "sd-props-open") { showDrawer(true); return; }

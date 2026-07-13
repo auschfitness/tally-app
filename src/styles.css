@@ -111,10 +111,13 @@
   .cmp-ver{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-2);border:1px solid var(--border);border-radius:20px;padding:5px 11px;cursor:pointer}
   .cmp-ver.on{background:rgba(43,92,230,.12);color:var(--blue);border-color:transparent}
   .cmp-ver input{width:auto}
+  .cmp-langseg{display:inline-flex;gap:2px;background:var(--surface-2);border-radius:8px;padding:3px}
+  .cmp-lang{border:none;background:transparent;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:700;color:var(--text-2)}
+  .cmp-lang.on{background:var(--surface);color:var(--blue);box-shadow:0 1px 2px rgba(0,0,0,.08)}
   .cmp-cols{display:grid;gap:12px}
   .cmp-col{border:1px solid var(--border);border-radius:12px;padding:13px;background:var(--surface-2)}
   .cmp-colh{font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px}
-  .cmp-text{font-size:14px;line-height:1.65;color:var(--text)}
+  .cmp-text{font-size:14px;line-height:1.65;color:var(--text);max-height:340px;overflow:auto}
   .cmp-actions{display:flex;gap:12px;margin-top:10px}
   @media(max-width:720px){.cmp-cols{grid-template-columns:1fr !important}}
   .modal h3{font-size:18px;font-weight:600;margin-bottom:4px;color:var(--text)}
@@ -130,23 +133,27 @@
   .sd-editor{max-width:1180px;margin:0 auto}
   .sd-bar{display:flex;align-items:center;gap:12px;padding:2px 2px 16px}
   .sd-status{font-size:12px;color:var(--text-2)}
-  .sd-body{display:grid;grid-template-columns:186px minmax(0,1fr);gap:28px;align-items:start}
-  .sd-body.asst{grid-template-columns:186px minmax(0,1fr) 320px}
-  .sd-rail{position:sticky;top:70px;display:flex;flex-direction:column;gap:2px}
-  .sd-rail-h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);margin:0 0 8px;padding-left:10px}
-  .sd-nav{text-align:left;border:none;background:transparent;color:var(--text-2);font-size:13px;font-weight:500;padding:7px 10px;border-radius:8px;width:100%}
-  .sd-nav:hover{background:var(--surface-2);color:var(--text)}
-  .sd-canvas{max-width:760px;width:100%;margin:0 auto;padding:2px 4px 90px}
+  .sd-body{display:block}
+  .sd-body.asst{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:26px;align-items:start}
+  .sd-canvas{width:100%;max-width:none;margin:0;padding:2px 2px 90px}
   .sd-title{width:100%;border:none;background:transparent;color:var(--text);font-size:34px;font-weight:600;line-height:1.2;font-family:inherit;padding:0;margin:0 0 10px}
   .sd-title::placeholder{color:var(--text-2);opacity:.45}
   .sd-title:focus,.sd-passage:focus,.sd-bigidea:focus,.sd-doc:focus{outline:none}
   .sd-subhead{display:flex;flex-direction:column;gap:5px;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border)}
   .sd-passage{border:none;background:transparent;font-family:inherit;font-size:15px;font-weight:600;color:var(--blue);padding:0;width:100%}
   .sd-bigidea{border:none;background:transparent;font-family:inherit;font-size:15px;color:var(--text-2);font-style:italic;padding:0;width:100%}
-  .sd-block{margin-bottom:30px}
+  .sd-block{margin-top:28px}
+  .sd-sech{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .sd-seclabel{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+  .sd-secdel{opacity:0;transition:opacity .12s}
+  .sd-block:hover .sd-secdel{opacity:.7}
   .sd-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px}
-  .sd-doc{display:block;width:100%;border:none;background:transparent;font-family:inherit;font-size:15.5px;line-height:1.7;color:var(--text);padding:0;resize:none;overflow:hidden;min-height:28px}
+  .sd-doc{display:block;width:100%;border:none;background:transparent;font-family:inherit;font-size:15.5px;line-height:1.75;color:var(--text);padding:0;resize:none;overflow:hidden;min-height:28px}
+  .sd-body-doc{min-height:300px;margin-top:4px}
   .sd-doc::placeholder{color:var(--text-2);opacity:.5}
+  .sd-addsec{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;border-top:1px dashed var(--border);padding-top:18px}
+  .sd-addbtn{border:1px solid var(--border);background:transparent;color:var(--text-2);border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:600}
+  .sd-addbtn:hover{color:var(--text);border-color:var(--blue)}
   .sd-props .field{margin-bottom:14px}
   .sd-asst{position:sticky;top:70px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;max-height:calc(100vh - 90px);overflow:auto}
   .sd-recog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);font-weight:500}

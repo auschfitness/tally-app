@@ -61,6 +61,10 @@ export function fetchPassage(ref, translationId) {
   if (!ref || !ref.book || !ref.chapter) return Promise.resolve({ ok: false, error: "Referência inválida." });
   var tr = translationId;
   var start = tr ? Promise.resolve(tr) : defaultTranslation().then(function (d) { return d && d.id; });
+  // Nome amigável da tradução (do metadado da API): "Bíblia Livre (BLJ)".
+  var nameFor = listTranslations().then(function (list) {
+    return function (id) { var m = (list || []).filter(function (x) { return x.id === id; })[0]; return m ? (m.name + (m.shortName ? " (" + m.shortName + ")" : "")) : id; };
+  }).catch(function () { return function (id) { return id; }; });
   return start.then(function (trId) {
     if (!trId) return { ok: false, error: "Nenhuma tradução disponível agora." };
     var key = trId + "/" + ref.book + "/" + ref.chapter;
@@ -69,15 +73,16 @@ export function fetchPassage(ref, translationId) {
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .catch(function (e) { delete _chapterCache[key]; throw e; });
     }
-    return _chapterCache[key].then(function (data) {
+    return Promise.all([_chapterCache[key], nameFor]).then(function (arr) {
+      var data = arr[0], trName = arr[1](trId);
       var all = versesFrom(data);
       var vs = ref.verse_start, ve = ref.verse_end || ref.verse_start;
       var picked = all.filter(function (v) {
         if (!vs) return true;                 // capítulo inteiro
         return v.number >= vs && v.number <= ve;
       }).map(function (v) { return { n: v.number, text: verseText(v) }; });
-      if (!picked.length) return { ok: false, error: "Passagem não encontrada nesta tradução.", translationId: trId };
-      return { ok: true, translationId: trId, verses: picked, text: picked.map(function (p) { return p.text; }).join(" ") };
+      if (!picked.length) return { ok: false, error: "Passagem não encontrada nesta tradução.", translationId: trId, translationName: trName };
+      return { ok: true, translationId: trId, translationName: trName, verses: picked, text: picked.map(function (p) { return p.text; }).join(" ") };
     });
   }).catch(function () {
     return { ok: false, error: "Não foi possível carregar a versão agora." };
