@@ -30,8 +30,8 @@ globalThis.getComputedStyle = window.getComputedStyle;
 // afirma que não lança e que contém os elementos-chave. As demais telas seguem
 // na paridade normal até serem tocadas. Trocamos "idêntica ao original" por
 // "renderiza certo e tem o que precisa ter" — o teste adequado pra uma tela que evolui.
-// Graduadas até agora: journey (Journey Map), inbox (Group Signals da Fase 4).
-const VIEWS = ["dashboard", "people", "care", "groups", "coord", "prayer", "finance", "settings"];
+// Graduadas até agora: journey (Journey Map), inbox (Group Signals), dashboard (Community Insights da Fase 6).
+const VIEWS = ["people", "care", "groups", "coord", "prayer", "finance", "settings"];
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 // --- MONÓLITO: extrai o script inline do original e roda numa função ---
@@ -128,7 +128,11 @@ const journeyView = await import("../src/views/journey.js");
 const inboxView = await import("../src/views/inbox.js");
 const groupsView = await import("../src/views/groups.js");
 const studyView = await import("../src/views/study.js");
+const homeView = await import("../src/views/home.js");
 const FEATURE_VIEWS = [
+  // dashboard graduou na Fase 6: ganhou Community Insights + movimento de Journey/Groups.
+  ["dashboard", () => { const s = clone(seedData); s.view = "dashboard"; setState(s); return homeView.viewDashboard(); },
+    ["Hoje no Tally", "Comunidade", "sem comunidade", "Pessoas sem comunidade"]],
   ["journey", () => { const s = clone(seedData); s.view = "journey"; setState(s); return journeyView.viewJourney(); },
     ["Journey Map", 'data-jstage="first_visit"', 'data-jstage="leadership"', "Primeira visita", "Liderança", "jmap-row"]],
   // inbox graduou na Fase 4: passou a emitir Group Signals (ex.: grupos sem líder no seed).

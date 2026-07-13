@@ -3,7 +3,7 @@
 
 import { state } from "../core/state.js";
 import { esc, initials, agoLabel, isThisMonth } from "../core/helpers.js";
-import { inCampus, riskDist, attendanceSeries, careReasons, groupsHealth, activeSignals } from "../core/derived.js";
+import { inCampus, riskDist, attendanceSeries, careReasons, groupsHealth, activeSignals, communityInsights } from "../core/derived.js";
 
 export function viewDashboard(){
   var ppl=state.people.filter(inCampus);var d=riskDist();var total=d.em+d.at+d.ri;
@@ -19,7 +19,19 @@ export function viewDashboard(){
   var carehead=rf?('Filtrando: '+rl[rf]+' <button class="link" id="clearRisk">limpar</button>'):'Pessoas que precisam de atenção';
   var gs=(typeof groupsHealth==="function")?groupsHealth().slice(0,3):[];
   var grows=gs.map(function(x){return '<button class="gcard" data-groupdetail="'+esc(x.name)+'" style="width:100%;margin-bottom:9px"><div class="gc-top"><span class="gc-name">'+esc(x.name)+'</span><span class="hb '+x.band+'">'+x.rate+'%</span></div><div class="gbar"><i class="'+x.band+'" style="width:'+x.rate+'%"></i></div></button>';}).join("")||'<div class="empty">Sem grupos.</div>';
-  return '<div style="display:flex;align-items:baseline;margin-bottom:16px"><h1 class="page">Bom te ver, '+esc(state.account.name||"")+'</h1><span class="sub" style="margin:0 0 0 12px">'+esc(state.activeCampus)+' · últimas 8 semanas</span></div>'+todayStrip()+'<div class="row2"><div class="panel"><div class="ph"><h3>Frequência</h3><span class="muted" style="margin-left:auto">'+cap+'</span></div><div class="chartbox"><canvas id="attChart"></canvas></div></div><div class="panel"><div class="ph"><h3>Risco pastoral</h3></div><div class="donutwrap"><canvas id="riskDonut"></canvas><div class="donutctr"><b>'+total+'</b><span>pessoas</span></div></div><div class="leg"><span><i style="background:#1FA97A"></i>Em dia · '+d.em+'</span><span><i style="background:#E8833A"></i>Atenção · '+d.at+'</span><span><i style="background:#EA5B4C"></i>Em risco · '+d.ri+'</span></div></div></div><div class="row2"><div class="panel"><div class="ph"><h3>Care Radar</h3><span class="muted" style="margin-left:auto">'+carehead+'</span></div>'+care+'</div><div class="panel"><div class="ph"><h3>Grupos em atenção</h3></div>'+grows+'</div></div>'+celebRow();
+  return '<div style="display:flex;align-items:baseline;margin-bottom:16px"><h1 class="page">Bom te ver, '+esc(state.account.name||"")+'</h1><span class="sub" style="margin:0 0 0 12px">'+esc(state.activeCampus)+' · últimas 8 semanas</span></div>'+todayStrip()+'<div class="row2"><div class="panel"><div class="ph"><h3>Frequência</h3><span class="muted" style="margin-left:auto">'+cap+'</span></div><div class="chartbox"><canvas id="attChart"></canvas></div></div><div class="panel"><div class="ph"><h3>Risco pastoral</h3></div><div class="donutwrap"><canvas id="riskDonut"></canvas><div class="donutctr"><b>'+total+'</b><span>pessoas</span></div></div><div class="leg"><span><i style="background:#1FA97A"></i>Em dia · '+d.em+'</span><span><i style="background:#E8833A"></i>Atenção · '+d.at+'</span><span><i style="background:#EA5B4C"></i>Em risco · '+d.ri+'</span></div></div></div><div class="row2"><div class="panel"><div class="ph"><h3>Care Radar</h3><span class="muted" style="margin-left:auto">'+carehead+'</span></div>'+care+'</div><div class="panel"><div class="ph"><h3>Grupos em atenção</h3></div>'+grows+'</div></div>'+communityPanel()+celebRow();
+}
+
+// Painel de Comunidade (Fase 6): padrões úteis de conexão — dado real, sem grafo.
+export function communityPanel(){
+  var ci=communityInsights();
+  var pat='<div class="li"><div><b>'+ci.inGroup+' de '+ci.total+'</b> em algum grupo <span class="muted">('+ci.connRate+'% conectados)</span></div></div>';
+  if(ci.noGroup.length)pat+='<div class="li"><div><b class="neg">'+ci.noGroup.length+'</b> sem comunidade</div></div>';
+  if(ci.groupsNoNew.length)pat+='<div class="li"><div><b>'+ci.groupsNoNew.length+'</b> grupo(s) sem novatos <span class="muted">(30 dias)</span></div></div>';
+  if(ci.groupsNoLeader.length)pat+='<div class="li"><div><b>'+ci.groupsNoLeader.length+'</b> grupo(s) sem líder</div></div>';
+  pat+='<div class="li"><div>'+(ci.movement30>0?('<b>'+ci.movement30+'</b> mudança(s) de estágio nos últimos 30 dias'):'<span class="muted">Sem movimento de jornada registrado ainda.</span>')+'</div></div>';
+  var noGroupList=ci.noGroup.slice(0,6).map(function(p){var vis=(p.relationship&&p.relationship.indexOf("visitor")===0);return '<div class="li"><div class="av c">'+initials(p.name)+'</div><div><div><b>'+esc(p.name)+'</b></div><div class="meta">sem grupo'+(vis?' · visitante':'')+'</div></div><div class="right"><button class="btn ghost sm" data-stick="'+p.id+'">Abrir</button></div></div>';}).join("")||'<div class="empty">Todo mundo está em algum grupo.</div>';
+  return '<div class="row2" style="margin-top:16px"><div class="panel"><div class="ph"><h3>Comunidade</h3><span class="muted" style="margin-left:auto">onde as relações acontecem</span></div>'+pat+'</div><div class="panel"><div class="ph"><h3>Pessoas sem comunidade</h3></div>'+noGroupList+'</div></div>';
 }
 
 export function celebRow(){
@@ -34,5 +46,6 @@ export function todayStrip(){
   var celeb=activeSignals().filter(function(s){return s.level==="celebration";}).length;
   var gatt=(typeof groupsHealth==="function"?groupsHealth():[]).filter(function(g){return g.band!=="healthy";}).length;
   var ans=(state.prayers||[]).filter(function(p){return p.answered&&p.answeredDate&&isThisMonth(p.answeredDate);}).length;
-  return '<div class="panel" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap;align-items:center"><div class="mi-k">Hoje no Tally</div><div><b style="color:var(--coral);font-size:16px">'+care+'</b> <span class="muted">precisam de follow-up</span></div><div><b style="color:#E8833A;font-size:16px">'+gatt+'</b> <span class="muted">grupos em atenção</span></div><div><b style="color:#8b74e8;font-size:16px">'+celeb+'</b> <span class="muted">avançaram</span></div><div><b style="color:var(--green);font-size:16px">'+ans+'</b> <span class="muted">orações respondidas</span></div></div>';
+  var noComm=state.people.filter(inCampus).filter(function(p){return !p.archived&&!p.group;}).length;
+  return '<div class="panel" style="margin-bottom:16px;display:flex;gap:28px;flex-wrap:wrap;align-items:center"><div class="mi-k">Hoje no Tally</div><div><b style="color:var(--coral);font-size:16px">'+care+'</b> <span class="muted">precisam de follow-up</span></div><div><b style="color:#E8833A;font-size:16px">'+gatt+'</b> <span class="muted">grupos em atenção</span></div><div><b style="color:var(--blue);font-size:16px">'+noComm+'</b> <span class="muted">sem comunidade</span></div><div><b style="color:#8b74e8;font-size:16px">'+celeb+'</b> <span class="muted">avançaram</span></div><div><b style="color:var(--green);font-size:16px">'+ans+'</b> <span class="muted">orações respondidas</span></div></div>';
 }

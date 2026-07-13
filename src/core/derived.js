@@ -95,6 +95,23 @@ export function journeyMovement(months){
   return buckets;
 }
 
+// --- Community Insights (Step 4 · Fase 6) — só padrões com dado real. ---
+// Conexão (quem está em grupo), pessoas sem comunidade, grupos sem novatos/sem
+// líder, e movimento de jornada dos últimos 30 dias. Sem grafo, sem inventar.
+export function communityInsights(){
+  var ppl=(state.people||[]).filter(inCampus).filter(function(p){return !p.archived;});
+  var noGroup=ppl.filter(function(p){return !p.group;});
+  var inGroup=ppl.length-noGroup.length;
+  var connRate=ppl.length?Math.round(inGroup/ppl.length*100):0;
+  var groups=(typeof groupsHealth==="function")?groupsHealth():[];
+  var groupsNoNew=groups.filter(function(g){return (g.newMembers||0)===0;});
+  var groupsNoLeader=groups.filter(function(g){return g.noLeader;});
+  var t=today();
+  var evs=(state.journey&&state.journey.events)?state.journey.events:[];
+  var movement30=evs.filter(function(e){return e.occurredAt&&(t-new Date(e.occurredAt))/(1000*60*60*24)<=30;}).length;
+  return {total:ppl.length,inGroup:inGroup,noGroup:noGroup,connRate:connRate,groups:groups,groupsNoNew:groupsNoNew,groupsNoLeader:groupsNoLeader,movement30:movement30};
+}
+
 export function stickBy(id){return (state.people||[]).find(function(p){return p.id===id;});}
 export function householdOf(p){if(!p.household)return null;return (state.households||[]).find(function(h){return h.name===p.household;});}
 export function stickTimeline(p){
