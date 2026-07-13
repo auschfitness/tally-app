@@ -99,6 +99,9 @@ function addSection(key) {
   refreshAddMenu();
 }
 function removeSection(key) {
+  var sec = sectionMeta(key); if (!sec) return;
+  // Seção com conteúdo: confirma (não há desfazer). Vazia: remove na hora.
+  if (val(sec.id).trim() && !window.confirm("Remover esta seção e o conteúdo dela?")) return;
   var el = gid("sec-" + key); if (el && el.parentNode) el.parentNode.removeChild(el);
   refreshAddMenu(); scheduleSave();
 }
