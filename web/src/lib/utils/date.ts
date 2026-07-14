@@ -41,6 +41,12 @@ export function initials(name: string): string {
     .toUpperCase();
 }
 
+export function isThisMonth(iso: string | null | undefined): boolean {
+  if (!iso) return false;
+  const d = new Date(iso), n = today();
+  return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
+}
+
 export function ageFrom(birthDate: string | null | undefined): number | null {
   if (!birthDate) return null;
   return Math.floor((today().getTime() - new Date(birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25));

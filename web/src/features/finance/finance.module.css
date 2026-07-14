@@ -1,0 +1,14 @@
+/* Estilos da feature Finance (CSS Module). Barras de 6 meses (Entradas vs Saídas)
+   e saldo por fundo — migrados de styles.css preservando o visual. */
+
+.finbars { display: flex; align-items: flex-end; gap: 14px; height: 200px; padding-top: 8px; }
+.fincol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
+.finbarwrap { flex: 1; display: flex; align-items: flex-end; gap: 5px; width: 100%; justify-content: center; }
+.finbar { width: 16px; border-radius: 4px 4px 0 0; min-height: 2px; }
+.finIn { background: var(--green); }
+.finOut { background: var(--coral); }
+.finlbl { font-size: 11px; color: var(--text-2); }
+
+.fundrow { margin-bottom: 13px; }
+.fundlbl { display: flex; font-size: 13px; margin-bottom: 5px; color: var(--text); }
+.fundlbl span { margin-left: auto; font-weight: 600; }

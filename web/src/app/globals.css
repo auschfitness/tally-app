@@ -115,6 +115,13 @@ a { color: inherit; }
 .engbar > i.risk { background: var(--coral); }
 .engn { width: 30px; text-align: right; font-weight: 600; color: var(--text); font-size: 13px; }
 
+/* Barra de progresso/saldo (Grupos, Finance) */
+.gbar { height: 8px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+.gbar > i { display: block; height: 100%; border-radius: 6px; }
+.gbar > i.healthy { background: var(--green); }
+.gbar > i.attention { background: #E8833A; }
+.gbar > i.risk { background: var(--coral); }
+
 /* Listas (linha com avatar) */
 .li { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
 .li:last-child { border-bottom: none; }
