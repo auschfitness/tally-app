@@ -101,6 +101,20 @@ a { color: inherit; }
 .panel .ph { display: flex; align-items: center; margin-bottom: 12px; gap: 10px; }
 .panel h3 { font-size: 15px; font-weight: 600; color: var(--text); }
 
+/* Faixa de métricas + barras de engajamento (Sticks, Teams) */
+.ministrip { display: flex; gap: 22px; margin-bottom: 16px; flex-wrap: wrap; }
+.ministrip .mi-k { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-2); font-weight: 600; }
+.ministrip .mi-v { font-size: 20px; font-weight: 600; }
+.engrow { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 8px; transition: background var(--dur-micro) var(--ease); }
+.engrow:hover, .engrow.on { background: var(--surface-2); }
+.englbl { width: 78px; font-size: 13px; color: var(--text); }
+.engbar { flex: 1; height: 10px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+.engbar > i { display: block; height: 100%; border-radius: 6px; }
+.engbar > i.healthy { background: var(--green); }
+.engbar > i.attention { background: #E8833A; }
+.engbar > i.risk { background: var(--coral); }
+.engn { width: 30px; text-align: right; font-weight: 600; color: var(--text); font-size: 13px; }
+
 /* Listas (linha com avatar) */
 .li { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
 .li:last-child { border-bottom: none; }
