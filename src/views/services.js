@@ -109,11 +109,26 @@ function serviceDetailView(id) {
     (s.campus ? '<div class="field"><label>Campus</label><div>' + esc(s.campus) + '</div></div>' : '') +
     (s.description ? '<div class="field"><label>Sobre</label><div>' + esc(s.description) + '</div></div>' : '');
 
+  // Conexões (Fase 3): sermões pregados neste culto (Study) + times escalados (Teams).
+  var serm = (state.sermons || []).filter(function (x) { return x.service_id === id; });
+  var sermList = serm.map(function (x) {
+    return '<button class="li" data-svcsermon="' + x.id + '" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);cursor:pointer"><div style="flex:1"><b>' + esc(x.title || "(sem título)") + '</b>' + (x.main_passage ? ' <span class="muted">· ' + esc(x.main_passage) + '</span>' : '') + '</div></button>';
+  }).join("") || '<div class="empty">Nenhum sermão vinculado a este culto. Vincule no editor do sermão (Propriedades → Culto).</div>';
+
+  var assigns = (state.schedule || []).filter(function (a) { return a.service_id === id; });
+  var teamNames = {}; (state.teams || []).forEach(function (tm) { teamNames[tm.id] = tm.name; });
+  var svcPeople = {}; (state.people || []).forEach(function (p) { svcPeople[p.id] = p.name; });
+  var assignList = assigns.map(function (a) {
+    return '<div class="li"><div style="flex:1"><b>' + esc(teamNames[a.team_id] || "Time") + '</b>' + (a.role ? ' <span class="muted">· ' + esc(a.role) + '</span>' : '') + (a.stick_id ? ' <span class="muted">· ' + esc(svcPeople[a.stick_id] || "—") + '</span>' : '') + '</div></div>';
+  }).join("") || '<div class="empty">Nenhum time escalado para este culto ainda. A escala por time vive em Times › Escala.</div>';
+
   return '<button class="link" id="servicesBack">&#8592; Voltar aos cultos</button>' +
     '<div style="display:flex;align-items:flex-start;margin:10px 0 18px"><div><h1 class="page">' + esc(s.name || "(sem nome)") + '</h1><p class="sub" style="margin:0">' + esc(whenLabel(s)) + (s.type ? ' · ' + esc(s.type) : '') + (s.active ? '' : ' · Inativo') + '</p></div><button class="btn ghost" id="editService" data-service="' + id + '" style="margin-left:auto">Editar culto</button><button class="btn" id="serviceCheckin" data-service="' + id + '">Registrar presença</button></div>' +
     '<div class="panel" style="margin-bottom:16px">' + presence + '</div>' +
     '<div class="row2"><div class="panel"><div class="ph"><h3>Ordem do culto</h3><button class="btn ghost sm" id="addPlanItem" data-service="' + id + '" style="margin-left:auto">+ Item</button></div>' + planList + '</div>' +
-    '<div class="panel"><div class="ph"><h3>Presenças recentes</h3><span class="muted" style="margin-left:auto">' + sess.length + ' ocorrência' + (sess.length !== 1 ? 's' : '') + '</span></div>' + sessList + '<div style="margin-top:14px" class="ph"><h3>Sobre o culto</h3></div>' + info + '</div></div>';
+    '<div class="panel"><div class="ph"><h3>Presenças recentes</h3><span class="muted" style="margin-left:auto">' + sess.length + ' ocorrência' + (sess.length !== 1 ? 's' : '') + '</span></div>' + sessList + '<div style="margin-top:14px" class="ph"><h3>Sobre o culto</h3></div>' + info + '</div></div>' +
+    '<div class="row2" style="margin-top:16px"><div class="panel"><div class="ph"><h3>Ensino deste culto</h3><span class="muted" style="margin-left:auto">' + serm.length + ' sermã' + (serm.length === 1 ? 'o' : 'os') + '</span></div>' + sermList + '</div>' +
+    '<div class="panel"><div class="ph"><h3>Times escalados</h3></div>' + assignList + '</div></div>';
 }
 
 function planItemModal(serviceId, it) {
@@ -160,8 +175,9 @@ function serviceModal(s) {
 }
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-servicedetail],[data-planedit],[data-plandel],[data-planup],[data-plandown],#newService,#servicesBack,#editService,#serviceCheckin,#addPlanItem") : null; if (!t) return;
+  var t = e.target.closest ? e.target.closest("[data-servicedetail],[data-svcsermon],[data-planedit],[data-plandel],[data-planup],[data-plandown],#newService,#servicesBack,#editService,#serviceCheckin,#addPlanItem") : null; if (!t) return;
   if (t.getAttribute("data-servicedetail")) { state.serviceDetail = t.getAttribute("data-servicedetail"); save(); render(); return; }
+  if (t.getAttribute("data-svcsermon")) { state.view = "sermons"; state.studyTab = "library"; state.seriesDetail = null; state.scriptureMap = false; state.serviceDetail = null; state.sermonEdit = t.getAttribute("data-svcsermon"); save(); render(); return; }
   if (t.getAttribute("data-planedit")) { var pe = (state.planItems || []).find(function (x) { return x.id === t.getAttribute("data-planedit"); }); if (pe) planItemModal(pe.service_id, pe); return; }
   if (t.getAttribute("data-plandel")) { if (!window.confirm("Remover este item da ordem?")) return; deletePlanItem(t.getAttribute("data-plandel")).then(function () { render(); }); return; }
   if (t.getAttribute("data-planup")) { movePlanItem(t.getAttribute("data-planup"), -1).then(function () { render(); }); return; }

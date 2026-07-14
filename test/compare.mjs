@@ -182,7 +182,7 @@ const FEATURE_VIEWS = [
     const s = clone(seedData); s.view = "sermons";
     s.sermons = [{ id: "sm-e", title: "O Bom Pastor", subtitle: "", main_passage: "John 10:1-18", big_idea: "Ele conhece as ovelhas", status: "preparing", visibility: "church", campus: "", sermon_date: "", series_id: null, content: { outline: "1. A porta", notes: "", illustrations: "", application: "", prayer_response: "" } }];
     s.sermonEdit = "sm-e"; setState(s); return sermonsView.viewSermons();
-  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", 'id="se-notes"', "sd-body-doc", 'id="sec-outline"', 'data-addsec="prayer_response"', "Resposta de oração", 'id="sd-props-open"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"', 'id="sd-memory"', 'id="sd-related"', 'id="se-track"']],
+  }, ["sd-canvas", "sd-title", "O Bom Pastor", "John 10:1-18", 'id="se-notes"', "sd-body-doc", 'id="sec-outline"', 'data-addsec="prayer_response"', "Resposta de oração", 'id="sd-props-open"', 'id="sd-asst-toggle"', 'id="sd-recog"', 'id="sd-compare-open"', 'id="sd-memory"', 'id="sd-related"', 'id="se-track"', 'id="se-service"']],
   // study-notes (Study · Fase 4) — sub-nav do Estudo + lista de notas com escopo e
   // vínculos leves. Semeia uma nota compartilhada vinculada a um sermão.
   ["study-notes", () => {
@@ -355,6 +355,17 @@ const FEATURE_VIEWS = [
     s.serviceDetail = "sv-1";
     setState(s); return servicesView.viewServices();
   }, ["Ordem do culto", "Louvor", "Mensagem", "20 min", "Banda", 'data-planedit="pl-1"', 'data-plandown="pl-1"', 'id="addPlanItem"', "presentes (última)"]],
+  // service-connections (Step 6 · Fase 3) — sermão do Study + times escalados no culto.
+  ["service-connections", () => {
+    const s = clone(seedData); s.view = "services";
+    s.services = [{ id: "sv-1", name: "Culto de Domingo", type: "Domingo", campus: s.activeCampus, weekday: 0, start_time: "09:00", end_time: "", location: "", recurring_pattern: "weekly", description: "", active: true }];
+    s.sessions = [];
+    s.sermons = [{ id: "sm-1", title: "O Bom Pastor", main_passage: "João 10:1-18", service_id: "sv-1", content: {} }];
+    s.teams = [{ id: "tk-1", name: "Banda", serving_roles: [], status: "active" }];
+    s.schedule = [{ id: "as-1", team_id: "tk-1", role: "Vocal", stick_id: s.people[0].id, assignment_date: "2026-03-01", status: "confirmed", service_id: "sv-1", event_id: null, confirmed_at: null }];
+    s.serviceDetail = "sv-1";
+    setState(s); return servicesView.viewServices();
+  }, ["Ensino deste culto", 'data-svcsermon="sm-1"', "O Bom Pastor", "Times escalados", "Banda", "Vocal"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {

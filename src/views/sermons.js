@@ -41,7 +41,7 @@ function sectionMeta(key) { return SECTIONS.filter(function (s) { return s.key =
 
 function val(id) { var el = document.getElementById(id); return el ? el.value : ""; }
 function gid(id) { return document.getElementById(id); }
-function blankSermon() { return { id: null, title: "", subtitle: "", main_passage: "", big_idea: "", status: "draft", visibility: "church", campus: state.activeCampus, sermon_date: "", series_id: null, content: {} }; }
+function blankSermon() { return { id: null, title: "", subtitle: "", main_passage: "", big_idea: "", status: "draft", visibility: "church", campus: state.activeCampus, sermon_date: "", series_id: null, service_id: null, content: {} }; }
 function brDate(d) { return d ? d.split("-").reverse().join("/") : ""; }
 function seriesById(id) { return (state.series || []).find(function (x) { return x.id === id; }) || null; }
 function sermonById(id) { return (state.sermons || []).find(function (x) { return x.id === id; }) || null; }
@@ -64,7 +64,7 @@ function collectSermon() {
     main_passage: val("se-passage").trim(), big_idea: val("se-bigidea").trim(),
     status: val("se-status") || "draft", visibility: val("se-vis") || "church",
     campus: val("se-campus"), sermon_date: val("se-date"),
-    series_id: val("se-series") || null, content: content,
+    series_id: val("se-series") || null, service_id: val("se-service") || null, content: content,
   };
 }
 // Passagens do sermão atual: a passagem principal SEMPRE conta; o texto das seções
@@ -592,6 +592,7 @@ function sermonEditor(id) {
   var seriesSel = '<select id="se-series"><option value="">Sem série</option>' + (state.series || []).map(function (se) { return '<option value="' + se.id + '"' + (s.series_id === se.id ? " selected" : "") + '>' + esc(se.title || "(sem título)") + '</option>'; }).join("") + '</select>';
   var curTrack = (s.content && s.content.track_id) || "";
   var trackSel = '<select id="se-track"><option value="">Nenhuma</option>' + (state.tracks || []).map(function (tr) { return '<option value="' + tr.id + '"' + (curTrack === tr.id ? " selected" : "") + '>' + esc(tr.name || "(sem nome)") + '</option>'; }).join("") + '</select>';
+  var serviceSel = '<select id="se-service"><option value="">Nenhum</option>' + (state.services || []).map(function (sv) { return '<option value="' + sv.id + '"' + (s.service_id === sv.id ? " selected" : "") + '>' + esc(sv.name || "(sem nome)") + '</option>'; }).join("") + '</select>';
   var drawer = '<div class="drawer-ov" id="sd-drawer-ov" style="display:none"></div>' +
     '<aside class="drawer sd-props" id="sd-drawer" style="display:none"><div class="ph"><h3>Propriedades</h3><button class="link" id="sd-props-close" style="margin-left:auto">Fechar</button></div>' +
     '<div class="field"><label>Subtítulo</label><input id="se-subtitle" value="' + esc(s.subtitle) + '" placeholder="Opcional"></div>' +
@@ -599,6 +600,7 @@ function sermonEditor(id) {
     '<div class="mrow"><div class="field"><label>Campus</label>' + campusSel + '</div><div class="field"><label>Data</label><input id="se-date" type="date" value="' + esc(s.sermon_date) + '"></div></div>' +
     '<div class="field"><label>Série</label>' + seriesSel + '</div>' +
     '<div class="field"><label>Trilha (material de ensino)</label>' + trackSel + '</div>' +
+    '<div class="field"><label>Culto (pregado em)</label>' + serviceSel + '</div>' +
     '</aside>';
 
   // Notas e recursos vinculados a este sermão (conexão leve — Fase 4). Só quando já salvo.
