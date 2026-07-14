@@ -1,0 +1,15 @@
+/* Estilos da feature Coordenação (CSS Module). Avisos + tarefas. */
+.post { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 11px; }
+.pt { font-weight: 600; font-size: 13.5px; margin-bottom: 3px; color: var(--text); }
+.pb { font-size: 12.5px; color: var(--text-2); }
+.pm { font-size: 11px; color: var(--blue); margin-top: 8px; font-weight: 600; }
+
+.todo { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px 14px; }
+.t { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.t:last-child { border-bottom: none; }
+.tx { color: var(--text); }
+.tDone .tx { text-decoration: line-through; color: var(--text-2); }
+.cbx { width: 17px; height: 17px; border-radius: 5px; border: 2px solid var(--border); flex-shrink: 0; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; cursor: pointer; padding: 0; }
+.cbxDone { background: var(--green); border-color: var(--green); }
+.who { margin-left: auto; font-size: 11px; color: var(--blue); background: rgba(43, 92, 230, .12); padding: 2px 8px; border-radius: 20px; }
+.del { color: var(--text-2); border: none; background: none; font-size: 15px; line-height: 1; cursor: pointer; }
