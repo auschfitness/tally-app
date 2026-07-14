@@ -12,9 +12,11 @@ Branch `refactor/nextjs`. App Next em `tally-app/web/`. App JS legado intacto em
 - [x] **Fase 3 — Casca + design-system** — Sidebar/Topbar/ThemeToggle, tokens/estilos
   globais migrados de `styles.css`, responsivo. Falta ligar a troca de campus ativo
   (hoje estático no Topbar) — fica com a 1ª feature que precisar de estado de campus.
-- [~] **Fase 4 — Feature a feature** — em andamento (1/16).
-- [ ] **Fase 5 — Validação** — typecheck+lint+build já rodam verdes a cada marco;
-  falta E2E autenticado dos fluxos críticos (precisa de login real — ver abaixo).
+- [~] **Fase 4 — Feature a feature** — em andamento (2/16). **CHECKPOINT** após 2-3
+  features para revisão do orquestrador/dono (ver `.tmp/nextjs/CHECKPOINT.md`).
+- [ ] **Fase 5 — Validação** — typecheck+lint+**test**+build rodam verdes a cada marco
+  (24 testes de unidade). Falta integração+e2e autenticados (precisam da fixture do
+  orquestrador — ver `docs/testing.md`).
 - [ ] **Fase 6 — Limpeza** — só depois de equivalência: remover legado, reapontar
   Vercel para `web/`, atualizar docs.
 
@@ -22,7 +24,9 @@ Branch `refactor/nextjs`. App Next em `tally-app/web/`. App JS legado intacto em
 - [x] **Sticks** — lista + composição/engajamento + filtros/busca (URL) + cadastro/
   edição/arquivar contra `sticks`. Pendências documentadas em `features/sticks/README.md`
   (perfil/timeline, milestones, check-in, coluna Sinais, eventos de timeline de grupo).
-- [ ] Prayer, Finance (repos limpos; bom próximo passo)
+- [x] **Prayer** — mural + nuvem semântica + filtro + orando/respondida/recolocar + novo
+  pedido, contra `prayer_requests`. Pendências em `features/prayer/README.md`.
+- [ ] Finance (próximo — repo limpo)
 - [ ] Groups, Journey
 - [ ] Teams, Services, Events, Calendar
 - [ ] Study/Sermons, Tracks
