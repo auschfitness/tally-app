@@ -351,9 +351,9 @@ function libraryBody() {
   // Filtros da Library.
   var statusChips = '<div class="filtchips"><button class="fchip' + (!f.status ? " on" : "") + '" data-sermonstatus="__all__">Todos</button>' +
     ["draft", "preparing", "ready", "preached", "archived"].map(function (st) { return '<button class="fchip' + (f.status === st ? " on" : "") + '" data-sermonstatus="' + st + '">' + STATUS_LBL[st] + '</button>'; }).join("") + '</div>';
-  var seriesFilt = '<select id="sermon-fseries" style="margin-left:auto"><option value="">Todas as séries</option><option value="__none__"' + (f.series === "__none__" ? " selected" : "") + '>Sem série</option>' +
+  var seriesFilt = '<select id="sermon-fseries" class="study-select" style="margin-left:auto"><option value="">Todas as séries</option><option value="__none__"' + (f.series === "__none__" ? " selected" : "") + '>Sem série</option>' +
     series.map(function (se) { return '<option value="' + se.id + '"' + (f.series === se.id ? " selected" : "") + '>' + esc(se.title || "(sem título)") + '</option>'; }).join("") + '</select>';
-  var campusSel = '<select id="sermon-fcampus"><option value="">Todos os campus</option>' +
+  var campusSel = '<select id="sermon-fcampus" class="study-select"><option value="">Todos os campus</option>' +
     state.institution.campuses.map(function (c) { return '<option' + (f.campus === c ? " selected" : "") + '>' + esc(c) + '</option>'; }).join("") + '</select>';
 
   // Cards — agrupados por série quando há séries; flat quando não há.
@@ -398,7 +398,7 @@ function notesBody() {
   var cards = notes.map(function (n) {
     var preview = (n.content || "").trim();
     if (preview.length > 220) preview = preview.slice(0, 220) + "…";
-    return '<button class="gcard" data-noteedit="' + n.id + '" style="text-align:left"><div class="gc-top"><span class="gc-name">' + esc(n.title || "(sem título)") + '</span><span class="hb ' + (n.scope === "shared" ? "healthy" : "attention") + '">' + (NOTE_SCOPE_LBL[n.scope] || "Pessoal") + '</span></div>' +
+    return '<button class="gcard notecard" data-noteedit="' + n.id + '" style="text-align:left"><div class="gc-top"><span class="gc-name">' + esc(n.title || "(sem título)") + '</span><span class="hb ' + (n.scope === "shared" ? "healthy" : "attention") + '">' + (NOTE_SCOPE_LBL[n.scope] || "Pessoal") + '</span></div>' +
       (preview ? '<div class="gc-foot" style="white-space:pre-wrap">' + esc(preview) + '</div>' : '') + noteLinks(n) + tagsHtml(n.tags) + '</button>';
   }).join("");
   return '<div class="gcards">' + cards + '</div>';
@@ -414,7 +414,7 @@ function resourcesBody() {
   var topics = []; all.forEach(function (r) { if (r.topic && topics.indexOf(r.topic) < 0) topics.push(r.topic); });
   var typeChips = '<div class="filtchips"><button class="fchip' + (!f.type ? " on" : "") + '" data-restype="__all__">Todos</button>' +
     Object.keys(RES_TYPE_LBL).map(function (ty) { return '<button class="fchip' + (f.type === ty ? " on" : "") + '" data-restype="' + ty + '">' + RES_TYPE_LBL[ty] + '</button>'; }).join("") + '</div>';
-  var topicSel = topics.length ? '<select id="res-ftopic" style="margin-left:auto"><option value="">Todos os tópicos</option>' +
+  var topicSel = topics.length ? '<select id="res-ftopic" class="study-select" style="margin-left:auto"><option value="">Todos os tópicos</option>' +
     topics.map(function (tp) { return '<option value="' + esc(tp) + '"' + (f.topic === tp ? " selected" : "") + '>' + esc(tp) + '</option>'; }).join("") + '</select>' : '';
   var filters = '<div class="ph" style="margin-bottom:14px">' + typeChips + topicSel + '</div>';
 
@@ -527,7 +527,7 @@ function searchResultsHtml(q) {
 }
 function searchBody() {
   var q = state.studySearchQuery || "";
-  return '<div class="ph" style="margin-bottom:14px"><input id="study-search" value="' + esc(q) + '" placeholder="Buscar em sermões, notas, referências e séries…" style="width:100%;max-width:520px" autocomplete="off"></div>' +
+  return '<div class="ph" style="margin-bottom:14px"><input id="study-search" class="study-search" value="' + esc(q) + '" placeholder="Buscar em sermões, notas, referências e séries…" style="width:100%;max-width:520px" autocomplete="off"></div>' +
     '<div id="study-results">' + searchResultsHtml(q) + '</div>';
 }
 

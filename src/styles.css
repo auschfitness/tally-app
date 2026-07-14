@@ -279,6 +279,16 @@
   .filtchips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
   .fchip{border:1px solid var(--border);background:var(--surface);color:var(--text-2);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600}
   .fchip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  /* Study (Fase 5/6): controles de filtro/busca com o tema do app (claro e escuro). */
+  .study-search{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13.5px;color:var(--text);background:var(--surface-2)}
+  .study-search::placeholder{color:var(--text-2)}
+  .study-search:focus{outline:none;border-color:var(--blue)}
+  .study-select{appearance:none;-webkit-appearance:none;border:1px solid var(--border);border-radius:9px;padding:8px 30px 8px 11px;font-family:inherit;font-size:13px;font-weight:600;color:var(--text);background-color:var(--surface-2);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238893A5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+  .study-select:focus{outline:none;border-color:var(--blue)}
+  /* Notas: texto secundário do card mais legível (descrição, vínculos, tags). */
+  .notecard .gc-foot{color:var(--text);font-size:12.5px;line-height:1.5}
+  .notecard .meta{color:var(--text);font-size:12px}
+  .notecard .chip{color:var(--text);background:var(--surface-2)}
   tr[data-stick]:hover td{background:var(--surface-2)}
   #gate{position:fixed;inset:0;background:var(--main);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
   .gcard{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:30px;text-align:center;box-shadow:0 10px 40px rgba(16,24,40,.10)}
