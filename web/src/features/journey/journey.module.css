@@ -1,0 +1,20 @@
+/* Estilos da feature Journey Map (CSS Module). Migrados de styles.css. */
+.jmapRow { display: block; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 10px; margin-bottom: 6px; cursor: pointer; font-family: inherit; transition: background var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease); }
+.jmapRow:hover { background: var(--surface-2); }
+.jmapOn { border-color: var(--blue); background: rgba(43, 92, 230, .07); }
+.jmapHead { display: flex; align-items: baseline; margin-bottom: 6px; }
+.jmapName { font-size: 13px; font-weight: 600; color: var(--text); }
+.jmapCount { margin-left: auto; font-size: 14px; font-weight: 600; color: var(--text); }
+.jmapMeta { font-size: 11.5px; margin-top: 5px; }
+
+.jmov { display: flex; align-items: flex-end; gap: 10px; height: 120px; padding-top: 6px; }
+.jmovCol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.jmovBarwrap { width: 100%; flex: 1; display: flex; align-items: flex-end; }
+.jmovBar { width: 100%; background: var(--blue); border-radius: 5px 5px 0 0; min-height: 3px; }
+.jmovN { font-size: 12px; font-weight: 600; color: var(--text); }
+.jmovL { font-size: 11px; }
+
+.jdrillRow { display: flex; align-items: baseline; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--border); cursor: pointer; text-decoration: none; }
+.jdrillRow:last-child { border-bottom: none; }
+.jdrillRow:hover { background: var(--surface-2); }
+.jdrillNm { font-size: 13px; font-weight: 600; color: var(--text); }
