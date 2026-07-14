@@ -5,3 +5,10 @@ dist
 .DS_Store
 Thumbs.db
 .tmp
+
+# Fixture de teste — CREDENCIAIS, nunca commitar (repo público)
+docs/testing-fixture.md
+.env.test
+.env.test.local
+**/.env.test
+**/.env.test.local

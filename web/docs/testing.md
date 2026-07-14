@@ -26,11 +26,12 @@ TALLY_TEST_PASSWORD=...
 Com essas variáveis, `npm run test` passa a rodar também os testes de integração
 (login → query → asserção de org-scoping e shape). Sem elas, pulam sem falhar.
 
-## 3. E2E leve (SSR + auth) — só fluxos críticos [a fazer na validação]
-Playwright, só o crítico: **login → página protegida renderiza dados semeados**;
-**logout**; **redirect de não-autenticado → /login**. Instalar na fase de validação
-(baixa navegadores) usando a mesma fixture do orquestrador + o preview deploy da branch.
-Não e2e em tudo — só o caminho que prova SSR autenticado ponta a ponta.
+## 3. E2E leve (SSR + auth) — só fluxos críticos — `npm run test:e2e`
+Playwright (Chromium), só o crítico, em `e2e/auth.spec.ts`: **redirect de
+não-autenticado → /login**; **login → /sticks renderiza dados semeados ("Ana") →
+logout → /login**. O `playwright.config.ts` sobe o dev server e carrega `.env.test`.
+Rodar: `npm run test:e2e` (precisa de `.env.test` com a fixture; sem ela o teste
+autenticado se auto-pula). Prova o SSR autenticado ponta a ponta.
 
 ## Divisão de validação (acordada com o orquestrador)
 - **Claude Code:** unidade (parity das regras) + integração (org-scoping/RLS/shape) +

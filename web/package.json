@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:unit": "vitest run src/features",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
     "types:db": "echo 'Tipos do banco são gerados pelo orquestrador via MCP Supabase e vivem em src/lib/database.types.ts'"
   },
@@ -24,6 +25,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
