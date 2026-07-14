@@ -147,6 +147,58 @@ export function signals(){
   });
   state.tasks.filter(function(t){return !t.done&&t.who;}).forEach(function(t){out.push({key:"task-"+t.id,type:"team",level:"notice",title:esc(t.who)+" foi designado: "+esc(t.text),why:[],date:iso(today()),category:"Teams",stickName:t.who});});
   out=out.concat(serviceSignals());
+  out=out.concat(serviceEventSignals());
+  return out;
+}
+
+// --- Signals de Cultos & Eventos (Step 6 · Fase 6, §10) — só dado real. Alimentam
+// Inbox (categoria Cultos) e Home. Presença que caiu, visitante para acompanhar,
+// escala sem cobertura, evento próximo, presença recorde. Nunca score. ---
+export function serviceEventSignals(){
+  var out=[];
+  var t=today();
+  var svcs=(state.services||[]).filter(function(s){return s.active!==false&&(!s.campus||s.campus===state.activeCampus);});
+  svcs.forEach(function(s){
+    var sess=(state.sessions||[]).filter(function(x){return x.service===s.id;}).slice().sort(function(a,b){return (a.date||"").localeCompare(b.date||"");});
+    if(sess.length>=3){
+      var counts=sess.map(function(x){return (x.attendees||[]).length;});
+      var latest=counts[counts.length-1];
+      var prev=counts.slice(Math.max(0,counts.length-4),counts.length-1);
+      var avg=prev.reduce(function(a,b){return a+b;},0)/prev.length;
+      if(avg>0&&latest<avg*0.8){
+        var pct=Math.round((1-latest/avg)*100);
+        out.push({key:"svc-drop-"+s.id,type:"service_attendance",level:"attention",title:"Presença caiu em "+s.name,why:["Última: "+latest+" · média recente: "+Math.round(avg)+" (−"+pct+"%)"],date:iso(t),category:"Services"});
+      }
+      if(latest>0&&latest===Math.max.apply(null,counts)){
+        out.push({key:"svc-record-"+s.id+"-"+latest,type:"service_attendance",level:"celebration",title:s.name+" teve a maior presença registrada",why:[latest+" presentes"],date:sess[sess.length-1].date||iso(t),category:"Celebration"});
+      }
+    }
+    // Visitantes no último culto → oportunidade de follow-up (§10 · Journey).
+    if(sess.length){
+      var last=sess[sess.length-1];
+      var vis=(last.attendees||[]).filter(function(aid){var p=(state.people||[]).find(function(x){return x.id===aid;});return p&&p.relationship&&p.relationship.indexOf("visitor")===0;}).length;
+      if(vis>0){
+        out.push({key:"svc-vis-"+s.id+"-"+(last.date||""),type:"service_visitor",level:"notice",title:vis+" visitante"+(vis>1?"s":"")+" no último "+s.name,why:["Acompanhe o follow-up e a Journey"],date:last.date||iso(t),category:"Services"});
+      }
+    }
+  });
+
+  // Escala sem cobertura (precisa de substituto / recusada) numa data futura.
+  var teamNames={}; (state.teams||[]).forEach(function(tm){teamNames[tm.id]=tm.name;});
+  var need=(state.schedule||[]).filter(function(a){return a.assignment_date&&a.assignment_date>=iso(t)&&(a.status==="replacement_needed"||a.status==="declined");});
+  if(need.length){
+    out.push({key:"svc-cover",type:"service_coverage",level:"attention",title:need.length+" escalação"+(need.length>1?"ões":"")+" sem cobertura",why:["Alguém recusou ou pediu substituto"],date:iso(t),category:"Services"});
+  }
+
+  // Evento próximo (até 14 dias) — lembrete operacional.
+  (state.events||[]).forEach(function(e){
+    if(e.status!=="active"||!e.event_date||(e.campus&&e.campus!==state.activeCampus))return;
+    var dd=Math.round((new Date(e.event_date+"T00:00:00")-t)/(1000*60*60*24));
+    if(dd>=0&&dd<=14){
+      var regs=(state.eventRegs||[]).filter(function(r){return r.event_id===e.id;}).length;
+      out.push({key:"evt-soon-"+e.id,type:"event_upcoming",level:"notice",title:e.name+(dd===0?" é hoje":(dd===1?" é amanhã":" em "+dd+" dias")),why:[regs+" inscrito"+(regs!==1?"s":"")+(e.capacity?" de "+e.capacity:"")],date:iso(t),category:"Services"});
+    }
+  });
   return out;
 }
 

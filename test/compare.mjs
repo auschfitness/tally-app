@@ -415,6 +415,21 @@ const FEATURE_VIEWS = [
     s.schedule = [];
     setState(s); return calendarView.viewCalendar();
   }, ['data-calview="month"', "Conferência", 'id="calNext"', "Seg", "Sáb"]],
+  // inbox-services (Step 6 · Fase 6) — signals de Cultos: presença caiu + visitante p/ follow-up.
+  ["inbox-services", () => {
+    const s = clone(seedData); s.view = "inbox"; s.inboxCat = "Services";
+    const c = s.activeCampus;
+    s.people[0].relationship = "visitor_first"; s.people[0].campus = c;
+    const pv = s.people[0].id;
+    const ten = Array.from({ length: 10 }, (_, i) => "d" + i);
+    s.services = [{ id: "sv-1", name: "Culto", type: "", campus: c, weekday: 0, start_time: "", end_time: "", location: "", recurring_pattern: "weekly", description: "", active: true }];
+    s.sessions = [
+      { id: "x1", campus: c, group: "", service: "sv-1", date: "2026-02-01", attendees: ten, photo: null },
+      { id: "x2", campus: c, group: "", service: "sv-1", date: "2026-02-08", attendees: ten, photo: null },
+      { id: "x3", campus: c, group: "", service: "sv-1", date: "2026-02-15", attendees: [pv], photo: null },
+    ];
+    setState(s); return inboxView.viewInbox();
+  }, ['data-inboxcat="Services"', "Presença caiu em Culto", "visitante no último Culto"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
