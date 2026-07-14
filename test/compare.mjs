@@ -132,6 +132,7 @@ const sermonsView = await import("../src/views/sermons.js");
 const homeView = await import("../src/views/home.js");
 const teamsView = await import("../src/views/teams.js");
 const servicesView = await import("../src/views/services.js");
+const eventsView = await import("../src/views/events.js");
 const FEATURE_VIEWS = [
   // dashboard graduou na Fase 6: ganhou Community Insights + movimento de Journey/Groups.
   ["dashboard", () => { const s = clone(seedData); s.view = "dashboard"; setState(s); return homeView.viewDashboard(); },
@@ -366,6 +367,29 @@ const FEATURE_VIEWS = [
     s.serviceDetail = "sv-1";
     setState(s); return servicesView.viewServices();
   }, ["Ensino deste culto", 'data-svcsermon="sm-1"', "O Bom Pastor", "Times escalados", "Banda", "Vocal"]],
+  // events-empty (Step 6 · Fase 4) — módulo Eventos vazio honesto.
+  ["events-empty", () => {
+    const s = clone(seedData); s.view = "events"; s.events = []; s.eventRegs = []; s.eventDetail = null;
+    setState(s); return eventsView.viewEvents();
+  }, ["Eventos", 'id="newEvent"', "Nenhum evento ainda"]],
+  // events-list (Fase 4) — cards de evento com data/status/capacidade.
+  ["events-list", () => {
+    const s = clone(seedData); s.view = "events"; s.eventDetail = null;
+    s.events = [{ id: "ev-1", name: "Conferência de Jovens", type: "Conferência", campus: s.activeCampus, event_date: "2026-05-10", start_time: "19:00", end_time: "", location: "Templo", capacity: 100, registration_required: true, payment_required: false, check_in_enabled: true, status: "active", description: "" }];
+    s.eventRegs = [{ id: "rg-1", event_id: "ev-1", stick_id: s.people[0].id, name: "", email: "", phone: "", household: "", answers: {}, payment_status: "", checked_in: false, checked_in_at: null }];
+    setState(s); return eventsView.viewEvents();
+  }, ["Eventos", 'data-eventdetail="ev-1"', "Conferência de Jovens", "10/05/2026", "1/100"]],
+  // event-detail (Fase 4) — inscrições internas + check-in + identificar visitante.
+  ["event-detail", () => {
+    const s = clone(seedData); s.view = "events";
+    s.events = [{ id: "ev-1", name: "Retiro", type: "Retiro", campus: s.activeCampus, event_date: "2026-05-10", start_time: "08:00", end_time: "18:00", location: "Sítio", capacity: 50, registration_required: true, payment_required: true, check_in_enabled: true, status: "active", description: "Fim de semana" }];
+    s.eventRegs = [
+      { id: "rg-1", event_id: "ev-1", stick_id: s.people[0].id, name: "", email: "", phone: "", household: "", answers: {}, payment_status: "", checked_in: true, checked_in_at: "2026-05-10T08:00:00Z" },
+      { id: "rg-2", event_id: "ev-1", stick_id: null, name: "Visitante Novo", email: "v@x.com", phone: "", household: "", answers: {}, payment_status: "", checked_in: false, checked_in_at: null },
+    ];
+    s.eventDetail = "ev-1";
+    setState(s); return eventsView.viewEvents();
+  }, ["Voltar aos eventos", "Inscrições", "Visitante Novo", 'data-regcheck="rg-2"', 'data-regdel="rg-1"', 'id="registerBtn"', "Presente ✓", "Sobre o evento"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
