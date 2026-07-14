@@ -324,3 +324,50 @@
   .chkrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);font-size:14px;color:var(--text);cursor:pointer}
   .chkrow:last-child{border-bottom:none}
   .chkrow input{width:16px;height:16px}
+
+  /* ===== Fundação de Design (docs/design-principles.md) ===== */
+  /* Tokens de movimento — definir uma vez, reusar. Movimento é função, não enfeite. */
+  :root{--dur-micro:140ms;--dur-panel:220ms;--ease:cubic-bezier(.2,.8,.2,1)}
+
+  /* Todo <select> nativo estilizado ao tema (claro E escuro): seta custom, sem controle cru. */
+  .field select,.setrow select,.gfield select,.sel,.cmp-sel select{
+    appearance:none;-webkit-appearance:none;padding-right:30px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238893A5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center}
+  .field select:focus,.setrow select:focus,.gfield select:focus,.sel:focus,.study-select:focus,.study-search:focus,.searchbox:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
+
+  /* Movimento base — micro-interações (hover/press). */
+  .btn,.btn.ghost,.btn.danger{transition:background var(--dur-micro) var(--ease),color var(--dur-micro) var(--ease),transform var(--dur-micro) var(--ease),box-shadow var(--dur-micro) var(--ease)}
+  .btn:hover{box-shadow:0 2px 10px rgba(43,92,230,.28)}
+  .btn.ghost:hover,.btn.danger:hover{box-shadow:none}
+  .btn:active,.iconbtn:active,.gbtn:active{transform:translateY(1px)}
+  .iconbtn,.link,.navitem,.fchip,.tab,.tab2,.pillsel button,.cloudw,.sd-addbtn,.jmap-row,.cmp-ver,.cmp-lang{transition:background var(--dur-micro) var(--ease),color var(--dur-micro) var(--ease),border-color var(--dur-micro) var(--ease)}
+  .fchip:hover{border-color:var(--blue);color:var(--text)}
+  .fchip.on:hover{color:#fff}
+  /* Cards: hover/press padronizados nos tokens (substitui o transition:.12s antigo). */
+  .gcard{transition:border-color var(--dur-micro) var(--ease),transform var(--dur-micro) var(--ease),box-shadow var(--dur-micro) var(--ease)}
+  .gcard:active{transform:translateY(0);box-shadow:0 1px 2px rgba(16,24,40,.05)}
+
+  /* Abrir/fechar de modal — fade do overlay + leve rise/scale do cartão. */
+  @keyframes ovIn{from{opacity:0}to{opacity:1}}
+  @keyframes ovOut{from{opacity:1}to{opacity:0}}
+  @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+  @keyframes modalOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(6px) scale(.99)}}
+  .overlay{animation:ovIn var(--dur-micro) var(--ease)}
+  .overlay .modal{animation:modalIn var(--dur-panel) var(--ease)}
+  .overlay.closing{animation:ovOut var(--dur-micro) var(--ease) forwards}
+  .overlay.closing .modal{animation:modalOut var(--dur-micro) var(--ease) forwards}
+
+  /* Abrir de drawer — overlay em fade + painel deslizando da direita. */
+  @keyframes drawerIn{from{transform:translateX(26px);opacity:.5}to{transform:none;opacity:1}}
+  .drawer-ov{animation:ovIn var(--dur-micro) var(--ease)}
+  .drawer{animation:drawerIn var(--dur-panel) var(--ease)}
+
+  /* Transição de view / entrada de lista — fade+rise do conteúdo a cada render. */
+  @keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .content.view-in{animation:viewIn var(--dur-panel) var(--ease)}
+
+  /* Acessibilidade: respeitar quem pede menos movimento. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  }

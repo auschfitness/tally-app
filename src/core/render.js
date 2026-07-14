@@ -32,7 +32,10 @@ export function render(){
   const isw=document.getElementById("instsel");
   if(showInstSwitcher()){isw.style.display="flex";isw.innerHTML=state.institution.institutions.map(i=>'<button class="'+(i===state.institution.activeInstitution?'on':'')+'" data-inst="'+esc(i)+'">'+esc(i)+'</button>').join("");}else{isw.style.display="none";}
   document.getElementById("campus").innerHTML=state.institution.campuses.map(cp=>'<button class="'+(cp===state.activeCampus?'on':'')+'" data-campus="'+esc(cp)+'">'+esc(cp)+'</button>').join("");
-  document.getElementById("content").innerHTML=({dashboard:viewDashboard,people:viewPeople,coord:viewCoord,finance:viewFinance,settings:viewSettings,prayer:viewPrayer,groups:viewGroups,care:viewCare,journey:viewJourney,inbox:viewInbox,study:viewStudy,sermons:viewSermons,teams:viewTeams,services:viewServices,events:viewEvents,calendar:viewCalendar}[state.view])();
+  var _content=document.getElementById("content");
+  _content.innerHTML=({dashboard:viewDashboard,people:viewPeople,coord:viewCoord,finance:viewFinance,settings:viewSettings,prayer:viewPrayer,groups:viewGroups,care:viewCare,journey:viewJourney,inbox:viewInbox,study:viewStudy,sermons:viewSermons,teams:viewTeams,services:viewServices,events:viewEvents,calendar:viewCalendar}[state.view])();
+  // Transição de view (design-principles.md): re-dispara o fade+rise do conteúdo a cada render.
+  _content.classList.remove("view-in");void _content.offsetWidth;_content.classList.add("view-in");
   if(state.view==="prayer"&&window.requestAnimationFrame)requestAnimationFrame(layoutPrayerCloud);
   if(state.view==="sermons"&&state.sermonEdit&&window.requestAnimationFrame)requestAnimationFrame(mountSermonEditor);
   if(window.requestAnimationFrame)requestAnimationFrame(renderCharts);

@@ -83,6 +83,7 @@ São 12 steps (#1 a #12) no Notion do dono. Já implementados: #1 (arquitetura C
 Recomendado: repositório no GitHub ligado ao Vercel (auto-deploy a cada push). O app é estático (build do Vite → `dist/`; a Vercel detecta o Vite sozinha). Após o deploy, adicione a URL do Vercel em Supabase → Authentication → URL Configuration (Site URL + Redirect URLs) — necessário para o Google OAuth. "Confirm email" está desligado (login por e-mail+senha entra na hora).
 
 ## Convenções
+- **Fundação de Design: `docs/design-principles.md` GOVERNA toda tela nova ou alterada** (norte macOS/ChatGPT: uma ação primária por tela, revelação progressiva, ar no lugar de caixas, cor contida, controles nativos sempre estilizados ao tema claro E escuro, movimento como função). Leia antes de mexer em UI; se um design conflita com o doc, o doc vence. Tokens de movimento (`--dur-micro`/`--dur-panel`/`--ease`) e as interações base (hover/press, modal/drawer, troca de view via `.content.view-in`) vivem em `src/styles.css` — reuse, respeitando `prefers-reduced-motion`.
 - Preserve o sistema visual atual (claro, interativo, gráficos clicáveis, drill-down, densidade organizada).
 - A interface é em **português (PT-BR)**. Traduza qualquer inglês que vaze na UI, exceto os termos abaixo.
 - Termos de produto (não traduzir): Stick(s), Signal, Care, Journey, Milestone, Pulse, Inbox. Rótulo do botão de adicionar pessoa: "Nova pessoa". Use "Campus" (não "Campi").
