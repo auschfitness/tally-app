@@ -1,0 +1,13 @@
+/* Estilos da feature Grupos (CSS Module) — cards de grupo e layout do topo. */
+.gtop { display: grid; grid-template-columns: 290px 1fr; gap: 16px; align-items: start; }
+.gcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-content: start; }
+.gcard { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 15px; cursor: pointer; box-shadow: 0 1px 2px rgba(16, 24, 40, .05); text-decoration: none; display: block; transition: border-color var(--dur-micro) var(--ease), transform var(--dur-micro) var(--ease); }
+.gcard:hover { border-color: var(--blue); transform: translateY(-1px); }
+.gcTop { display: flex; align-items: center; margin-bottom: 4px; }
+.gcName { font-weight: 600; color: var(--text); }
+.gcSub { font-size: 12px; color: var(--text-2); margin-bottom: 11px; }
+.gcFoot { font-size: 11px; color: var(--text-2); margin-top: 8px; }
+
+@media (max-width: 880px) {
+  .gtop { grid-template-columns: 1fr; }
+}

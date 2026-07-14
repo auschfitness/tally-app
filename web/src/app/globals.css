@@ -122,6 +122,12 @@ a { color: inherit; }
 .gbar > i.attention { background: #E8833A; }
 .gbar > i.risk { background: var(--coral); }
 
+/* Selo de saúde (Grupos, Home) */
+.hb { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.hb.healthy { background: rgba(31, 169, 122, .16); color: var(--green); }
+.hb.attention { background: rgba(232, 131, 58, .18); color: #E8833A; }
+.hb.risk { background: rgba(234, 91, 76, .16); color: var(--coral); }
+
 /* Listas (linha com avatar) */
 .li { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
 .li:last-child { border-bottom: none; }
