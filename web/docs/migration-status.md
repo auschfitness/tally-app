@@ -26,8 +26,10 @@ Branch `refactor/nextjs`. App Next em `tally-app/web/`. App JS legado intacto em
   (perfil/timeline, milestones, check-in, coluna Sinais, eventos de timeline de grupo).
 - [x] **Prayer** — mural + nuvem semântica + filtro + orando/respondida/recolocar + novo
   pedido, contra `prayer_requests`. Pendências em `features/prayer/README.md`.
-- [ ] Finance (próximo — repo limpo)
-- [ ] Groups, Journey
+- [x] **Finance Lite** — entradas/saídas, gráficos (barras 6m + donut despesas), saldo
+  por fundo, lançamentos + novo, contra `finance_entries`. Só dados reais (DNA #2).
+  Novos compartilhados: `components/shared/ConicDonut`, `lib/utils/money`.
+- [ ] Groups, Journey (próximos — dependem de Sticks: presença/estágios)
 - [ ] Teams, Services, Events, Calendar
 - [ ] Study/Sermons, Tracks
 - [ ] Care, Coordination (migrar do blob app_state → tabelas que já existem)
