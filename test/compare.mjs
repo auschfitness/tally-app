@@ -131,6 +131,7 @@ const studyView = await import("../src/views/study.js");
 const sermonsView = await import("../src/views/sermons.js");
 const homeView = await import("../src/views/home.js");
 const teamsView = await import("../src/views/teams.js");
+const servicesView = await import("../src/views/services.js");
 const FEATURE_VIEWS = [
   // dashboard graduou na Fase 6: ganhou Community Insights + movimento de Journey/Groups.
   ["dashboard", () => { const s = clone(seedData); s.view = "dashboard"; setState(s); return homeView.viewDashboard(); },
@@ -321,6 +322,26 @@ const FEATURE_VIEWS = [
     s.teamDetail = "tk-1";
     setState(s); return teamsView.viewTeams();
   }, ["Desenvolvimento de liderança", "um caminho de crescimento, não uma nota", "Aprendiz", "Co-líder", "Servindo", "Líder"]],
+  // services-empty (Step 6 · Fase 1) — módulo Cultos vazio honesto.
+  ["services-empty", () => {
+    const s = clone(seedData); s.view = "services"; s.services = []; s.serviceDetail = null;
+    setState(s); return servicesView.viewServices();
+  }, ["Cultos", 'id="newService"', "Nenhum culto ainda"]],
+  // services-list (Fase 1) — cards de culto com dia/horário e ocorrências.
+  ["services-list", () => {
+    const s = clone(seedData); s.view = "services"; s.serviceDetail = null;
+    s.services = [{ id: "sv-1", name: "Culto de Domingo", type: "Domingo", campus: s.activeCampus, weekday: 0, start_time: "09:00", end_time: "11:00", location: "Templo", recurring_pattern: "weekly", description: "", active: true }];
+    s.sessions = [{ id: "se-1", campus: s.activeCampus, group: "", service: "sv-1", date: "2026-03-01", attendees: ["a", "b"], photo: null }];
+    setState(s); return servicesView.viewServices();
+  }, ["Cultos", 'data-servicedetail="sv-1"', "Culto de Domingo", "Domingo", "09:00", "1 ocorrência"]],
+  // service-detail (Fase 1) — info + presenças recentes ligadas ao culto + registrar presença.
+  ["service-detail", () => {
+    const s = clone(seedData); s.view = "services";
+    s.services = [{ id: "sv-1", name: "Culto de Domingo", type: "Domingo", campus: s.activeCampus, weekday: 0, start_time: "09:00", end_time: "", location: "Templo", recurring_pattern: "weekly", description: "Principal", active: true }];
+    s.sessions = [{ id: "se-1", campus: s.activeCampus, group: "", service: "sv-1", date: "2026-03-01", attendees: ["a", "b", "c"], photo: null }];
+    s.serviceDetail = "sv-1";
+    setState(s); return servicesView.viewServices();
+  }, ["Voltar aos cultos", "Presenças recentes", "3 presentes", 'id="serviceCheckin"', 'id="editService"', "Sobre o culto"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {

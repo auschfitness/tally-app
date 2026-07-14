@@ -73,13 +73,17 @@ export function milestoneModal(id){
 // Check-in de presença
 let checkinSel=new Set();
 function renderChk(filter){const f=(filter||"").toLowerCase();const list=state.people.filter(p=>p.campus===state.activeCampus&&p.name.toLowerCase().includes(f));document.getElementById("chklist").innerHTML=list.map(p=>'<div class="chkrow '+(checkinSel.has(p.id)?"sel":"")+'" data-chk="'+p.id+'"><span class="box">'+(checkinSel.has(p.id)?"✓":"")+'</span><span class="nm">'+esc(p.name)+'</span><span class="mt">'+esc(agoLabel(p.lastSeen))+'</span></div>').join("")||'<div class="empty">Ninguém neste campus.</div>';}
-export function checkinModal(){
+export function checkinModal(preService){
   checkinSel=new Set();
-  openWide('<h3>Registrar presença</h3><div class="msub">'+esc(state.activeCampus)+' · hoje · toque em quem veio ao culto</div><input class="searchbox" id="chk-search" placeholder="Buscar pessoa..."><div class="chklist" id="chklist"></div><div class="actions"><button class="btn ghost" id="chk-cancel">Cancelar</button><button class="btn" id="chk-save">Salvar presença</button></div>');
+  // Seletor de culto (Step 6 · Fase 1): liga a presença a um Service do campus. Opcional.
+  var svcs=(state.services||[]).filter(function(s){return s.active!==false&&(!s.campus||s.campus===state.activeCampus);});
+  var preId=(preService&&typeof preService==="string")?preService:"";
+  var svcSel=svcs.length?('<div class="field" style="margin-bottom:10px"><label>Culto (opcional)</label><select id="chk-service"><option value="">Sem culto específico</option>'+svcs.map(function(s){return '<option value="'+s.id+'"'+(preId===s.id?" selected":"")+'>'+esc(s.name||"(sem nome)")+'</option>';}).join("")+'</select></div>'):'';
+  openWide('<h3>Registrar presença</h3><div class="msub">'+esc(state.activeCampus)+' · hoje · toque em quem veio ao culto</div>'+svcSel+'<input class="searchbox" id="chk-search" placeholder="Buscar pessoa..."><div class="chklist" id="chklist"></div><div class="actions"><button class="btn ghost" id="chk-cancel">Cancelar</button><button class="btn" id="chk-save">Salvar presença</button></div>');
   renderChk("");
   document.getElementById("chk-search").addEventListener("input",ev=>renderChk(ev.target.value));
   document.getElementById("chk-cancel").onclick=closeModal;
-  document.getElementById("chk-save").onclick=()=>{const d=iso(today());state.people.forEach(p=>{if(checkinSel.has(p.id)){p.lastSeen=d;p.followup=false;upsertStick(p);}});if(checkinSel.size){if(!state.sessions)state.sessions=[];var ns={id:uid(),campus:state.activeCampus,group:"",date:d,attendees:Array.from(checkinSel),photo:null};state.sessions.push(ns);upsertSession(ns).then(function(newId){if(newId&&newId!==ns.id){ns.id=newId;save();}});}save();closeModal();render();};
+  document.getElementById("chk-save").onclick=()=>{const d=iso(today());var svcEl=document.getElementById("chk-service");var svc=svcEl?svcEl.value:"";state.people.forEach(p=>{if(checkinSel.has(p.id)){p.lastSeen=d;p.followup=false;upsertStick(p);}});if(checkinSel.size){if(!state.sessions)state.sessions=[];var ns={id:uid(),campus:state.activeCampus,group:"",service:svc||"",date:d,attendees:Array.from(checkinSel),photo:null};state.sessions.push(ns);upsertSession(ns).then(function(newId){if(newId&&newId!==ns.id){ns.id=newId;save();}});}save();closeModal();render();};
 }
 
 // Marcar/desmarcar quem veio, dentro do modal de presença

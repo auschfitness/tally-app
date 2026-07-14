@@ -57,6 +57,8 @@ function rowToSession(row, maps, attendeesById) {
     id: row.id,
     campus: maps.campusById[row.campus_id] || "",
     group: (row.context_type === "group" && row.context_id) ? (maps.groupById[row.context_id] || "") : "",
+    // Vínculo com um Service (Step 6 · Fase 1): a ocorrência de culto aponta o service via context_id.
+    service: (row.context_type === "service" && row.context_id) ? row.context_id : "",
     date: row.session_date || "",
     attendees: attendeesById[row.id] || [],
     photo: row.photo || null,
@@ -66,10 +68,12 @@ function rowToSession(row, maps, attendeesById) {
 // objeto sessão -> linha da sessão. `createdAt` só no backfill (preserva a data).
 function sessionToRow(s, maps, createdAt) {
   const hasGroup = !!s.group;
+  // Sessão de culto pode apontar um Service (Step 6) via context_id; grupo tem prioridade.
+  const svcId = (!hasGroup && isUuid(s.service)) ? s.service : null;
   const row = {
     org_id: ORG_ID,
     context_type: hasGroup ? "group" : "service",
-    context_id: hasGroup ? (maps.groupByName[s.group] || null) : null,
+    context_id: hasGroup ? (maps.groupByName[s.group] || null) : svcId,
     campus_id: null, // preenchido pelo caller após ensureCampusId
     title: null,
     session_date: s.date || null,
