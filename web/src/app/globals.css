@@ -78,9 +78,173 @@ a { color: inherit; }
 .gswitch { font-size: 12.5px; color: var(--text-2); margin-top: 14px; }
 .gswitch a { color: var(--blue); font-weight: 600; cursor: pointer; }
 
+/* ============================================================
+   Design-system compartilhado (usado por várias features). Estilos
+   específicos de UMA feature vivem em features/<f>/*.module.css.
+   ============================================================ */
+
+/* Tipografia de página */
+.pos { color: var(--green); font-weight: 600; }
+.neg { color: var(--coral); font-weight: 600; }
+
+/* Cartões de estatística */
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .05); }
+.stat .k { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); font-weight: 600; margin-bottom: 6px; }
+.stat .v { font-size: 26px; font-weight: 600; line-height: 1; color: var(--text); }
+.stat.alert { border-color: rgba(234, 91, 76, .4); background: rgba(234, 91, 76, .07); }
+.stat.alert .v { color: var(--coral); }
+.stat .v.pos { color: var(--green); }
+.stat .v.neg { color: var(--coral); }
+.row2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; margin-bottom: 20px; }
+.panel { box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .05); }
+.panel .ph { display: flex; align-items: center; margin-bottom: 12px; gap: 10px; }
+.panel h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+
+/* Listas (linha com avatar) */
+.li { display: flex; align-items: center; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+.li:last-child { border-bottom: none; }
+.li b { color: var(--text); }
+.li .meta { color: var(--text-2); font-size: 12px; }
+.li .right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.av { width: 30px; height: 30px; border-radius: 50%; background: rgba(43, 92, 230, .13); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; color: var(--blue); flex-shrink: 0; }
+.av.c { background: rgba(234, 91, 76, .16); color: var(--coral); }
+.flag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: rgba(234, 91, 76, .15); color: var(--coral); }
+
+/* Tabelas */
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+th { background: var(--surface-2); font-size: 11px; letter-spacing: .03em; text-transform: uppercase; color: var(--text); font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+tr[data-stick]:hover td, tr.rowlink:hover td { background: var(--surface-2); }
+
+/* Chips */
+.chip { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.chip.member { background: rgba(31, 169, 122, .16); color: var(--green); }
+.chip.visitor { background: rgba(43, 92, 230, .15); color: var(--blue); }
+.chip.leader { background: rgba(107, 79, 214, .18); color: #8b74e8; }
+.chip.care { background: rgba(234, 91, 76, .16); color: var(--coral); }
+
+/* Abas e chips de filtro */
+.tabs { display: flex; gap: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+.tab { padding: 10px 2px; margin-bottom: -1px; border: none; background: none; color: var(--text-2); font-weight: 600; font-size: 14px; border-bottom: 2px solid transparent; transition: color var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease); }
+.tab.on { color: var(--text); border-bottom-color: var(--blue); }
+.tabs2 { display: flex; gap: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab2 { padding: 9px 2px; border: none; background: none; color: var(--text-2); font-weight: 600; font-size: 13.5px; border-bottom: 2px solid transparent; transition: color var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease); }
+.tab2.on { color: var(--text); border-bottom-color: var(--blue); }
+.filtchips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+.fchip { border: 1px solid var(--border); background: var(--surface); color: var(--text-2); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease); }
+.fchip.on { background: var(--blue); color: #fff; border-color: var(--blue); }
+.fchip:hover { border-color: var(--blue); color: var(--text); }
+.fchip.on:hover { color: #fff; }
+
+/* Gráficos (chrome compartilhado) */
+.chartbox { position: relative; height: 210px; }
+.donutwrap { position: relative; height: 180px; }
+.donutctr { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+.donutctr b { font-size: 26px; font-weight: 600; color: var(--text); display: block; line-height: 1; }
+.donutctr span { font-size: 11px; color: var(--text-2); }
+.leg { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; font-size: 12.5px; color: var(--text-2); }
+.leg span { display: flex; align-items: center; gap: 8px; }
+.leg i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* Timeline (a "memória da igreja" — usada em várias features/drawer) */
+.tlm { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-2); margin: 14px 0 4px; }
+.tlrow { position: relative; padding: 8px 0 8px 16px; border-left: 2px solid var(--border); }
+.tlrow::before { content: ""; position: absolute; left: -6px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+.tlrow.attendance::before { background: var(--green); }
+.tlrow.care::before { background: var(--coral); }
+.tlrow.milestone::before { background: #8b74e8; }
+.tlrow .tt { font-size: 13.5px; color: var(--text); font-weight: 500; }
+.tlrow .ts { font-size: 12px; color: var(--text-2); }
+.tlrow .td { font-size: 11px; color: var(--text-2); }
+
+/* Journey snapshot + faixa de presença (usados na lista/drawer de Sticks) */
+.jsnap { display: flex; gap: 4px; align-items: flex-start; flex-wrap: wrap; }
+.jstep { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-2); width: 70px; text-align: center; }
+.jdot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); }
+.jstep.done .jdot { background: var(--blue); border-color: var(--blue); }
+.jstep.cur .jdot { background: var(--green); border-color: var(--green); }
+.wkstrip { display: flex; gap: 5px; flex-wrap: wrap; }
+.wk { width: 16px; height: 16px; border-radius: 5px; background: var(--surface-2); }
+.wk.present { background: var(--green); }
+.wk.absent { background: var(--coral); }
+
+/* Formulários (base compartilhada de campos) */
+.field { margin-bottom: 13px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 5px; }
+.field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 13.5px; color: var(--text); background: var(--surface-2); }
+.field textarea { resize: vertical; line-height: 1.5; }
+.field.check { display: flex; align-items: center; gap: 8px; }
+.field.check input { width: auto; }
+.field.check label { margin: 0; }
+.mrow { display: flex; gap: 10px; }
+.mrow .field { flex: 1; }
+.sel { font-size: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; background: var(--surface); color: var(--text); font-family: inherit; }
+.searchbox { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 13.5px; color: var(--text); background: var(--surface-2); margin-bottom: 8px; }
+.switch { width: 44px; height: 25px; border-radius: 20px; background: var(--border); position: relative; border: none; flex-shrink: 0; }
+.switch.on { background: var(--blue); }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: #fff; transition: .15s; }
+.switch.on::after { left: 22px; }
+.seg { display: flex; gap: 6px; }
+.seg button { flex: 1; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); padding: 9px; border-radius: 9px; font-weight: 600; font-size: 13px; }
+.seg button.on[data-t="in"] { background: rgba(31, 169, 122, .16); color: var(--green); border-color: rgba(31, 169, 122, .4); }
+.seg button.on[data-t="out"] { background: rgba(234, 91, 76, .16); color: var(--coral); border-color: rgba(234, 91, 76, .4); }
+
+/* <select> nativo estilizado ao tema (claro E escuro) — sem controle cru (design-principles). */
+.field select, .sel {
+  appearance: none; -webkit-appearance: none; padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238893A5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.field input:focus, .field select:focus, .field textarea:focus, .sel:focus, .searchbox:focus { outline: none; border-color: var(--blue); }
+
+/* Modal (overlay + cartão) */
+.overlay { position: fixed; inset: 0; background: rgba(6, 10, 20, .55); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+.modal { background: var(--surface); border-radius: 16px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0, 0, 0, .4); }
+.modal.wide { max-width: 540px; }
+.modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+.modal .msub { font-size: 12.5px; color: var(--text-2); margin-bottom: 14px; }
+.modal .actions { display: flex; gap: 10px; margin-top: 18px; }
+.modal .actions .btn { flex: 1; justify-content: center; }
+
+/* Drawer (painel lateral de detalhe) */
+.drawer-ov { position: fixed; inset: 0; background: rgba(6, 10, 20, .4); z-index: 60; }
+.drawer { position: fixed; top: 0; right: 0; height: 100vh; width: min(440px, 94vw); background: var(--surface); box-shadow: -12px 0 40px rgba(0, 0, 0, .18); z-index: 61; padding: 22px; overflow: auto; }
+.drawer .dh { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.drawer .dh .av { width: 48px; height: 48px; font-size: 16px; }
+.drawer .dh .nm { font-size: 18px; font-weight: 600; color: var(--text); }
+.drawer .dh .rl { font-size: 12px; color: var(--text-2); }
+.kv { display: flex; font-size: 12.5px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.kv span { color: var(--text-2); }
+.kv b { margin-left: auto; color: var(--text); font-weight: 500; }
+
+/* Movimento — micro-interações e coreografia base (design-principles §Movimento) */
+.btn:hover { box-shadow: 0 2px 10px rgba(43, 92, 230, .28); }
+.btn.ghost:hover, .btn.danger:hover { box-shadow: none; }
+@keyframes ovIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ovOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes modalOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(6px) scale(.99); } }
+.overlay { animation: ovIn var(--dur-micro) var(--ease); }
+.overlay .modal { animation: modalIn var(--dur-panel) var(--ease); }
+.overlay.closing { animation: ovOut var(--dur-micro) var(--ease) forwards; }
+.overlay.closing .modal { animation: modalOut var(--dur-micro) var(--ease) forwards; }
+@keyframes drawerIn { from { transform: translateX(26px); opacity: .5; } to { transform: none; opacity: 1; } }
+.drawer-ov { animation: ovIn var(--dur-micro) var(--ease); }
+.drawer { animation: drawerIn var(--dur-panel) var(--ease); }
+
 /* --- Transição de view (re-disparada a cada navegação de conteúdo) --- */
 @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .view-in { animation: viewIn var(--dur-panel) var(--ease); }
+
+/* Responsivo: some a sidebar e colapsa grids em telas estreitas. */
+@media (max-width: 880px) {
+  .app { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .cards { grid-template-columns: 1fr 1fr; }
+  .row2 { grid-template-columns: 1fr; }
+}
 
 /* --- Casca do app (frame + navegação) --- */
 .app { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
