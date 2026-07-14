@@ -133,6 +133,7 @@ const homeView = await import("../src/views/home.js");
 const teamsView = await import("../src/views/teams.js");
 const servicesView = await import("../src/views/services.js");
 const eventsView = await import("../src/views/events.js");
+const calendarView = await import("../src/views/calendar.js");
 const FEATURE_VIEWS = [
   // dashboard graduou na Fase 6: ganhou Community Insights + movimento de Journey/Groups.
   ["dashboard", () => { const s = clone(seedData); s.view = "dashboard"; setState(s); return homeView.viewDashboard(); },
@@ -390,6 +391,30 @@ const FEATURE_VIEWS = [
     s.eventDetail = "ev-1";
     setState(s); return eventsView.viewEvents();
   }, ["Voltar aos eventos", "Inscrições", "Visitante Novo", 'data-regcheck="rg-2"', 'data-regdel="rg-1"', 'id="registerBtn"', "Presente ✓", "Sobre o evento"]],
+  // calendar-agenda (Step 6 · Fase 5) — chrome da Agenda (toggles + filtros de tipo).
+  ["calendar-agenda", () => {
+    const s = clone(seedData); s.view = "calendar"; s.calView = "agenda"; s.calTypeFilter = null;
+    s.services = []; s.events = []; s.schedule = [];
+    setState(s); return calendarView.viewCalendar();
+  }, ["Agenda", 'data-calview="week"', 'data-calview="month"', 'data-caltype="service"', 'data-caltype="event"', "Nada agendado"]],
+  // calendar-week (Fase 5) — semana determinística (calAnchor): culto recorrente + evento.
+  ["calendar-week", () => {
+    const s = clone(seedData); s.view = "calendar"; s.calView = "week"; s.calAnchor = "2026-03-01";
+    const c = s.activeCampus;
+    s.services = [{ id: "sv-1", name: "Culto de Domingo", type: "Domingo", campus: c, weekday: 0, start_time: "09:00", end_time: "", location: "", recurring_pattern: "weekly", description: "", active: true }];
+    s.events = [{ id: "ev-1", name: "Retiro", type: "Retiro", campus: c, event_date: "2026-03-04", start_time: "08:00", end_time: "", location: "", capacity: null, registration_required: false, payment_required: false, check_in_enabled: false, status: "active", description: "" }];
+    s.schedule = [];
+    setState(s); return calendarView.viewCalendar();
+  }, ['data-calview="week"', "Culto de Domingo", "Retiro", 'id="calPrev"', 'id="calNext"', "Dom"]],
+  // calendar-month (Fase 5) — grade do mês (calAnchor): dias + itens.
+  ["calendar-month", () => {
+    const s = clone(seedData); s.view = "calendar"; s.calView = "month"; s.calAnchor = "2026-03-15";
+    const c = s.activeCampus;
+    s.services = [{ id: "sv-1", name: "Culto", type: "", campus: c, weekday: 0, start_time: "09:00", end_time: "", location: "", recurring_pattern: "weekly", description: "", active: true }];
+    s.events = [{ id: "ev-1", name: "Conferência", type: "", campus: c, event_date: "2026-03-10", start_time: "", end_time: "", location: "", capacity: null, registration_required: false, payment_required: false, check_in_enabled: false, status: "active", description: "" }];
+    s.schedule = [];
+    setState(s); return calendarView.viewCalendar();
+  }, ['data-calview="month"', "Conferência", 'id="calNext"', "Seg", "Sáb"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
