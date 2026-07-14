@@ -12,11 +12,11 @@ Branch `refactor/nextjs`. App Next em `tally-app/web/`. App JS legado intacto em
 - [x] **Fase 3 — Casca + design-system** — Sidebar/Topbar/ThemeToggle, tokens/estilos
   globais migrados de `styles.css`, responsivo. Falta ligar a troca de campus ativo
   (hoje estático no Topbar) — fica com a 1ª feature que precisar de estado de campus.
-- [~] **Fase 4 — Feature a feature** — em andamento (2/16). **CHECKPOINT** após 2-3
-  features para revisão do orquestrador/dono (ver `.tmp/nextjs/CHECKPOINT.md`).
-- [ ] **Fase 5 — Validação** — typecheck+lint+**test**+build rodam verdes a cada marco
-  (24 testes de unidade). Falta integração+e2e autenticados (precisam da fixture do
-  orquestrador — ver `docs/testing.md`).
+- [~] **Fase 4 — Feature a feature** — 6/16 migradas e testadas. Inventário completo e
+  ordem restante em `.tmp/nextjs/FEATURES-DONE.md`.
+- [~] **Fase 5 — Validação** — typecheck+lint+**test**+build verdes a cada marco.
+  Fixture do orquestrador ligada: 44 testes (unidade + integração real) + e2e
+  (login→dados semeados→logout). Ver `docs/testing.md`.
 - [ ] **Fase 6 — Limpeza** — só depois de equivalência: remover legado, reapontar
   Vercel para `web/`, atualizar docs.
 
@@ -29,12 +29,15 @@ Branch `refactor/nextjs`. App Next em `tally-app/web/`. App JS legado intacto em
 - [x] **Finance Lite** — entradas/saídas, gráficos (barras 6m + donut despesas), saldo
   por fundo, lançamentos + novo, contra `finance_entries`. Só dados reais (DNA #2).
   Novos compartilhados: `components/shared/ConicDonut`, `lib/utils/money`.
-- [ ] Groups, Journey (próximos — dependem de Sticks: presença/estágios)
-- [ ] Teams, Services, Events, Calendar
+- [x] **Saúde dos Grupos** — /groups + /groups/[id], contra groups/group_members/attendance.
+- [x] **Journey Map** — /journey, analytics read-only (stick_journey_records/timeline/milestones).
+- [x] **Coordenação** — /coordination, migrada do blob → coordination_posts/tasks.
+- [ ] **Signals engine** (pré-requisito compartilhado de Care/Inbox/Home — migrar como
+  domínio testável antes dessas três).
+- [ ] Teams, Services, Events, Calendar (Calendar depois deles)
 - [ ] Study/Sermons, Tracks
-- [ ] Care, Coordination (migrar do blob app_state → tabelas que já existem)
-- [ ] Inbox, Home (agregam tudo; por último)
-- [ ] Settings
+- [ ] Care, Inbox, Home (dependem do Signals engine)
+- [ ] Settings (config; parte ainda no blob)
 
 ## Padrão de referência (provado com Sticks)
 `features/<f>/`: `domain.ts` (interface pública) · `types.ts` · `queries.ts`
