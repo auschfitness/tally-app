@@ -19,7 +19,8 @@ if (import.meta.env && import.meta.env.DEV) {
     import("./core/state.js"),
     import("./core/render.js"),
     import("./core/supabase.js"),
-  ]).then(([{ seed }, { setState }, { render }, { hideGate }]) => {
+  ]).then(([{ seed }, stateMod, { render }, { hideGate }]) => {
+    var setState = stateMod.setState;
     window.__tallyPreview = function (v) {
       var s = seed();
       s.view = v || "dashboard";
@@ -27,6 +28,10 @@ if (import.meta.env && import.meta.env.DEV) {
       hideGate();
       render();
     };
-    console.log("[dev] preview pronto — use __tallyPreview('dashboard')");
+    // Hooks de verificação (dev-only): acessam o state/render REAIS do app, evitando a
+    // duplicação de instância de módulo que ocorre ao importar via console.
+    window.__tallyState = function () { return stateMod.state; };
+    window.__tallyInject = function (patch) { Object.assign(stateMod.state, patch || {}); hideGate(); render(); };
+    console.log("[dev] preview pronto — use __tallyPreview('dashboard'), __tallyInject({...})");
   });
 }

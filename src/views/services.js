@@ -5,8 +5,9 @@
 
 import { state } from "../core/state.js";
 import { save } from "../core/persist.js";
-import { esc } from "../core/helpers.js";
+import { esc, ageOf } from "../core/helpers.js";
 import { createService, updateService, deleteService } from "../core/services-repo.js";
+import { planFor, createPlanItem, updatePlanItem, deletePlanItem, movePlanItem } from "../core/service-plan-repo.js";
 import { checkinModal } from "./sticks.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { render } from "../core/render.js";
@@ -44,14 +45,64 @@ export function viewServices() {
     '<div class="gcards">' + cards + '</div>';
 }
 
+// Composição de uma sessão (só dado real). Crianças por data de nascimento conhecida.
+function stickOf(id) { return (state.people || []).find(function (p) { return p.id === id; }) || null; }
+function composition(sess) {
+  var c = { total: 0, visitors: 0, first: 0, returning: 0, kids: 0 };
+  (sess.attendees || []).forEach(function (aid) {
+    c.total++;
+    var p = stickOf(aid); if (!p) return;
+    if (p.relationship === "visitor_first") { c.visitors++; c.first++; }
+    else if (p.relationship === "visitor_returning") { c.visitors++; c.returning++; }
+    var age = ageOf(p); if (age !== null && age < 12) c.kids++;
+  });
+  return c;
+}
+// Tendência: barras inline (altura ∝ contagem) das últimas N ocorrências. Sem Chart.js.
+function trendBars(sessAsc, n) {
+  var last = sessAsc.slice(-n);
+  var max = last.reduce(function (m, s) { return Math.max(m, (s.attendees || []).length); }, 0) || 1;
+  return '<div style="display:flex;align-items:flex-end;gap:5px;height:90px;margin:6px 0 4px">' + last.map(function (s) {
+    var v = (s.attendees || []).length; var h = Math.round(v / max * 78) + 2;
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><span class="muted" style="font-size:10px">' + v + '</span><div title="' + esc(brDate(s.date)) + '" style="width:100%;max-width:26px;height:' + h + 'px;background:var(--blue);border-radius:4px 4px 0 0"></div><span class="muted" style="font-size:9px;margin-top:3px">' + (s.date ? brDate(s.date).slice(0, 5) : '—') + '</span></div>';
+  }).join("") + '</div>';
+}
+
 function serviceDetailView(id) {
   var s = serviceById(id);
   if (!s) return '<button class="link" id="servicesBack">&#8592; Voltar aos cultos</button><div class="empty">Culto não encontrado.</div>';
   var sess = sessionsOf(id).slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
-  var sessList = sess.map(function (x) {
+  var sessAsc = sess.slice().reverse();
+
+  // Painel de presença: tendência (12) + composição da última ocorrência.
+  var presence;
+  if (sess.length) {
+    var latest = sess[0]; var c = composition(latest);
+    var comp = '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:10px">' +
+      '<span><b style="color:var(--blue);font-size:16px">' + c.total + '</b> <span class="muted">presentes (última)</span></span>' +
+      '<span><b>' + c.visitors + '</b> <span class="muted">visitantes</span></span>' +
+      '<span><b>' + c.first + '</b> <span class="muted">1ª vez</span></span>' +
+      '<span><b>' + c.returning + '</b> <span class="muted">retornando</span></span>' +
+      '<span><b>' + c.kids + '</b> <span class="muted">crianças</span></span></div>';
+    presence = '<div class="ph"><h3>Presença</h3><span class="muted" style="margin-left:auto">últimas ' + Math.min(12, sess.length) + ' ocorrências</span></div>' + trendBars(sessAsc, 12) + comp;
+  } else {
+    presence = '<div class="ph"><h3>Presença</h3></div><div class="empty">Sem ocorrências ainda. Registre a presença de um culto para ver a tendência.</div>';
+  }
+
+  var sessList = sess.slice(0, 8).map(function (x) {
     var n = (x.attendees || []).length;
     return '<div class="li"><div class="av">' + (x.date ? brDate(x.date).slice(0, 5) : '—') + '</div><div style="flex:1"><div><b>' + (x.date ? brDate(x.date) : 'sem data') + '</b></div><div class="meta">' + n + ' presente' + (n !== 1 ? 's' : '') + '</div></div></div>';
   }).join("") || '<div class="empty">Nenhuma presença registrada neste culto ainda. Use “Registrar presença”.</div>';
+
+  // Ordem do culto (service_plan_items — template do serviço).
+  var plan = planFor(id);
+  var planList = plan.map(function (it, i) {
+    var right = '<button class="link" data-planup="' + it.id + '"' + (i === 0 ? ' style="visibility:hidden"' : '') + '>↑</button><button class="link" data-plandown="' + it.id + '"' + (i === plan.length - 1 ? ' style="visibility:hidden"' : '') + '>↓</button><button class="link" data-planedit="' + it.id + '">editar</button><button class="link" data-plandel="' + it.id + '">×</button>';
+    var meta = [];
+    if (it.duration_min) meta.push(it.duration_min + " min");
+    if (it.responsible) meta.push(esc(it.responsible));
+    return '<div class="li"><div class="av">' + (it.time_label ? esc(it.time_label) : (i + 1)) + '</div><div style="flex:1"><div><b>' + esc(it.title) + '</b></div>' + (meta.length ? '<div class="meta">' + meta.join(" · ") + '</div>' : '') + '</div><div class="right">' + right + '</div></div>';
+  }).join("") || '<div class="empty">Sem ordem definida. Monte a sequência do culto (louvor, avisos, mensagem…).</div>';
 
   var info = '<div class="field"><label>Quando</label><div>' + esc(whenLabel(s)) + ' · ' + (PATTERN_LBL[s.recurring_pattern] || s.recurring_pattern) + '</div></div>' +
     (s.location ? '<div class="field"><label>Local</label><div>' + esc(s.location) + '</div></div>' : '') +
@@ -60,8 +111,27 @@ function serviceDetailView(id) {
 
   return '<button class="link" id="servicesBack">&#8592; Voltar aos cultos</button>' +
     '<div style="display:flex;align-items:flex-start;margin:10px 0 18px"><div><h1 class="page">' + esc(s.name || "(sem nome)") + '</h1><p class="sub" style="margin:0">' + esc(whenLabel(s)) + (s.type ? ' · ' + esc(s.type) : '') + (s.active ? '' : ' · Inativo') + '</p></div><button class="btn ghost" id="editService" data-service="' + id + '" style="margin-left:auto">Editar culto</button><button class="btn" id="serviceCheckin" data-service="' + id + '">Registrar presença</button></div>' +
-    '<div class="row2"><div class="panel"><div class="ph"><h3>Presenças recentes</h3><span class="muted" style="margin-left:auto">' + sess.length + ' ocorrência' + (sess.length !== 1 ? 's' : '') + '</span></div>' + sessList + '</div>' +
-    '<div class="panel"><div class="ph"><h3>Sobre o culto</h3></div>' + info + '</div></div>';
+    '<div class="panel" style="margin-bottom:16px">' + presence + '</div>' +
+    '<div class="row2"><div class="panel"><div class="ph"><h3>Ordem do culto</h3><button class="btn ghost sm" id="addPlanItem" data-service="' + id + '" style="margin-left:auto">+ Item</button></div>' + planList + '</div>' +
+    '<div class="panel"><div class="ph"><h3>Presenças recentes</h3><span class="muted" style="margin-left:auto">' + sess.length + ' ocorrência' + (sess.length !== 1 ? 's' : '') + '</span></div>' + sessList + '<div style="margin-top:14px" class="ph"><h3>Sobre o culto</h3></div>' + info + '</div></div>';
+}
+
+function planItemModal(serviceId, it) {
+  var isNew = !it; it = it || {};
+  openModal('<h3>' + (isNew ? 'Novo item da ordem' : 'Editar item') + '</h3>' +
+    '<div class="mrow"><div class="field"><label>Horário</label><input id="pl-time" value="' + esc(it.time_label || "") + '" placeholder="Ex.: 09:00"></div><div class="field"><label>Duração (min)</label><input id="pl-dur" type="number" min="0" value="' + (it.duration_min != null ? it.duration_min : "") + '"></div></div>' +
+    '<div class="field"><label>Título</label><input id="pl-title" value="' + esc(it.title || "") + '" placeholder="Ex.: Louvor, Avisos, Mensagem"></div>' +
+    '<div class="field"><label>Responsável</label><input id="pl-resp" value="' + esc(it.responsible || "") + '" placeholder="Opcional"></div>' +
+    '<div class="field"><label>Notas</label><textarea id="pl-notes" rows="2" placeholder="Opcional">' + esc(it.notes || "") + '</textarea></div>' +
+    '<div class="actions"><button class="btn ghost" id="pl-cancel">Cancelar</button><button class="btn" id="pl-save" data-id="' + (it.id || "") + '" data-service="' + serviceId + '">' + (isNew ? 'Adicionar' : 'Salvar') + '</button></div>');
+  document.getElementById("pl-cancel").onclick = closeModal;
+  document.getElementById("pl-save").onclick = function () {
+    var title = val("pl-title").trim(); if (!title) { var el = document.getElementById("pl-title"); if (el) el.focus(); return; }
+    var data = { time_label: val("pl-time").trim(), duration_min: val("pl-dur"), title: title, responsible: val("pl-resp").trim(), notes: val("pl-notes").trim() };
+    var pid = this.getAttribute("data-id");
+    if (pid) updatePlanItem(pid, data).then(function () { closeModal(); render(); });
+    else { data.service_id = this.getAttribute("data-service"); createPlanItem(data).then(function () { closeModal(); render(); }); }
+  };
 }
 
 function serviceModal(s) {
@@ -90,8 +160,13 @@ function serviceModal(s) {
 }
 
 document.addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-servicedetail],#newService,#servicesBack,#editService,#serviceCheckin") : null; if (!t) return;
+  var t = e.target.closest ? e.target.closest("[data-servicedetail],[data-planedit],[data-plandel],[data-planup],[data-plandown],#newService,#servicesBack,#editService,#serviceCheckin,#addPlanItem") : null; if (!t) return;
   if (t.getAttribute("data-servicedetail")) { state.serviceDetail = t.getAttribute("data-servicedetail"); save(); render(); return; }
+  if (t.getAttribute("data-planedit")) { var pe = (state.planItems || []).find(function (x) { return x.id === t.getAttribute("data-planedit"); }); if (pe) planItemModal(pe.service_id, pe); return; }
+  if (t.getAttribute("data-plandel")) { if (!window.confirm("Remover este item da ordem?")) return; deletePlanItem(t.getAttribute("data-plandel")).then(function () { render(); }); return; }
+  if (t.getAttribute("data-planup")) { movePlanItem(t.getAttribute("data-planup"), -1).then(function () { render(); }); return; }
+  if (t.getAttribute("data-plandown")) { movePlanItem(t.getAttribute("data-plandown"), 1).then(function () { render(); }); return; }
+  if (t.id === "addPlanItem") { planItemModal(t.getAttribute("data-service"), null); return; }
   if (t.id === "newService") { serviceModal(null); return; }
   if (t.id === "servicesBack") { state.serviceDetail = null; save(); render(); return; }
   if (t.id === "editService") { serviceModal(serviceById(t.getAttribute("data-service"))); return; }

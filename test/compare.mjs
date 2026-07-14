@@ -341,7 +341,20 @@ const FEATURE_VIEWS = [
     s.sessions = [{ id: "se-1", campus: s.activeCampus, group: "", service: "sv-1", date: "2026-03-01", attendees: ["a", "b", "c"], photo: null }];
     s.serviceDetail = "sv-1";
     setState(s); return servicesView.viewServices();
-  }, ["Voltar aos cultos", "Presenças recentes", "3 presentes", 'id="serviceCheckin"', 'id="editService"', "Sobre o culto"]],
+  }, ["Voltar aos cultos", "Presença", "últimas", "Ordem do culto", "Presenças recentes", "3 presentes", 'id="serviceCheckin"', 'id="editService"', "Sobre o culto"]],
+  // service-plan (Step 6 · Fase 2) — ordem do culto com itens + composição de presença.
+  ["service-plan", () => {
+    const s = clone(seedData); s.view = "services";
+    const p0 = s.people[0].id, p1 = s.people[1].id;
+    s.services = [{ id: "sv-1", name: "Culto de Domingo", type: "Domingo", campus: s.activeCampus, weekday: 0, start_time: "09:00", end_time: "", location: "", recurring_pattern: "weekly", description: "", active: true }];
+    s.sessions = [{ id: "se-1", campus: s.activeCampus, group: "", service: "sv-1", date: "2026-03-01", attendees: [p0, p1], photo: null }];
+    s.planItems = [
+      { id: "pl-1", service_id: "sv-1", session_id: null, position: 1, time_label: "09:00", title: "Louvor", duration_min: 20, responsible: "Banda", notes: "" },
+      { id: "pl-2", service_id: "sv-1", session_id: null, position: 2, time_label: "09:25", title: "Mensagem", duration_min: 35, responsible: "Pr. João", notes: "" },
+    ];
+    s.serviceDetail = "sv-1";
+    setState(s); return servicesView.viewServices();
+  }, ["Ordem do culto", "Louvor", "Mensagem", "20 min", "Banda", 'data-planedit="pl-1"', 'data-plandown="pl-1"', 'id="addPlanItem"', "presentes (última)"]],
   // scripture-map (Study · Fase 3a) — cobertura dos 66 livros por uso real; célula por
   // livro com intensidade; clicar num livro lista os sermões. Semeia escrituras reais.
   ["scripture-map", () => {
