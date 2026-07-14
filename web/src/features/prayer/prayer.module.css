@@ -1,0 +1,30 @@
+/* Estilos específicos da feature Oração (CSS Module — colocados por feature,
+   não no global). Migrados de src/styles.css preservando o visual. */
+
+.cloudbox { position: relative; height: 330px; width: 100%; overflow: hidden; }
+.cw { position: absolute; top: 0; left: 0; border: none; background: none; font-family: inherit; font-weight: 600; line-height: 1; padding: 1px 3px; border-radius: 6px; white-space: nowrap; cursor: pointer; }
+.cw[data-vert="1"] { transform: rotate(-90deg); }
+.cw:hover { opacity: .65; }
+.cwOn { text-decoration: underline; text-underline-offset: 3px; }
+.cwTopic { color: var(--green); }
+.cwName { color: var(--blue); }
+.cwGroup { color: #8b74e8; }
+
+.cloudleg { display: flex; gap: 14px; font-size: 11.5px; color: var(--text-2); align-items: center; }
+.cloudleg span { display: flex; align-items: center; gap: 5px; }
+.cloudleg i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.lgName { background: var(--blue); }
+.lgTopic { background: var(--green); }
+.lgGroup { background: #8b74e8; }
+
+.pray { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.prayAnswered { border-color: rgba(31, 169, 122, .5); background: rgba(31, 169, 122, .06); }
+.ph2 { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+.who { font-weight: 600; color: var(--text); }
+.pv { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--text-2); background: var(--surface-2); padding: 2px 8px; border-radius: 20px; }
+.rx { color: var(--text); font-size: 14px; line-height: 1.5; }
+.pa { margin-top: 11px; display: flex; gap: 12px; align-items: center; }
+.answeredtag { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: .04em; margin-left: auto; }
+.ptopics { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.ptag { font-size: 11px; font-weight: 500; color: var(--text-2); background: var(--surface-2); padding: 2px 9px; border-radius: 20px; }
+.prbar { display: flex; align-items: center; margin-bottom: 10px; }
