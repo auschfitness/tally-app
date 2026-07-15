@@ -1,0 +1,71 @@
+/* Estilos de Settings (o global tem tabs/tab, switch, field, btn, panel, chip...). */
+
+.setrow {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+}
+.setrow:last-child {
+  border-bottom: none;
+}
+.lbl {
+  flex: 0 0 220px;
+  font-weight: 600;
+  color: var(--text);
+}
+.lbl small {
+  display: block;
+  font-weight: 400;
+  color: var(--text-2, #6b7280);
+  margin-top: 2px;
+}
+.ctrl {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ctrl input,
+.ctrl select {
+  max-width: 320px;
+}
+
+.taglist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.tagx {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2, #f2f4f8);
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 16px;
+  padding: 4px 6px 4px 12px;
+  font-size: 13px;
+}
+.tagx button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-2, #6b7280);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.tagx button:hover {
+  color: var(--coral, #ea5b4c);
+}
+
+.addRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.addRow input {
+  max-width: 200px;
+}
