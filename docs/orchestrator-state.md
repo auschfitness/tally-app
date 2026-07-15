@@ -28,6 +28,10 @@ Escaneei de uma vez todas as tabelas que faltam — nenhuma feature restante pre
 6. **Settings** → `docs/handoffs/settings-supabase.md` (fonte da verdade por campo: tabela vs. blob; blob = read-modify-write cirúrgico)
 7. **Cut-over (Fase 6)** → `docs/handoffs/cutover-checklist.md` (Vercel→web/, Supabase Auth URLs, advisors, aposentar legado)
 Ações que ficaram explicitamente PARA MIM (orquestrador), sob pedido: inscrição pública/pagamento (RLS anon), confidencialidade real de Care, FKs de sermons, enforcement de visibility, restringir edição de org a owner, usuário de teste não-owner p/ Care.
+
+## Decisão registrada (Care, quando o Claude Code chegou nele)
+- Care migrado COMO OWNER (happy path completo e testável; fixture é owner → passa `care.view`/`care.manage`). Caminho negativo ("sem permissão → não vê nada") = teste ADIADO, documentado no README do Care.
+- **Pendência minha+dono**: prover usuário de teste NÃO-owner. Requer credencial extra em `web/.env.test` (fora do git, na máquina do dono) + eu semeio o membership sem `care.view`. Fazer quando quisermos fechar o teste negativo — NÃO bloqueia nada.
 - **Docs de orquestração JÁ versionados** (commit `b99e0c3`): `docs/orchestrator-state.md` + `docs/handoffs/*`. Handoff agora vive no git. (Continuar: NÃO commitar pela pasta OneDrive — git dela é inconsistente com o repo real; commits saem do lado do Claude Code.)
 - **Lacuna herdada conhecida**: check-in não atualiza `last_seen`/`followup` da Stick (veio da migração de Groups; documentado nos READMEs). Revisitar quando fizer sentido para Care/Home.
 
