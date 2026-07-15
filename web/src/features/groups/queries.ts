@@ -1,6 +1,7 @@
 // Consultas de Grupos. Resolve líder (group_members role='leader') e os contadores
 // de novos/saídas (≤30 dias) a partir de group_members — sem depender do blob.
 import type { DB } from "@/lib/auth/session";
+import { listAttendanceSessions } from "@/lib/attendance";
 import type { Group } from "./domain";
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
@@ -42,26 +43,12 @@ export async function listGroups(supabase: DB, orgId: string): Promise<Group[]> 
 }
 
 // Sessões de presença de um grupo (context_type='group'), recentes primeiro.
+// Usa o caminho de presença compartilhado (lib/attendance) — mesma tabela que Services.
 export async function listGroupSessions(
   supabase: DB,
   orgId: string,
   groupId: string,
 ): Promise<{ date: string; count: number }[]> {
-  const sessRes = await supabase
-    .from("attendance_sessions")
-    .select("id, session_date")
-    .eq("org_id", orgId)
-    .eq("context_type", "group")
-    .eq("context_id", groupId)
-    .order("session_date", { ascending: false });
-
-  const sessions = sessRes.data ?? [];
-  if (sessions.length === 0) return [];
-
-  const ids = sessions.map((s) => s.id);
-  const recRes = await supabase.from("attendance_records").select("session_id").in("session_id", ids).eq("status", "present");
-  const countBySession = new Map<string, number>();
-  for (const r of recRes.data ?? []) countBySession.set(r.session_id, (countBySession.get(r.session_id) ?? 0) + 1);
-
-  return sessions.map((s) => ({ date: s.session_date ?? "", count: countBySession.get(s.id) ?? 0 }));
+  const sessions = await listAttendanceSessions(supabase, orgId, "group", groupId);
+  return sessions.map((s) => ({ date: s.date, count: s.count }));
 }

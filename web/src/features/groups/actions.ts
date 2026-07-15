@@ -5,16 +5,9 @@
 import { revalidatePath } from "next/cache";
 import { requireOrg, type DB } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
+import { ensureCampusId, recordAttendance } from "@/lib/attendance";
 import { parseGroupInput } from "./schema";
 import { isoDate, today } from "@/lib/utils/date";
-
-async function ensureCampusId(supabase: DB, orgId: string, name: string): Promise<string | null> {
-  if (!name) return null;
-  const found = await supabase.from("campuses").select("id").eq("org_id", orgId).eq("name", name).maybeSingle();
-  if (found.data) return found.data.id;
-  const created = await supabase.from("campuses").insert({ org_id: orgId, name }).select("id").single();
-  return created.data?.id ?? null;
-}
 
 // Promove uma Stick a líder do grupo (demove o líder anterior a membro).
 async function promoteLeader(supabase: DB, groupId: string, stickId: string): Promise<void> {
@@ -84,27 +77,14 @@ export async function recordGroupAttendanceAction(formData: FormData): Promise<A
   const { supabase, orgId } = await requireOrg();
   try {
     const campusId = await ensureCampusId(supabase, orgId, campus);
-    const { data: session, error: sErr } = await supabase
-      .from("attendance_sessions")
-      .insert({
-        org_id: orgId,
-        context_type: "group",
-        context_id: groupId,
-        campus_id: campusId,
-        session_date: isoDate(today()),
-      })
-      .select("id")
-      .single();
-    if (sErr || !session) return fail(toMessage(sErr, "Não consegui registrar a presença."));
-
-    const records = stickIds.map((stick_id) => ({
-      session_id: session.id,
-      stick_id,
-      status: "present" as const,
-      source: "checkin",
-    }));
-    const { error: rErr } = await supabase.from("attendance_records").insert(records);
-    if (rErr) return fail(toMessage(rErr, "Presença parcial: erro ao gravar registros."));
+    const { error } = await recordAttendance(supabase, orgId, {
+      contextType: "group",
+      contextId: groupId,
+      campusId,
+      stickIds,
+      sessionDate: isoDate(today()),
+    });
+    if (error) return fail(toMessage(error, "Não consegui registrar a presença."));
 
     revalidatePath(`/groups/${groupId}`);
     revalidatePath("/groups");
