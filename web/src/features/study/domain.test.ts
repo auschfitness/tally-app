@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { filterSermons, sortSermonsByDate, SECTIONS, OPTIONAL_SECTIONS, STATUS_BAND } from "./domain";
-import type { Sermon } from "./types";
+import { filterSermons, sortSermonsByDate, SECTIONS, OPTIONAL_SECTIONS, STATUS_BAND, coverage, sermonIdsUsing } from "./domain";
+import type { Scripture, Sermon } from "./types";
 
 function sermon(o: Partial<Sermon>): Sermon {
   return {
@@ -67,5 +67,33 @@ describe("STATUS_BAND", () => {
     expect(STATUS_BAND.ready).toBe("healthy");
     expect(STATUS_BAND.archived).toBe("risk");
     expect(STATUS_BAND.draft).toBe("attention");
+  });
+});
+
+describe("coverage / sermonIdsUsing (Mapa de Escrituras)", () => {
+  const scr = (o: Partial<Scripture>): Scripture => ({
+    id: o.id ?? Math.random().toString(36).slice(2),
+    sermon_id: o.sermon_id ?? "s1",
+    book: o.book ?? "JHN",
+    chapter: o.chapter ?? 10,
+    verse_start: o.verse_start ?? null,
+    verse_end: o.verse_end ?? null,
+    reference: o.reference ?? "João 10",
+  });
+  it("conta sermões DISTINTOS por livro (não dupla contagem)", () => {
+    const list = [
+      scr({ sermon_id: "s1", book: "JHN" }),
+      scr({ sermon_id: "s1", book: "JHN", chapter: 3 }), // mesmo sermão, mesmo livro → 1
+      scr({ sermon_id: "s2", book: "JHN" }),
+      scr({ sermon_id: "s1", book: "ROM" }),
+    ];
+    const cov = coverage(list);
+    expect(cov.count.JHN).toBe(2); // s1, s2
+    expect(cov.count.ROM).toBe(1);
+    expect(cov.max).toBe(2);
+  });
+  it("sermonIdsUsing exclui o sermão atual", () => {
+    const list = [scr({ sermon_id: "s1", book: "JHN", chapter: 10 }), scr({ sermon_id: "s2", book: "JHN", chapter: 10 })];
+    expect(sermonIdsUsing(list, "JHN", 10, "s1")).toEqual(["s2"]);
   });
 });

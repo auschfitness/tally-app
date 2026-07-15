@@ -69,3 +69,49 @@ export async function deleteSermonAction(formData: FormData): Promise<void> {
   await supabase.from("sermons").delete().eq("id", id);
   revalidatePath("/study");
 }
+
+// Sincroniza as passagens de UM sermão (slice 2): upsert das atuais + remove as que
+// saíram. UNIQUE (sermon_id, reference) → upsert onConflict não duplica ao re-parsear.
+// `refs` vem do parser (lib/bible/parse). Nunca lança para a UI.
+export interface SyncRef {
+  book: string;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+  reference: string;
+}
+export async function syncSermonScripturesAction(sermonId: string, refs: SyncRef[]): Promise<void> {
+  if (!UUID.test(sermonId)) return;
+  const { supabase, orgId } = await requireOrg();
+
+  // dedup por reference (a unique é (sermon_id, reference))
+  const seen = new Set<string>();
+  const desired = (refs ?? []).filter((r) => {
+    if (!r || !r.reference || seen.has(r.reference)) return false;
+    seen.add(r.reference);
+    return true;
+  });
+
+  if (desired.length) {
+    await supabase.from("sermon_scriptures").upsert(
+      desired.map((r) => ({
+        org_id: orgId,
+        sermon_id: sermonId,
+        book: r.book,
+        chapter: r.chapter,
+        verse_start: r.verse_start ?? null,
+        verse_end: r.verse_end ?? null,
+        reference: r.reference,
+      })),
+      { onConflict: "sermon_id,reference" },
+    );
+  }
+
+  // remove as que não existem mais (compara o que há no banco para este sermão)
+  const existing = await supabase.from("sermon_scriptures").select("id, reference").eq("org_id", orgId).eq("sermon_id", sermonId);
+  const keep = new Set(desired.map((r) => r.reference));
+  const toDelete = (existing.data ?? []).filter((x) => !keep.has(x.reference)).map((x) => x.id);
+  if (toDelete.length) await supabase.from("sermon_scriptures").delete().in("id", toDelete);
+
+  revalidatePath("/study/map");
+}

@@ -73,7 +73,8 @@ export function SermonLibrary({
           <h1 className="page">Estudo</h1>
           <p className="sub" style={{ margin: 0 }}>Onde a igreja prepara e preserva o ensino. A Bíblia é a fundação; o Tally organiza.</p>
         </div>
-        <Link href="/study/sermon/new" className="btn" style={{ marginLeft: "auto" }}>+ Novo sermão</Link>
+        <Link href="/study/map" className="btn ghost" style={{ marginLeft: "auto" }}>Mapa de Escrituras</Link>
+        <Link href="/study/sermon/new" className="btn">+ Novo sermão</Link>
       </div>
 
       <div className={styles.filters}>

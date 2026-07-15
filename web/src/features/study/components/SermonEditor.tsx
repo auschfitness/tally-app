@@ -6,10 +6,12 @@
 // preservando o shape do `content` (nunca null) e os sub-campos extras do blob.
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveSermonAction } from "../actions";
+import { saveSermonAction, syncSermonScripturesAction } from "../actions";
 import { OPTIONAL_SECTIONS, SECTIONS, STATUS_LBL, VIS_LBL } from "../domain";
 import type { Sermon, SermonContent } from "../types";
 import type { Series } from "../types";
+import { parseRefs, type ScriptureRef } from "@/lib/bible/parse";
+import { fetchPassage, type PassageResult } from "@/lib/bible/source";
 import styles from "../study.module.css";
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -24,6 +26,14 @@ interface SectionValues {
 interface ServiceOpt {
   id: string;
   name: string;
+}
+
+// Referências do sermão: a passagem principal SEMPRE conta; o texto das seções só
+// é varrido quando "Reconhecer escrituras" está ligado. Portado de refsForCurrent().
+function refsFor(mainPassage: string, v: SectionValues, recognizeOn: boolean): ScriptureRef[] {
+  let txt = mainPassage;
+  if (recognizeOn) txt += "\n" + [v.outline, v.notes, v.illustrations, v.application, v.prayer_response].join("\n");
+  return parseRefs(txt);
 }
 
 function AutoTextarea({ value, onChange, placeholder, className }: { value: string; onChange: (v: string) => void; placeholder: string; className?: string }) {
@@ -84,14 +94,21 @@ export function SermonEditor({
   const [status, setStatus] = useState(sermon ? "Salvo" : "Novo sermão");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Assistente de escrituras (slice 2): reconhecimento + painel de texto (helloao).
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [recognizeOn, setRecognizeOn] = useState(true);
+  const [selRef, setSelRef] = useState<ScriptureRef | null>(null);
+  const [passage, setPassage] = useState<PassageResult | null>(null);
+  const [loadingPassage, setLoadingPassage] = useState(false);
+
   const savingRef = useRef(false);
   const rerunRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dirtyRef = useRef(false);
 
   // Snapshot atual (via ref) para o save assíncrono sempre ver o estado mais novo.
-  const snapRef = useRef({ meta, values });
-  snapRef.current = { meta, values };
+  const snapRef = useRef({ meta, values, recognizeOn });
+  snapRef.current = { meta, values, recognizeOn };
 
   async function doSave() {
     if (savingRef.current) {
@@ -136,6 +153,8 @@ export function SermonEditor({
         // Adota a URL do sermão salvo sem remontar o editor (shallow).
         window.history.replaceState(null, "", `/study/sermon/${res.data.id}`);
       }
+      // Sincroniza as passagens do sermão (upsert/remoção), com o id já garantido.
+      void syncSermonScripturesAction(idRef.current, refsFor(m.main_passage, v, snapRef.current.recognizeOn));
     } else {
       setStatus(res.message || "Não foi possível salvar");
     }
@@ -186,7 +205,17 @@ export function SermonEditor({
     router.push("/study");
   }
 
+  async function openPassage(ref: ScriptureRef) {
+    setSelRef(ref);
+    setPassage(null);
+    setLoadingPassage(true);
+    const res = await fetchPassage(ref);
+    setLoadingPassage(false);
+    setPassage(res);
+  }
+
   const addable = OPTIONAL_SECTIONS.filter((s) => !present.has(s.key));
+  const detected = refsFor(meta.main_passage, values, recognizeOn);
 
   return (
     <div>
@@ -194,6 +223,7 @@ export function SermonEditor({
         <button className="link" onClick={backToLibrary}>← Biblioteca</button>
         <span className={styles.status}>{status}</span>
         <span style={{ flex: 1 }} />
+        <button className="btn ghost sm" onClick={() => setAssistantOpen((o) => !o)}>Escrituras</button>
         <button className="btn ghost sm" onClick={() => setDrawerOpen(true)}>Propriedades</button>
       </div>
 
@@ -226,6 +256,48 @@ export function SermonEditor({
           </div>
         ) : null}
       </main>
+
+      {assistantOpen ? (
+        <>
+          <div className={styles.drawerOv} onClick={() => setAssistantOpen(false)} />
+          <aside className={styles.drawer}>
+            <div className="ph"><h3 style={{ fontSize: 14 }}>Assistente de estudo</h3><button className="link" style={{ marginLeft: "auto" }} onClick={() => setAssistantOpen(false)}>Fechar</button></div>
+            <label className="field check" style={{ marginTop: 8 }}>
+              <input type="checkbox" checked={recognizeOn} onChange={(e) => setRecognizeOn(e.target.checked)} />
+              <span>Reconhecer escrituras</span>
+            </label>
+            <div className={styles.seclabel} style={{ marginTop: 16 }}>Referências</div>
+            {detected.length === 0 ? (
+              <div className="muted" style={{ marginTop: 6 }}>
+                {recognizeOn ? "Nenhuma referência reconhecida ainda. Escreva “João 10:1-18”, “Rm 8:28”…" : "Reconhecimento desligado. A passagem principal ainda é registrada."}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+                {detected.map((r) => (
+                  <button key={r.reference} className="chip" style={{ background: "rgba(43,92,230,.10)", color: "var(--blue)", border: "none", cursor: "pointer" }} onClick={() => openPassage(r)}>{r.reference}</button>
+                ))}
+              </div>
+            )}
+            {selRef ? (
+              <div style={{ marginTop: 16 }}>
+                <div className={styles.seclabel}>{selRef.reference}</div>
+                {loadingPassage ? (
+                  <div className="muted" style={{ marginTop: 6 }}>Carregando o texto…</div>
+                ) : passage && passage.ok ? (
+                  <div style={{ marginTop: 6, lineHeight: 1.7, fontSize: 14 }}>
+                    {passage.verses.map((v) => (
+                      <span key={v.n}><sup style={{ color: "var(--text-2)", marginRight: 3 }}>{v.n}</sup>{v.text} </span>
+                    ))}
+                    <div className="muted" style={{ marginTop: 8 }}>Versão: {passage.translationName || passage.translationId || ""}</div>
+                  </div>
+                ) : (
+                  <div className="muted" style={{ marginTop: 6 }}>{(passage && !passage.ok && passage.error) || "Não foi possível carregar a versão agora."}</div>
+                )}
+              </div>
+            ) : null}
+          </aside>
+        </>
+      ) : null}
 
       {drawerOpen ? (
         <>

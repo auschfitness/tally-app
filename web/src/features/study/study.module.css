@@ -171,6 +171,31 @@
   color: var(--blue, #2b5ce6);
 }
 
+/* Mapa de Escrituras */
+.smap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+}
+.smapCell {
+  position: relative;
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.smapN {
+  position: absolute;
+  top: 4px;
+  right: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
 /* Drawer de propriedades */
 .drawerOv {
   position: fixed;

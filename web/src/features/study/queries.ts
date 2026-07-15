@@ -4,7 +4,7 @@
 // com integridade. `content` (jsonb) preservado 1:1 (nunca null). Ver
 // docs/handoffs/study-supabase.md.
 import type { DB } from "@/lib/auth/session";
-import type { Sermon, SermonContent, SermonStatus, SermonVisibility, Series, SeriesStatus } from "./types";
+import type { Scripture, Sermon, SermonContent, SermonStatus, SermonVisibility, Series, SeriesStatus } from "./types";
 
 const SERMON_STATUS = new Set<SermonStatus>(["draft", "preparing", "ready", "preached", "archived"]);
 const SERMON_VIS = new Set<SermonVisibility>(["private", "leadership", "church", "public"]);
@@ -76,5 +76,24 @@ export async function listSeries(supabase: DB, orgId: string): Promise<Series[]>
     start_date: r.start_date ?? "",
     end_date: r.end_date ?? "",
     status: seriesStatusOr(r.status),
+  }));
+}
+
+// Todas as passagens (sermon_scriptures) da org — alimentam o Mapa de Escrituras e o
+// histórico "você já pregou sobre isto". O TEXTO bíblico não vem daqui (é da helloao).
+export async function listScriptures(supabase: DB, orgId: string): Promise<Scripture[]> {
+  const res = await supabase
+    .from("sermon_scriptures")
+    .select("id, sermon_id, book, chapter, verse_start, verse_end, reference")
+    .eq("org_id", orgId);
+  if (res.error) throw new Error(res.error.message);
+  return (res.data ?? []).map((r) => ({
+    id: r.id,
+    sermon_id: r.sermon_id,
+    book: r.book,
+    chapter: r.chapter,
+    verse_start: r.verse_start ?? null,
+    verse_end: r.verse_end ?? null,
+    reference: r.reference,
   }));
 }

@@ -1,7 +1,7 @@
 // Domínio de Study/Sermões. Rótulos, faixas, seções do canvas e regras puras
 // portadas de src/views/sermons.js. Glossário PT-BR FIXADO (CLAUDE.md): Esboço,
 // Ideia central, Notas, Ilustrações, Aplicação, Resposta de oração.
-import type { Sermon, SermonStatus, SermonVisibility, SeriesStatus } from "./types";
+import type { Scripture, Sermon, SermonStatus, SermonVisibility, SeriesStatus } from "./types";
 
 export const STATUS_LBL: Record<SermonStatus, string> = {
   draft: "Rascunho",
@@ -80,4 +80,31 @@ export function sortSermonsByDate(sermons: Sermon[], dir: "asc" | "desc" = "desc
     if (!b.sermon_date) return -1;
     return mul * a.sermon_date.localeCompare(b.sermon_date);
   });
+}
+
+// --- Mapa de Escrituras (slice 2): cobertura dos 66 livros por uso real. ---
+export interface Coverage {
+  count: Record<string, number>; // code → nº de sermões distintos que usam o livro
+  max: number;
+}
+export function coverage(scriptures: Scripture[]): Coverage {
+  const by: Record<string, Set<string>> = {};
+  for (const x of scriptures) (by[x.book] ?? (by[x.book] = new Set())).add(x.sermon_id);
+  const count: Record<string, number> = {};
+  let max = 0;
+  for (const code of Object.keys(by)) {
+    const n = by[code]!.size;
+    count[code] = n;
+    if (n > max) max = n;
+  }
+  return { count, max };
+}
+
+// Sermões (ids) que já usaram um livro+capítulo, exceto o sermão atual. Só dado real.
+export function sermonIdsUsing(scriptures: Scripture[], book: string, chapter: number, exceptSermonId: string | null): string[] {
+  const ids = new Set<string>();
+  for (const x of scriptures) {
+    if (x.book === book && x.chapter === chapter && x.sermon_id !== exceptSermonId) ids.add(x.sermon_id);
+  }
+  return [...ids];
 }
