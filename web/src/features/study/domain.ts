@@ -38,6 +38,13 @@ export const SERIES_BAND: Record<SeriesStatus, string> = {
 
 export const SERMON_STATUSES: SermonStatus[] = ["draft", "preparing", "ready", "preached", "archived"];
 
+export const NOTE_SCOPE_LBL: Record<string, string> = { personal: "Pessoal", shared: "Compartilhada" };
+
+// "graça, pastoreio" → ["graça","pastoreio"] (sem vazios). Portado de parseTags.
+export function parseTags(s: string): string[] {
+  return (s || "").split(",").map((t) => t.trim()).filter(Boolean);
+}
+
 // Seções do canvas (dentro de content). `notes` é o corpo aberto; as demais são
 // estrutura opcional (aparecem quando têm conteúdo ou quando o pastor as adiciona).
 export interface SectionDef {

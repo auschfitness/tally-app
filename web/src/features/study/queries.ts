@@ -4,7 +4,7 @@
 // com integridade. `content` (jsonb) preservado 1:1 (nunca null). Ver
 // docs/handoffs/study-supabase.md.
 import type { DB } from "@/lib/auth/session";
-import type { Scripture, Sermon, SermonContent, SermonStatus, SermonVisibility, Series, SeriesStatus } from "./types";
+import type { NoteScope, Scripture, Sermon, SermonContent, SermonStatus, SermonVisibility, Series, SeriesStatus, StudyNote } from "./types";
 
 const SERMON_STATUS = new Set<SermonStatus>(["draft", "preparing", "ready", "preached", "archived"]);
 const SERMON_VIS = new Set<SermonVisibility>(["private", "leadership", "church", "public"]);
@@ -76,6 +76,27 @@ export async function listSeries(supabase: DB, orgId: string): Promise<Series[]>
     start_date: r.start_date ?? "",
     end_date: r.end_date ?? "",
     status: seriesStatusOr(r.status),
+  }));
+}
+
+// Notas de estudo da org (mais recentes primeiro). tags é text[] NOT NULL (default {}).
+export async function listNotes(supabase: DB, orgId: string): Promise<StudyNote[]> {
+  const res = await supabase
+    .from("study_notes")
+    .select("id, title, content, scope, sermon_id, series_id, scripture_ref, topic, tags")
+    .eq("org_id", orgId)
+    .order("updated_at", { ascending: false });
+  if (res.error) throw new Error(res.error.message);
+  return (res.data ?? []).map((r) => ({
+    id: r.id,
+    title: r.title ?? "",
+    content: r.content ?? "",
+    scope: (r.scope === "shared" ? "shared" : "personal") as NoteScope,
+    sermon_id: r.sermon_id ?? null,
+    series_id: r.series_id ?? null,
+    scripture_ref: r.scripture_ref ?? "",
+    topic: r.topic ?? "",
+    tags: Array.isArray(r.tags) ? r.tags : [],
   }));
 }
 

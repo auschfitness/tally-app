@@ -1,7 +1,8 @@
 // Validação/coerção de entrada (fronteira do servidor). O autosave envia um objeto
 // tipado (não FormData); ainda assim coagimos status/visibility a valores válidos e
 // exigimos título para persistir (o cliente já bloqueia, o servidor confirma).
-import type { SeriesStatus, SermonContent, SermonStatus, SermonVisibility } from "./types";
+import { parseTags } from "./domain";
+import type { NoteScope, SeriesStatus, SermonContent, SermonStatus, SermonVisibility } from "./types";
 
 const STATUS = new Set<SermonStatus>(["draft", "preparing", "ready", "preached", "archived"]);
 const VIS = new Set<SermonVisibility>(["private", "leadership", "church", "public"]);
@@ -18,6 +19,40 @@ export interface SeriesInput {
 export type ValidatedSeries =
   | { ok: true; data: SeriesInput }
   | { ok: false; fieldErrors: Record<string, string[]> };
+
+export interface NoteInput {
+  title: string;
+  content: string;
+  scope: NoteScope;
+  topic: string;
+  sermonId: string | null;
+  seriesId: string | null;
+  scriptureRef: string;
+  tags: string[];
+}
+export type ValidatedNote =
+  | { ok: true; data: NoteInput }
+  | { ok: false; fieldErrors: Record<string, string[]> };
+
+export function parseNoteInput(fd: FormData): ValidatedNote {
+  const title = String(fd.get("title") ?? "").trim();
+  const content = String(fd.get("content") ?? "").trim();
+  // Precisa de título OU conteúdo (a nota não pode ser totalmente vazia).
+  if (!title && !content) return { ok: false, fieldErrors: { title: ["Dê um título ou escreva algo."] } };
+  return {
+    ok: true,
+    data: {
+      title,
+      content,
+      scope: String(fd.get("scope") ?? "") === "shared" ? "shared" : "personal",
+      topic: String(fd.get("topic") ?? "").trim(),
+      sermonId: String(fd.get("sermonId") ?? "").trim() || null,
+      seriesId: String(fd.get("seriesId") ?? "").trim() || null,
+      scriptureRef: String(fd.get("scriptureRef") ?? "").trim(),
+      tags: parseTags(String(fd.get("tags") ?? "")),
+    },
+  };
+}
 
 export function parseSeriesInput(fd: FormData): ValidatedSeries {
   const title = String(fd.get("title") ?? "").trim();

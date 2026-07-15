@@ -1,6 +1,7 @@
 import { requireOrg } from "@/lib/auth/session";
 import { listSermons, listSeries } from "@/features/study/queries";
 import { SermonLibrary } from "@/features/study/components/SermonLibrary";
+import { StudyTabs } from "@/features/study/components/StudyTabs";
 
 // Estudo — Sermões (Server Component): biblioteca de sermões + séries. Editor e
 // mutações via Server Actions. `visibility` é rótulo de app (não RLS) — ver README.
@@ -14,5 +15,10 @@ export default async function StudyPage() {
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  return <SermonLibrary sermons={sermons} series={series} campuses={campuses} />;
+  return (
+    <>
+      <StudyTabs />
+      <SermonLibrary sermons={sermons} series={series} campuses={campuses} />
+    </>
+  );
 }

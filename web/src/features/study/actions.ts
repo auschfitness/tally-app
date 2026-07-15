@@ -6,7 +6,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOrg, type DB } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
-import { coerceSermon, parseSeriesInput, type SermonSaveInput } from "./schema";
+import { coerceSermon, parseNoteInput, parseSeriesInput, type SermonSaveInput } from "./schema";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function uuidOrNull(v: string | null): string | null {
@@ -182,4 +182,69 @@ export async function setSermonSeriesAction(fd: FormData): Promise<void> {
   revalidatePath("/study");
   const backTo = String(fd.get("backTo") ?? "");
   if (backTo) revalidatePath(backTo);
+}
+
+// --- Notas de estudo (slice 4) ---
+export async function createNoteAction(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  const parsed = parseNoteInput(fd);
+  if (!parsed.ok) return fail("Confira os campos.", parsed.fieldErrors);
+  const { supabase, orgId } = await requireOrg();
+  try {
+    const d = parsed.data;
+    const { error } = await supabase.from("study_notes").insert({
+      org_id: orgId,
+      title: d.title || null,
+      content: d.content || null,
+      scope: d.scope,
+      sermon_id: uuidOrNull(d.sermonId),
+      series_id: uuidOrNull(d.seriesId),
+      scripture_ref: d.scriptureRef || null,
+      topic: d.topic || null,
+      tags: d.tags,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) return fail(toMessage(error, "Não consegui criar a nota."));
+    revalidatePath("/study/notes");
+    return ok(undefined);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+export async function updateNoteAction(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  const id = String(fd.get("id") ?? "");
+  const parsed = parseNoteInput(fd);
+  if (!UUID.test(id)) return fail("Nota inválida.");
+  if (!parsed.ok) return fail("Confira os campos.", parsed.fieldErrors);
+  const { supabase } = await requireOrg();
+  try {
+    const d = parsed.data;
+    const { error } = await supabase
+      .from("study_notes")
+      .update({
+        title: d.title || null,
+        content: d.content || null,
+        scope: d.scope,
+        sermon_id: uuidOrNull(d.sermonId),
+        series_id: uuidOrNull(d.seriesId),
+        scripture_ref: d.scriptureRef || null,
+        topic: d.topic || null,
+        tags: d.tags,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
+    revalidatePath("/study/notes");
+    return ok(undefined);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+export async function deleteNoteAction(fd: FormData): Promise<void> {
+  const id = String(fd.get("id") ?? "");
+  if (!UUID.test(id)) return;
+  const { supabase } = await requireOrg();
+  await supabase.from("study_notes").delete().eq("id", id);
+  revalidatePath("/study/notes");
 }

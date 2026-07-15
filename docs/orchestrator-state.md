@@ -14,7 +14,20 @@ Se você é o orquestrador (Cowork) num chat NOVO, leia isto + o CLAUDE.md e voc
 - **Teams CONCLUÍDO** (commit `572d1e9`, 78 testes verdes): `features/teams/` + rotas /teams, /teams/[id], /teams/ministry/[id], /teams/schedule. Sem migração (banco já atendia). `leadershipDev` segue no blob `app_state` com patch cirúrgico; delete de ministério é cascade real (confirmado na UI).
 - **Services/Cultos CONCLUÍDO** (commit `1bbcd87`, 88 testes): `features/services/` + /services, /services/[id]. Caminho de presença extraído para `lib/attendance.ts` (fonte única de `attendance_sessions`/`attendance_records`); Groups refatorado para usá-lo; Services usa o mesmo com `context_type='service'`. Events/Teaching futuros reusam.
 - **Events/Eventos CONCLUÍDO** (commit `9539bae`, 98 testes): `features/events/` + /events, /events/[id]. Check-in de evento = `event_registrations.checked_in` (legado NÃO usa `lib/attendance`); dedupe de inscrição no app (sem unique no banco); inscrição pública/pagamento seguem ADIADAS. Docs versionados no mesmo commit.
-- Próximo na migração: **Calendar/Agenda** (/calendar). **Sem nada novo de banco** — confirmado via MCP que NÃO há view nem RPC de agregação. Agregar na camada do app reusando as queries de Services+Events+Teams. Nota em `docs/handoffs/calendar-supabase.md`. Depois: Study/Sermões→Study/Trilhas, Care→Inbox→Home, Settings.
+- **Calendar/Agenda CONCLUÍDO** (commit `05992fe`, 108 testes): `features/calendar/` + /calendar. Agregação de leitura no app reusando `listServices`/`listEvents`/`loadTeamsData`; item comum `{date,kind,title,ref}`; views Agenda/Semana/Mês. Sem tabela nova.
+- Próximo na migração: **Study/Sermões** (/study) — a MAIOR feature. Handoff `docs/handoffs/study-supabase.md`. ⚠️ visibility não imposta por RLS; service_id/preacher_id sem FK; content jsonb (canvas). Fatiar.
+
+## TODOS OS HANDOFFS RESTANTES JÁ PRONTOS (banco 100% escaneado via MCP)
+Escaneei de uma vez todas as tabelas que faltam — nenhuma feature restante precisa de migração
+(schema/RLS/constraints já atendem; última migração segue **m20**). Ordem e docs:
+1. **Study/Sermões** → `docs/handoffs/study-supabase.md`
+2. **Study/Trilhas** → `docs/handoffs/study-trilhas-supabase.md` (⚠️ milestones compartilhada c/ Journey; enrollments UNIQUE p/ upsert)
+3. **Care** → `docs/handoffs/care-supabase.md` (⚠️ RLS por permissão `care.view`/`care.manage`; fixture é owner=passa; IDs de pessoa são de auth.users, não sticks)
+4. **Inbox** → `docs/handoffs/inbox-supabase.md` (⚠️ decidir fonte: engine ao vivo + signal_overrides vs. tabela signals; overrides UNIQUE p/ upsert)
+5. **Home** → `docs/handoffs/home-supabase.md` (agregação pura no app; por último; depende do engine + Care + Inbox)
+6. **Settings** → `docs/handoffs/settings-supabase.md` (fonte da verdade por campo: tabela vs. blob; blob = read-modify-write cirúrgico)
+7. **Cut-over (Fase 6)** → `docs/handoffs/cutover-checklist.md` (Vercel→web/, Supabase Auth URLs, advisors, aposentar legado)
+Ações que ficaram explicitamente PARA MIM (orquestrador), sob pedido: inscrição pública/pagamento (RLS anon), confidencialidade real de Care, FKs de sermons, enforcement de visibility, restringir edição de org a owner, usuário de teste não-owner p/ Care.
 - **Docs de orquestração JÁ versionados** (commit `b99e0c3`): `docs/orchestrator-state.md` + `docs/handoffs/*`. Handoff agora vive no git. (Continuar: NÃO commitar pela pasta OneDrive — git dela é inconsistente com o repo real; commits saem do lado do Claude Code.)
 - **Lacuna herdada conhecida**: check-in não atualiza `last_seen`/`followup` da Stick (veio da migração de Groups; documentado nos READMEs). Revisitar quando fizer sentido para Care/Home.
 

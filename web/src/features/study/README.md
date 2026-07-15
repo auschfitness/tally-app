@@ -7,15 +7,17 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
 > Nav "Estudo" → `/study` é a feature de **Sermões** (key `sermons`). Trilhas é
 > separada (key `study` → `/tracks`), com handoff próprio.
 
-## Fatias
+## Fatias (todas concluídas)
 1. ✅ **Sermões CRUD + editor de content** — biblioteca (filtros status/campus/série),
    editor canvas (título, passagem, ideia central, corpo + seções opcionais) com
    autosave, drawer de Propriedades. Rotas `/study`, `/study/sermon/[id]`.
-2. ⏳ **Passagens** — parse de referências (PT/EN/abrev) → `sermon_scriptures`
-   (upsert), chips detectados, Mapa de Escrituras, painel helloao (mantido como está;
+2. ✅ **Passagens** — parse de referências (PT/EN/abrev, `lib/bible`) →
+   `sermon_scriptures` (upsert onConflict), chips detectados no editor, Mapa de
+   Escrituras (`/study/map`), painel de texto via **helloao** (mantido como está;
    interlinear ADIADO).
-3. ⏳ **Séries** — CRUD + workspace da série.
-4. ⏳ **Notas** — `study_notes` (lista + editor).
+3. ✅ **Séries** — CRUD + workspace (`/study/series/[id]`); vínculo sermão↔série.
+4. ✅ **Notas** — `study_notes` (aba `/study/notes`: lista + editor em modal, vínculos
+   leves, escopo pessoal/compartilhada, tags).
 
 ## Arquivos-chave (fatia 1)
 - `domain.ts` — rótulos/faixas, `SECTIONS` (glossário PT-BR fixado), `filterSermons`,
@@ -49,7 +51,11 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   `/study/map`).
 - **Trilha (material de ensino)** no editor: o select de Trilha fica para quando
   **Tracks** migrar; o `content.track_id` já é preservado no jsonb.
-- Abas **Recursos/Buscar** e o **Comparar Bíblia** do legado não estão nesta fatia:
-  Recursos usa tabela fora do handoff (precisa de handoff próprio); Buscar/Comparar são
-  derivados e entram depois. Nada disso é escondido — está registrado aqui.
+- **Diferido, documentado (não escondido):** aba **Recursos** (tabela fora do handoff
+  das 4 — precisa de handoff próprio do orquestrador); **Comparar Bíblia**, **Buscar**
+  no Estudo e **Memória de sermão** (sugestões de relacionados) são derivados/extra e
+  entram numa rodada futura; o **select de Trilha** no editor entra com Tracks
+  (o `content.track_id` já é preservado). O helloao "você já pregou sobre isto" no
+  painel do editor virá junto do Comparar; hoje o Mapa de Escrituras já mostra o
+  cruzamento livro→sermões.
 - `esc()` removido (React escapa); sticks arquivadas excluídas onde listar pessoas.
