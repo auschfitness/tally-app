@@ -1,0 +1,97 @@
+/* Estilos da Agenda (por feature; global tem panel, li, ph, mi-k, muted, meta,
+   empty, btn, link). */
+
+.filters {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.chips {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chip {
+  border: 1px solid var(--border, #e6e8ee);
+  background: var(--surface, #fff);
+  color: var(--text-2, #6b7280);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--dur-micro, 0.12s) var(--ease, ease), color var(--dur-micro, 0.12s) var(--ease, ease);
+}
+.chip.on {
+  background: var(--blue, #2b5ce6);
+  border-color: var(--blue, #2b5ce6);
+  color: #fff;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex: none;
+}
+
+/* Semana / mês */
+.week7,
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.monthHead {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.monthGrid {
+  gap: 6px;
+}
+.monthCell {
+  min-height: 74px;
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 8px;
+  padding: 4px 5px;
+}
+.monthItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text, #1a1f36);
+  text-decoration: none;
+}
+.weekItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+  cursor: pointer;
+  padding: 6px 0;
+  color: inherit;
+  text-decoration: none;
+}
+.today {
+  outline: 2px solid var(--blue, #2b5ce6);
+}
