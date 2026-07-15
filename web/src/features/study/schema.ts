@@ -1,10 +1,40 @@
 // Validação/coerção de entrada (fronteira do servidor). O autosave envia um objeto
 // tipado (não FormData); ainda assim coagimos status/visibility a valores válidos e
 // exigimos título para persistir (o cliente já bloqueia, o servidor confirma).
-import type { SermonContent, SermonStatus, SermonVisibility } from "./types";
+import type { SeriesStatus, SermonContent, SermonStatus, SermonVisibility } from "./types";
 
 const STATUS = new Set<SermonStatus>(["draft", "preparing", "ready", "preached", "archived"]);
 const VIS = new Set<SermonVisibility>(["private", "leadership", "church", "public"]);
+const SERIES_STATUS = ["planning", "active", "completed", "archived"] as const;
+
+export interface SeriesInput {
+  title: string;
+  description: string;
+  theme: string;
+  start_date: string;
+  end_date: string;
+  status: SeriesStatus;
+}
+export type ValidatedSeries =
+  | { ok: true; data: SeriesInput }
+  | { ok: false; fieldErrors: Record<string, string[]> };
+
+export function parseSeriesInput(fd: FormData): ValidatedSeries {
+  const title = String(fd.get("title") ?? "").trim();
+  if (!title) return { ok: false, fieldErrors: { title: ["Dê um título à série."] } };
+  const status = String(fd.get("status") ?? "");
+  return {
+    ok: true,
+    data: {
+      title,
+      description: String(fd.get("description") ?? "").trim(),
+      theme: String(fd.get("theme") ?? "").trim(),
+      start_date: String(fd.get("start_date") ?? ""),
+      end_date: String(fd.get("end_date") ?? ""),
+      status: (SERIES_STATUS as readonly string[]).includes(status) ? (status as SeriesStatus) : "planning",
+    },
+  };
+}
 
 export interface SermonSaveInput {
   id: string | null;

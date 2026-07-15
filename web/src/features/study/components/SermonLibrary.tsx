@@ -5,8 +5,9 @@
 // entram nas próximas fatias.
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { STATUS_BAND, STATUS_LBL, SERMON_STATUSES, filterSermons, type SermonFilter } from "../domain";
+import { STATUS_BAND, STATUS_LBL, SERMON_STATUSES, SERIES_BAND, SERIES_LBL, filterSermons, type SermonFilter } from "../domain";
 import type { Sermon, Series } from "../types";
+import { SeriesModal } from "./SeriesModal";
 import { brDate } from "@/lib/utils/date";
 import styles from "../study.module.css";
 
@@ -20,8 +21,14 @@ export function SermonLibrary({
   campuses: string[];
 }) {
   const [filter, setFilter] = useState<SermonFilter>({ status: null, campus: null, series: null });
+  const [newSeriesOpen, setNewSeriesOpen] = useState(false);
   const seriesById = useMemo(() => new Map(series.map((s) => [s.id, s])), [series]);
   const list = filterSermons(sermons, filter);
+  const countBySeries = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of sermons) if (s.series_id) m.set(s.series_id, (m.get(s.series_id) ?? 0) + 1);
+    return m;
+  }, [sermons]);
 
   function Card({ s }: { s: Sermon }) {
     const se = s.series_id ? seriesById.get(s.series_id) : null;
@@ -77,6 +84,30 @@ export function SermonLibrary({
         <Link href="/study/sermon/new" className="btn">+ Novo sermão</Link>
       </div>
 
+      <div className="ph" style={{ marginBottom: 8 }}>
+        <h3 style={{ margin: 0 }}>Séries</h3>
+        <button className="btn ghost" style={{ marginLeft: "auto" }} onClick={() => setNewSeriesOpen(true)}>+ Nova série</button>
+      </div>
+      <div className={styles.cards} style={{ marginBottom: 22 }}>
+        {series.length === 0 ? (
+          <div className="empty">Nenhuma série ainda. Agrupe sermões numa jornada de ensino em “+ Nova série”.</div>
+        ) : (
+          series.map((se) => {
+            const n = countBySeries.get(se.id) ?? 0;
+            return (
+              <Link key={se.id} href={`/study/series/${se.id}`} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <span className={styles.cardName}>{se.title || "(sem título)"}</span>
+                  <span className={`hb ${SERIES_BAND[se.status] || "attention"}`} style={{ marginLeft: "auto" }}>{SERIES_LBL[se.status] || se.status}</span>
+                </div>
+                <div className={styles.cardSub}>{se.theme ? se.theme + " · " : ""}{n} sermã{n === 1 ? "o" : "os"}</div>
+                {se.description ? <div className={styles.cardFoot}>{se.description}</div> : null}
+              </Link>
+            );
+          })
+        )}
+      </div>
+
       <div className={styles.filters}>
         <div className={styles.chips}>
           <button className={`${styles.fchip}${!filter.status ? " " + styles.on : ""}`} onClick={() => setFilter((f) => ({ ...f, status: null }))}>Todos</button>
@@ -96,6 +127,8 @@ export function SermonLibrary({
       </div>
 
       {body}
+
+      {newSeriesOpen ? <SeriesModal onClose={() => setNewSeriesOpen(false)} /> : null}
     </>
   );
 }

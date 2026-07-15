@@ -6,7 +6,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOrg, type DB } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
-import { coerceSermon, type SermonSaveInput } from "./schema";
+import { coerceSermon, parseSeriesInput, type SermonSaveInput } from "./schema";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function uuidOrNull(v: string | null): string | null {
@@ -114,4 +114,72 @@ export async function syncSermonScripturesAction(sermonId: string, refs: SyncRef
   if (toDelete.length) await supabase.from("sermon_scriptures").delete().in("id", toDelete);
 
   revalidatePath("/study/map");
+}
+
+// --- Séries (slice 3) ---
+export async function createSeriesAction(_prev: ActionResult<{ id: string }>, fd: FormData): Promise<ActionResult<{ id: string }>> {
+  const parsed = parseSeriesInput(fd);
+  if (!parsed.ok) return fail("Confira os campos.", parsed.fieldErrors);
+  const { supabase, orgId } = await requireOrg();
+  try {
+    const d = parsed.data;
+    const { data, error } = await supabase
+      .from("series")
+      .insert({
+        org_id: orgId,
+        title: d.title,
+        description: d.description || null,
+        theme: d.theme || null,
+        start_date: d.start_date || null,
+        end_date: d.end_date || null,
+        status: d.status,
+      })
+      .select("id")
+      .single();
+    if (error || !data) return fail(toMessage(error, "Não consegui criar a série."));
+    revalidatePath("/study");
+    return ok({ id: data.id });
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+export async function updateSeriesAction(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  const id = String(fd.get("id") ?? "");
+  const parsed = parseSeriesInput(fd);
+  if (!UUID.test(id)) return fail("Série inválida.");
+  if (!parsed.ok) return fail("Confira os campos.", parsed.fieldErrors);
+  const { supabase } = await requireOrg();
+  try {
+    const d = parsed.data;
+    const { error } = await supabase
+      .from("series")
+      .update({
+        title: d.title,
+        description: d.description || null,
+        theme: d.theme || null,
+        start_date: d.start_date || null,
+        end_date: d.end_date || null,
+        status: d.status,
+      })
+      .eq("id", id);
+    if (error) return fail(toMessage(error, "Não consegui salvar a série."));
+    revalidatePath("/study");
+    revalidatePath(`/study/series/${id}`);
+    return ok(undefined);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Vincula (ou desvincula, seriesId="") um sermão a uma série. Atualiza sermons.series_id.
+export async function setSermonSeriesAction(fd: FormData): Promise<void> {
+  const sermonId = String(fd.get("sermonId") ?? "");
+  const seriesId = String(fd.get("seriesId") ?? "");
+  if (!UUID.test(sermonId)) return;
+  const { supabase } = await requireOrg();
+  await supabase.from("sermons").update({ series_id: uuidOrNull(seriesId), updated_at: new Date().toISOString() }).eq("id", sermonId);
+  revalidatePath("/study");
+  const backTo = String(fd.get("backTo") ?? "");
+  if (backTo) revalidatePath(backTo);
 }
