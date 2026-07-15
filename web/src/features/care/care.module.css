@@ -1,0 +1,63 @@
+/* Estilos da feature Care (por feature; o global tem panel, av, ministrip, hb,
+   btn, field, modal/overlay, check...). */
+
+.header {
+  margin-bottom: 8px;
+}
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 22px 0 12px;
+  color: var(--text);
+}
+.pos {
+  color: var(--green, #22a06b);
+}
+.neg {
+  color: var(--coral, #ea5b4c);
+}
+
+.itemTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.itemBody {
+  flex: 1;
+}
+.itemName {
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.itemMeta {
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+.itemActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.log {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+.logLine {
+  font-size: 12.5px;
+  color: var(--text-2);
+  padding: 3px 0;
+}
+.logLine b {
+  color: var(--text);
+}
+.noteLine {
+  font-size: 12.5px;
+  color: var(--text-2);
+  padding: 3px 0;
+  font-style: italic;
+}
