@@ -1,0 +1,40 @@
+/* Estilos da Home (o global tem panel, row2, li, av, gbar, hb, leg, donutwrap,
+   donutctr, mi-k, muted, empty...). */
+
+.strip {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.neg {
+  color: var(--coral, #ea5b4c);
+}
+
+/* Card de grupo (Care/Home) — link com barra de saúde. */
+.gcard {
+  display: block;
+  width: 100%;
+  margin-bottom: 9px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.gcardTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.studyLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.studyLink:hover b {
+  color: var(--blue, #2b5ce6);
+}
