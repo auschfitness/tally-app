@@ -29,6 +29,28 @@ Escaneei de uma vez todas as tabelas que faltam — nenhuma feature restante pre
 7. **Cut-over (Fase 6)** → `docs/handoffs/cutover-checklist.md` (Vercel→web/, Supabase Auth URLs, advisors, aposentar legado)
 Ações que ficaram explicitamente PARA MIM (orquestrador), sob pedido: inscrição pública/pagamento (RLS anon), confidencialidade real de Care, FKs de sermons, enforcement de visibility, restringir edição de org a owner, usuário de teste não-owner p/ Care.
 
+## MARCO: 16/16 telas + Signals engine MIGRADOS (verify + e2e verdes)
+Todas as features migradas no `refactor/nextjs`. Commits desta rodada: Trilhas `d0d4e93`,
+Care `d1d52a8`, Inbox `7ca754e`, Home `b7e9137`, Settings `f54df0f`. `npm run verify` verde
+(179 testes) + e2e verde (login→dados→logout). Descobertas do Claude Code: Inbox confirmou
+fonte = engine + `signal_overrides` (tabela `signals` NÃO é lida); Home usa frequência REAL
+de culto (trocou o dado sintético do legado, DNA #2); nenhuma feature pediu mudança de schema.
+
+### Advisors pré-cut-over (rodados 2026-07-14) — nada bloqueia
+- Security: só WARN esperados (5 helpers SECURITY DEFINER intencionais + leaked-password no Auth).
+- Performance: 93 INFO/WARN, todos adiáveis — 54 unindexed_foreign_keys (INFO), 33 unused_index
+  (INFO, tabelas novas), 6 auth_rls_initplan (WARN). Otimizações de escala, ação MINHA quando
+  fizer sentido (envolver auth/is_org_member em subselect nas policies). NÃO bloqueiam a virada.
+
+### Falta só o CUT-OVER (Fase 6) — checklist em docs/handoffs/cutover-checklist.md
+- Código: ✅ pronto. Pré-requisitos (16 features + e2e): ✅.
+- Dono+Claude Code: apontar Vercel para `tally-app/web/`, validar preview, promover.
+- ORQUESTRADOR (eu): assim que houver URL da Vercel (prod+preview), adicionar em Supabase →
+  Auth → URL Configuration (Site URL + Redirect URLs) — necessário p/ Google OAuth/login.
+  Depois: reconfirmar advisors, scan final de segredos, aposentar legado só após novo estável.
+- Pendências que NÃO bloqueiam (migrações minhas, sob pedido): inscrição pública/pagamento,
+  confidencialidade real de Care, FKs de sermons, enforcement de visibility, org-edit só owner.
+
 ## Decisão registrada (Care, quando o Claude Code chegou nele)
 - Care migrado COMO OWNER (happy path completo e testável; fixture é owner → passa `care.view`/`care.manage`). Caminho negativo ("sem permissão → não vê nada") = teste ADIADO, documentado no README do Care.
 - **Pendência minha+dono**: prover usuário de teste NÃO-owner. Requer credencial extra em `web/.env.test` (fora do git, na máquina do dono) + eu semeio o membership sem `care.view`. Fazer quando quisermos fechar o teste negativo — NÃO bloqueia nada.
