@@ -2,6 +2,8 @@
 
 Este arquivo dá ao Claude Code o contexto completo do Tally. Leia-o inteiro antes de agir. O dono do projeto (Gaybiel) é de marketing, não é dev; explique decisões técnicas em linguagem clara e peça aprovação antes de mudanças grandes.
 
+> **ATUALIZAÇÃO (jul/2026 — cut-over feito):** o app agora é **Next.js (App Router) + TypeScript estrito + Supabase SSR**, na **raiz** do repositório (`src/`, features em `src/features/<f>/`, rotas em `src/app/`). O app legado Vite (descrito abaixo em "Estado atual do código") foi **aposentado** — vive só na tag git `backup/legacy-vite`. Verificação hoje é **`npm run verify`** (typecheck+lint+test+build) + e2e Playwright, não mais o teste de paridade. As seções abaixo sobre estrutura Vite/`npm run dev` na 5173/`npm test` de paridade são **históricas**. O que continua válido: produto, marca, DNA, glossário PT-BR, modelo de dados Supabase e RLS.
+
 ## O que é o Tally
 
 Tally é um **Church OS**: um sistema operacional para igrejas com uma camada de inteligência pastoral. Filosofia: "um gerente vê 99%, um pastor vê o um" — ninguém deve passar despercebido. Marca em azul (#2B5CE6), tipografia Poppins, tema claro por padrão (dark mode disponível). Público: Brasil e EUA (PT/EN/ES no roadmap; hoje o app está em PT). Multi-campus e multi-instituição são requisitos de arquitetura.

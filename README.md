@@ -1,96 +1,72 @@
-# Tally — app (Church OS)
+# Tally — web (Next.js)
 
-App do Tally, um **Church OS** com camada de inteligência pastoral. JavaScript
-vanilla organizado em módulos ES, empacotado com **Vite**. Os dados ficam no
-**Supabase** (login por e-mail+senha, onboarding via RPC `create_org`,
-persistência na tabela `app_state`).
+Refatoração do Tally (Church OS) para **Next.js (App Router) + TypeScript estrito +
+Supabase (SSR por cookies)**. Vive em `tally-app/web/` e é construído em paralelo ao app
+JS puro legado (`tally-app/`), que segue no ar até o cut-over. Esta pasta é a fonte da
+verdade da versão Next.
 
-> Contexto completo do produto, arquitetura e roadmap: veja [`CLAUDE.md`](./CLAUDE.md).
+> Contrato da migração: [`docs/refactor-nextjs-spec.md`](./docs/refactor-nextjs-spec.md).
+> Auditoria e matriz: [`docs/audit.md`](./docs/audit.md) ·
+> [`docs/migration-matrix.md`](./docs/migration-matrix.md).
+> Norte de UI: [`docs/design-principles.md`](./docs/design-principles.md).
 
-## Rodar localmente
+## Requisitos
+- Node 18+ (testado no Node 24).
+- Um projeto Supabase (o schema/RLS é preservado, gerido pelo orquestrador).
 
-Precisa de **Node 18+** (testado no Node 24).
-
+## Instalação e execução
 ```bash
-npm install      # instala as dependências (uma vez)
-npm run dev      # sobe o servidor de desenvolvimento em http://localhost:5173
+cp .env.example .env.local   # preencha a URL e a anon key públicas do Supabase
+npm install
+npm run dev                  # http://localhost:3000
 ```
 
-Outros comandos:
+## Variáveis de ambiente
+Só chaves **públicas** (a segurança está no RLS). Ver [`.env.example`](./.env.example):
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
+A `service_role` **nunca** entra aqui nem em qualquer `NEXT_PUBLIC_*`.
+
+## Verificação (substitui o teste de paridade do monólito)
 ```bash
-npm run build    # gera a pasta dist/ (o site pronto para publicar)
-npm run preview  # serve a dist/ localmente, para conferir o build
-npm test         # teste de paridade: compara cada tela do código modular com o original
+npm run typecheck   # tsc --noEmit (TypeScript estrito)
+npm run lint        # ESLint (next/core-web-vitals + typescript)
+npm run build       # build de produção
+npm run verify      # os três em sequência
 ```
 
-### Preview sem login (desenvolvimento)
-
-Em `npm run dev`, o console do navegador expõe `__tallyPreview('<tela>')`, que
-renderiza qualquer tela com dados de exemplo (a org demo "Grace Church"), sem
-precisar logar. Ex.: `__tallyPreview('finance')`, `__tallyPreview('prayer')`.
-Isso **não** vai para o build de produção.
-
-## Estrutura
-
+## Arquitetura
+App Router com fatias verticais por feature (spec §Isolamento por feature):
 ```
-index.html            Casca da página (só o esqueleto + <script> do módulo)
 src/
-  main.js             Ponto de entrada: tema, listeners globais, início do app
-  config.js           URL + chave pública (anon) do Supabase
-  styles.css          Todo o CSS
-  core/
-    state.js          Estado da aplicação (dados das telas)
-    session.js        Sessão: cliente Supabase, org e usuário logado
-    persist.js        save() — grava o estado no Supabase (com debounce)
-    supabase.js       Cliente, login/cadastro/Google, onboarding, carregar org
-    theme.js          Tema claro/escuro
-    helpers.js        Utilidades puras (datas, texto, rótulos)
-    format.js         Formatação de dinheiro
-    derived.js        Inteligência: careReasons, Signals, saúde de grupos, timeline…
-    render.js         Render central (injeta a tela no #content)
-    events.js         Navegação e listeners globais
-  ui/
-    modal.js          Janelas modais
-    charts.js         Gráficos (Chart.js)
-  views/              Uma tela por arquivo
-    home.js  inbox.js  sticks.js  care.js  journey.js
-    groups.js  coordination.js  prayer.js  finance.js  settings.js
-  dev/
-    seed.js           Dados de exemplo (só para dev/testes)
-test/
-  compare.mjs         Verificação de paridade (modular × original)
-reference/
-  original-monolith.html   O index.html original de 1 arquivo (referência/base do teste)
+  app/
+    (auth)/login        Login (Server Action e-mail+senha; Google OAuth no cliente)
+    (auth)/auth/callback Troca de code→sessão (OAuth / confirmação de e-mail)
+    onboarding          Criação da igreja (RPC create_org)
+    (dashboard)/        Casca protegida (requireOrg) + telas migradas
+    layout.tsx  error.tsx  loading.tsx  not-found.tsx  globals.css
+  components/
+    shared/             Sidebar, Topbar, ThemeToggle, LogoMark
+    ui/                 (design-system compartilhado)
+  features/<feature>/   page/components/queries/actions/schemas/types/*.module.css
+  lib/
+    supabase/{client,server,middleware}.ts   Clientes browser/servidor + refresh de sessão
+    auth/session.ts     requireUser / requireOrg / can (autorização no servidor)
+    env/  errors/  database.types.ts (tipos do banco, gerados via MCP Supabase)
+  config/nav.ts         Itens de navegação
+  middleware.ts         Guarda de autenticação (SSR)
 ```
 
-## Bibliotecas
+### Princípios aplicados
+- **Server Components por padrão**; Client Components só nas folhas interativas.
+- **Mutações via Server Actions** com `ActionResult` tipado; validação e autorização no
+  servidor (nunca confiar no navegador). RLS é a barreira real no banco.
+- **Auth SSR por cookies** (`@supabase/ssr`): páginas privadas validadas no servidor,
+  middleware renova a sessão e redireciona não-autenticado.
+- **Tema** em cookie (sem flash/hidratação); única preferência local.
 
-- [`chart.js`](https://www.chartjs.org/) — gráficos
-- [`@supabase/supabase-js`](https://supabase.com/docs/reference/javascript) — banco e autenticação
-
-Antes ficavam via CDN; agora vêm via npm (versões travadas, build otimizado).
-
-## Deploy (Vercel)
-
-O app é estático. O fluxo recomendado é **GitHub + Vercel** (publica sozinho a
-cada `git push`):
-
-1. Suba este projeto para um repositório no GitHub.
-2. Na Vercel, importe o repositório. Ela detecta o Vite automaticamente
-   (build: `vite build`, saída: `dist`).
-3. Depois do primeiro deploy, copie a URL da Vercel e cole no Supabase em
-   **Authentication → URL Configuration** (Site URL + Redirect URLs). Isso é
-   necessário para os redirects de autenticação e para o Google OAuth.
-
-## Segurança
-
-A chave em `src/config.js` é a **anon key** do Supabase — pública por design e
-protegida pelo RLS (Row Level Security). Pode ir para o GitHub sem risco. A
-`service_role` key **nunca** deve aparecer no front-end.
-
-## Auto-push (hook local)
-
-Há um hook `post-commit` em `.git/hooks/` que faz `git push origin HEAD`
-automaticamente a cada commit. Hooks não são versionados, então ele existe só
-nesta máquina. Para pausar o auto-push, apague `.git/hooks/post-commit`.
+## Estado da migração
+Fases 1 (auditoria+matriz), 2 (fundação) e 3 (casca) concluídas. Fase 4 migra as features
+uma a uma (ordem em `docs/migration-matrix.md`). Enquanto uma feature não está migrada e
+validada ponta a ponta, o app legado continua sendo a versão publicada.
