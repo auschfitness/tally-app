@@ -61,7 +61,7 @@ export default async function SeriesWorkspacePage({ params }: { params: Promise<
         </div>
 
         <div className="panel">
-          <div className="ph"><h3>Cronograma</h3><span className="muted" style={{ marginLeft: "auto" }}>{mine.length} sermã{mine.length === 1 ? "o" : "os"}</span></div>
+          <div className="ph"><h3>Cronograma</h3><span className="muted" style={{ marginLeft: "auto" }}>{mine.length} {mine.length === 1 ? "sermão" : "sermões"}</span></div>
           {mine.length === 0 ? (
             <div className="empty">Sem sermões ainda. Vincule um sermão a esta série abaixo — ou defina a série no editor do sermão.</div>
           ) : (

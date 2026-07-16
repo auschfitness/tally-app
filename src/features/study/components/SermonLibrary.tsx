@@ -100,7 +100,7 @@ export function SermonLibrary({
                   <span className={styles.cardName}>{se.title || "(sem título)"}</span>
                   <span className={`hb ${SERIES_BAND[se.status] || "attention"}`} style={{ marginLeft: "auto" }}>{SERIES_LBL[se.status] || se.status}</span>
                 </div>
-                <div className={styles.cardSub}>{se.theme ? se.theme + " · " : ""}{n} sermã{n === 1 ? "o" : "os"}</div>
+                <div className={styles.cardSub}>{se.theme ? se.theme + " · " : ""}{n} {n === 1 ? "sermão" : "sermões"}</div>
                 {se.description ? <div className={styles.cardFoot}>{se.description}</div> : null}
               </Link>
             );

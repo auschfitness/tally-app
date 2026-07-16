@@ -116,7 +116,7 @@ export function TrackDetail({
       <div className="panel" style={{ marginTop: 16 }}>
         <div className="ph">
           <h3>Material de ensino</h3>
-          <span className="muted" style={{ marginLeft: "auto" }}>{teaching.length} sermã{teaching.length === 1 ? "o" : "os"}</span>
+          <span className="muted" style={{ marginLeft: "auto" }}>{teaching.length} {teaching.length === 1 ? "sermão" : "sermões"}</span>
         </div>
         {teaching.length === 0 ? (
           <div className="empty">Nenhum sermão vinculado como material desta trilha. Vincule pelo editor de sermão (Propriedades → Trilha).</div>

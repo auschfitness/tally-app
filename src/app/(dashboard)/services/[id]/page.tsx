@@ -129,7 +129,7 @@ export default async function ServiceDetailPage({
 
       <div className="row2" style={{ marginTop: 16 }}>
         <div className="panel">
-          <div className="ph"><h3>Ensino deste culto</h3><span className="muted" style={{ marginLeft: "auto" }}>{sermons.length} sermã{sermons.length === 1 ? "o" : "os"}</span></div>
+          <div className="ph"><h3>Ensino deste culto</h3><span className="muted" style={{ marginLeft: "auto" }}>{sermons.length} {sermons.length === 1 ? "sermão" : "sermões"}</span></div>
           {sermons.length === 0 ? (
             <div className="empty">Nenhum sermão vinculado a este culto. Vincule no editor do sermão (Propriedades → Culto).</div>
           ) : (

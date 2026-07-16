@@ -59,7 +59,7 @@ export function InstitutionPanel({
         </div>
       </form>
 
-      {/* Campi (campuses) */}
+      {/* Campus (campuses) */}
       <div className={styles.setrow}>
         <div className={styles.lbl}>Campus<small>Cada campus tem seus dados e presença</small></div>
         <div className={styles.ctrl}>

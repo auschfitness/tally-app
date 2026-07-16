@@ -33,7 +33,7 @@ export function ScriptureMap({ scriptures, sermons }: { scriptures: Scripture[];
       .filter((x): x is { s: SermonLite; refs: string[] } => !!x.s);
     detail = (
       <div className="panel" style={{ marginTop: 16 }}>
-        <div className="ph"><h3>{bookName(book)}</h3><span className="muted" style={{ marginLeft: "auto" }}>{items.length} sermã{items.length !== 1 ? "es" : "o"}</span></div>
+        <div className="ph"><h3>{bookName(book)}</h3><span className="muted" style={{ marginLeft: "auto" }}>{items.length} {items.length === 1 ? "sermão" : "sermões"}</span></div>
         {items.length === 0 ? (
           <div className="empty">Nenhum sermão usou este livro ainda.</div>
         ) : (
@@ -71,7 +71,7 @@ export function ScriptureMap({ scriptures, sermons }: { scriptures: Scripture[];
                   key={b.code}
                   className={styles.smapCell}
                   style={{ background: bg, color: col, ...(book === b.code ? { outline: "2px solid var(--blue)" } : {}) }}
-                  title={`${b.pt}${n ? ` · ${n} sermão${n !== 1 ? "es" : ""}` : " · sem uso"}`}
+                  title={`${b.pt}${n ? ` · ${n} ${n === 1 ? "sermão" : "sermões"}` : " · sem uso"}`}
                   onClick={() => setBook(book === b.code ? null : b.code)}
                 >
                   {b.pt}
