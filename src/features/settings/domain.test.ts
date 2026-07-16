@@ -1,12 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { isCurrency, isLanguage, isTimezone, readInstitution, readAccount } from "./domain";
+import { isCurrency, isTimezone, readInstitution, readAccount } from "./domain";
 
 describe("validadores de opção", () => {
-  it("moeda/idioma/fuso só aceitam valores conhecidos", () => {
+  it("moeda/fuso só aceitam valores conhecidos", () => {
     expect(isCurrency("BRL")).toBe(true);
     expect(isCurrency("EUR")).toBe(false);
-    expect(isLanguage("pt")).toBe(true);
-    expect(isLanguage("xx")).toBe(false);
     expect(isTimezone("America/Sao_Paulo")).toBe(true);
     expect(isTimezone("Mars/Base")).toBe(false);
   });
@@ -23,12 +21,12 @@ describe("readInstitution (leitura segura do blob)", () => {
   });
 });
 
-describe("readAccount (leitura segura do blob)", () => {
-  it("lê idioma/fuso válidos", () => {
-    expect(readAccount({ account: { language: "en", timezone: "America/Chicago" } })).toEqual({ language: "en", timezone: "America/Chicago" });
+describe("readAccount (leitura segura do blob — só fuso)", () => {
+  it("lê fuso válido", () => {
+    expect(readAccount({ account: { timezone: "America/Chicago" } })).toEqual({ timezone: "America/Chicago" });
   });
-  it("cai nos defaults quando inválido/ausente", () => {
-    expect(readAccount({})).toEqual({ language: "pt", timezone: "America/Sao_Paulo" });
-    expect(readAccount({ account: { language: "xx", timezone: "zzz" } })).toEqual({ language: "pt", timezone: "America/Sao_Paulo" });
+  it("cai no default quando inválido/ausente", () => {
+    expect(readAccount({})).toEqual({ timezone: "America/Sao_Paulo" });
+    expect(readAccount({ account: { timezone: "zzz" } })).toEqual({ timezone: "America/Sao_Paulo" });
   });
 });

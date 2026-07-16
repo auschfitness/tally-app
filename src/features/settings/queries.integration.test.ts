@@ -21,7 +21,8 @@ describe.skipIf(!hasTestFixture)("Settings queries (integração, org de teste)"
     }
     expect(typeof s.institution.multiInstitution).toBe("boolean");
     expect(Array.isArray(s.institution.institutions)).toBe(true);
-    expect(["pt", "en", "es"]).toContain(s.account.language);
+    expect(typeof s.account.timezone).toBe("string");
+    expect(["pt-BR", "en", "es"]).toContain(s.locale); // idioma vem de profiles.locale
     expect(typeof s.userName).toBe("string");
   });
 });

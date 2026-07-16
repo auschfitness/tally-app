@@ -3,9 +3,11 @@
 //  - campuses         → `campuses` (tabela)
 //  - userName         → `profiles.full_name` (tabela, do usuário logado)
 //  - institution.*    → blob `app_state.data.institution` (só multiInstituição/lista)
-//  - account.*        → blob `app_state.data.account` (idioma/fuso)
+//  - account.timezone → blob `app_state.data.account` (fuso)
+//  - locale (idioma)  → `profiles.locale` (tabela, por usuário) — NÃO é blob (i18n)
 // Categorias/fundos de finança NÃO estão aqui: são relacionais (finance_*), geridos
 // na feature Finance. Tema fica no Topbar (ThemeToggle), não em Settings.
+import type { Locale } from "@/lib/i18n/config";
 
 export interface InstitutionConfig {
   multiInstitution: boolean;
@@ -13,7 +15,6 @@ export interface InstitutionConfig {
 }
 
 export interface AccountConfig {
-  language: string;
   timezone: string;
 }
 
@@ -29,5 +30,6 @@ export interface SettingsData {
   institution: InstitutionConfig;
   account: AccountConfig;
   userName: string;
+  locale: Locale;
   isOwner: boolean;
 }

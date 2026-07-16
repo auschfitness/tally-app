@@ -1,6 +1,6 @@
-// Validação na fronteira do servidor. Nome da org obrigatório; moeda/idioma/fuso
-// coagidos a valores conhecidos.
-import { isCurrency, isLanguage, isTimezone } from "./domain";
+// Validação na fronteira do servidor. Nome da org obrigatório; moeda/fuso coagidos a
+// valores conhecidos. Idioma é gravado à parte (profiles.locale via setLocaleAction).
+import { isCurrency, isTimezone } from "./domain";
 
 export interface OrgInput {
   name: string;
@@ -17,15 +17,12 @@ export function parseOrgInput(fd: FormData): ValidatedOrg {
 
 export interface AccountInput {
   fullName: string;
-  language: string;
   timezone: string;
 }
 export function parseAccountInput(fd: FormData): AccountInput {
-  const language = String(fd.get("language") ?? "");
   const timezone = String(fd.get("timezone") ?? "");
   return {
     fullName: String(fd.get("fullName") ?? "").trim(),
-    language: isLanguage(language) ? language : "pt",
     timezone: isTimezone(timezone) ? timezone : "America/Sao_Paulo",
   };
 }

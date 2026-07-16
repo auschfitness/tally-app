@@ -6,11 +6,7 @@ export const CURRENCIES = [
   { value: "BRL", label: "Real (BRL)" },
   { value: "USD", label: "Dólar (USD)" },
 ];
-export const LANGUAGES = [
-  { value: "pt", label: "Português (BR)" },
-  { value: "en", label: "English" },
-  { value: "es", label: "Español" },
-];
+// Idioma NÃO fica aqui: é por usuário em `profiles.locale` (ver src/lib/i18n).
 export const TIMEZONES = [
   { value: "America/Sao_Paulo", label: "São Paulo (GMT-3)" },
   { value: "America/Chicago", label: "Central US / Texas (GMT-6)" },
@@ -19,9 +15,6 @@ export const TIMEZONES = [
 
 export function isCurrency(v: string): boolean {
   return CURRENCIES.some((c) => c.value === v);
-}
-export function isLanguage(v: string): boolean {
-  return LANGUAGES.some((l) => l.value === v);
 }
 export function isTimezone(v: string): boolean {
   return TIMEZONES.some((t) => t.value === v);
@@ -38,11 +31,10 @@ export function readInstitution(data: unknown): InstitutionConfig {
   return { multiInstitution: inst.multiInstitution === true, institutions };
 }
 
-// Lê account do blob (idioma/fuso) com defaults.
+// Lê account do blob (só fuso) com default. Idioma vem de profiles.locale (i18n).
 export function readAccount(data: unknown): AccountConfig {
   const acc = asObject(asObject(data).account);
   return {
-    language: isLanguage(String(acc.language)) ? String(acc.language) : "pt",
     timezone: isTimezone(String(acc.timezone)) ? String(acc.timezone) : "America/Sao_Paulo",
   };
 }

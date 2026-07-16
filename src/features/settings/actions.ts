@@ -102,8 +102,7 @@ export async function updateAccountAction(_prev: ActionResult, fd: FormData): Pr
     }
     await patchAppState(ctx, (data) => {
       const acc = data.account && typeof data.account === "object" ? { ...(data.account as Record<string, unknown>) } : {};
-      acc.language = d.language;
-      acc.timezone = d.timezone;
+      acc.timezone = d.timezone; // idioma NÃO vai no blob — é profiles.locale (setLocaleAction)
       data.account = acc;
     });
     revalidatePath("/settings");
