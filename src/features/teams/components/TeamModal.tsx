@@ -2,6 +2,7 @@
 
 // Modal de criar/editar Time (Client — Server Actions). Ao criar, navega para o
 // detalhe do novo time (paridade com o legado, que abria o time recém-criado).
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createTeamAction, updateTeamAction, deleteTeamAction } from "../actions";
@@ -72,20 +73,20 @@ export function TeamModal({
         <div className="mrow">
           <div className="field">
             <label>Ministério</label>
-            <select name="ministryId" defaultValue={team?.ministry_id ?? ""}>
+            <Select name="ministryId" defaultValue={team?.ministry_id ?? ""}>
               <option value="">Sem ministério</option>
               {ministries.map((m) => (
                 <option key={m.id} value={m.id}>{m.name}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Status</label>
-            <select name="status" defaultValue={team?.status ?? "active"}>
+            <Select name="status" defaultValue={team?.status ?? "active"}>
               {Object.entries(TEAM_STATUS_LBL).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="field">
@@ -99,20 +100,20 @@ export function TeamModal({
         <div className="mrow">
           <div className="field">
             <label>Líder</label>
-            <select name="leaderStickId" defaultValue={team?.leader_id ?? ""}>
+            <Select name="leaderStickId" defaultValue={team?.leader_id ?? ""}>
               <option value="">Sem líder</option>
               {people.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Campus</label>
-            <select name="campus" defaultValue={team?.campus || activeCampus}>
+            <Select name="campus" defaultValue={team?.campus || activeCampus}>
               {campuses.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
         {!state.success && state.message ? <div className="gerr">{state.message}</div> : null}

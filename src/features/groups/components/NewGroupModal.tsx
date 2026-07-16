@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createGroupAction } from "../actions";
@@ -43,20 +44,20 @@ export function NewGroupModal({
         <div className="mrow">
           <div className="field">
             <label>Líder</label>
-            <select name="leaderStickId" defaultValue="">
+            <Select name="leaderStickId" defaultValue="">
               <option value="">(sem líder)</option>
               {members.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Campus</label>
-            <select name="campus" defaultValue={activeCampus}>
+            <Select name="campus" defaultValue={activeCampus}>
               {campuses.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="mrow">

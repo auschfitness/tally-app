@@ -2,6 +2,7 @@
 
 // Modal de criar/editar Série (Client — Server Actions). Ao criar, navega para o
 // workspace da nova série.
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createSeriesAction, updateSeriesAction } from "../actions";
@@ -58,9 +59,9 @@ export function SeriesModal({ series, onClose }: { series?: Series; onClose: () 
         </div>
         <div className="field">
           <label>Status</label>
-          <select name="status" defaultValue={series?.status ?? "planning"}>
+          <Select name="status" defaultValue={series?.status ?? "planning"}>
             {Object.entries(SERIES_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
+          </Select>
         </div>
         {!state.success && state.message ? <div className="gerr">{state.message}</div> : null}
         <div className="actions">

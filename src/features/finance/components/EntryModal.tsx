@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEntryAction } from "../actions";
@@ -80,13 +81,13 @@ export function EntryModal({
             {isNew ? (
               <input name="cat" placeholder="Nova categoria" autoFocus />
             ) : (
-              <select value={catSel} onChange={(e) => setCatSel(e.target.value)} name="cat">
+              <Select value={catSel} onChange={(e) => setCatSel(e.target.value)} name="cat">
                 <option value="">(escolha)</option>
                 {cats.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
                 <option value={NEW}>+ Nova categoria…</option>
-              </select>
+              </Select>
             )}
             {isNew ? (
               <button type="button" className="link" style={{ marginTop: 4 }} onClick={() => setCatSel("")}>← escolher da lista</button>
@@ -95,21 +96,21 @@ export function EntryModal({
           </div>
           <div className="field">
             <label>Fundo</label>
-            <select name="fund" defaultValue={funds[0] ?? ""}>
+            <Select name="fund" defaultValue={funds[0] ?? ""}>
               {funds.map((f) => (
                 <option key={f} value={f}>{f}</option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
 
         <div className="field">
           <label>Campus</label>
-          <select name="campus" defaultValue={activeCampus}>
+          <Select name="campus" defaultValue={activeCampus}>
             {campuses.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
-          </select>
+          </Select>
         </div>
 
         {!state.success && state.message ? <div className="gerr">{state.message}</div> : null}

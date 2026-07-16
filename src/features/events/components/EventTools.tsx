@@ -2,6 +2,7 @@
 
 // Ações do detalhe do evento (Client — Server Actions): editar e inscrever.
 // Inscrever vincula uma Stick existente OU registra visitante novo (sem criar Stick).
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addRegistrationAction } from "../actions";
@@ -58,10 +59,10 @@ export function RegisterButton({ eventId, people }: { eventId: string; people: R
             <input type="hidden" name="eventId" value={eventId} />
             <div className="field">
               <label>Pessoa conhecida (Stick)</label>
-              <select name="stickId" defaultValue="">
+              <Select name="stickId" defaultValue="">
                 <option value="">— Visitante novo (não vincular) —</option>
                 {people.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-              </select>
+              </Select>
             </div>
             <div className="msub" style={{ margin: "2px 0 10px" }}>
               Se for visitante novo, deixe acima em “Visitante novo” e preencha abaixo — não criamos uma Stick duplicada aqui.

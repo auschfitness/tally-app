@@ -3,6 +3,7 @@
 // Biblioteca de Sermões (Client): filtros (status/campus/série) e cards agrupados
 // por série. "+ Novo sermão" abre o editor. Séries (cards + workspace) e demais abas
 // entram nas próximas fatias.
+import { Select } from "@/components/shared/Select";
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { STATUS_BAND, STATUS_LBL, SERMON_STATUSES, SERIES_BAND, SERIES_LBL, filterSermons, type SermonFilter } from "../domain";
@@ -115,15 +116,15 @@ export function SermonLibrary({
             <button key={st} className={`${styles.fchip}${filter.status === st ? " " + styles.on : ""}`} onClick={() => setFilter((f) => ({ ...f, status: st }))}>{STATUS_LBL[st]}</button>
           ))}
         </div>
-        <select className={styles.select} style={{ marginLeft: "auto" }} value={filter.campus ?? ""} onChange={(e) => setFilter((f) => ({ ...f, campus: e.target.value || null }))}>
+        <Select compact style={{ marginLeft: "auto" }} value={filter.campus ?? ""} onChange={(e) => setFilter((f) => ({ ...f, campus: e.target.value || null }))}>
           <option value="">Todos os campus</option>
           {campuses.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select className={styles.select} value={filter.series ?? ""} onChange={(e) => setFilter((f) => ({ ...f, series: e.target.value || null }))}>
+        </Select>
+        <Select compact value={filter.series ?? ""} onChange={(e) => setFilter((f) => ({ ...f, series: e.target.value || null }))}>
           <option value="">Todas as séries</option>
           <option value="__none__">Sem série</option>
           {series.map((se) => <option key={se.id} value={se.id}>{se.title || "(sem título)"}</option>)}
-        </select>
+        </Select>
       </div>
 
       {body}

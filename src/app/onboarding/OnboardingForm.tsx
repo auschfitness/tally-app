@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/shared/Select";
 import { useActionState } from "react";
 import { createOrgAction, type OnboardingState } from "./actions";
 
@@ -20,10 +21,10 @@ export function OnboardingForm() {
         <input name="campus" placeholder="Primeiro campus (ex.: Sede)" />
       </div>
       <div className="gfield">
-        <select name="currency" defaultValue="BRL">
+        <Select name="currency" defaultValue="BRL">
           <option value="BRL">Real (BRL)</option>
           <option value="USD">Dólar (USD)</option>
-        </select>
+        </Select>
       </div>
 
       <div className="gerr">{state.error ?? ""}</div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createPrayerAction } from "../actions";
@@ -37,11 +38,11 @@ export function PrayerModal({ authorDefault, onClose }: { authorDefault: string;
         <div className="mrow">
           <div className="field">
             <label>Quem vê</label>
-            <select name="privacy" defaultValue="church">
+            <Select name="privacy" defaultValue="church">
               {PRIVACY_OPTIONS.map(([v, label]) => (
                 <option key={v} value={v}>{label}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Grupo (opcional)</label>

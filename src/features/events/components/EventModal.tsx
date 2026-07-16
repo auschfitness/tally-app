@@ -2,6 +2,7 @@
 
 // Modal de criar/editar Evento (Client — Server Actions). Ao criar, navega para o
 // detalhe do novo evento (paridade com o legado).
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createEventAction, updateEventAction, deleteEventAction } from "../actions";
@@ -68,18 +69,18 @@ export function EventModal({
           <div className="field"><label>Tipo</label><input name="type" defaultValue={event?.type ?? ""} placeholder="Ex.: Conferência, Retiro, Curso" /></div>
           <div className="field">
             <label>Campus</label>
-            <select name="campus" defaultValue={event?.campus || activeCampus}>
+            <Select name="campus" defaultValue={event?.campus || activeCampus}>
               {campuses.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="mrow">
           <div className="field"><label>Data</label><input name="event_date" type="date" defaultValue={event?.event_date ?? ""} /></div>
           <div className="field">
             <label>Status</label>
-            <select name="status" defaultValue={event?.status ?? "active"}>
+            <Select name="status" defaultValue={event?.status ?? "active"}>
               {Object.entries(STATUS_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="mrow">

@@ -1,6 +1,7 @@
 "use client";
 
 // Controle de líder + registro de presença do grupo (Client — Server Actions).
+import { Select } from "@/components/shared/Select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setGroupLeaderAction, recordGroupAttendanceAction } from "../actions";
@@ -20,12 +21,12 @@ export function GroupLeaderControl({
       <input type="hidden" name="groupId" value={groupId} />
       <div className="field">
         <label>Definir líder do grupo</label>
-        <select name="leaderStickId" defaultValue={currentLeaderId}>
+        <Select name="leaderStickId" defaultValue={currentLeaderId}>
           <option value="">(sem líder)</option>
           {members.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
-        </select>
+        </Select>
       </div>
       <div className="field" style={{ display: "flex", alignItems: "flex-end" }}>
         <button className="btn ghost" type="submit">Salvar líder</button>

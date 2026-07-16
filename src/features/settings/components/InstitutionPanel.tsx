@@ -2,6 +2,7 @@
 
 // Aba Instituição (Client — Server Actions). Nome/moeda (tabela organizations),
 // campi (tabela campuses, add/remove) e multi-instituição (blob, owner-gated).
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { CURRENCIES } from "../domain";
@@ -51,9 +52,9 @@ export function InstitutionPanel({
         <div className={styles.ctrl}>
           <input name="name" defaultValue={orgName} placeholder="Nome da instituição" />
           {orgErr?.name ? <div className="gerr">{orgErr.name[0]}</div> : null}
-          <select name="currency" defaultValue={currency}>
+          <Select name="currency" defaultValue={currency}>
             {CURRENCIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
+          </Select>
           {!orgState.success && orgState.message ? <div className="gerr">{orgState.message}</div> : null}
           <div><button className="btn" type="submit" disabled={orgPending}>{orgPending ? "Salvando…" : "Salvar"}</button></div>
         </div>

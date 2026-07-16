@@ -1,6 +1,7 @@
 "use client";
 
 // Modal de criar/editar Ministério (Client — Server Actions).
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createMinistryAction, updateMinistryAction, deleteMinistryAction } from "../actions";
@@ -64,20 +65,20 @@ export function MinistryModal({
         <div className="mrow">
           <div className="field">
             <label>Líder</label>
-            <select name="leaderStickId" defaultValue={ministry?.leader_id ?? ""}>
+            <Select name="leaderStickId" defaultValue={ministry?.leader_id ?? ""}>
               <option value="">Sem líder</option>
               {people.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Status</label>
-            <select name="status" defaultValue={ministry?.status ?? "active"}>
+            <Select name="status" defaultValue={ministry?.status ?? "active"}>
               {Object.entries(MIN_STATUS_LBL).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
         {!state.success && state.message ? <div className="gerr">{state.message}</div> : null}

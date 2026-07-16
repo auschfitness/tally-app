@@ -3,6 +3,7 @@
 // Modal de criar/editar Care Item (Client — Server Actions). Espelha o padrão do
 // SeriesModal (useActionState + sentinela de edição). "Responsável" é um membro
 // (auth.users) e "pessoa" é uma Stick — selects distintos (ver handoff).
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createCareItemAction, updateCareItemAction } from "../actions";
@@ -61,17 +62,17 @@ export function CareItemModal({
         <div className="mrow">
           <div className="field">
             <label>Pessoa (Stick)</label>
-            <select name="stickId" defaultValue={item?.stick_id ?? ""}>
+            <Select name="stickId" defaultValue={item?.stick_id ?? ""}>
               <option value="">— Sem pessoa —</option>
               {sticks.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Responsável</label>
-            <select name="assignedTo" defaultValue={item?.assigned_to ?? ""}>
+            <Select name="assignedTo" defaultValue={item?.assigned_to ?? ""}>
               <option value="">— Ninguém —</option>
               {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -83,9 +84,9 @@ export function CareItemModal({
         <div className="mrow">
           <div className="field">
             <label>Prioridade</label>
-            <select name="priority" defaultValue={item?.priority ?? "attention"}>
+            <Select name="priority" defaultValue={item?.priority ?? "attention"}>
               {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LBL[p]}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Prazo</label>
@@ -103,9 +104,9 @@ export function CareItemModal({
         ) : (
           <div className="field">
             <label>Status</label>
-            <select name="status" defaultValue={item?.status ?? "assigned"}>
+            <Select name="status" defaultValue={item?.status ?? "assigned"}>
               {EDIT_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LBL[s]}</option>)}
-            </select>
+            </Select>
           </div>
         )}
 

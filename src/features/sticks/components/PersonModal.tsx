@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createStickAction, updateStickAction, archiveStickAction } from "../actions";
@@ -64,37 +65,37 @@ export function PersonModal({
         <div className="mrow">
           <div className="field">
             <label>Relação</label>
-            <select name="relationship" defaultValue={person?.relationship ?? "member"}>
+            <Select name="relationship" defaultValue={person?.relationship ?? "member"}>
               {RELATIONSHIPS.map((r) => (
                 <option key={r} value={r}>
                   {relLabelFull(r)}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Campus</label>
-            <select name="campus" defaultValue={person?.campus || activeCampus}>
+            <Select name="campus" defaultValue={person?.campus || activeCampus}>
               {campuses.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
 
         <div className="mrow">
           <div className="field">
             <label>Grupo</label>
-            <select name="group" defaultValue={person?.group ?? ""}>
+            <Select name="group" defaultValue={person?.group ?? ""}>
               <option value="">(nenhum)</option>
               {groups.map((g) => (
                 <option key={g} value={g}>
                   {g}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Última presença</label>

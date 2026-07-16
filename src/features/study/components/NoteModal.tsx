@@ -2,6 +2,7 @@
 
 // Editor de nota (modal — Client + Server Actions). Vínculos opcionais e escopo.
 // Excluir quando já existe.
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createNoteAction, updateNoteAction, deleteNoteAction } from "../actions";
@@ -66,26 +67,26 @@ export function NoteModal({
         <div className="mrow">
           <div className="field">
             <label>Escopo</label>
-            <select name="scope" defaultValue={note?.scope ?? "personal"}>
+            <Select name="scope" defaultValue={note?.scope ?? "personal"}>
               {Object.entries(NOTE_SCOPE_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field"><label>Tópico</label><input name="topic" defaultValue={note?.topic ?? ""} placeholder="Opcional" /></div>
         </div>
         <div className="mrow">
           <div className="field">
             <label>Sermão</label>
-            <select name="sermonId" defaultValue={note?.sermon_id ?? ""}>
+            <Select name="sermonId" defaultValue={note?.sermon_id ?? ""}>
               <option value="">Nenhum</option>
               {sermons.map((s) => <option key={s.id} value={s.id}>{s.title || "(sem título)"}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Série</label>
-            <select name="seriesId" defaultValue={note?.series_id ?? ""}>
+            <Select name="seriesId" defaultValue={note?.series_id ?? ""}>
               <option value="">Nenhuma</option>
               {series.map((s) => <option key={s.id} value={s.id}>{s.title || "(sem título)"}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="mrow">

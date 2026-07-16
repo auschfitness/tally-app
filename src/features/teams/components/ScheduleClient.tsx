@@ -3,6 +3,7 @@
 // Controles interativos do board de Escala (Client — Server Actions): botão/modal
 // de escalar, e por escalação o avanço de status e a remoção (com confirmação).
 // O board em si é renderizado no servidor (RSC); aqui ficam só as folhas.
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createAssignmentAction, deleteAssignmentAction, setAssignmentStatusAction } from "../actions";
@@ -85,17 +86,17 @@ function AssignModal({
           </div>
           <div className="field">
             <label>Time</label>
-            <select name="teamId" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
+            <Select name="teamId" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
               {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="mrow">
           <div className="field">
             <label>Pessoa</label>
-            <select name="stickId" defaultValue={people[0]?.id ?? ""}>
+            <Select name="stickId" defaultValue={people[0]?.id ?? ""}>
               {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            </Select>
             {fieldErrors?.stickId ? <div className="gerr">{fieldErrors.stickId[0]}</div> : null}
           </div>
           <div className="field">

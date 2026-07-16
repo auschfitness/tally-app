@@ -2,6 +2,7 @@
 // participação) + material de ensino. As mutações são forms de Server Action
 // (addStep / enroll / advance) — sem estado de cliente. "Material de ensino" são
 // sermões vinculados via content.track_id (leitura da feature Study já migrada).
+import { Select } from "@/components/shared/Select";
 import Link from "next/link";
 import { initials } from "@/lib/utils/date";
 import { enrollmentPosition, sortSteps } from "../domain";
@@ -99,9 +100,9 @@ export function TrackDetail({
                 <input type="hidden" name="trackId" value={track.id} />
                 <div className="field">
                   <label>Matricular pessoa</label>
-                  <select name="stickId" defaultValue={people[0]?.id ?? ""}>
+                  <Select name="stickId" defaultValue={people[0]?.id ?? ""}>
                     {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
+                  </Select>
                 </div>
                 <div className="field" style={{ display: "flex", alignItems: "flex-end" }}>
                   <button className="btn ghost" type="submit">Matricular</button>

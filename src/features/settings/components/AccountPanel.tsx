@@ -2,6 +2,7 @@
 
 // Aba Conta (Client — Server Action). Seu nome (profiles.full_name) + idioma/fuso
 // (blob). Tema fica no Topbar (ThemeToggle), não aqui. Cargo é só leitura.
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LANGUAGES, TIMEZONES } from "../domain";
@@ -33,17 +34,17 @@ export function AccountPanel({ userName, account, isOwner }: { userName: string;
       <div className={styles.setrow}>
         <div className={styles.lbl}>Idioma<small>Tradução completa da interface em breve</small></div>
         <div className={styles.ctrl}>
-          <select name="language" defaultValue={account.language}>
+          <Select name="language" defaultValue={account.language}>
             {LANGUAGES.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
-          </select>
+          </Select>
         </div>
       </div>
       <div className={styles.setrow}>
         <div className={styles.lbl}>Fuso horário</div>
         <div className={styles.ctrl}>
-          <select name="timezone" defaultValue={account.timezone}>
+          <Select name="timezone" defaultValue={account.timezone}>
             {TIMEZONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
+          </Select>
         </div>
       </div>
       <div className={styles.setrow}>

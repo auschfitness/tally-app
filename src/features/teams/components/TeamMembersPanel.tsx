@@ -3,6 +3,7 @@
 // Painel "Quem serve" do detalhe do time (Client — Server Actions): lista de
 // membros com papel/status, ações (papel, tornar líder, remover) e o controle de
 // adicionar pessoa. Modal de papel/estágio embutido.
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { addTeamMemberAction, removeTeamMemberAction, setTeamLeaderAction, updateTeamMemberAction } from "../actions";
@@ -97,19 +98,19 @@ export function TeamMembersPanel({
           <input type="hidden" name="teamId" value={team.id} />
           <div className="field">
             <label>Ligar pessoa ao time</label>
-            <select name="stickId" defaultValue="">
+            <Select name="stickId" defaultValue="">
               {availablePeople.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Papel</label>
             {roleList.length ? (
-              <select name="role" defaultValue="">
+              <Select name="role" defaultValue="">
                 <option value="">Papel (opcional)</option>
                 {roleList.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              </Select>
             ) : (
               <input name="role" placeholder="Papel (opcional)" />
             )}
@@ -165,11 +166,11 @@ function MemberRoleModal({
         <div className="field">
           <label>Papel</label>
           {roleList.length ? (
-            <select name="role" defaultValue={member.role}>
+            <Select name="role" defaultValue={member.role}>
               <option value="">Nenhum</option>
               {roleList.map((r) => <option key={r} value={r}>{r}</option>)}
               {member.role && !roleList.includes(member.role) ? <option value={member.role}>{member.role}</option> : null}
-            </select>
+            </Select>
           ) : (
             <input name="role" defaultValue={member.role} placeholder="Ex.: Vocal" />
           )}
@@ -177,9 +178,9 @@ function MemberRoleModal({
         <div className="mrow">
           <div className="field">
             <label>Status</label>
-            <select name="status" defaultValue={member.status}>
+            <Select name="status" defaultValue={member.status}>
               {Object.entries(MEMBER_STATUS_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Disponibilidade</label>
@@ -194,9 +195,9 @@ function MemberRoleModal({
         ) : (
           <div className="field">
             <label>Estágio de liderança</label>
-            <select name="devStage" defaultValue={dev}>
+            <Select name="devStage" defaultValue={dev}>
               {Object.entries(DEV_SETTABLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            </Select>
           </div>
         )}
         <div className="actions">

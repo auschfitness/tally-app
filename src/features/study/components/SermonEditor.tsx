@@ -4,6 +4,7 @@
 // subcabeçalho, corpo aberto (content.notes) e seções opcionais no fluxo. Metadados
 // num drawer de Propriedades. Autosave discreto (debounce 900ms) via Server Action,
 // preservando o shape do `content` (nunca null) e os sub-campos extras do blob.
+import { Select } from "@/components/shared/Select";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveSermonAction, syncSermonScripturesAction } from "../actions";
@@ -307,35 +308,35 @@ export function SermonEditor({
             <div className="field"><label>Subtítulo</label><input value={meta.subtitle} placeholder="Opcional" onChange={(e) => setField("subtitle", e.target.value)} /></div>
             <div className="mrow">
               <div className="field"><label>Status</label>
-                <select value={meta.status} onChange={(e) => setField("status", e.target.value as typeof meta.status)}>
+                <Select value={meta.status} onChange={(e) => setField("status", e.target.value as typeof meta.status)}>
                   {Object.entries(STATUS_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="field"><label>Quem vê</label>
-                <select value={meta.visibility} onChange={(e) => setField("visibility", e.target.value as typeof meta.visibility)}>
+                <Select value={meta.visibility} onChange={(e) => setField("visibility", e.target.value as typeof meta.visibility)}>
                   {Object.entries(VIS_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
+                </Select>
               </div>
             </div>
             <div className="mrow">
               <div className="field"><label>Campus</label>
-                <select value={meta.campus} onChange={(e) => setField("campus", e.target.value)}>
+                <Select value={meta.campus} onChange={(e) => setField("campus", e.target.value)}>
                   {campuses.map((cp) => <option key={cp} value={cp}>{cp}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="field"><label>Data</label><input type="date" value={meta.sermon_date} onChange={(e) => setField("sermon_date", e.target.value)} /></div>
             </div>
             <div className="field"><label>Série</label>
-              <select value={meta.series_id} onChange={(e) => setField("series_id", e.target.value)}>
+              <Select value={meta.series_id} onChange={(e) => setField("series_id", e.target.value)}>
                 <option value="">Sem série</option>
                 {series.map((se) => <option key={se.id} value={se.id}>{se.title || "(sem título)"}</option>)}
-              </select>
+              </Select>
             </div>
             <div className="field"><label>Culto (pregado em)</label>
-              <select value={meta.service_id} onChange={(e) => setField("service_id", e.target.value)}>
+              <Select value={meta.service_id} onChange={(e) => setField("service_id", e.target.value)}>
                 <option value="">Nenhum</option>
                 {services.map((sv) => <option key={sv.id} value={sv.id}>{sv.name || "(sem nome)"}</option>)}
-              </select>
+              </Select>
             </div>
           </aside>
         </>

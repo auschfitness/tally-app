@@ -2,6 +2,7 @@
 
 // Modal de criar/editar Culto (Client — Server Actions). Ao criar, navega para o
 // detalhe do novo culto (paridade com o legado).
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createServiceAction, updateServiceAction, deleteServiceAction } from "../actions";
@@ -71,24 +72,24 @@ export function ServiceModal({
           </div>
           <div className="field">
             <label>Campus</label>
-            <select name="campus" defaultValue={service?.campus || activeCampus}>
+            <Select name="campus" defaultValue={service?.campus || activeCampus}>
               {campuses.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="mrow">
           <div className="field">
             <label>Dia da semana</label>
-            <select name="weekday" defaultValue={service?.weekday ?? ""}>
+            <Select name="weekday" defaultValue={service?.weekday ?? ""}>
               <option value="">—</option>
               {WD.map((w, i) => <option key={i} value={i}>{w}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label>Recorrência</label>
-            <select name="recurring_pattern" defaultValue={service?.recurring_pattern ?? "weekly"}>
+            <Select name="recurring_pattern" defaultValue={service?.recurring_pattern ?? "weekly"}>
               {Object.entries(PATTERN_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            </Select>
           </div>
         </div>
         <div className="mrow">

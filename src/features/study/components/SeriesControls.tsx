@@ -2,6 +2,7 @@
 
 // Controles do workspace da série (Client — Server Actions): editar a série e
 // adicionar um sermão a ela. Remover um sermão é um form simples (server action).
+import { Select } from "@/components/shared/Select";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { setSermonSeriesAction } from "../actions";
@@ -29,9 +30,9 @@ export function AddSermonToSeries({ seriesId, options }: { seriesId: string; opt
       <input type="hidden" name="backTo" value={`/study/series/${seriesId}`} />
       <div className="field">
         <label>Adicionar sermão à série</label>
-        <select name="sermonId" defaultValue={options[0]?.id ?? ""}>
+        <Select name="sermonId" defaultValue={options[0]?.id ?? ""}>
           {options.map((s) => <option key={s.id} value={s.id}>{s.title || "(sem título)"}</option>)}
-        </select>
+        </Select>
       </div>
       <div className="field" style={{ display: "flex", alignItems: "flex-end" }}>
         <button className="btn ghost" type="submit">Adicionar</button>

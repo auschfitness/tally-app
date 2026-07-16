@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { agoLabel } from "@/lib/utils/date";
@@ -119,9 +120,9 @@ function TaskModal({ assignees, onClose }: { assignees: string[]; onClose: () =>
         <div className="field"><label>Tarefa</label><input name="text" autoFocus />{fe?.text ? <div className="gerr">{fe.text[0]}</div> : null}</div>
         <div className="field">
           <label>Responsável</label>
-          <select name="who" defaultValue={assignees[0] ?? ""}>
+          <Select name="who" defaultValue={assignees[0] ?? ""}>
             {assignees.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
+          </Select>
           <div className="muted" style={{ marginTop: 5, fontSize: 11.5 }}>Só aparecem pessoas com cargo (líderes).</div>
         </div>
         <div className="actions">
