@@ -1,10 +1,10 @@
 "use client";
 
 import { Select } from "@/components/shared/Select";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPrayerAction } from "../actions";
-import { PRIVACY_OPTIONS } from "../domain";
+import { PRIVACY_OPTIONS, PRAYER_TOPICS } from "../domain";
 import { type ActionResult } from "@/lib/errors";
 
 const INITIAL: ActionResult = { success: true, data: undefined };
@@ -12,6 +12,19 @@ const INITIAL: ActionResult = { success: true, data: undefined };
 export function PrayerModal({ authorDefault, onClose }: { authorDefault: string; onClose: () => void }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(createPrayerAction, INITIAL);
+  const [topics, setTopics] = useState<string[]>([]);
+  const [custom, setCustom] = useState("");
+
+  function toggleTopic(t: string) {
+    setTopics((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+  }
+  function addCustom() {
+    const t = custom.trim();
+    if (t && !topics.some((x) => x.toLowerCase() === t.toLowerCase())) setTopics((prev) => [...prev, t]);
+    setCustom("");
+  }
+  // Chips: a lista fixa + os temas personalizados que o usuário adicionou.
+  const chips = [...PRAYER_TOPICS, ...topics.filter((t) => !PRAYER_TOPICS.includes(t))];
 
   useEffect(() => {
     if (state.success && state !== INITIAL) {
@@ -50,8 +63,29 @@ export function PrayerModal({ authorDefault, onClose }: { authorDefault: string;
           </div>
         </div>
         <div className="field">
-          <label>Temas (separados por vírgula)</label>
-          <input name="topics" placeholder="Ex.: saúde, família" />
+          <label>Qual o motivo?</label>
+          <input type="hidden" name="topics" value={topics.join(",")} />
+          <div className="filtchips" style={{ marginTop: 2 }}>
+            {chips.map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={`fchip${topics.includes(t) ? " on" : ""}`}
+                onClick={() => toggleTopic(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <input
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustom(); } }}
+              placeholder="Adicionar outro tema…"
+            />
+            <button type="button" className="btn ghost sm" onClick={addCustom}>Adicionar</button>
+          </div>
         </div>
         <div className="field">
           <label>Nome</label>

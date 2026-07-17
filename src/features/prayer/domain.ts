@@ -17,6 +17,26 @@ export const PRIVACY_OPTIONS: ReadonlyArray<readonly [Privacy, string]> = [
   ["leader", "Só líderes"],
 ];
 
+// Motivos de oração sugeridos (roadmap #3) — o "Novo pedido" oferece esta lista +
+// "adicionar novo tema". Gravados em prayer_requests.topics (coluna já existe).
+export const PRAYER_TOPICS: readonly string[] = [
+  "Saúde",
+  "Família",
+  "Casamento",
+  "Filhos",
+  "Finanças",
+  "Trabalho",
+  "Vida espiritual",
+  "Libertação",
+  "Cura emocional",
+  "Ansiedade",
+  "Luto",
+  "Relacionamentos",
+  "Estudos",
+  "Ministério",
+  "Outros",
+];
+
 export interface PrayerRequest {
   id: string;
   title: string;
