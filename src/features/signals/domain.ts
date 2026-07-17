@@ -138,6 +138,11 @@ function weeksSinceOn(now: Date, iso: string | null): number {
 function inCampus(campus: string | null | undefined, activeCampus: string): boolean {
   return campus === activeCampus;
 }
+// Rótulo do grupo nos títulos de sinal: não duplica "Grupo" quando o próprio nome
+// já começa com ele (evita "Grupo Grupo de Jovens").
+function groupLabel(name: string): string {
+  return /^grupo\b/i.test(name.trim()) ? name : "Grupo " + name;
+}
 
 // --- Signals de pessoas + milestones (por Stick do campus ativo) ---
 export function peopleSignals(
@@ -223,7 +228,7 @@ export function groupHealthSignals(health: GroupHealth[], sessions: Session[], n
         type: "group_health",
         level: "attention",
         groupName: g.name,
-        title: "Grupo " + g.name + " com saúde baixa",
+        title: groupLabel(g.name) + " com saúde baixa",
         why: [g.rate + "% dos membros em dia"],
         date: nowIso,
         category: "Groups",
@@ -235,7 +240,7 @@ export function groupHealthSignals(health: GroupHealth[], sessions: Session[], n
         type: "group_leader",
         level: "notice",
         groupName: g.name,
-        title: "Grupo " + g.name + " sem líder atribuído",
+        title: groupLabel(g.name) + " sem líder atribuído",
         why: ["Nenhum líder definido"],
         date: nowIso,
         category: "Groups",
@@ -248,7 +253,7 @@ export function groupHealthSignals(health: GroupHealth[], sessions: Session[], n
         type: "group_growth",
         level: "celebration",
         groupName: g.name,
-        title: "Grupo " + g.name + " recebeu " + g.newMembers + " novo" + (plural ? "s" : "") + " membro" + (plural ? "s" : ""),
+        title: groupLabel(g.name) + " recebeu " + g.newMembers + " novo" + (plural ? "s" : "") + " membro" + (plural ? "s" : ""),
         why: [],
         date: nowIso,
         category: "Groups",
@@ -261,7 +266,7 @@ export function groupHealthSignals(health: GroupHealth[], sessions: Session[], n
         type: "group_movement",
         level: "attention",
         groupName: g.name,
-        title: "Grupo " + g.name + ": " + g.leftRecently + " saída" + (plural ? "s" : "") + " recente" + (plural ? "s" : ""),
+        title: groupLabel(g.name) + ": " + g.leftRecently + " saída" + (plural ? "s" : "") + " recente" + (plural ? "s" : ""),
         why: [],
         date: nowIso,
         category: "Groups",
@@ -279,7 +284,7 @@ export function groupHealthSignals(health: GroupHealth[], sessions: Session[], n
           type: "group_attendance",
           level: "attention",
           groupName: g.name,
-          title: "Grupo " + g.name + " sem registro de presença",
+          title: groupLabel(g.name) + " sem registro de presença",
           why: ["Última presença há " + dd + " dias"],
           date: nowIso,
           category: "Groups",

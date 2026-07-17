@@ -76,10 +76,10 @@ export function GroupsBoard({
                   <span className={styles.gcName}>{g.name}</span>
                   <span className={`hb ${g.band}`} style={{ marginLeft: "auto" }}>{g.rate}%</span>
                 </div>
-                <div className={styles.gcSub}>{g.leader || "sem líder"} · {g.count} membros</div>
+                <div className={styles.gcSub}>{g.leader || "sem líder"} · {g.count} {g.count === 1 ? "membro" : "membros"}</div>
                 <div className="gbar"><i className={g.band} style={{ width: `${g.rate}%` }} /></div>
                 <div className={styles.gcFoot}>
-                  {g.acc} em dia · {g.count - g.acc} sinalizados
+                  {g.acc} em dia · {g.count - g.acc} sinalizado{g.count - g.acc === 1 ? "" : "s"}
                   {g.newMembers > 0 ? ` · ${g.newMembers} novo${g.newMembers > 1 ? "s" : ""}` : ""}
                 </div>
               </Link>

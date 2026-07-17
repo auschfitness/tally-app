@@ -16,6 +16,14 @@ export const CATEGORIES: CategoryDef[] = [
   { key: "Celebration", label: "Celebrações" },
 ];
 
+// Rótulo PT-BR da origem de um sinal (reusa os rótulos dos chips para o item e o
+// filtro direm a MESMA palavra). Sem isto, o feed mostrava o enum cru em inglês
+// ("Teams"/"Groups"). Fallback = a própria categoria.
+const CATEGORY_LABEL = new Map(CATEGORIES.filter((c) => c.key !== "all").map((c) => [c.key, c.label]));
+export function categoryLabel(category: string): string {
+  return CATEGORY_LABEL.get(category) ?? category;
+}
+
 // Urgência de exibição (0 = mais alto). Preserva o rank do legado.
 export const LEVEL_RANK: Record<SignalLevel, number> = { attention: 0, notice: 1, celebration: 2 };
 

@@ -123,6 +123,11 @@ describe("groupHealthSignals", () => {
     expect(out.find((x) => x.key === "gx-Beta")!.title).toBe("Grupo Beta: 1 saída recente");
   });
 
+  it("não duplica 'Grupo' quando o nome já começa com ele (1 novo membro no singular)", () => {
+    const out = groupHealthSignals([health({ name: "Grupo de Jovens", newMembers: 1 })], [], NOW);
+    expect(out.find((x) => x.key === "gn-Grupo de Jovens")!.title).toBe("Grupo de Jovens recebeu 1 novo membro");
+  });
+
   it("presença: só sinaliza grupo que já registrou e parou (>21 dias)", () => {
     const stale: Session[] = [{ group: "Gamma", date: daysAgoIso(30), attendees: [] }];
     const recent: Session[] = [{ group: "Delta", date: daysAgoIso(10), attendees: [] }];
