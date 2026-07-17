@@ -1,17 +1,7 @@
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
-import { CampusSwitcher } from "@/components/shared/CampusSwitcher";
 
-// Barra superior: igreja, seletor de campus (troca o campus ativo — cookie global)
-// e tema.
-export function Topbar({
-  orgName,
-  campuses,
-  activeCampus,
-}: {
-  orgName: string;
-  campuses: string[];
-  activeCampus: string;
-}) {
+// Barra superior: igreja e tema. Uma igreja = um local: não há mais seletor de campus.
+export function Topbar({ orgName }: { orgName: string }) {
   return (
     <div className="top">
       <div className="church">
@@ -31,7 +21,6 @@ export function Topbar({
           <span>Administrador</span>
         </div>
       </div>
-      <CampusSwitcher campuses={campuses} activeCampus={activeCampus} />
       <span className="plan">Seed · grátis</span>
       <div className="spacer" />
       <ThemeToggle />

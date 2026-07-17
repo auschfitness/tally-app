@@ -12,14 +12,12 @@ import styles from "../finance.module.css";
 export function FinanceBoard({
   entries,
   currency,
-  activeCampus,
   catIn,
   catOut,
   funds,
 }: {
   entries: FinanceEntry[];
   currency: string;
-  activeCampus: string;
   catIn: string[];
   catOut: string[];
   funds: string[];
@@ -51,7 +49,7 @@ export function FinanceBoard({
     <>
       <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 14 }}>
         <h1 className="page">Finance Lite</h1>
-        <span className="sub" style={{ margin: 0 }}>{activeCampus} · este mês</span>
+        <span className="sub" style={{ margin: 0 }}>este mês</span>
       </div>
 
       <div className="ministrip">
@@ -160,7 +158,6 @@ export function FinanceBoard({
           catIn={catIn}
           catOut={catOut}
           funds={funds}
-          activeCampus={activeCampus}
           currency={currency}
           onClose={() => setModalOpen(false)}
         />

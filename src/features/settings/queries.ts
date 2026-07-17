@@ -37,22 +37,18 @@ export async function loadSettings(supabase: DB, orgId: string, userId: string):
   };
 }
 
-// Dados jurídicos: perfil fiscal da matriz (org_fiscal_profiles) + por filial
-// (campus_fiscal_profiles) + campi ativos p/ o seletor. SELECT é liberado a qualquer
-// membro (RLS); a escrita é gated na action.
+// Dados jurídicos: perfil fiscal da organização (org_fiscal_profiles) + o país da org
+// (organizations.country), que dita o formulário BR/US. Uma igreja = um local: filiais
+// (campus_fiscal_profiles) são ignoradas na UI. SELECT liberado a qualquer membro (RLS);
+// a escrita é gated na action.
 export async function loadFiscal(supabase: DB, orgId: string): Promise<FiscalData> {
-  const [orgRes, campusProfsRes, campusesRes] = await Promise.all([
+  const [orgProfRes, orgRes] = await Promise.all([
     supabase.from("org_fiscal_profiles").select("*").eq("org_id", orgId).maybeSingle(),
-    supabase.from("campus_fiscal_profiles").select("*").eq("org_id", orgId),
-    supabase.from("campuses").select("id, name").eq("org_id", orgId).eq("active", true).order("name"),
+    supabase.from("organizations").select("country").eq("id", orgId).maybeSingle(),
   ]);
 
-  const byCampus: Record<string, ReturnType<typeof rowToProfile>> = {};
-  for (const r of campusProfsRes.data ?? []) byCampus[r.campus_id] = rowToProfile(r);
-
   return {
-    org: rowToProfile(orgRes.data),
-    byCampus,
-    campuses: (campusesRes.data ?? []).map((c): CampusRow => ({ id: c.id, name: c.name, active: true })),
+    org: rowToProfile(orgProfRes.data),
+    country: orgRes.data?.country === "US" ? "US" : "BR",
   };
 }

@@ -1337,18 +1337,21 @@ export type Database = {
       }
       organizations: {
         Row: {
+          country: string
           created_at: string
           currency: string
           id: string
           name: string
         }
         Insert: {
+          country?: string
           created_at?: string
           currency?: string
           id?: string
           name: string
         }
         Update: {
+          country?: string
           created_at?: string
           currency?: string
           id?: string
@@ -2750,6 +2753,7 @@ export type Database = {
       create_org: {
         Args: {
           p_campus: string
+          p_country?: string
           p_currency: string
           p_name: string
           p_state: Json
@@ -2763,6 +2767,7 @@ export type Database = {
         Args: { p_org: string }
         Returns: undefined
       }
+      seed_default_system_roles: { Args: { p_org: string }; Returns: undefined }
       shares_org: { Args: { p_other: string }; Returns: boolean }
     }
     Enums: {

@@ -18,6 +18,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ]);
 
   const orgName = orgRes.data?.name ?? "Minha igreja";
+  // Uma igreja = um local: o seletor de campus saiu da UI, mas o motor de Signals
+  // ainda resolve o campus ativo internamente (default = o "Sede" do cadastro).
   const campuses = (campusRes.data ?? []).map((c) => c.name);
   const activeCampus = await resolveActiveCampus(campuses);
   const userLabel = user.email?.split("@")[0] ?? "Você";
@@ -43,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="app">
       <Sidebar userLabel={userLabel} counts={counts} />
       <div className="main">
-        <Topbar orgName={orgName} campuses={campuses} activeCampus={activeCampus} />
+        <Topbar orgName={orgName} />
         <div className="content view-in">{children}</div>
       </div>
     </div>

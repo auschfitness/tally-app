@@ -1,15 +1,15 @@
 "use client";
 
-// Aba Jurídico (Client — Server Action). Dados fiscais da MATRIZ (org_fiscal_profiles)
-// e de cada FILIAL (campus_fiscal_profiles) — cada CNPJ é separado. Um seletor escolhe
-// a entidade; o formulário troca entre BR/US por país. Leitura para qualquer membro;
-// escrita só p/ dono/pastor/tesoureiro (canManage) — a UI desabilita o que não pode.
+// Aba Jurídico (Client — Server Action). Dados fiscais da organização
+// (org_fiscal_profiles). Uma igreja = um local: não há mais seletor de entidade
+// (matriz/filial) nem alternador BR/EUA — o formulário é DIRIGIDO pelo país da
+// organização (organizations.country), definido no cadastro. Leitura para qualquer
+// membro; escrita só p/ dono/pastor/tesoureiro (canManage) — a UI desabilita o resto.
 import { useEffect, useState } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { Select } from "@/components/shared/Select";
 import { saveFiscalAction } from "../actions";
-import { EMPTY_FISCAL, type FiscalCountry, type FiscalProfile } from "../fiscal";
+import { type FiscalCountry, type FiscalProfile } from "../fiscal";
 import type { FiscalData } from "../types";
 import { type ActionResult } from "@/lib/errors";
 import styles from "../settings.module.css";
@@ -18,7 +18,6 @@ const INITIAL: ActionResult = { success: true, data: undefined };
 
 export function FiscalPanel({ fiscal, canManage }: { fiscal: FiscalData; canManage: boolean }) {
   const router = useRouter();
-  const [target, setTarget] = useState<string>("org");
   const [state, action, pending] = useActionState(saveFiscalAction, INITIAL);
   const [justSaved, setJustSaved] = useState(false);
 
@@ -28,9 +27,6 @@ export function FiscalPanel({ fiscal, canManage }: { fiscal: FiscalData; canMana
       router.refresh();
     }
   }, [state, router]);
-  useEffect(() => setJustSaved(false), [target]);
-
-  const profile = target === "org" ? fiscal.org : fiscal.byCampus[target] ?? EMPTY_FISCAL;
 
   return (
     <div className="panel">
@@ -38,22 +34,9 @@ export function FiscalPanel({ fiscal, canManage }: { fiscal: FiscalData; canMana
         <div className={styles.fiscalNote}>Você pode ver os dados jurídicos. Só o dono, o pastor ou o tesoureiro pode editar.</div>
       ) : null}
 
-      <div className={styles.setrow}>
-        <div className={styles.lbl}>Entidade<small>Matriz ou uma filial — cada uma tem seu próprio CNPJ/EIN</small></div>
-        <div className={styles.ctrl}>
-          <Select value={target} onChange={(e) => setTarget(e.target.value)}>
-            <option value="org">Matriz (organização)</option>
-            {fiscal.campuses.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </Select>
-        </div>
-      </div>
-
       <FiscalForm
-        key={target}
-        target={target}
-        profile={profile}
+        country={fiscal.country}
+        profile={fiscal.org}
         canManage={canManage}
         action={action}
         pending={pending}
@@ -65,7 +48,7 @@ export function FiscalPanel({ fiscal, canManage }: { fiscal: FiscalData; canMana
 }
 
 function FiscalForm({
-  target,
+  country,
   profile,
   canManage,
   action,
@@ -73,7 +56,7 @@ function FiscalForm({
   errorMsg,
   justSaved,
 }: {
-  target: string;
+  country: FiscalCountry;
   profile: FiscalProfile;
   canManage: boolean;
   action: (fd: FormData) => void;
@@ -81,18 +64,13 @@ function FiscalForm({
   errorMsg: string | null | undefined;
   justSaved: boolean;
 }) {
-  const [country, setCountry] = useState<FiscalCountry>(profile.country);
   const ro = !canManage;
 
   return (
     <form action={action} className={styles.fiscalForm}>
-      <input type="hidden" name="target" value={target} />
+      {/* Entidade e país são fixos: a org (matriz) e o país do cadastro. */}
+      <input type="hidden" name="target" value="org" />
       <input type="hidden" name="country" value={country} />
-
-      <div className={`seg ${styles.fiscalSeg}`}>
-        <button type="button" className={country === "BR" ? "on" : ""} onClick={() => setCountry("BR")} disabled={ro}>Brasil</button>
-        <button type="button" className={country === "US" ? "on" : ""} onClick={() => setCountry("US")} disabled={ro}>Estados Unidos</button>
-      </div>
 
       <div className={styles.fiscalSection}>Identificação</div>
       <div className="field">

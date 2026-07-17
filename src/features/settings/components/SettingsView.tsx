@@ -25,7 +25,7 @@ export function SettingsView({ data, dict }: { data: SettingsData; dict: Diction
         <button className={`tab${tab === "acc" ? " on" : ""}`} onClick={() => setTab("acc")}>{t.tabAccount}</button>
       </div>
       {tab === "inst" ? (
-        <InstitutionPanel orgName={data.orgName} currency={data.currency} campuses={data.campuses} institution={data.institution} isOwner={data.isOwner} />
+        <InstitutionPanel orgName={data.orgName} currency={data.currency} />
       ) : tab === "team" ? (
         <TeamPanel data={data.team} />
       ) : tab === "legal" ? (

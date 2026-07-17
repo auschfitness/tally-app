@@ -9,12 +9,11 @@
 // na feature Finance. Tema fica no Topbar (ThemeToggle), não em Settings.
 import type { Locale } from "@/lib/i18n/config";
 import type { TeamData } from "@/features/roles/types";
-import type { FiscalProfile } from "./fiscal";
+import type { FiscalCountry, FiscalProfile } from "./fiscal";
 
 export interface FiscalData {
-  org: FiscalProfile; // dados fiscais da matriz (org_fiscal_profiles)
-  byCampus: Record<string, FiscalProfile>; // por campus (campus_fiscal_profiles), chave = campus_id
-  campuses: CampusRow[]; // campi ativos, para o seletor de entidade
+  org: FiscalProfile; // dados fiscais da organização (org_fiscal_profiles)
+  country: FiscalCountry; // país da org (organizations.country) — dita o formulário BR/US
 }
 
 export interface InstitutionConfig {

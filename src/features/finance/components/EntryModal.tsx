@@ -17,14 +17,12 @@ export function EntryModal({
   catIn,
   catOut,
   funds,
-  activeCampus,
   currency,
   onClose,
 }: {
   catIn: string[];
   catOut: string[];
   funds: string[];
-  activeCampus: string;
   currency: string;
   onClose: () => void;
 }) {
@@ -50,8 +48,6 @@ export function EntryModal({
         <h3>Novo lançamento</h3>
         <input type="hidden" name="type" value={type} />
         <input type="hidden" name="newCategory" value={isNew ? "1" : "0"} />
-        {/* Campus vem do contexto (seletor do topo), não é escolhido no lançamento. */}
-        <input type="hidden" name="campus" value={activeCampus} />
 
         <div className="field">
           <label>Tipo</label>
