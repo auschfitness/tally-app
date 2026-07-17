@@ -48,7 +48,12 @@ relacional **`milestones`** (Journey/Trilhas gravam nela), não o blob `app_stat
   já ordenados; o chip filtra em memória (sem round-trip). Chips e ordem por nível
   (attention→notice→celebration) idênticos ao legado.
 - **"Abrir" (perfil da Stick)** omitido: ainda não há rota `/sticks/[id]`.
-- **Badge do nav (contador do Inbox)** segue **0** por ora: computar o feed inteiro no
-  layout de todas as páginas seria caro. Entra quando a Home agregar o engine (o mesmo
-  `buildSignalsInput`) — aí o número real pode ser compartilhado.
+- **Origem do item em PT-BR** (`categoryLabel`, `domain.ts`): o feed mostra o rótulo
+  do chip correspondente (Care, Pessoas, Grupos, Serviço, Cultos, Celebrações) em vez
+  do enum cru em inglês (`Teams`/`Groups`). Item e chip dizem a MESMA palavra.
+- **Badge do nav (contador do Inbox)**: agora computado no layout do dashboard
+  (`app/(dashboard)/layout.tsx`) a partir da MESMA fonte da tela — `buildSignalsInput`
+  + `signals` + `visibleSignals`. Custo: monta o assembler a cada navegação (aceitável
+  no porte atual; tabelas pequenas). Defensivo: qualquer falha → 0. Revisitar com cache
+  (React `cache()`) ou compartilhando o cálculo com a Home se o custo pesar.
 - **`now` injetado** no engine (page passa `new Date()`); o domínio é determinístico.

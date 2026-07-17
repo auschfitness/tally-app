@@ -56,6 +56,10 @@ servidor (semana por URL, compartilhável).
   `archived`), como no Signals.
 - Escala ainda é **por data** (`service_id`/`event_id` ficam nulos): Serviços/Eventos
   chegam nas próximas features; o gancho já está pronto no schema.
+- **"Hoje" da Escala vem do fuso da organização** (`app_state.account.timezone`, via
+  `zonedTodayIso`), não do relógio do servidor. O SSR roda em UTC na Vercel, então usar
+  a data do servidor destacava o dia SEGUINTE à noite no Brasil/EUA (off-by-one). Sem
+  `?anchor=`, a semana padrão parte desse "hoje" corrigido.
 
 ## Consumidores
 Os Signals de Teams já existem em `features/signals` (serviceSignals consome
