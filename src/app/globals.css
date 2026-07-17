@@ -343,3 +343,9 @@ h1.page { font-size: 24px; font-weight: 600; margin-bottom: 3px; color: var(--te
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
+
+/* Impressão: some o chrome do app (nav/topo) para documentos como o recibo de doação. */
+@media print {
+  .side, .top { display: none !important; }
+  .content { padding: 0 !important; }
+}

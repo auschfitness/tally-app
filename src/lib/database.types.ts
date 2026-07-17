@@ -510,6 +510,155 @@ export type Database = {
           },
         ]
       }
+      donation_receipts: {
+        Row: {
+          country: string
+          created_by: string | null
+          currency: string
+          donation_id: string | null
+          id: string
+          issued_at: string
+          kind: string
+          org_id: string
+          period_year: number | null
+          receipt_no: string
+          snapshot: Json
+          stick_id: string | null
+          total_amount: number
+        }
+        Insert: {
+          country?: string
+          created_by?: string | null
+          currency?: string
+          donation_id?: string | null
+          id?: string
+          issued_at?: string
+          kind: string
+          org_id: string
+          period_year?: number | null
+          receipt_no: string
+          snapshot?: Json
+          stick_id?: string | null
+          total_amount?: number
+        }
+        Update: {
+          country?: string
+          created_by?: string | null
+          currency?: string
+          donation_id?: string | null
+          id?: string
+          issued_at?: string
+          kind?: string
+          org_id?: string
+          period_year?: number | null
+          receipt_no?: string
+          snapshot?: Json
+          stick_id?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donation_receipts_donation_id_fkey"
+            columns: ["donation_id"]
+            isOneToOne: false
+            referencedRelation: "donations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_receipts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_receipts_stick_id_fkey"
+            columns: ["stick_id"]
+            isOneToOne: false
+            referencedRelation: "sticks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donations: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          donation_date: string
+          donor_name: string | null
+          donor_tax_id: string | null
+          fund_id: string | null
+          goods_services_description: string | null
+          goods_services_provided: boolean
+          goods_services_value: number | null
+          id: string
+          method: string
+          note: string | null
+          org_id: string
+          stick_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          donation_date?: string
+          donor_name?: string | null
+          donor_tax_id?: string | null
+          fund_id?: string | null
+          goods_services_description?: string | null
+          goods_services_provided?: boolean
+          goods_services_value?: number | null
+          id?: string
+          method?: string
+          note?: string | null
+          org_id: string
+          stick_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          donation_date?: string
+          donor_name?: string | null
+          donor_tax_id?: string | null
+          fund_id?: string | null
+          goods_services_description?: string | null
+          goods_services_provided?: boolean
+          goods_services_value?: number | null
+          id?: string
+          method?: string
+          note?: string | null
+          org_id?: string
+          stick_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donations_stick_id_fkey"
+            columns: ["stick_id"]
+            isOneToOne: false
+            referencedRelation: "sticks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           answers: Json
@@ -2762,6 +2911,7 @@ export type Database = {
       }
       has_perm: { Args: { p_org: string; p_perm: string }; Returns: boolean }
       is_org_member: { Args: { p_org: string }; Returns: boolean }
+      next_receipt_number: { Args: { p_org: string }; Returns: string }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
       seed_default_finance_categories: {
         Args: { p_org: string }

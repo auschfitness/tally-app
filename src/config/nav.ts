@@ -63,7 +63,10 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "financeiro",
     label: "Financeiro",
-    items: [{ key: "finance", label: "Finance Lite", href: "/finance" }],
+    items: [
+      { key: "finance", label: "Finance Lite", href: "/finance" },
+      { key: "giving", label: "Doações", href: "/giving" },
+    ],
   },
 ];
 

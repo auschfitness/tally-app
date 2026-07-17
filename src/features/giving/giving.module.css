@@ -1,0 +1,158 @@
+/* Giving/Doações. O global já traz panel, row2, table, ministrip, btn, field,
+   filtchips/fchip, empty, muted, pos/neg. Aqui só o específico da feature + recibo. */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 6px 0 16px;
+}
+
+.donorCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.donorActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fundrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+.fundrow:last-child {
+  border-bottom: none;
+}
+
+.receiptRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: opacity var(--dur-micro) var(--ease);
+}
+.receiptRow:last-child {
+  border-bottom: none;
+}
+.receiptRow:hover {
+  opacity: 0.72;
+}
+
+/* ---- Recibo (documento imprimível) ---- */
+.receiptWrap {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.receiptBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.receipt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
+}
+.receiptHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+.receiptOrg {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.receiptMuted {
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.receiptNo {
+  text-align: right;
+  flex-shrink: 0;
+}
+.receiptTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.receiptDonor {
+  margin-bottom: 18px;
+}
+.receiptTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  border: none;
+  background: transparent;
+  margin-bottom: 18px;
+}
+.receiptTable th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-2);
+  font-weight: 600;
+  background: transparent;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.receiptTable td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.receiptTable tfoot td {
+  border-bottom: none;
+  border-top: 2px solid var(--border);
+}
+.receiptLegal {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.receiptSign {
+  margin-top: 34px;
+  width: 260px;
+}
+.receiptSignLine {
+  border-top: 1px solid var(--text-2);
+  margin-bottom: 6px;
+}
+
+@media print {
+  .noprint {
+    display: none !important;
+  }
+  .receipt {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+}
