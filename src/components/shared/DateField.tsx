@@ -32,9 +32,13 @@ export function DateField({ name, value, defaultValue, onChange, id, disabled, .
   const autoId = useId();
   const fieldId = id ?? autoId;
 
-  // Re-sincroniza o texto quando o valor controlado muda de fora (ex.: carregou).
+  // Re-sincroniza o texto quando o valor controlado muda de FORA (ex.: carregou).
+  // Só quando o novo ISO diverge do que o texto já representa — senão, digitar uma
+  // data incompleta (ISO vira "") apagaria o texto no meio da digitação.
   useEffect(() => {
-    if (controlled) setText(brDate(value ?? ""));
+    if (!controlled) return;
+    const v = value ?? "";
+    if (v !== brToIso(text)) setText(brDate(v));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
