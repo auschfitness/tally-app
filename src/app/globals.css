@@ -59,6 +59,9 @@ a { color: inherit; }
 .btn.danger { background: rgba(234, 91, 76, .14); color: var(--coral); }
 
 .link { color: var(--blue); background: none; border: none; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+/* Botão de ícone (ex.: fechar ×) — controle discreto, estilizado ao tema claro/escuro. */
+.iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; border: none; background: none; color: var(--text-2); font-size: 20px; line-height: 1; cursor: pointer; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease); }
+.iconbtn:hover { background: var(--surface-2); color: var(--text); }
 .muted { color: var(--text-2); font-size: 12px; }
 .empty { color: var(--text-2); font-size: 13px; padding: 18px 0; text-align: center; }
 

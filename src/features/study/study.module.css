@@ -247,28 +247,21 @@
   color: var(--text);
   background: var(--surface-2);
 }
-.cmpLangSeg {
-  display: inline-flex;
-  gap: 2px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 2px;
+.cmpHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
 }
-.cmpLang {
+/* "Mais versões" — link discreto que revela o resto do catálogo (revelação progressiva). */
+.cmpMore {
   border: 0;
   background: none;
-  color: var(--text-2);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 5px 10px;
-  border-radius: 7px;
-  cursor: pointer;
-}
-.cmpLang.on {
-  background: var(--surface);
   color: var(--blue);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 4px;
+  cursor: pointer;
 }
 .cmpVers {
   display: flex;

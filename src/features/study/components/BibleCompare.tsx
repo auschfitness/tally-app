@@ -13,17 +13,26 @@ import { fetchPassage, listTranslations, type PassageVerse, type Translation } f
 import type { ScriptureRef } from "@/lib/bible/parse";
 import styles from "../study.module.css";
 
-const APP_LANGS = [
-  { code: "por", label: "PT-BR" },
-  { code: "eng", label: "EN" },
-  { code: "spa", label: "ES" },
-] as const;
-type LangCode = (typeof APP_LANGS)[number]["code"];
+type LangCode = "por" | "eng" | "spa";
 
 function localeToLang(locale: string): LangCode {
   if ((locale || "").startsWith("en")) return "eng";
   if ((locale || "").startsWith("es")) return "spa";
   return "por";
+}
+
+// Lista curada por idioma: poucas versões conhecidas de domínio público mostradas
+// por padrão; o resto (Septuaginta, Targums, dezenas de revisões em inglês…) fica
+// atrás de "Mais versões". Tokens casam por substring em id/nome (robusto a variações
+// de id da helloao). O gate de licença de domínio público já existe na fonte.
+const CURATED: Record<LangCode, string[]> = {
+  por: ["ALMEIDA", "ARC", "ACF", "ARA", "NAA"],
+  eng: ["BSB", "BEREAN", "WORLD ENGLISH", "WEB", "KING JAMES", "KJV", "AMERICAN STANDARD", "ASV"],
+  spa: ["REINA", "VALERA", "RVA", "RVR", "RVG"],
+};
+function isCurated(t: Translation, lang: LangCode): boolean {
+  const hay = `${t.id} ${t.shortName} ${t.name} ${t.englishName}`.toUpperCase();
+  return CURATED[lang].some((tok) => hay.includes(tok));
 }
 
 interface CmpRef {
@@ -53,9 +62,10 @@ export function BibleCompare({
       ? { book: initialRef.book, chapter: initialRef.chapter, verse_start: initialRef.verse_start, verse_end: initialRef.verse_end }
       : { book: "JHN", chapter: 3, verse_start: 16, verse_end: null },
   );
-  const [lang, setLang] = useState<LangCode>(() => localeToLang(locale));
+  const lang = localeToLang(locale);
   const [translations, setTranslations] = useState<Translation[] | null>(null);
   const [picks, setPicks] = useState<string[]>([]);
+  const [showMore, setShowMore] = useState(false);
   const [results, setResults] = useState<Record<string, ColResult>>({});
   const [chapStr, setChapStr] = useState(ref.chapter ? String(ref.chapter) : "");
   const [vsStr, setVsStr] = useState(ref.verse_start ? String(ref.verse_start) : "");
@@ -76,6 +86,15 @@ export function BibleCompare({
     [translations, lang],
   );
 
+  // Poucas versões por padrão (curadas); o resto atrás de "Mais versões". Se nenhuma
+  // versão casar a curadoria nesta língua, mostra as 3 primeiras como fallback (nunca
+  // um padrão vazio).
+  const { primary, extra } = useMemo(() => {
+    const cur = versionsForLang.filter((t) => isCurated(t, lang));
+    if (cur.length) return { primary: cur, extra: versionsForLang.filter((t) => !isCurated(t, lang)) };
+    return { primary: versionsForLang.slice(0, 3), extra: versionsForLang.slice(3) };
+  }, [versionsForLang, lang]);
+
   function runFor(ids: string[], r: CmpRef) {
     if (!ids.length) return;
     setResults((prev) => {
@@ -93,10 +112,10 @@ export function BibleCompare({
     }
   }
 
-  // Ao carregar as versões ou trocar de língua: seleciona as 2 primeiras e busca.
+  // Ao carregar as versões: seleciona as 2 primeiras curadas e busca.
   useEffect(() => {
     if (!translations) return;
-    const def = versionsForLang.slice(0, 2).map((t) => t.id);
+    const def = primary.slice(0, 2).map((t) => t.id);
     setPicks(def);
     runFor(def, ref);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,9 +173,9 @@ export function BibleCompare({
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <form className={`modal ${styles.cmp}`} onSubmit={(e) => e.preventDefault()}>
-        <div className="ph">
+        <div className={styles.cmpHead}>
           <h3>Comparar Bíblia</h3>
-          <button className="link" type="button" style={{ marginLeft: "auto" }} onClick={onClose}>Fechar</button>
+          <button className="iconbtn" type="button" aria-label="Fechar" style={{ marginLeft: "auto" }} onClick={onClose}>×</button>
         </div>
         <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
           Versões de domínio público. Passagem: <b>{refLabel}</b>
@@ -171,14 +190,6 @@ export function BibleCompare({
           <input type="number" min={1} placeholder="v. fim" value={veStr} onChange={(e) => setVeStr(e.target.value)} style={{ width: 62 }} />
           <button className="btn" type="button" onClick={compareNow}>Comparar</button>
           <button className="link" type="button" onClick={wholeChapter}>Capítulo inteiro</button>
-          <span style={{ flex: 1 }} />
-          <span className={styles.cmpLangSeg}>
-            {APP_LANGS.map((l) => (
-              <button key={l.code} type="button" className={`${styles.cmpLang}${lang === l.code ? " " + styles.on : ""}`} onClick={() => setLang(l.code)}>
-                {l.label}
-              </button>
-            ))}
-          </span>
         </div>
 
         <div className={styles.cmpVers}>
@@ -187,14 +198,21 @@ export function BibleCompare({
           ) : versionsForLang.length === 0 ? (
             <span className="muted">Sem versões de domínio público nesta língua.</span>
           ) : (
-            versionsForLang.map((t) => (
-              <label key={t.id} className={`${styles.cmpVer}${picks.includes(t.id) ? " " + styles.on : ""}`}>
-                <input type="checkbox" checked={picks.includes(t.id)} onChange={() => togglePick(t.id)} />
-                {" "}
-                {t.name || t.shortName || t.id}
-                {t.shortName ? ` (${t.shortName})` : ""}
-              </label>
-            ))
+            <>
+              {[...primary, ...(showMore ? extra : extra.filter((t) => picks.includes(t.id)))].map((t) => (
+                <label key={t.id} className={`${styles.cmpVer}${picks.includes(t.id) ? " " + styles.on : ""}`}>
+                  <input type="checkbox" checked={picks.includes(t.id)} onChange={() => togglePick(t.id)} />
+                  {" "}
+                  {t.name || t.shortName || t.id}
+                  {t.shortName ? ` (${t.shortName})` : ""}
+                </label>
+              ))}
+              {extra.length ? (
+                <button type="button" className={styles.cmpMore} onClick={() => setShowMore((v) => !v)}>
+                  {showMore ? "Menos versões" : `Mais versões (${extra.length})`}
+                </button>
+              ) : null}
+            </>
           )}
         </div>
 

@@ -277,7 +277,11 @@ export function SermonEditor({
         <>
           <div className={styles.drawerOv} onClick={() => setAssistantOpen(false)} />
           <aside className={styles.drawer}>
-            <div className="ph"><h3 style={{ fontSize: 14 }}>Assistente de estudo</h3><button className="link" style={{ marginLeft: "auto" }} onClick={() => { setCompareRef(selRef ?? detected[0] ?? null); setCompareOpen(true); }}>Comparar Bíblia</button><button className="link" onClick={() => setAssistantOpen(false)}>Fechar</button></div>
+            <div className={styles.cmpHead}>
+              <h3 style={{ fontSize: 14 }}>Assistente de estudo</h3>
+              <button className="btn ghost sm" type="button" style={{ marginLeft: "auto" }} onClick={() => { setCompareRef(selRef ?? detected[0] ?? null); setCompareOpen(true); }}>Comparar Bíblia</button>
+              <button className="iconbtn" type="button" aria-label="Fechar" onClick={() => setAssistantOpen(false)}>×</button>
+            </div>
             <label className="field check" style={{ marginTop: 8 }}>
               <input type="checkbox" checked={recognizeOn} onChange={(e) => setRecognizeOn(e.target.checked)} />
               <span>Reconhecer escrituras</span>
