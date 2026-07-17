@@ -2,6 +2,7 @@
 
 import { Select } from "@/components/shared/Select";
 import { DateField } from "@/components/shared/DateField";
+import { MoneyField } from "@/components/shared/MoneyField";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEntryAction } from "../actions";
@@ -18,6 +19,7 @@ export function EntryModal({
   funds,
   campuses,
   activeCampus,
+  currency,
   onClose,
 }: {
   catIn: string[];
@@ -25,6 +27,7 @@ export function EntryModal({
   funds: string[];
   campuses: string[];
   activeCampus: string;
+  currency: string;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -67,7 +70,7 @@ export function EntryModal({
         <div className="mrow">
           <div className="field">
             <label>Valor</label>
-            <input name="amount" type="number" min="0" step="0.01" placeholder="0,00" />
+            <MoneyField name="amount" currency={currency} />
             {fieldErrors?.amount ? <div className="gerr">{fieldErrors.amount[0]}</div> : null}
           </div>
           <div className="field">

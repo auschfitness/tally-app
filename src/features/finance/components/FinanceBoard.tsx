@@ -156,6 +156,7 @@ export function FinanceBoard({
           funds={funds}
           campuses={campuses}
           activeCampus={activeCampus}
+          currency={currency}
           onClose={() => setModalOpen(false)}
         />
       ) : null}
