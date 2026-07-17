@@ -32,33 +32,61 @@
   max-width: 320px;
 }
 
-.taglist {
+/* Gestão de Campus: lista quieta (ar, não caixas), uma linha por campus. */
+.campusList {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+  max-width: 420px;
+}
+.campusEmpty {
+  color: var(--text-2, #6b7280);
+  font-size: 13px;
+  padding: 6px 0;
+}
+.campusRow {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+}
+.campusRow:last-child {
+  border-bottom: none;
+}
+.campusName {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.campusOff .campusName {
+  color: var(--text-2, #6b7280);
+  font-weight: 400;
+}
+.campusBadge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2, #6b7280);
+  background: var(--surface-2, #f2f4f8);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+.campusActions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.campusEdit {
+  display: flex;
   gap: 8px;
   align-items: center;
+  flex: 1;
 }
-.tagx {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--surface-2, #f2f4f8);
-  border: 1px solid var(--border, #e6e8ee);
-  border-radius: 16px;
-  padding: 4px 6px 4px 12px;
-  font-size: 13px;
-}
-.tagx button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--text-2, #6b7280);
-  font-size: 15px;
-  line-height: 1;
-  padding: 0 2px;
-}
-.tagx button:hover {
-  color: var(--coral, #ea5b4c);
+.campusEdit input {
+  max-width: 220px;
 }
 
 .addRow {

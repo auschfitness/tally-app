@@ -3,10 +3,10 @@
 // Aba Instituição (Client — Server Actions). Nome/moeda (tabela organizations),
 // campi (tabela campuses, add/remove) e multi-instituição (blob, owner-gated).
 import { Select } from "@/components/shared/Select";
-import { useActionState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState } from "react";
 import { CURRENCIES } from "../domain";
-import { updateOrgAction, addCampusAction, removeCampusAction, setMultiInstitutionAction } from "../actions";
+import { updateOrgAction, setMultiInstitutionAction } from "../actions";
+import { CampusManager } from "./CampusManager";
 import type { CampusRow, InstitutionConfig } from "../types";
 import { type ActionResult } from "@/lib/errors";
 import styles from "../settings.module.css";
@@ -26,21 +26,7 @@ export function InstitutionPanel({
   institution: InstitutionConfig;
   isOwner: boolean;
 }) {
-  const router = useRouter();
   const [orgState, orgAction, orgPending] = useActionState(updateOrgAction, INITIAL);
-  const [addState, addAction, addPending] = useActionState(addCampusAction, INITIAL);
-  const [rmState, rmAction] = useActionState(removeCampusAction, INITIAL);
-  const addRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    if (addState.success && addState !== INITIAL) {
-      addRef.current?.reset();
-      router.refresh();
-    }
-  }, [addState, router]);
-  useEffect(() => {
-    if (rmState.success && rmState !== INITIAL) router.refresh();
-  }, [rmState, router]);
 
   const orgErr = orgState.success ? undefined : orgState.fieldErrors;
 
@@ -60,28 +46,10 @@ export function InstitutionPanel({
         </div>
       </form>
 
-      {/* Campus (campuses) */}
+      {/* Campus (campuses) — gestão: listar/renomear/remover/adicionar */}
       <div className={styles.setrow}>
-        <div className={styles.lbl}>Campus<small>Cada campus tem seus dados e presença</small></div>
-        <div className={styles.ctrl}>
-          <div className={styles.taglist}>
-            {campuses.map((c) => (
-              <span key={c.id} className={styles.tagx}>
-                {c.name}
-                <form action={rmAction} style={{ display: "inline" }}>
-                  <input type="hidden" name="id" value={c.id} />
-                  <button type="submit" aria-label={`Remover ${c.name}`}>×</button>
-                </form>
-              </span>
-            ))}
-          </div>
-          {!rmState.success && rmState.message ? <div className="gerr">{rmState.message}</div> : null}
-          <form action={addAction} ref={addRef} className={styles.addRow}>
-            <input name="name" placeholder="Novo campus" />
-            <button className="btn ghost sm" type="submit" disabled={addPending}>{addPending ? "…" : "+ Adicionar"}</button>
-          </form>
-          {!addState.success && addState.message ? <div className="gerr">{addState.message}</div> : null}
-        </div>
+        <div className={styles.lbl}>Campus<small>Cada campus tem seus dados e presença. Troque o campus ativo no seletor do topo.</small></div>
+        <CampusManager campuses={campuses} />
       </div>
 
       {/* Multi-instituição (blob, só owner) */}

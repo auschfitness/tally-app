@@ -18,6 +18,7 @@ describe.skipIf(!hasTestFixture)("Settings queries (integração, org de teste)"
     for (const c of s.campuses) {
       expect(typeof c.id).toBe("string");
       expect(typeof c.name).toBe("string");
+      expect(typeof c.active).toBe("boolean");
     }
     expect(typeof s.institution.multiInstitution).toBe("boolean");
     expect(Array.isArray(s.institution.institutions)).toBe(true);

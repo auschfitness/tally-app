@@ -21,6 +21,7 @@ export interface AccountConfig {
 export interface CampusRow {
   id: string;
   name: string;
+  active: boolean; // desativado = fora do seletor/filtros, mas preserva o histórico
 }
 
 export interface SettingsData {

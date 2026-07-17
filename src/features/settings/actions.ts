@@ -61,6 +61,53 @@ export async function addCampusAction(_prev: ActionResult, fd: FormData): Promis
   }
 }
 
+// Renomeia um campus (tabela campuses). O nome é referência denormalizada em alguns
+// lugares (ex.: finance_entries lê campus por id → seguro; presença por id → seguro).
+export async function renameCampusAction(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  const id = String(fd.get("id") ?? "");
+  if (!UUID.test(id)) return fail("Campus inválido.");
+  const name = String(fd.get("name") ?? "").trim();
+  if (!name) return fail("Dê um nome ao campus.");
+  const ctx = await requireOrg();
+  try {
+    const { error } = await ctx.supabase.from("campuses").update({ name }).eq("id", id).eq("org_id", ctx.orgId);
+    if (error) return fail(toMessage(error, "Não consegui renomear o campus."));
+    revalidatePath("/settings");
+    revalidatePath("/", "layout");
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Ativa/desativa um campus (campuses.active). Desativar retira o campus do seletor e
+// dos filtros SEM apagar histórico — o caminho certo para uma filial que fechou. Guarda:
+// nunca deixar a org sem nenhum campus ativo (o seletor/os filtros ficariam vazios).
+export async function setCampusActiveAction(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  const id = String(fd.get("id") ?? "");
+  if (!UUID.test(id)) return fail("Campus inválido.");
+  const active = String(fd.get("active") ?? "") === "1";
+  const ctx = await requireOrg();
+  try {
+    if (!active) {
+      const { count } = await ctx.supabase
+        .from("campuses")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", ctx.orgId)
+        .eq("active", true)
+        .neq("id", id);
+      if ((count ?? 0) === 0) return fail("Mantenha ao menos um campus ativo.");
+    }
+    const { error } = await ctx.supabase.from("campuses").update({ active }).eq("id", id).eq("org_id", ctx.orgId);
+    if (error) return fail(toMessage(error, "Não consegui atualizar o campus."));
+    revalidatePath("/settings");
+    revalidatePath("/", "layout");
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
 // Remove um campus. Se estiver em uso (FK de sticks/serviços/etc.), o banco recusa —
 // devolvemos um erro claro em vez de apagar em cascata.
 export async function removeCampusAction(_prev: ActionResult, fd: FormData): Promise<ActionResult> {

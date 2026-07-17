@@ -145,24 +145,99 @@ export type Database = {
           },
         ]
       }
+      campus_fiscal_profiles: {
+        Row: {
+          bank_info: Json
+          campus_id: string
+          country: string
+          donation_compliance: Json
+          fiscal_address: Json
+          legal_name: string | null
+          org_id: string
+          pix_key: string | null
+          state_registration: string | null
+          tax_exempt_status: string | null
+          tax_id: string | null
+          trade_name: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bank_info?: Json
+          campus_id: string
+          country?: string
+          donation_compliance?: Json
+          fiscal_address?: Json
+          legal_name?: string | null
+          org_id: string
+          pix_key?: string | null
+          state_registration?: string | null
+          tax_exempt_status?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bank_info?: Json
+          campus_id?: string
+          country?: string
+          donation_compliance?: Json
+          fiscal_address?: Json
+          legal_name?: string | null
+          org_id?: string
+          pix_key?: string | null
+          state_registration?: string | null
+          tax_exempt_status?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campus_fiscal_profiles_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: true
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campus_fiscal_profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campuses: {
         Row: {
+          active: boolean
+          address: Json
           created_at: string
           id: string
           name: string
           org_id: string
+          timezone: string
         }
         Insert: {
+          active?: boolean
+          address?: Json
           created_at?: string
           id?: string
           name: string
           org_id: string
+          timezone?: string
         }
         Update: {
+          active?: boolean
+          address?: Json
           created_at?: string
           id?: string
           name?: string
           org_id?: string
+          timezone?: string
         }
         Relationships: [
           {
@@ -1199,6 +1274,62 @@ export type Database = {
             foreignKeyName: "ministries_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_fiscal_profiles: {
+        Row: {
+          bank_info: Json
+          country: string
+          donation_compliance: Json
+          fiscal_address: Json
+          legal_name: string | null
+          org_id: string
+          pix_key: string | null
+          state_registration: string | null
+          tax_exempt_status: string | null
+          tax_id: string | null
+          trade_name: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bank_info?: Json
+          country?: string
+          donation_compliance?: Json
+          fiscal_address?: Json
+          legal_name?: string | null
+          org_id: string
+          pix_key?: string | null
+          state_registration?: string | null
+          tax_exempt_status?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bank_info?: Json
+          country?: string
+          donation_compliance?: Json
+          fiscal_address?: Json
+          legal_name?: string | null
+          org_id?: string
+          pix_key?: string | null
+          state_registration?: string | null
+          tax_exempt_status?: string | null
+          tax_id?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_fiscal_profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -2615,6 +2746,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_org_fiscal: { Args: { p_org: string }; Returns: boolean }
       create_org: {
         Args: {
           p_campus: string
@@ -2627,6 +2759,10 @@ export type Database = {
       has_perm: { Args: { p_org: string; p_perm: string }; Returns: boolean }
       is_org_member: { Args: { p_org: string }; Returns: boolean }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
+      seed_default_finance_categories: {
+        Args: { p_org: string }
+        Returns: undefined
+      }
       shares_org: { Args: { p_other: string }; Returns: boolean }
     }
     Enums: {
@@ -2821,4 +2957,3 @@ export const Constants = {
     },
   },
 } as const
-

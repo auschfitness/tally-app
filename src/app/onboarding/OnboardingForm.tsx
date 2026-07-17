@@ -18,9 +18,6 @@ export function OnboardingForm() {
         <input name="name" placeholder="Nome da igreja" required />
       </div>
       <div className="gfield">
-        <input name="campus" placeholder="Primeiro campus (ex.: Sede)" />
-      </div>
-      <div className="gfield">
         <Select name="currency" defaultValue="BRL">
           <option value="BRL">Real (BRL)</option>
           <option value="USD">Dólar (USD)</option>

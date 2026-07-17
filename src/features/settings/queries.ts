@@ -19,7 +19,7 @@ export interface SettingsLoad {
 export async function loadSettings(supabase: DB, orgId: string, userId: string): Promise<SettingsLoad> {
   const [orgRes, campusRes, stateRes, profRes] = await Promise.all([
     supabase.from("organizations").select("name, currency").eq("id", orgId).maybeSingle(),
-    supabase.from("campuses").select("id, name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("id, name, active").eq("org_id", orgId).order("active", { ascending: false }).order("name"),
     supabase.from("app_state").select("data").eq("org_id", orgId).maybeSingle(),
     supabase.from("profiles").select("full_name, locale").eq("id", userId).maybeSingle(),
   ]);
@@ -28,7 +28,7 @@ export async function loadSettings(supabase: DB, orgId: string, userId: string):
   return {
     orgName: orgRes.data?.name ?? "",
     currency: orgRes.data?.currency ?? "BRL",
-    campuses: (campusRes.data ?? []).map((c) => ({ id: c.id, name: c.name })),
+    campuses: (campusRes.data ?? []).map((c) => ({ id: c.id, name: c.name, active: c.active })),
     institution: readInstitution(blob),
     account: readAccount(blob),
     userName: profRes.data?.full_name ?? "",

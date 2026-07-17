@@ -12,7 +12,9 @@ const CURRENCIES = new Set(["BRL", "USD"]);
 
 export async function createOrgAction(_prev: OnboardingState, formData: FormData): Promise<OnboardingState> {
   const name = String(formData.get("name") ?? "").trim();
-  const campus = String(formData.get("campus") ?? "").trim() || "Sede";
+  // Campus saiu do cadastro (roadmap #2): criamos um "Sede" default aqui e a pessoa
+  // gerencia os campi depois em Configurações → Instituição.
+  const campus = "Sede";
   const currencyRaw = String(formData.get("currency") ?? "BRL");
   const currency = CURRENCIES.has(currencyRaw) ? currencyRaw : "BRL";
 
