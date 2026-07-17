@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { Sidebar, type NavCounts } from "@/components/shared/Sidebar";
 import { Topbar } from "@/components/shared/Topbar";
 import { signals } from "@/features/signals/domain";
@@ -12,13 +13,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const [orgRes, campusRes, peopleRes] = await Promise.all([
     supabase.from("organizations").select("name").eq("id", orgId).maybeSingle(),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
     supabase.from("sticks").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("archived", false),
   ]);
 
   const orgName = orgRes.data?.name ?? "Minha igreja";
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses);
   const userLabel = user.email?.split("@")[0] ?? "Você";
 
   // Badge do Inbox = nº de sinais VISÍVEIS (mesma fonte da tela /inbox: engine ao

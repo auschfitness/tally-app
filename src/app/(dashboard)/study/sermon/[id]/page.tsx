@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listSermons, listSeries } from "@/features/study/queries";
 import { listServices } from "@/features/services/queries";
 import { SermonEditor } from "@/features/study/components/SermonEditor";
@@ -20,7 +21,7 @@ export default async function SermonEditorPage({
     listSermons(supabase, orgId),
     listSeries(supabase, orgId),
     listServices(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
     supabase.from("profiles").select("locale").eq("id", user.id).maybeSingle(),
   ]);
 
@@ -29,7 +30,7 @@ export default async function SermonEditorPage({
   if (!isNew && !sermon) notFound();
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
   const serviceOpts = services.map((s) => ({ id: s.id, name: s.name }));
 
   const locale = profRes.data?.locale ?? "pt-BR";

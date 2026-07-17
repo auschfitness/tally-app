@@ -33,7 +33,7 @@ export default async function ServiceDetailPage({
     listServiceSermons(supabase, orgId, id),
     listServiceAssignments(supabase, orgId, id),
     listSticks(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const service = services.find((s) => s.id === id);

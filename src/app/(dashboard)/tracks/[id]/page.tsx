@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listSticks } from "@/features/sticks/queries";
 import { listSermons } from "@/features/study/queries";
 import { loadTracks } from "@/features/tracks/queries";
@@ -24,14 +25,14 @@ export default async function TrackPage({
     loadTracks(supabase, orgId),
     listSticks(supabase, orgId),
     listSermons(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const track = tracks.find((t) => t.id === id);
   if (!track) notFound();
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
 
   const trackEnrollments = enrollments.filter((e) => e.track_id === id);
   const enrolledIds = new Set(trackEnrollments.map((e) => e.stick_id));

@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listSticks, listGroupNames } from "@/features/sticks/queries";
 import { SticksBoard } from "@/features/sticks/components/SticksBoard";
 
@@ -21,11 +22,11 @@ export default async function SticksPage({
   const [people, groups, campusRes] = await Promise.all([
     listSticks(supabase, orgId),
     listGroupNames(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
   const campusPeople = people.filter((p) => p.campus === activeCampus);
 
   const initial = {

@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listEntries, listFunds, listCategories } from "@/features/finance/queries";
 import { FinanceBoard } from "@/features/finance/components/FinanceBoard";
 
@@ -16,12 +17,12 @@ export default async function FinancePage({
     listEntries(supabase, orgId),
     listFunds(supabase, orgId),
     listCategories(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
     supabase.from("organizations").select("currency").eq("id", orgId).maybeSingle(),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
   const currency = orgRes.data?.currency ?? "BRL";
   const campusEntries = entries.filter((e) => e.campus === activeCampus);
 
@@ -37,7 +38,6 @@ export default async function FinancePage({
       catIn={categories.in}
       catOut={categories.out}
       funds={[...fundSet]}
-      campuses={campuses}
     />
   );
 }

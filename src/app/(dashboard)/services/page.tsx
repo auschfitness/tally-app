@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listServices, serviceOccurrenceCounts } from "@/features/services/queries";
 import { ServicesBoard } from "@/features/services/components/ServicesBoard";
 
@@ -11,11 +12,11 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
   const [services, occ, campusRes] = await Promise.all([
     listServices(supabase, orgId),
     serviceOccurrenceCounts(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
 
   return (
     <ServicesBoard

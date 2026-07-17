@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { signals } from "@/features/signals/domain";
 import { loadHomeData } from "@/features/home/queries";
 import {
@@ -19,9 +20,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const { supabase, orgId, user } = await requireOrg();
   const sp = await searchParams;
 
-  const campusRes = await supabase.from("campuses").select("name").eq("org_id", orgId).order("name");
+  const campusRes = await supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name");
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
 
   const now = new Date();
   const data = await loadHomeData(supabase, orgId, activeCampus, now);

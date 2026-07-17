@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listSticks } from "@/features/sticks/queries";
 import { loadJourneyData } from "@/features/journey/queries";
 import { journeyStats, journeyFunnel, journeyMovement, firstVisitDrop } from "@/features/journey/domain";
@@ -17,11 +18,11 @@ export default async function JourneyPage({
   const [people, data, campusRes] = await Promise.all([
     listSticks(supabase, orgId),
     loadJourneyData(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
   const campusPeople = people.filter((p) => p.campus === activeCampus);
 
   const now = new Date();

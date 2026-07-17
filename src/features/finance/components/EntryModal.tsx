@@ -17,7 +17,6 @@ export function EntryModal({
   catIn,
   catOut,
   funds,
-  campuses,
   activeCampus,
   currency,
   onClose,
@@ -25,7 +24,6 @@ export function EntryModal({
   catIn: string[];
   catOut: string[];
   funds: string[];
-  campuses: string[];
   activeCampus: string;
   currency: string;
   onClose: () => void;
@@ -52,6 +50,8 @@ export function EntryModal({
         <h3>Novo lançamento</h3>
         <input type="hidden" name="type" value={type} />
         <input type="hidden" name="newCategory" value={isNew ? "1" : "0"} />
+        {/* Campus vem do contexto (seletor do topo), não é escolhido no lançamento. */}
+        <input type="hidden" name="campus" value={activeCampus} />
 
         <div className="field">
           <label>Tipo</label>
@@ -106,15 +106,6 @@ export function EntryModal({
               ))}
             </Select>
           </div>
-        </div>
-
-        <div className="field">
-          <label>Campus</label>
-          <Select name="campus" defaultValue={activeCampus}>
-            {campuses.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </Select>
         </div>
 
         {!state.success && state.message ? <div className="gerr">{state.message}</div> : null}

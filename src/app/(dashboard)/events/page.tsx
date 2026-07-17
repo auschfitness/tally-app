@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listEvents, eventRegCounts } from "@/features/events/queries";
 import { EventsBoard } from "@/features/events/components/EventsBoard";
 
@@ -11,11 +12,11 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   const [events, counts, campusRes] = await Promise.all([
     listEvents(supabase, orgId),
     eventRegCounts(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
 
   return (
     <EventsBoard

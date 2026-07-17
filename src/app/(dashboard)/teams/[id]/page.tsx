@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listSticks } from "@/features/sticks/queries";
 import { loadTeamsData } from "@/features/teams/queries";
 import {
@@ -36,7 +37,7 @@ export default async function TeamDetailPage({
   const [data, people, campusRes] = await Promise.all([
     loadTeamsData(supabase, orgId),
     listSticks(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const team = data.teams.find((t) => t.id === id);
@@ -48,7 +49,7 @@ export default async function TeamDetailPage({
     .sort((a, b) => (a.status === "active" ? 0 : 1) - (b.status === "active" ? 0 : 1));
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
   const campusOptions = people.filter((p) => p.campus === activeCampus).map((p) => ({ id: p.id, name: p.name }));
 
   const nameByStick = Object.fromEntries(data.nameByStick);

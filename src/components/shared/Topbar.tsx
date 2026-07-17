@@ -1,7 +1,8 @@
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { CampusSwitcher } from "@/components/shared/CampusSwitcher";
 
-// Barra superior: igreja, seletor de campus e tema. O seletor de campus ganha
-// interatividade (troca de campus ativo) na Fase 3/4, junto do estado por URL.
+// Barra superior: igreja, seletor de campus (troca o campus ativo — cookie global)
+// e tema.
 export function Topbar({
   orgName,
   campuses,
@@ -30,15 +31,7 @@ export function Topbar({
           <span>Administrador</span>
         </div>
       </div>
-      {campuses.length > 0 ? (
-        <div className="pillsel">
-          {campuses.map((c) => (
-            <button key={c} className={c === activeCampus ? "on" : ""} type="button">
-              {c}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <CampusSwitcher campuses={campuses} activeCampus={activeCampus} />
       <span className="plan">Seed · grátis</span>
       <div className="spacer" />
       <ThemeToggle />

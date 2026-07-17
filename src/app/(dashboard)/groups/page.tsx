@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listSticks } from "@/features/sticks/queries";
 import { listGroups } from "@/features/groups/queries";
 import { GroupsBoard } from "@/features/groups/components/GroupsBoard";
@@ -16,11 +17,11 @@ export default async function GroupsPage({
   const [people, groups, campusRes] = await Promise.all([
     listSticks(supabase, orgId),
     listGroups(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
 
   return <GroupsBoard people={people} groups={groups} activeCampus={activeCampus} campuses={campuses} />;
 }

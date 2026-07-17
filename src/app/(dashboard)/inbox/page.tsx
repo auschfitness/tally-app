@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { signals } from "@/features/signals/domain";
 import { buildSignalsInput, loadOverrides } from "@/features/inbox/queries";
 import { visibleSignals } from "@/features/inbox/domain";
@@ -12,9 +13,9 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   const { supabase, orgId } = await requireOrg();
   const sp = await searchParams;
 
-  const campusRes = await supabase.from("campuses").select("name").eq("org_id", orgId).order("name");
+  const campusRes = await supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name");
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
 
   const [input, overrides] = await Promise.all([buildSignalsInput(supabase, orgId, activeCampus), loadOverrides(supabase, orgId)]);
   const all = signals(input, new Date());

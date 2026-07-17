@@ -23,7 +23,7 @@ export default async function EventDetailPage({
     listEvents(supabase, orgId),
     listEventRegistrations(supabase, orgId, id),
     listSticks(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const event = events.find((e) => e.id === id);

@@ -11,7 +11,7 @@ export default async function StudyPage() {
   const [sermons, series, campusRes] = await Promise.all([
     listSermons(supabase, orgId),
     listSeries(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);

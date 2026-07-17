@@ -16,7 +16,6 @@ export function FinanceBoard({
   catIn,
   catOut,
   funds,
-  campuses,
 }: {
   entries: FinanceEntry[];
   currency: string;
@@ -24,7 +23,6 @@ export function FinanceBoard({
   catIn: string[];
   catOut: string[];
   funds: string[];
-  campuses: string[];
 }) {
   const [finCat, setFinCat] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -162,7 +160,6 @@ export function FinanceBoard({
           catIn={catIn}
           catOut={catOut}
           funds={funds}
-          campuses={campuses}
           activeCampus={activeCampus}
           currency={currency}
           onClose={() => setModalOpen(false)}

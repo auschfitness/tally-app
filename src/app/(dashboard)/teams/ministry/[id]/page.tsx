@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { listSticks } from "@/features/sticks/queries";
 import { loadTeamsData } from "@/features/teams/queries";
 import { barPct, ministryStats } from "@/features/teams/domain";
@@ -23,14 +24,14 @@ export default async function MinistryDashboardPage({
   const [data, people, campusRes] = await Promise.all([
     loadTeamsData(supabase, orgId),
     listSticks(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const ministry = data.ministries.find((m) => m.id === id);
   if (!ministry) notFound();
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
   const options = people.filter((p) => p.campus === activeCampus).map((p) => ({ id: p.id, name: p.name }));
   const nameByStick = data.nameByStick;
 

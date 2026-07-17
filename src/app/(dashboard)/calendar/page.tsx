@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { resolveActiveCampus } from "@/lib/campus";
 import { loadCalendarSources } from "@/features/calendar/queries";
 import { CalendarBoard } from "@/features/calendar/components/CalendarBoard";
 
@@ -10,11 +11,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   const [sources, campusRes] = await Promise.all([
     loadCalendarSources(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
-  const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
+  const activeCampus = await resolveActiveCampus(campuses, sp.campus);
 
   return <CalendarBoard sources={sources} activeCampus={activeCampus} />;
 }
