@@ -36,6 +36,7 @@ export function FinanceBoard({
   const now = useMemo(() => new Date(), []);
   const bars = useMemo(() => financeMonthly(entries, now), [entries, now]);
   const barMax = Math.max(1, ...bars.inc, ...bars.exp);
+  const hasBars = bars.inc.some((v) => v > 0) || bars.exp.some((v) => v > 0);
 
   const expenses = useMemo(() => expenseByCat(entries), [entries]);
   const donutSegments = expenses.map((x, i) => ({ value: x.val, color: FINPAL[i % FINPAL.length]! }));
@@ -63,18 +64,25 @@ export function FinanceBoard({
 
       <div className="row2">
         <div className="panel">
-          <div className="ph"><h3>Entradas vs Saídas</h3><span className="muted" style={{ marginLeft: "auto" }}>6 meses</span></div>
-          <div className={styles.finbars}>
-            {bars.labels.map((lbl, i) => (
-              <div key={lbl + i} className={styles.fincol}>
-                <div className={styles.finbarwrap}>
-                  <div className={`${styles.finbar} ${styles.finIn}`} style={{ height: `${Math.round((bars.inc[i]! / barMax) * 100)}%` }} title={money(bars.inc[i]!, currency)} />
-                  <div className={`${styles.finbar} ${styles.finOut}`} style={{ height: `${Math.round((bars.exp[i]! / barMax) * 100)}%` }} title={money(bars.exp[i]!, currency)} />
+          <div className="ph"><h3>Entradas vs Saídas</h3>{hasBars ? <span className="muted" style={{ marginLeft: "auto" }}>6 meses</span> : null}</div>
+          {hasBars ? (
+            <div className={styles.finbars}>
+              {bars.labels.map((lbl, i) => (
+                <div key={lbl + i} className={styles.fincol}>
+                  <div className={styles.finbarwrap}>
+                    <div className={`${styles.finbar} ${styles.finIn}`} style={{ height: `${Math.round((bars.inc[i]! / barMax) * 100)}%` }} title={money(bars.inc[i]!, currency)} />
+                    <div className={`${styles.finbar} ${styles.finOut}`} style={{ height: `${Math.round((bars.exp[i]! / barMax) * 100)}%` }} title={money(bars.exp[i]!, currency)} />
+                  </div>
+                  <span className={styles.finlbl}>{lbl}</span>
                 </div>
-                <span className={styles.finlbl}>{lbl}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty" style={{ padding: "40px 12px", lineHeight: 1.6 }}>
+              Sem lançamentos ainda.<br />
+              <span className="muted">Toque em “+ Lançamento” para registrar a primeira entrada ou saída — a tendência aparece aqui conforme você lança.</span>
+            </div>
+          )}
         </div>
 
         <div className="panel">
