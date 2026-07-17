@@ -1,4 +1,6 @@
-// Navegação principal (espelha a sidebar do app atual, na mesma ordem e rótulos).
+// Navegação principal. Onda 2 / Fatia B: os itens agora ficam agrupados por
+// domínio (arquitetura de informação), mas as ROTAS e os RÓTULOS de produto são
+// preservados — aqui só reorganizamos o menu, nunca renomeamos termos do CLAUDE.md.
 // `key` = feature; `href` = rota no App Router; `count` marca itens com contador.
 export interface NavItem {
   key: string;
@@ -7,22 +9,62 @@ export interface NavItem {
   count?: "inbox" | "people" | "tasks";
 }
 
-export const NAV: NavItem[] = [
+// Um grupo colapsável do menu (um domínio). `key` identifica o grupo para
+// persistir aberto/fechado; `label` é o cabeçalho quieto (não é rota).
+export interface NavGroup {
+  key: string;
+  label: string;
+  items: NavItem[];
+}
+
+// Itens soltos no topo (sem grupo): as duas superfícies de uso diário.
+export const TOP_ITEMS: NavItem[] = [
   { key: "dashboard", label: "Home", href: "/" },
   { key: "inbox", label: "Inbox", href: "/inbox", count: "inbox" },
-  { key: "people", label: "Sticks", href: "/sticks", count: "people" },
-  { key: "care", label: "Care", href: "/care" },
-  { key: "journey", label: "Journey", href: "/journey" },
-  { key: "groups", label: "Saúde dos Grupos", href: "/groups" },
-  { key: "teams", label: "Times", href: "/teams" },
-  { key: "services", label: "Cultos", href: "/services" },
-  { key: "events", label: "Eventos", href: "/events" },
-  { key: "calendar", label: "Agenda", href: "/calendar" },
-  { key: "study", label: "Trilhas", href: "/tracks" },
-  { key: "sermons", label: "Estudo", href: "/study" },
-  { key: "coord", label: "Coordenação", href: "/coordination", count: "tasks" },
-  { key: "prayer", label: "Oração", href: "/prayer" },
-  { key: "finance", label: "Finance Lite", href: "/finance" },
+];
+
+// Grupos por domínio. Um item ativo por vez; grupos revelam-se sob demanda.
+// Sem reintroduzir campus e sem renomear termos de produto (Stick/Care/Journey...).
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    key: "pessoas",
+    label: "Pessoas",
+    items: [
+      { key: "people", label: "Sticks", href: "/sticks", count: "people" },
+      { key: "groups", label: "Saúde dos Grupos", href: "/groups" },
+      { key: "teams", label: "Times", href: "/teams" },
+      { key: "coord", label: "Coordenação", href: "/coordination", count: "tasks" },
+      { key: "journey", label: "Journey", href: "/journey" },
+      { key: "study", label: "Trilhas", href: "/tracks" },
+    ],
+  },
+  {
+    key: "encontros",
+    label: "Encontros",
+    items: [
+      { key: "services", label: "Cultos", href: "/services" },
+      { key: "events", label: "Eventos", href: "/events" },
+      { key: "calendar", label: "Agenda", href: "/calendar" },
+    ],
+  },
+  {
+    key: "cuidado",
+    label: "Cuidado",
+    items: [
+      { key: "care", label: "Care", href: "/care" },
+      { key: "prayer", label: "Oração", href: "/prayer" },
+    ],
+  },
+  {
+    key: "ensino",
+    label: "Ensino",
+    items: [{ key: "sermons", label: "Estudo", href: "/study" }],
+  },
+  {
+    key: "financeiro",
+    label: "Financeiro",
+    items: [{ key: "finance", label: "Finance Lite", href: "/finance" }],
+  },
 ];
 
 export const SETTINGS_ITEM: NavItem = { key: "settings", label: "Configurações", href: "/settings" };

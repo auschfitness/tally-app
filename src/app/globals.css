@@ -284,6 +284,15 @@ tr[data-stick]:hover td, tr.rowlink:hover td { background: var(--surface-2); }
 .navitem.active::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--blue); }
 .navitem .cnt { margin-left: auto; font-size: 11px; background: rgba(255, 255, 255, .12); color: #cfd8e6; padding: 1px 8px; border-radius: 20px; }
 .navsep { height: 1px; background: rgba(255, 255, 255, .08); margin: 8px 6px; }
+/* Navegação agrupada (Onda 2 / Fatia B): cabeçalhos quietos por domínio, colapsáveis. */
+.navgroup { display: flex; flex-direction: column; gap: 3px; }
+.navgroup-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-top: 7px; padding: 7px 12px 5px; border: none; background: transparent; color: #6C7A94; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; cursor: pointer; transition: color var(--dur-micro) var(--ease); }
+.navgroup-hd:hover { color: #AEB8CC; }
+.navgroup-hd.has-active { color: #C6D0E2; }
+.navgroup-hd .chev { color: #6C7A94; transition: transform var(--dur-micro) var(--ease); }
+.navgroup-hd .chev.open { transform: rotate(90deg); }
+.navgroup-items { display: flex; flex-direction: column; gap: 3px; animation: viewIn var(--dur-micro) var(--ease); }
+.navgroup-items .navitem { padding-left: 22px; }
 .side .foot { margin-top: auto; font-size: 11px; color: #6C7A94; padding: 10px 8px; line-height: 1.6; }
 .side .foot button { background: none; border: none; color: #8A98B4; font-size: 11px; text-decoration: underline; padding: 0; }
 .main { background: var(--main); display: flex; flex-direction: column; min-width: 0; }
