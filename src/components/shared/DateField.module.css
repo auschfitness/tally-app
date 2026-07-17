@@ -1,0 +1,50 @@
+/* O texto herda a aparência de `.field input` (globals). Só reservamos espaço p/ o
+   ícone e posicionamos o seletor nativo invisível sobre ele. Regras escopadas em
+   `.wrap` p/ vencer a especificidade de `.field input`. */
+.wrap {
+  position: relative;
+  width: 100%;
+  display: block;
+}
+
+.wrap .text {
+  padding-right: 38px;
+}
+
+.wrap .cal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  overflow: hidden;
+  border-radius: 0 9px 9px 0;
+}
+
+.wrap .cal:hover {
+  color: var(--blue);
+}
+
+/* Input de data nativo: cobre só a área do ícone, invisível, capturando o clique
+   para abrir o calendário do sistema. O resto do campo continua sendo texto. */
+.wrap .native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+  color-scheme: light dark;
+}
+
+.wrap .native:disabled {
+  cursor: default;
+}

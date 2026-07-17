@@ -3,6 +3,7 @@
 // Modal de criar/editar Evento (Client — Server Actions). Ao criar, navega para o
 // detalhe do novo evento (paridade com o legado).
 import { Select } from "@/components/shared/Select";
+import { DateField } from "@/components/shared/DateField";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createEventAction, updateEventAction, deleteEventAction } from "../actions";
@@ -75,7 +76,7 @@ export function EventModal({
           </div>
         </div>
         <div className="mrow">
-          <div className="field"><label>Data</label><input name="event_date" type="date" defaultValue={event?.event_date ?? ""} /></div>
+          <div className="field"><label>Data</label><DateField name="event_date" defaultValue={event?.event_date ?? ""} /></div>
           <div className="field">
             <label>Status</label>
             <Select name="status" defaultValue={event?.status ?? "active"}>

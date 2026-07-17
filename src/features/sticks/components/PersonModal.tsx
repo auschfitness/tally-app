@@ -1,6 +1,7 @@
 "use client";
 
 import { Select } from "@/components/shared/Select";
+import { DateField } from "@/components/shared/DateField";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createStickAction, updateStickAction, archiveStickAction } from "../actions";
@@ -99,7 +100,7 @@ export function PersonModal({
           </div>
           <div className="field">
             <label>Última presença</label>
-            <input type="date" name="lastSeen" defaultValue={person?.lastSeen || isoDate(today())} />
+            <DateField name="lastSeen" defaultValue={person?.lastSeen || isoDate(today())} />
             {fieldErrors?.lastSeen ? <div className="gerr">{fieldErrors.lastSeen[0]}</div> : null}
           </div>
         </div>

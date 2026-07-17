@@ -5,6 +5,7 @@
 // num drawer de Propriedades. Autosave discreto (debounce 900ms) via Server Action,
 // preservando o shape do `content` (nunca null) e os sub-campos extras do blob.
 import { Select } from "@/components/shared/Select";
+import { DateField } from "@/components/shared/DateField";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveSermonAction, syncSermonScripturesAction } from "../actions";
@@ -324,7 +325,7 @@ export function SermonEditor({
                   {campuses.map((cp) => <option key={cp} value={cp}>{cp}</option>)}
                 </Select>
               </div>
-              <div className="field"><label>Data</label><input type="date" value={meta.sermon_date} onChange={(e) => setField("sermon_date", e.target.value)} /></div>
+              <div className="field"><label>Data</label><DateField value={meta.sermon_date} onChange={(iso) => setField("sermon_date", iso)} /></div>
             </div>
             <div className="field"><label>Série</label>
               <Select value={meta.series_id} onChange={(e) => setField("series_id", e.target.value)}>

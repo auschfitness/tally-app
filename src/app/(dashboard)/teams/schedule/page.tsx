@@ -4,7 +4,8 @@ import { listSticks } from "@/features/sticks/queries";
 import { loadTeamsData } from "@/features/teams/queries";
 import { WD, addDays, ddmm, weekStart } from "@/features/teams/domain";
 import { AssignButton, AssignmentControls } from "@/features/teams/components/ScheduleClient";
-import { initials, isoDate, today } from "@/lib/utils/date";
+import { readAccount } from "@/features/settings/domain";
+import { initials, isoDate, zonedTodayIso } from "@/lib/utils/date";
 import type { ScheduleAssignment } from "@/features/teams/types";
 
 // Board de Escala (Server Component): semana com avatares. Serviço/Evento → Time →
@@ -18,10 +19,11 @@ export default async function SchedulePage({
   const { supabase, orgId } = await requireOrg();
   const sp = await searchParams;
 
-  const [data, people, campusRes] = await Promise.all([
+  const [data, people, campusRes, stateRes] = await Promise.all([
     loadTeamsData(supabase, orgId),
     listSticks(supabase, orgId),
     supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("app_state").select("data").eq("org_id", orgId).maybeSingle(),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
@@ -30,8 +32,13 @@ export default async function SchedulePage({
   const nameByStick = data.nameByStick;
   const teamName = new Map(data.teams.map((t) => [t.id, t.name]));
 
-  const ws = weekStart(sp.anchor);
-  const todayIso = isoDate(today());
+  // "Hoje" no fuso da organização (não no do servidor). O app roda SSR na Vercel em
+  // UTC — usar a data do servidor destaca o dia errado (off-by-one) à noite no
+  // Brasil/EUA. O fuso vem de app_state.account (Configurações). Sem âncora, a semana
+  // padrão parte desse "hoje" corrigido.
+  const tz = readAccount(stateRes.data?.data).timezone;
+  const todayIso = zonedTodayIso(tz);
+  const ws = weekStart(sp.anchor ?? todayIso);
   const prev = isoDate(addDays(ws, -7));
   const next = isoDate(addDays(ws, 7));
   const wkLabel = ddmm(ws) + " – " + ddmm(addDays(ws, 6));

@@ -1,6 +1,7 @@
 "use client";
 
 import { Select } from "@/components/shared/Select";
+import { DateField } from "@/components/shared/DateField";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEntryAction } from "../actions";
@@ -71,7 +72,7 @@ export function EntryModal({
           </div>
           <div className="field">
             <label>Data</label>
-            <input name="date" type="date" defaultValue={isoDate(today())} />
+            <DateField name="date" defaultValue={isoDate(today())} />
           </div>
         </div>
 

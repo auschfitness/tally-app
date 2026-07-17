@@ -32,6 +32,46 @@ export function brDate(iso: string | null | undefined): string {
   return iso ? iso.split("-").reverse().join("/") : "";
 }
 
+// "Hoje" (YYYY-MM-DD) no fuso IANA dado — robusto no SSR (o servidor da Vercel roda
+// em UTC, então `today()` cruza a meia-noite antes do usuário no Brasil/EUA e
+// destaca o dia errado). Usa Intl no fuso da organização. Fuso inválido → cai para
+// a data local do servidor (comportamento antigo).
+export function zonedTodayIso(timeZone: string, now: Date = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(now);
+    const y = parts.find((p) => p.type === "year")?.value;
+    const m = parts.find((p) => p.type === "month")?.value;
+    const d = parts.find((p) => p.type === "day")?.value;
+    if (y && m && d) return `${y}-${m}-${d}`;
+  } catch {
+    // fuso inválido → fallback
+  }
+  return isoDate(today());
+}
+
+// Máscara progressiva de dígitos em "dd/mm/aaaa" (para o campo de data PT-BR).
+export function maskBrDate(raw: string): string {
+  const d = (raw || "").replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return d.slice(0, 2) + "/" + d.slice(2);
+  return d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4);
+}
+
+// "dd/mm/aaaa" -> "aaaa-mm-dd" (ISO). String vazia se incompleta ou data inválida.
+export function brToIso(br: string): string {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((br || "").trim());
+  if (!m) return "";
+  const dd = +m[1]!, mm = +m[2]!, yyyy = +m[3]!;
+  const dt = new Date(yyyy, mm - 1, dd);
+  if (dt.getFullYear() !== yyyy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return "";
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
 export function initials(name: string): string {
   return name
     .split(" ")

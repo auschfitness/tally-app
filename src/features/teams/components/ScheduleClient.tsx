@@ -4,6 +4,7 @@
 // de escalar, e por escalação o avanço de status e a remoção (com confirmação).
 // O board em si é renderizado no servidor (RSC); aqui ficam só as folhas.
 import { Select } from "@/components/shared/Select";
+import { DateField } from "@/components/shared/DateField";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createAssignmentAction, deleteAssignmentAction, setAssignmentStatusAction } from "../actions";
@@ -81,7 +82,7 @@ function AssignModal({
         <div className="mrow">
           <div className="field">
             <label>Data</label>
-            <input name="date" type="date" defaultValue={date} />
+            <DateField name="date" defaultValue={date} />
             {fieldErrors?.date ? <div className="gerr">{fieldErrors.date[0]}</div> : null}
           </div>
           <div className="field">

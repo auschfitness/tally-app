@@ -4,6 +4,7 @@
 // SeriesModal (useActionState + sentinela de edição). "Responsável" é um membro
 // (auth.users) e "pessoa" é uma Stick — selects distintos (ver handoff).
 import { Select } from "@/components/shared/Select";
+import { DateField } from "@/components/shared/DateField";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createCareItemAction, updateCareItemAction } from "../actions";
@@ -90,7 +91,7 @@ export function CareItemModal({
           </div>
           <div className="field">
             <label>Prazo</label>
-            <input type="date" name="dueDate" defaultValue={item?.due_date ?? ""} />
+            <DateField name="dueDate" defaultValue={item?.due_date ?? ""} />
           </div>
         </div>
 

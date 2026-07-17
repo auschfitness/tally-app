@@ -4,6 +4,7 @@
 // "resolvido" (checkbox) ou "em andamento". Espelha o contactModal do legado.
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { DateField } from "@/components/shared/DateField";
 import { addCareContactAction } from "../actions";
 import { type ActionResult } from "@/lib/errors";
 
@@ -31,7 +32,7 @@ export function ContactModal({ careItemId, onClose }: { careItemId: string; onCl
           <input name="note" placeholder="Ex.: Liguei, conversamos sobre…" autoFocus />
         </div>
         <div className="mrow">
-          <div className="field"><label>Data</label><input type="date" name="contactedOn" defaultValue={today} /></div>
+          <div className="field"><label>Data</label><DateField name="contactedOn" defaultValue={today} /></div>
           <div className="field"><label>Meio (opcional)</label><input name="method" placeholder="Ligação, visita…" /></div>
         </div>
         <div className="field check">

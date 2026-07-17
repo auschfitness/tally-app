@@ -3,6 +3,7 @@
 // Modal de criar/editar Série (Client — Server Actions). Ao criar, navega para o
 // workspace da nova série.
 import { Select } from "@/components/shared/Select";
+import { DateField } from "@/components/shared/DateField";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createSeriesAction, updateSeriesAction } from "../actions";
@@ -54,8 +55,8 @@ export function SeriesModal({ series, onClose }: { series?: Series; onClose: () 
           <input name="theme" defaultValue={series?.theme ?? ""} placeholder="Ex.: Identidade em Cristo" />
         </div>
         <div className="mrow">
-          <div className="field"><label>Início</label><input name="start_date" type="date" defaultValue={series?.start_date ?? ""} /></div>
-          <div className="field"><label>Fim</label><input name="end_date" type="date" defaultValue={series?.end_date ?? ""} /></div>
+          <div className="field"><label>Início</label><DateField name="start_date" defaultValue={series?.start_date ?? ""} /></div>
+          <div className="field"><label>Fim</label><DateField name="end_date" defaultValue={series?.end_date ?? ""} /></div>
         </div>
         <div className="field">
           <label>Status</label>
