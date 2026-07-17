@@ -14,6 +14,7 @@ import type { Sermon, SermonContent } from "../types";
 import type { Series } from "../types";
 import { parseRefs, type ScriptureRef } from "@/lib/bible/parse";
 import { fetchPassage, type PassageResult } from "@/lib/bible/source";
+import { BibleCompare } from "./BibleCompare";
 import styles from "../study.module.css";
 
 type SectionKey = (typeof SECTIONS)[number]["key"];
@@ -56,12 +57,14 @@ export function SermonEditor({
   services,
   campuses,
   activeCampus,
+  locale = "pt-BR",
 }: {
   sermon: Sermon | null;
   series: Series[];
   services: ServiceOpt[];
   campuses: string[];
   activeCampus: string;
+  locale?: string;
 }) {
   const router = useRouter();
   const initialContent = useRef<SermonContent>(sermon?.content ?? {});
@@ -102,6 +105,10 @@ export function SermonEditor({
   const [selRef, setSelRef] = useState<ScriptureRef | null>(null);
   const [passage, setPassage] = useState<PassageResult | null>(null);
   const [loadingPassage, setLoadingPassage] = useState(false);
+  const [panelWhole, setPanelWhole] = useState(false);
+  // Comparar Bíblia (versões lado a lado) — restaurado da migração.
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareRef, setCompareRef] = useState<ScriptureRef | null>(null);
 
   const savingRef = useRef(false);
   const rerunRef = useRef(false);
@@ -207,13 +214,20 @@ export function SermonEditor({
     router.push("/study");
   }
 
-  async function openPassage(ref: ScriptureRef) {
+  async function openPassage(ref: ScriptureRef, whole = false) {
     setSelRef(ref);
+    setPanelWhole(whole);
     setPassage(null);
     setLoadingPassage(true);
-    const res = await fetchPassage(ref);
+    const q = whole ? { book: ref.book, chapter: ref.chapter, verse_start: null, verse_end: null } : ref;
+    const res = await fetchPassage(q);
     setLoadingPassage(false);
     setPassage(res);
+  }
+
+  function addBlockToNotes(block: string) {
+    setValues((prev) => ({ ...prev, notes: (prev.notes ? prev.notes.replace(/\s+$/, "") + "\n\n" : "") + block }));
+    scheduleSave();
   }
 
   const addable = OPTIONAL_SECTIONS.filter((s) => !present.has(s.key));
@@ -263,7 +277,7 @@ export function SermonEditor({
         <>
           <div className={styles.drawerOv} onClick={() => setAssistantOpen(false)} />
           <aside className={styles.drawer}>
-            <div className="ph"><h3 style={{ fontSize: 14 }}>Assistente de estudo</h3><button className="link" style={{ marginLeft: "auto" }} onClick={() => setAssistantOpen(false)}>Fechar</button></div>
+            <div className="ph"><h3 style={{ fontSize: 14 }}>Assistente de estudo</h3><button className="link" style={{ marginLeft: "auto" }} onClick={() => { setCompareRef(selRef ?? detected[0] ?? null); setCompareOpen(true); }}>Comparar Bíblia</button><button className="link" onClick={() => setAssistantOpen(false)}>Fechar</button></div>
             <label className="field check" style={{ marginTop: 8 }}>
               <input type="checkbox" checked={recognizeOn} onChange={(e) => setRecognizeOn(e.target.checked)} />
               <span>Reconhecer escrituras</span>
@@ -282,14 +296,26 @@ export function SermonEditor({
             )}
             {selRef ? (
               <div style={{ marginTop: 16 }}>
-                <div className={styles.seclabel}>{selRef.reference}</div>
+                <div className="ph" style={{ marginBottom: 6, gap: 8 }}>
+                  <span className={styles.seclabel}>{selRef.reference}</span>
+                  <button className="link" style={{ marginLeft: "auto" }} onClick={() => openPassage(selRef, !panelWhole)}>
+                    {panelWhole ? "Só o versículo" : "Capítulo inteiro"}
+                  </button>
+                  <button className="link" onClick={() => { setCompareRef(selRef); setCompareOpen(true); }}>Comparar</button>
+                </div>
                 {loadingPassage ? (
                   <div className="muted" style={{ marginTop: 6 }}>Carregando o texto…</div>
                 ) : passage && passage.ok ? (
-                  <div style={{ marginTop: 6, lineHeight: 1.7, fontSize: 14 }}>
-                    {passage.verses.map((v) => (
-                      <span key={v.n}><sup style={{ color: "var(--text-2)", marginRight: 3 }}>{v.n}</sup>{v.text} </span>
-                    ))}
+                  <div style={{ marginTop: 6, lineHeight: 1.7, fontSize: 14, maxHeight: panelWhole ? 320 : undefined, overflow: panelWhole ? "auto" : undefined }}>
+                    {passage.verses.map((v) => {
+                      const vs = selRef.verse_start, ve = selRef.verse_end || selRef.verse_start;
+                      const hot = panelWhole && vs != null && v.n >= vs && v.n <= (ve as number);
+                      return (
+                        <span key={v.n} style={hot ? { background: "rgba(43,92,230,.16)" } : undefined}>
+                          <sup style={{ color: "var(--text-2)", marginRight: 3 }}>{v.n}</sup>{v.text}{" "}
+                        </span>
+                      );
+                    })}
                     <div className="muted" style={{ marginTop: 8 }}>Versão: {passage.translationName || passage.translationId || ""}</div>
                   </div>
                 ) : (
@@ -299,6 +325,15 @@ export function SermonEditor({
             ) : null}
           </aside>
         </>
+      ) : null}
+
+      {compareOpen ? (
+        <BibleCompare
+          initialRef={compareRef}
+          locale={locale}
+          onAddToSermon={addBlockToNotes}
+          onClose={() => setCompareOpen(false)}
+        />
       ) : null}
 
       {drawerOpen ? (

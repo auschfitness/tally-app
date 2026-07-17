@@ -51,11 +51,18 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   `/study/map`).
 - **Trilha (material de ensino)** no editor: o select de Trilha fica para quando
   **Tracks** migrar; o `content.track_id` já é preservado no jsonb.
+- **Comparar Bíblia (RESTAURADO — Onda 0, item 2):** regressão da migração corrigida.
+  `components/BibleCompare.tsx` — modal que busca/lê/compara passagens em versões de
+  **domínio público** (helloao, client-side) lado a lado, com toggle PT/EN/ES (default
+  = locale do usuário via `profiles.locale`), **Copiar** e **Adicionar ao sermão**.
+  Aberto do assistente de Escrituras ("Comparar Bíblia") e por referência ("Comparar").
+  O painel de passagem ganhou **"Capítulo inteiro"** (com realce dos versículos-alvo).
+  Interlinear grego/hebraico segue ADIADO (módulo grande, à parte).
 - **Diferido, documentado (não escondido):** aba **Recursos** (tabela fora do handoff
-  das 4 — precisa de handoff próprio do orquestrador); **Comparar Bíblia**, **Buscar**
-  no Estudo e **Memória de sermão** (sugestões de relacionados) são derivados/extra e
+  das 4 — precisa de handoff próprio do orquestrador); **Buscar** no Estudo (busca de
+  conteúdo: sermões/notas/séries) e **Memória de sermão** (sugestões de relacionados)
   entram numa rodada futura; o **select de Trilha** no editor entra com Tracks
-  (o `content.track_id` já é preservado). O helloao "você já pregou sobre isto" no
-  painel do editor virá junto do Comparar; hoje o Mapa de Escrituras já mostra o
+  (o `content.track_id` já é preservado). O "você já pregou sobre isto" (histórico por
+  passagem) no painel do editor fica para depois; hoje o Mapa de Escrituras já mostra o
   cruzamento livro→sermões.
 - `esc()` removido (React escapa); sticks arquivadas excluídas onde listar pessoas.

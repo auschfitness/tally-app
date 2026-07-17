@@ -13,14 +13,15 @@ export default async function SermonEditorPage({
   searchParams: Promise<{ campus?: string }>;
 }) {
   const { id } = await params;
-  const { supabase, orgId } = await requireOrg();
+  const { supabase, orgId, user } = await requireOrg();
   const sp = await searchParams;
 
-  const [sermons, series, services, campusRes] = await Promise.all([
+  const [sermons, series, services, campusRes, profRes] = await Promise.all([
     listSermons(supabase, orgId),
     listSeries(supabase, orgId),
     listServices(supabase, orgId),
     supabase.from("campuses").select("name").eq("org_id", orgId).order("name"),
+    supabase.from("profiles").select("locale").eq("id", user.id).maybeSingle(),
   ]);
 
   const isNew = id === "new";
@@ -31,5 +32,7 @@ export default async function SermonEditorPage({
   const activeCampus = sp.campus && campuses.includes(sp.campus) ? sp.campus : campuses[0] ?? "";
   const serviceOpts = services.map((s) => ({ id: s.id, name: s.name }));
 
-  return <SermonEditor sermon={sermon} series={series} services={serviceOpts} campuses={campuses} activeCampus={activeCampus} />;
+  const locale = profRes.data?.locale ?? "pt-BR";
+
+  return <SermonEditor sermon={sermon} series={series} services={serviceOpts} campuses={campuses} activeCampus={activeCampus} locale={locale} />;
 }
