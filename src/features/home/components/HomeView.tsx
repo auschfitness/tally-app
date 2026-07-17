@@ -60,7 +60,7 @@ export function HomeView({
       {/* Frequência + Risco pastoral */}
       <div className="row2">
         <div className="panel">
-          <div className="ph"><h3>Frequência</h3><span className="muted" style={{ marginLeft: "auto" }}>presença real de culto</span></div>
+          <div className="ph"><h3>Frequência</h3><span className="muted" style={{ marginLeft: "auto" }}>presença real de células</span></div>
           <FrequencyChart points={attendance} />
         </div>
         <div className="panel">

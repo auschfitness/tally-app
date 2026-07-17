@@ -2,7 +2,8 @@
 // features já retornam + a saída do Signals engine. Sem I/O, sem tabela nova.
 // Portado de src/views/home.js + src/core/derived.js, COM UMA CORREÇÃO honesta:
 // a "Frequência" NÃO é mais dado sintético (o legado inventava base×fatores) —
-// aqui vem das sessões de culto REAIS (DNA #2: nada de gráfico falso).
+// aqui vem das sessões de CÉLULA REAIS (DNA #2: nada de gráfico falso). A presença
+// individual da pessoa é medida pela célula (group), não pelo culto — Roadmap #4.
 import { careReasons, type CareReason, type Relationship } from "@/features/sticks/domain";
 import type { GroupHealth } from "@/features/groups/domain";
 import type { Session, Signal, SignalPerson } from "@/features/signals/domain";
@@ -49,7 +50,7 @@ export function flaggedPeople(people: SignalPerson[], activeCampus: string, care
     .sort((a, b) => b.reasons.length - a.reasons.length);
 }
 
-// Frequência REAL por semana (últimas N), das sessões de CULTO (service). Soma os
+// Frequência REAL por semana (últimas N), das sessões de CÉLULA (group). Soma os
 // presentes por semana. Vazio quando não há histórico (nunca inventa números).
 export interface WeekPoint {
   label: string;
@@ -68,7 +69,7 @@ export function weeklyAttendance(sessions: Session[], now: Date, weeks = 8): Wee
     points.push({ label: `${d.getUTCDate()}/${d.getUTCMonth() + 1}`, count: 0 });
   }
   for (const s of sessions) {
-    if (!s.service || !s.date) continue;
+    if (!s.group || !s.date) continue;
     const wi = weekIndex(new Date(s.date + "T00:00:00Z").getTime());
     const idx = wi - startW;
     if (idx >= 0 && idx < weeks) points[idx]!.count += (s.attendees ?? []).length;

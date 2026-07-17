@@ -53,11 +53,11 @@ describe("flaggedPeople", () => {
 });
 
 describe("weeklyAttendance (dado REAL, nunca sintético)", () => {
-  it("soma presentes de sessões de culto por semana; grupos são ignorados", () => {
+  it("soma presentes de sessões de célula por semana; cultos são ignorados", () => {
     const sessions: Session[] = [
-      { service: "s1", group: null, date: "2026-07-13", attendees: ["a", "b", "c"] }, // esta semana
-      { service: "s1", group: null, date: "2026-07-06", attendees: ["a", "b"] }, // semana passada
-      { service: null, group: "GA", date: "2026-07-13", attendees: ["x", "y"] }, // grupo → ignorado
+      { service: null, group: "GA", date: "2026-07-13", attendees: ["a", "b", "c"] }, // esta semana
+      { service: null, group: "GA", date: "2026-07-06", attendees: ["a", "b"] }, // semana passada
+      { service: "s1", group: null, date: "2026-07-13", attendees: ["x", "y"] }, // culto → ignorado
     ];
     const pts = weeklyAttendance(sessions, NOW, 8);
     expect(pts.length).toBe(8);

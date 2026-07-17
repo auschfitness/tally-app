@@ -1,5 +1,5 @@
 // Mini-gráfico de Frequência (SVG, Server Component). Barras das últimas semanas
-// com DADO REAL de presença de culto (DNA #2 — sem Chart.js, sem número inventado).
+// com DADO REAL de presença de célula (DNA #2 — sem Chart.js, sem número inventado).
 // Vazio quando ainda não há histórico.
 import type { WeekPoint } from "../domain";
 
@@ -7,7 +7,7 @@ export function FrequencyChart({ points }: { points: WeekPoint[] }) {
   const max = Math.max(1, ...points.map((p) => p.count));
   const hasData = points.some((p) => p.count > 0);
   if (!hasData) {
-    return <div className="empty">Sem histórico de presença ainda. Registre presença nos cultos para ver a tendência.</div>;
+    return <div className="empty">Sem histórico de presença ainda. Registre presença nas células para ver a tendência.</div>;
   }
 
   const W = 320;
