@@ -1,6 +1,9 @@
 import { requireOrg } from "@/lib/auth/session";
 import { Sidebar, type NavCounts } from "@/components/shared/Sidebar";
 import { Topbar } from "@/components/shared/Topbar";
+import { signals } from "@/features/signals/domain";
+import { buildSignalsInput, loadOverrides } from "@/features/inbox/queries";
+import { visibleSignals } from "@/features/inbox/domain";
 
 // Casca protegida. Toda rota deste grupo passa por requireOrg no servidor:
 // sem sessão → /login; sem org → /onboarding. Nada aqui confia no navegador.
@@ -18,8 +21,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const activeCampus = campuses[0] ?? "";
   const userLabel = user.email?.split("@")[0] ?? "Você";
 
-  // inbox/tasks derivam de features ainda não migradas (Fase 4) → 0 por ora.
-  const counts: NavCounts = { inbox: 0, people: peopleRes.count ?? 0, tasks: 0 };
+  // Badge do Inbox = nº de sinais VISÍVEIS (mesma fonte da tela /inbox: engine ao
+  // vivo + signal_overrides). Custa o assembler de Signals a cada navegação (tabelas
+  // pequenas no porte atual); defensivo — qualquer falha → 0, nunca derruba a casca.
+  let inbox = 0;
+  try {
+    const [input, overrides] = await Promise.all([
+      buildSignalsInput(supabase, orgId, activeCampus),
+      loadOverrides(supabase, orgId),
+    ]);
+    inbox = visibleSignals(signals(input, new Date()), overrides).length;
+  } catch {
+    inbox = 0;
+  }
+
+  // tasks: feature de tarefas ainda sem contador dedicado → 0 (badge oculto).
+  const counts: NavCounts = { inbox, people: peopleRes.count ?? 0, tasks: 0 };
 
   return (
     <div className="app">

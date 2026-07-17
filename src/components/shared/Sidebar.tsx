@@ -22,7 +22,7 @@ function Item({ item, counts, active }: { item: NavItem; counts: NavCounts; acti
   return (
     <Link href={item.href} className={`navitem${active ? " active" : ""}`}>
       <span>{item.label}</span>
-      {count != null ? <span className="cnt">{count}</span> : null}
+      {count ? <span className="cnt">{count}</span> : null}
     </Link>
   );
 }
