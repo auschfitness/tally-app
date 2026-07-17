@@ -97,7 +97,9 @@ export async function updateAccountAction(_prev: ActionResult, fd: FormData): Pr
   const ctx = await requireOrg();
   try {
     if (d.fullName) {
-      const { error } = await ctx.supabase.from("profiles").update({ full_name: d.fullName }).eq("id", ctx.user.id);
+      // UPSERT (não UPDATE): auto-cura se a linha do perfil faltar (o gatilho
+      // handle_new_user já a cria no cadastro; isto é defesa para linhas ausentes).
+      const { error } = await ctx.supabase.from("profiles").upsert({ id: ctx.user.id, full_name: d.fullName });
       if (error) return fail(toMessage(error, "Não consegui salvar seu nome."));
     }
     await patchAppState(ctx, (data) => {
