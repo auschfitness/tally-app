@@ -11,6 +11,15 @@ export type Relationship =
   | "member"
   | "inactive";
 
+// Nome completo (roadmap #3.2): ao menos 2 palavras, cada uma com ≥2 letras.
+// Bloqueia "João"/"Maria"; aceita "João Silva". Conta letras (acentos incluídos),
+// então iniciais de 1 letra ("Ana P Silva") não passam — de propósito.
+export function isFullName(name: string): boolean {
+  const words = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return false;
+  return words.every((w) => (w.match(/\p{L}/gu) || []).length >= 2);
+}
+
 export const RELATIONSHIPS: Relationship[] = [
   "visitor_first",
   "visitor_returning",

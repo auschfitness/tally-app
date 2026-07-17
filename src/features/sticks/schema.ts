@@ -1,6 +1,6 @@
 // Validação tipada da entrada de pessoa (fronteira de Server Action). Sem lib
 // externa — as regras são simples e explícitas. Retorna erros por campo.
-import { RELATIONSHIPS, type Relationship } from "./domain";
+import { RELATIONSHIPS, isFullName, type Relationship } from "./domain";
 import type { PersonInput } from "./types";
 
 export type Validated =
@@ -16,6 +16,7 @@ export function parsePersonInput(formData: FormData): Validated {
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) fieldErrors.name = ["Informe o nome."];
+  else if (!isFullName(name)) fieldErrors.name = ["Informe o nome completo (nome e sobrenome)."];
 
   const relRaw = String(formData.get("relationship") ?? "member");
   const relationship: Relationship = (RELATIONSHIPS as string[]).includes(relRaw)

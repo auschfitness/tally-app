@@ -28,14 +28,29 @@ describe("parsePersonInput (validação de fronteira)", () => {
   });
 
   it("relação inválida cai para 'member' (nunca inventa enum)", () => {
-    const r = parsePersonInput(fd({ name: "X", relationship: "hacker" }));
+    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "hacker" }));
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.data.relationship).toBe("member");
   });
 
   it("data de última presença malformada é erro de campo", () => {
-    const r = parsePersonInput(fd({ name: "X", relationship: "member", lastSeen: "01/07/2026" }));
+    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member", lastSeen: "01/07/2026" }));
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.fieldErrors.lastSeen).toBeDefined();
+  });
+
+  it("exige nome completo: rejeita um nome só", () => {
+    for (const name of ["João", "Maria", "Ana P"]) {
+      const r = parsePersonInput(fd({ name, relationship: "member" }));
+      expect(r.ok, name).toBe(false);
+      if (!r.ok) expect(r.fieldErrors.name).toBeDefined();
+    }
+  });
+
+  it("exige nome completo: aceita nome e sobrenome", () => {
+    for (const name of ["João Silva", "Ana Souza", "Maria de Lurdes"]) {
+      const r = parsePersonInput(fd({ name, relationship: "member" }));
+      expect(r.ok, name).toBe(true);
+    }
   });
 });
