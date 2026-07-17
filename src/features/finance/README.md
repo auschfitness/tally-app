@@ -11,7 +11,11 @@ fundo, lançamentos e novo lançamento. Contra a tabela `finance_entries`.
 - `schema.ts` + `actions.ts` — criar lançamento (com categoria nova opcional →
   finance_categories) e excluir. Valida → sessão/org → Supabase → revalidate.
 - `components/FinanceBoard.tsx` — ministrip, gráficos (barras CSS + donut), tabela,
-  saldo por fundo, filtro por categoria, modal.
+  saldo por fundo, filtro por categoria, modal. Filtro de **período** (Onda 2, Fatia A)
+  via `components/shared/PeriodFilter` + `lib/utils/period`: abre em "Este mês" (default
+  inteligente), persiste a escolha por tela (localStorage) e filtra totais/despesas/
+  saldos/lista pelo `{from,to}` sobre `entry_date`. A tendência de 6 meses é uma série
+  fixa e NÃO segue o filtro (colapsaria a um único mês).
 - `components/EntryModal.tsx` — novo lançamento (segmento entrada/saída, categorias
   por tipo, "+ Nova categoria", fundo, campus).
 - `finance.module.css` — barras de 6 meses e linhas de fundo (estilos da feature).

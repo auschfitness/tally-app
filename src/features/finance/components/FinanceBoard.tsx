@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { isThisMonth, brDate } from "@/lib/utils/date";
+import { useCallback, useMemo, useState } from "react";
+import { brDate } from "@/lib/utils/date";
 import { money } from "@/lib/utils/money";
 import { ConicDonut } from "@/components/shared/ConicDonut";
+import { PeriodFilter } from "@/components/shared/PeriodFilter";
+import { inPeriod, resolvePeriod, type PeriodRange, type PeriodValue } from "@/lib/utils/period";
 import { expenseByCat, financeMonthly, fundBalances, FINPAL, type FinanceEntry } from "../domain";
 import { deleteEntryAction } from "../actions";
 import { EntryModal } from "./EntryModal";
@@ -24,32 +26,42 @@ export function FinanceBoard({
 }) {
   const [finCat, setFinCat] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  // Período (Onda 2, Fatia A): Financeiro abre em "Este mês" (default inteligente) e
+  // persiste a escolha por tela. O intervalo filtra totais, despesas, saldos e lista.
+  const [range, setRange] = useState<PeriodRange>(() => resolvePeriod("thisMonth", new Date()));
+  const onPeriod = useCallback((v: PeriodValue) => setRange({ from: v.from, to: v.to }), []);
 
-  const monthE = entries.filter((e) => isThisMonth(e.date));
-  const income = monthE.filter((e) => e.type === "in").reduce((a, e) => a + e.amount, 0);
-  const expense = monthE.filter((e) => e.type === "out").reduce((a, e) => a + e.amount, 0);
+  const periodE = useMemo(() => entries.filter((e) => inPeriod(e.date, range)), [entries, range]);
+  const income = periodE.filter((e) => e.type === "in").reduce((a, e) => a + e.amount, 0);
+  const expense = periodE.filter((e) => e.type === "out").reduce((a, e) => a + e.amount, 0);
 
+  // Tendência: sempre os 6 meses correntes (visão de série, independente do filtro).
   const now = useMemo(() => new Date(), []);
   const bars = useMemo(() => financeMonthly(entries, now), [entries, now]);
   const barMax = Math.max(1, ...bars.inc, ...bars.exp);
   const hasBars = bars.inc.some((v) => v > 0) || bars.exp.some((v) => v > 0);
 
-  const expenses = useMemo(() => expenseByCat(entries), [entries]);
+  const expenses = useMemo(() => expenseByCat(periodE), [periodE]);
   const donutSegments = expenses.map((x, i) => ({ value: x.val, color: FINPAL[i % FINPAL.length]! }));
 
-  const funds2 = useMemo(() => fundBalances(entries), [entries]);
+  const funds2 = useMemo(() => fundBalances(periodE), [periodE]);
   const fundMax = Math.max(1, ...funds2.map((x) => Math.abs(x.balance)));
 
-  const rows = entries
+  const rows = periodE
     .filter((e) => !finCat || e.cat === finCat)
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 14 }}>
-        <h1 className="page">Finance Lite</h1>
-        <span className="sub" style={{ margin: 0 }}>este mês</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+        <h1 className="page" style={{ marginRight: "auto" }}>Finance Lite</h1>
+        <PeriodFilter
+          onChange={onPeriod}
+          defaultPreset="thisMonth"
+          storageKey="finance"
+          align="right"
+        />
       </div>
 
       <div className="ministrip">
