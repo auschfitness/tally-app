@@ -4,7 +4,8 @@
 import type { DB } from "@/lib/auth/session";
 import { normalizeLocale, type Locale } from "@/lib/i18n/config";
 import { readAccount, readInstitution } from "./domain";
-import type { AccountConfig, CampusRow, InstitutionConfig } from "./types";
+import { rowToProfile } from "./fiscal";
+import type { AccountConfig, CampusRow, FiscalData, InstitutionConfig } from "./types";
 
 export interface SettingsLoad {
   orgName: string;
@@ -33,5 +34,25 @@ export async function loadSettings(supabase: DB, orgId: string, userId: string):
     account: readAccount(blob),
     userName: profRes.data?.full_name ?? "",
     locale: normalizeLocale(profRes.data?.locale),
+  };
+}
+
+// Dados jurídicos: perfil fiscal da matriz (org_fiscal_profiles) + por filial
+// (campus_fiscal_profiles) + campi ativos p/ o seletor. SELECT é liberado a qualquer
+// membro (RLS); a escrita é gated na action.
+export async function loadFiscal(supabase: DB, orgId: string): Promise<FiscalData> {
+  const [orgRes, campusProfsRes, campusesRes] = await Promise.all([
+    supabase.from("org_fiscal_profiles").select("*").eq("org_id", orgId).maybeSingle(),
+    supabase.from("campus_fiscal_profiles").select("*").eq("org_id", orgId),
+    supabase.from("campuses").select("id, name").eq("org_id", orgId).eq("active", true).order("name"),
+  ]);
+
+  const byCampus: Record<string, ReturnType<typeof rowToProfile>> = {};
+  for (const r of campusProfsRes.data ?? []) byCampus[r.campus_id] = rowToProfile(r);
+
+  return {
+    org: rowToProfile(orgRes.data),
+    byCampus,
+    campuses: (campusesRes.data ?? []).map((c): CampusRow => ({ id: c.id, name: c.name, active: true })),
   };
 }

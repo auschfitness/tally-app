@@ -12,6 +12,8 @@ import { revalidatePath } from "next/cache";
 import { requireOrg, type OrgContext } from "@/lib/auth/session";
 import { type ActionResult, ok, done, fail, toMessage } from "@/lib/errors";
 import { parseAccountInput, parseOrgInput } from "./schema";
+import { parseFiscalInput, profileToColumns } from "./fiscal";
+import { canManageFiscal } from "./access";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -136,6 +138,32 @@ export async function setMultiInstitutionAction(fd: FormData): Promise<void> {
     data.institution = inst;
   });
   revalidatePath("/settings");
+}
+
+// Salva os dados jurídicos da matriz (target="org" → org_fiscal_profiles) ou de uma
+// filial (target=campus_id → campus_fiscal_profiles). Upsert pela PK (org_id/campus_id).
+// Escrita gated por canManageFiscal + RLS.
+export async function saveFiscalAction(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  const target = String(fd.get("target") ?? "org");
+  const ctx = await requireOrg();
+  if (!canManageFiscal(ctx)) return fail("Você não tem permissão para editar os dados jurídicos.");
+
+  const cols = profileToColumns(parseFiscalInput(fd));
+  const meta = { updated_by: ctx.user.id, updated_at: new Date().toISOString() };
+  try {
+    if (target === "org") {
+      const { error } = await ctx.supabase.from("org_fiscal_profiles").upsert({ org_id: ctx.orgId, ...cols, ...meta });
+      if (error) return fail(toMessage(error, "Não consegui salvar os dados jurídicos."));
+    } else {
+      if (!UUID.test(target)) return fail("Campus inválido.");
+      const { error } = await ctx.supabase.from("campus_fiscal_profiles").upsert({ campus_id: target, org_id: ctx.orgId, ...cols, ...meta });
+      if (error) return fail(toMessage(error, "Não consegui salvar os dados jurídicos."));
+    }
+    revalidatePath("/settings");
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
 }
 
 // Conta do usuário: nome (profiles.full_name, linha própria) + idioma/fuso (blob).

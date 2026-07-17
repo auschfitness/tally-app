@@ -8,6 +8,7 @@ export const ptBR = {
     title: "Configurações",
     subtitle: "Ajustes da instituição e da sua conta",
     tabInstitution: "Instituição",
+    tabLegal: "Jurídico",
     tabAccount: "Conta",
     yourName: "Seu nome",
     yourNamePlaceholder: "Como você aparece na equipe",

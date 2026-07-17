@@ -8,6 +8,13 @@
 // Categorias/fundos de finança NÃO estão aqui: são relacionais (finance_*), geridos
 // na feature Finance. Tema fica no Topbar (ThemeToggle), não em Settings.
 import type { Locale } from "@/lib/i18n/config";
+import type { FiscalProfile } from "./fiscal";
+
+export interface FiscalData {
+  org: FiscalProfile; // dados fiscais da matriz (org_fiscal_profiles)
+  byCampus: Record<string, FiscalProfile>; // por campus (campus_fiscal_profiles), chave = campus_id
+  campuses: CampusRow[]; // campi ativos, para o seletor de entidade
+}
 
 export interface InstitutionConfig {
   multiInstitution: boolean;
@@ -33,4 +40,6 @@ export interface SettingsData {
   userName: string;
   locale: Locale;
   isOwner: boolean;
+  fiscal: FiscalData; // dados jurídicos (matriz + filiais)
+  canManageFiscal: boolean; // pode editar dados jurídicos (dono/pastor/tesoureiro)
 }
