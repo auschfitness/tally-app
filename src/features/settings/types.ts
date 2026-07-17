@@ -8,6 +8,7 @@
 // Categorias/fundos de finança NÃO estão aqui: são relacionais (finance_*), geridos
 // na feature Finance. Tema fica no Topbar (ThemeToggle), não em Settings.
 import type { Locale } from "@/lib/i18n/config";
+import type { TeamData } from "@/features/roles/types";
 import type { FiscalProfile } from "./fiscal";
 
 export interface FiscalData {
@@ -42,4 +43,5 @@ export interface SettingsData {
   isOwner: boolean;
   fiscal: FiscalData; // dados jurídicos (matriz + filiais)
   canManageFiscal: boolean; // pode editar dados jurídicos (dono/pastor/tesoureiro)
+  team: TeamData; // equipe e cargos (feature roles) — gated por members.manage
 }

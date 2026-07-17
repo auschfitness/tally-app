@@ -7,6 +7,7 @@ export const es: Dictionary = {
     title: "Configuración",
     subtitle: "Ajustes de la institución y de tu cuenta",
     tabInstitution: "Institución",
+    tabTeam: "Equipo y cargos",
     tabLegal: "Legal",
     tabAccount: "Cuenta",
     yourName: "Tu nombre",

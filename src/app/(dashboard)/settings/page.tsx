@@ -1,7 +1,8 @@
-import { requireOrg } from "@/lib/auth/session";
+import { requireOrg, can } from "@/lib/auth/session";
 import { getDictionary } from "@/lib/i18n";
 import { loadSettings, loadFiscal } from "@/features/settings/queries";
 import { canManageFiscal } from "@/features/settings/access";
+import { loadMembers, loadRoles } from "@/features/roles/queries";
 import { SettingsView } from "@/features/settings/components/SettingsView";
 
 // Configurações (Server Component). Cada campo vem da sua fonte da verdade
@@ -11,10 +12,15 @@ import { SettingsView } from "@/features/settings/components/SettingsView";
 export default async function SettingsPage() {
   const ctx = await requireOrg();
   const { supabase, orgId, user, isOwner } = ctx;
-  const [data, fiscal] = await Promise.all([
+  const [data, fiscal, roles, members] = await Promise.all([
     loadSettings(supabase, orgId, user.id),
     loadFiscal(supabase, orgId),
+    loadRoles(supabase, orgId),
+    loadMembers(supabase, orgId, user.id),
   ]);
   const dict = getDictionary(data.locale);
-  return <SettingsView data={{ ...data, isOwner, fiscal, canManageFiscal: canManageFiscal(ctx) }} dict={dict} />;
+  // Equipe e cargos: leitura liberada a qualquer membro (o RLS já libera o SELECT);
+  // a escrita depende de members.manage — decidido no servidor, nunca no navegador.
+  const team = { roles, members, canManage: can(ctx, "members.manage") };
+  return <SettingsView data={{ ...data, isOwner, fiscal, canManageFiscal: canManageFiscal(ctx), team }} dict={dict} />;
 }

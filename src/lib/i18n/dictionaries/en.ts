@@ -7,6 +7,7 @@ export const en: Dictionary = {
     title: "Settings",
     subtitle: "Your institution and account preferences",
     tabInstitution: "Institution",
+    tabTeam: "Team & roles",
     tabLegal: "Legal",
     tabAccount: "Account",
     yourName: "Your name",

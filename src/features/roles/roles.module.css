@@ -1,0 +1,155 @@
+/* Equipe e cargos — listas quietas, ar no lugar de caixas (design-principles).
+   O global já traz panel/field/btn/link/chip/gerr/tabs. */
+
+.note {
+  color: var(--text-2, #6b7280);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.section {
+  margin: 22px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-2, #6b7280);
+}
+.section:first-child {
+  margin-top: 0;
+}
+
+/* --- Lista (cargos e membros) --- */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 620px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+}
+.row:last-child {
+  border-bottom: none;
+}
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+.rowName {
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rowSub {
+  color: var(--text-2, #6b7280);
+  font-size: 12.5px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowActions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2, #6b7280);
+  background: var(--surface-2, #f2f4f8);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+/* --- Editor de cargo (revelação progressiva: só abre quando pedido) --- */
+.editor {
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  max-width: 620px;
+  background: var(--surface-2, #f8f9fc);
+}
+.editorName {
+  max-width: 280px;
+}
+/* <fieldset>/<legend> dão semântica ao grupo de checkboxes, mas trazem borda e
+   entalhe nativos do navegador (berrantes no dark). Zeramos: a hierarquia aqui é
+   tipografia + espaço, não caixa (design-principles). */
+.permGroup {
+  margin-top: 14px;
+  border: none;
+  padding: 0;
+  min-width: 0;
+}
+.permGroupTitle {
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2, #6b7280);
+  margin-bottom: 6px;
+}
+.permItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 0;
+}
+/* Checkbox estilizado ao tema (design-principles: nada de controle cru — o nativo
+   fica um quadrado branco no dark). Mesma linguagem do <select> global: fundo da
+   superfície, borda sutil, acento azul quando marcado. */
+.permItem input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  flex-shrink: 0;
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 5px;
+  background: var(--surface, #fff);
+  cursor: pointer;
+  transition: background var(--dur-micro, 140ms) var(--ease, ease), border-color var(--dur-micro, 140ms) var(--ease, ease);
+}
+.permItem input:hover {
+  border-color: var(--blue, #2b5ce6);
+}
+.permItem input:checked {
+  background: var(--blue, #2b5ce6) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") no-repeat center;
+  border-color: var(--blue, #2b5ce6);
+}
+.permItem input:focus-visible {
+  outline: 2px solid var(--blue, #2b5ce6);
+  outline-offset: 2px;
+}
+.permText {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.35;
+}
+.permText small {
+  display: block;
+  color: var(--text-2, #6b7280);
+  font-size: 12px;
+  margin-top: 1px;
+}
+.editorActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Seletor de cargo na linha do membro. */
+.memberRole {
+  flex-shrink: 0;
+  min-width: 190px;
+}

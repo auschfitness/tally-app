@@ -7,11 +7,12 @@ import { useState } from "react";
 import { InstitutionPanel } from "./InstitutionPanel";
 import { AccountPanel } from "./AccountPanel";
 import { FiscalPanel } from "./FiscalPanel";
+import { TeamPanel } from "@/features/roles/components/TeamPanel";
 import type { SettingsData } from "../types";
 import type { Dictionary } from "@/lib/i18n";
 
 export function SettingsView({ data, dict }: { data: SettingsData; dict: Dictionary }) {
-  const [tab, setTab] = useState<"inst" | "legal" | "acc">("inst");
+  const [tab, setTab] = useState<"inst" | "team" | "legal" | "acc">("inst");
   const t = dict.settings;
   return (
     <>
@@ -19,11 +20,14 @@ export function SettingsView({ data, dict }: { data: SettingsData; dict: Diction
       <p className="sub">{t.subtitle}</p>
       <div className="tabs">
         <button className={`tab${tab === "inst" ? " on" : ""}`} onClick={() => setTab("inst")}>{t.tabInstitution}</button>
+        <button className={`tab${tab === "team" ? " on" : ""}`} onClick={() => setTab("team")}>{t.tabTeam}</button>
         <button className={`tab${tab === "legal" ? " on" : ""}`} onClick={() => setTab("legal")}>{t.tabLegal}</button>
         <button className={`tab${tab === "acc" ? " on" : ""}`} onClick={() => setTab("acc")}>{t.tabAccount}</button>
       </div>
       {tab === "inst" ? (
         <InstitutionPanel orgName={data.orgName} currency={data.currency} campuses={data.campuses} institution={data.institution} isOwner={data.isOwner} />
+      ) : tab === "team" ? (
+        <TeamPanel data={data.team} />
       ) : tab === "legal" ? (
         <FiscalPanel fiscal={data.fiscal} canManage={data.canManageFiscal} />
       ) : (

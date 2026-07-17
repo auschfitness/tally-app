@@ -22,7 +22,9 @@ export interface OrgContext extends UserContext {
   orgId: string;
   isOwner: boolean;
   role: string;
-  permissions: string[];
+  roleId: string | null; // cargo atual (roles.id); null = sem cargo atribuído
+  roleName: string | null; // nome do cargo (ex.: "Pastor"), para exibir na UI
+  permissions: string[]; // UNIÃO: permissões do próprio membership + as do cargo
 }
 
 export async function requireUser(): Promise<UserContext> {
@@ -36,22 +38,29 @@ export async function requireUser(): Promise<UserContext> {
 
 export async function requireOrg(): Promise<OrgContext> {
   const { supabase, user } = await requireUser();
+  // O cargo vem embutido (FK memberships.role_id → roles). As permissões efetivas
+  // são a UNIÃO das do membership com as do cargo — é assim que o has_perm do banco
+  // decide (m26). Ler só `memberships.permissions` faria a UI esconder telas que o
+  // RLS libera (ex.: quem é Pastor pelo cargo, sem permissão avulsa).
   const { data, error } = await supabase
     .from("memberships")
-    .select("org_id, is_owner, role, permissions")
+    .select("org_id, is_owner, role, permissions, role_id, roles(name, permissions)")
     .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
   if (!data) redirect("/onboarding");
 
+  const roleRow = data.roles;
   return {
     supabase,
     user,
     orgId: data.org_id,
     isOwner: data.is_owner,
     role: data.role,
-    permissions: data.permissions ?? [],
+    roleId: data.role_id,
+    roleName: roleRow?.name ?? null,
+    permissions: [...new Set([...(data.permissions ?? []), ...(roleRow?.permissions ?? [])])],
   };
 }
 
