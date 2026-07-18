@@ -375,8 +375,11 @@ export function BibleCompare({
   // Frequência global (strong_frequency) dos Strong da passagem — para ranquear as
   // palavras-chave (raras primeiro). Busca quando a aba está aberta e os tokens chegaram.
   useEffect(() => {
-    if (tab !== "keywords" || original.status !== "ok") return;
+    if (tab !== "keywords") return;
     const key = refKeyOf(ref);
+    // Só busca quando os tokens JÁ carregados são desta passagem (evita reivindicar a
+    // chave com tokens vazios antes do fetch do original terminar).
+    if (original.status !== "ok" || original.key !== key) return;
     if (fetchedFreqKey.current === key) return;
     const strongs = [...new Set(original.tokens.map((t) => t.strong).filter((s): s is string => !!s))];
     if (!strongs.length) {
@@ -406,7 +409,7 @@ export function BibleCompare({
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, ref, original.status]);
+  }, [tab, ref, original.status, original.key]);
 
   // "Ver ocorrências" de uma palavra-chave: versículos onde aquele Strong aparece.
   useEffect(() => {
