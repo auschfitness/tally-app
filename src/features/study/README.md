@@ -55,8 +55,8 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   reposicionado de "Comparar Bíblia" para o hub **"Estudo do Texto"** — a passagem é a
   estrela; comparar traduções vira **uma lente**. Cabeçalho com a referência + abas de
   revelação progressiva: **Traduções** (ativa) · Original · Palavras-chave · Contexto ·
-  Referências · Notas (as demais são placeholders "Em breve" até o dado chegar do
-  orquestrador — TSK/STEPBible). Idioma vem só da conta (`profiles.locale` via prop
+  **Referências** (ligada — cross-refs TSK) · Notas (Original/Palavras-chave/Contexto/
+  Notas são placeholders "Em breve" até o dado chegar do orquestrador — STEPBible). Idioma vem só da conta (`profiles.locale` via prop
   `locale`; sem toggle en/es/pt). Lista de versões **curada** por idioma (domínio
   público) + "Mais versões". Novidades da Fase 1: **favoritar versões** (★, pré-
   selecionadas ao abrir — `localStorage` `tally.bible.favVersions`), **histórico** de
@@ -66,7 +66,18 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   no topo) e **"Capítulo inteiro"**. Arquitetura **agnóstica de tradução** (só domínio
   público; nada de texto protegido no repo; uma API licenciada futura entra no mesmo
   ponto). Aberto do assistente ("Estudo do Texto") e por referência ("Estudar texto").
-  Fases 2+ (original grego/hebraico + Strong, contexto, cross-refs) têm handoffs próprios.
+  Fases 2+ (original grego/hebraico + Strong, contexto) têm handoffs próprios.
+- **Aba Referências — cross-refs TSK (Fase 1b):** ligada à tabela GLOBAL
+  `cross_references` (m33, leitura livre, sem org_id) via cliente do navegador. Ao abrir
+  uma passagem, consulta por `from_book/from_chapter/from_verse` (versículos em foco),
+  ordena por `votes` desc e mostra o top ~12 como chips "Textos relacionados" que abrem
+  o destino no próprio hub. Mapeamento de códigos openbible **OSIS**↔**USFM** do app em
+  `lib/bible/osis.ts`; agregação pura (dedupe por destino, max votes) em
+  `lib/bible/crossref.ts` (com teste). Estado vazio elegante + crédito CC BY a
+  openbible.info/TSK no rodapé. **Carga do dataset** (~340k linhas) é passo separado do
+  dono: `node scripts/seed-cross-references.mjs ./cross_references.txt` com
+  `SUPABASE_SERVICE_ROLE_KEY` (não vai ao repo). Enquanto a tabela estiver vazia, a aba
+  mostra o estado vazio.
 - **Diferido, documentado (não escondido):** aba **Recursos** (tabela fora do handoff
   das 4 — precisa de handoff próprio do orquestrador); **Buscar** no Estudo (busca de
   conteúdo: sermões/notas/séries) e **Memória de sermão** (sugestões de relacionados)

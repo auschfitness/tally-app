@@ -13,8 +13,11 @@
 // por aparelho (cross-device fica p/ depois). Diff de versões é calculado no cliente.
 import { useEffect, useMemo, useState } from "react";
 import { Select } from "@/components/shared/Select";
+import { createClient } from "@/lib/supabase/client";
 import { BOOKS, bookName } from "@/lib/bible/books";
 import { fetchPassage, listTranslations, type PassageVerse, type Translation } from "@/lib/bible/source";
+import { usfmToOsis } from "@/lib/bible/osis";
+import { aggregateRelated, type CrossRefRow, type RelatedRef } from "@/lib/bible/crossref";
 import type { ScriptureRef } from "@/lib/bible/parse";
 import styles from "../study.module.css";
 
@@ -140,7 +143,9 @@ const TABS = [
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
-const PLACEHOLDERS: Record<Exclude<TabKey, "trans">, { title: string; desc: string }> = {
+// Abas ainda sem dado (placeholders "Em breve"). Referências (refs) e Traduções (trans)
+// têm conteúdo próprio e não entram aqui.
+const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs">, { title: string; desc: string }> = {
   original: {
     title: "Idiomas originais",
     desc: "Grego e hebraico com Strong e morfologia — tocar numa palavra abre o significado. Chega na próxima fase.",
@@ -153,15 +158,17 @@ const PLACEHOLDERS: Record<Exclude<TabKey, "trans">, { title: string; desc: stri
     title: "Contexto",
     desc: "Autor, data, público e tema do texto, na voz do Tally. Em breve.",
   },
-  refs: {
-    title: "Textos relacionados",
-    desc: "Referências cruzadas — outras passagens que conversam com esta. Em breve.",
-  },
   notes: {
     title: "Notas de estudo",
     desc: "Suas anotações sobre o texto, guardadas junto do estudo. Em breve.",
   },
 };
+
+interface RelatedState {
+  key: string;
+  status: "loading" | "ok" | "error";
+  items: RelatedRef[];
+}
 
 export function BibleCompare({
   initialRef,
@@ -194,6 +201,7 @@ export function BibleCompare({
   // um estado aberto por interação), então ler o localStorage no init é seguro.
   const [favs, setFavs] = useState<string[]>(() => readLS<string[]>(FAV_KEY, []));
   const [history, setHistory] = useState<HistItem[]>(() => readLS<HistItem[]>(HIST_KEY, []));
+  const [related, setRelated] = useState<RelatedState>({ key: "", status: "ok", items: [] });
 
   useEffect(() => {
     let alive = true;
@@ -210,6 +218,51 @@ export function BibleCompare({
     if (ref.book && ref.chapter) pushHistory(ref);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Referências cruzadas (TSK) — busca sob demanda quando a aba "Referências" está
+  // aberta, refazendo quando a passagem muda. Consulta a tabela GLOBAL cross_references
+  // (leitura livre) pelo cliente do navegador; a lógica de mapeamento/ordenação é pura
+  // (lib/bible/crossref). Uma vez tentada uma passagem, não refaz (nem em erro) até a
+  // passagem mudar. Se os dados ainda não foram carregados (m33 vazio), volta vazio.
+  useEffect(() => {
+    if (tab !== "refs") return;
+    const key = refKeyOf(ref);
+    if (related.key === key) return; // já buscado para esta passagem
+    const osis = usfmToOsis(ref.book);
+    if (!osis || !ref.chapter) {
+      setRelated({ key, status: "ok", items: [] });
+      return;
+    }
+    let alive = true;
+    setRelated({ key, status: "loading", items: [] });
+    const supabase = createClient();
+    let q = supabase
+      .from("cross_references")
+      .select("to_book,to_chapter,to_verse_start,to_verse_end,votes")
+      .eq("from_book", osis)
+      .eq("from_chapter", ref.chapter);
+    if (ref.verse_start) {
+      const ve = ref.verse_end && ref.verse_end >= ref.verse_start ? ref.verse_end : ref.verse_start;
+      const verses: number[] = [];
+      for (let n = ref.verse_start; n <= ve; n++) verses.push(n);
+      q = q.in("from_verse", verses);
+    }
+    void q
+      .order("votes", { ascending: false })
+      .limit(300)
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error) {
+          setRelated({ key, status: "error", items: [] });
+          return;
+        }
+        setRelated({ key, status: "ok", items: aggregateRelated((data ?? []) as CrossRefRow[], 12) });
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, ref, related.key]);
 
   const versionsForLang = useMemo(
     () => (translations ?? []).filter((t) => (t.language || "").toLowerCase() === lang),
@@ -302,6 +355,16 @@ export function BibleCompare({
     setChapStr(String(h.chapter));
     setVsStr(h.verse_start ? String(h.verse_start) : "");
     setVeStr(h.verse_end ? String(h.verse_end) : "");
+    setTab("trans");
+    runFor(picks, r);
+    pushHistory(r);
+  }
+  function openRelated(rr: RelatedRef) {
+    const r: CmpRef = { book: rr.book, chapter: rr.chapter, verse_start: rr.verse_start, verse_end: rr.verse_end };
+    setRef(r);
+    setChapStr(String(rr.chapter));
+    setVsStr(String(rr.verse_start));
+    setVeStr(rr.verse_end ? String(rr.verse_end) : "");
     setTab("trans");
     runFor(picks, r);
     pushHistory(r);
@@ -430,7 +493,39 @@ export function BibleCompare({
           ))}
         </div>
 
-        {tab !== "trans" ? (
+        {tab === "refs" ? (
+          <div className={styles.stRefs}>
+            {related.status === "loading" ? (
+              <div className="muted">Buscando textos relacionados…</div>
+            ) : related.status === "error" ? (
+              <div className="muted">Não foi possível carregar as referências agora.</div>
+            ) : related.items.length === 0 ? (
+              <div className={styles.stPh}>
+                <div className={styles.stPhTitle}>Nenhum texto relacionado</div>
+                <div className="muted" style={{ maxWidth: 380 }}>
+                  Não encontramos referências cruzadas para <b>{refLabel}</b>. Tente abrir um versículo específico do capítulo.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                  Passagens que conversam com <b>{refLabel}</b>
+                </div>
+                <div className={styles.stRelChips}>
+                  {related.items.map((rr) => (
+                    <button key={rr.label} type="button" className={styles.stRelChip} onClick={() => openRelated(rr)}>
+                      {rr.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className={styles.stCredit}>
+              Referências cruzadas: Treasury of Scripture Knowledge via{" "}
+              <a href="https://www.openbible.info/labs/cross-references/" target="_blank" rel="noreferrer">openbible.info</a> (CC BY).
+            </div>
+          </div>
+        ) : tab !== "trans" ? (
           <div className={styles.stPh}>
             <div className={styles.stPhTitle}>{PLACEHOLDERS[tab].title}</div>
             <div className="muted" style={{ maxWidth: 380 }}>{PLACEHOLDERS[tab].desc}</div>

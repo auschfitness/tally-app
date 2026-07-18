@@ -145,6 +145,51 @@ export type Database = {
           },
         ]
       }
+      bible_original_tokens: {
+        Row: {
+          book: string
+          chapter: number
+          gloss: string | null
+          id: number
+          lang: string
+          lemma: string | null
+          morph: string | null
+          position: number
+          strong: string | null
+          surface: string
+          translit: string | null
+          verse: number
+        }
+        Insert: {
+          book: string
+          chapter: number
+          gloss?: string | null
+          id?: never
+          lang: string
+          lemma?: string | null
+          morph?: string | null
+          position: number
+          strong?: string | null
+          surface: string
+          translit?: string | null
+          verse: number
+        }
+        Update: {
+          book?: string
+          chapter?: number
+          gloss?: string | null
+          id?: never
+          lang?: string
+          lemma?: string | null
+          morph?: string | null
+          position?: number
+          strong?: string | null
+          surface?: string
+          translit?: string | null
+          verse?: number
+        }
+        Relationships: []
+      }
       campus_fiscal_profiles: {
         Row: {
           bank_info: Json
@@ -509,6 +554,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cross_references: {
+        Row: {
+          from_book: string
+          from_chapter: number
+          from_verse: number
+          id: number
+          to_book: string
+          to_chapter: number
+          to_verse_end: number | null
+          to_verse_start: number
+          votes: number
+        }
+        Insert: {
+          from_book: string
+          from_chapter: number
+          from_verse: number
+          id?: never
+          to_book: string
+          to_chapter: number
+          to_verse_end?: number | null
+          to_verse_start: number
+          votes?: number
+        }
+        Update: {
+          from_book?: string
+          from_chapter?: number
+          from_verse?: number
+          id?: never
+          to_book?: string
+          to_chapter?: number
+          to_verse_end?: number | null
+          to_verse_start?: number
+          votes?: number
+        }
+        Relationships: []
       }
       donation_receipts: {
         Row: {
@@ -2473,6 +2554,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      strongs_lexicon: {
+        Row: {
+          definition: string | null
+          gloss: string | null
+          lang: string
+          lemma: string | null
+          pronunciation: string | null
+          strong: string
+          translit: string | null
+        }
+        Insert: {
+          definition?: string | null
+          gloss?: string | null
+          lang: string
+          lemma?: string | null
+          pronunciation?: string | null
+          strong: string
+          translit?: string | null
+        }
+        Update: {
+          definition?: string | null
+          gloss?: string | null
+          lang?: string
+          lemma?: string | null
+          pronunciation?: string | null
+          strong?: string
+          translit?: string | null
+        }
+        Relationships: []
       }
       study_notes: {
         Row: {
