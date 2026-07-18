@@ -4,10 +4,15 @@ import {
   countByKey,
   countLabel,
   groupSpacesByKind,
+  isOverdue,
+  nextPosition,
+  progressLabel,
   sortCommentsOldestFirst,
   sortPostsForBoard,
+  sortTodos,
   spaceKindLabel,
   spaceKindSingular,
+  todoProgress,
 } from "./domain";
 import type { Space } from "./types";
 
@@ -107,5 +112,62 @@ describe("domain — rótulos de tipo", () => {
     expect(spaceKindSingular("ministry")).toBe("Ministério");
     expect(spaceKindLabel("church")).toBe("Igreja");
     expect(spaceKindSingular("group")).toBe("Grupo");
+  });
+});
+
+describe("domain — tarefas: ordenação", () => {
+  it("não-concluídos primeiro, concluídos ao fim; por position dentro do grupo", () => {
+    const ordered = sortTodos([
+      { id: "a", done: true, position: 0 },
+      { id: "b", done: false, position: 2 },
+      { id: "c", done: false, position: 1 },
+      { id: "d", done: true, position: 5 },
+    ]);
+    expect(ordered.map((t) => t.id)).toEqual(["c", "b", "a", "d"]);
+  });
+  it("não muta a entrada", () => {
+    const input = [
+      { id: "a", done: true, position: 0 },
+      { id: "b", done: false, position: 1 },
+    ];
+    sortTodos(input);
+    expect(input.map((t) => t.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("domain — tarefas: progresso", () => {
+  it("todoProgress conta concluídas de total", () => {
+    expect(todoProgress([{ done: true }, { done: false }, { done: true }])).toEqual({ done: 2, total: 3 });
+    expect(todoProgress([])).toEqual({ done: 0, total: 0 });
+  });
+  it("progressLabel formata X de Y", () => {
+    expect(progressLabel(2, 5)).toBe("2 de 5 concluídas");
+    expect(progressLabel(0, 0)).toBe("0 de 0 concluídas");
+  });
+});
+
+describe("domain — tarefas: vencido", () => {
+  const TODAY = "2026-07-18";
+  it("vencido quando prazo < hoje e não concluído", () => {
+    expect(isOverdue("2026-07-17", false, TODAY)).toBe(true);
+  });
+  it("hoje não é vencido", () => {
+    expect(isOverdue("2026-07-18", false, TODAY)).toBe(false);
+  });
+  it("futuro não é vencido", () => {
+    expect(isOverdue("2026-07-20", false, TODAY)).toBe(false);
+  });
+  it("concluído nunca é vencido; sem prazo nunca é vencido", () => {
+    expect(isOverdue("2026-01-01", true, TODAY)).toBe(false);
+    expect(isOverdue(null, false, TODAY)).toBe(false);
+  });
+});
+
+describe("domain — tarefas: próxima posição", () => {
+  it("maior position + 1", () => {
+    expect(nextPosition([{ position: 0 }, { position: 3 }, { position: 1 }])).toBe(4);
+  });
+  it("lista vazia começa em 0", () => {
+    expect(nextPosition([])).toBe(0);
   });
 });

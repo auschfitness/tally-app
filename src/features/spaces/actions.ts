@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOrg, can } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, done, toMessage } from "@/lib/errors";
-import { canManage } from "./domain";
+import { canManage, nextPosition } from "./domain";
 
 const DENIED_MANAGE = "Você não tem permissão para administrar espaços.";
 const DENIED_EDIT = "Só o autor ou quem administra a igreja pode editar isto.";
@@ -309,6 +309,226 @@ export async function deleteComment(commentId: string, postId: string, spaceId: 
     if (error) return fail(toMessage(error, "Não consegui excluir o comentário."));
 
     revalidatePath(`/spaces/${spaceId}/posts/${postId}`);
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// ==================== Tarefas (Fase 2) ====================
+
+function normDate(v: unknown): string | null {
+  const s = str(v);
+  // Aceita só aaaa-mm-dd; qualquer outra coisa vira null (sem prazo).
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
+// Confere se o usuário pode gerenciar uma lista (criador ou org.manage).
+async function assertCanManageList(
+  ctx: Awaited<ReturnType<typeof requireOrg>>,
+  listId: string,
+): Promise<{ ok: true } | { ok: false; result: ActionResult<never> }> {
+  const { supabase, orgId, user } = ctx;
+  const { data: l } = await supabase
+    .from("space_todo_lists")
+    .select("created_by")
+    .eq("org_id", orgId)
+    .eq("id", listId)
+    .maybeSingle();
+  if (!l) return { ok: false, result: fail("Lista não encontrada.") };
+  if (!canManage(user.id, l.created_by ?? "", can(ctx, "org.manage"))) {
+    return { ok: false, result: fail(DENIED_EDIT) };
+  }
+  return { ok: true };
+}
+
+// Criar lista de tarefas. Criar = membro.
+export async function createTodoList(
+  spaceId: string,
+  input: { name?: unknown },
+): Promise<ActionResult<{ id: string }>> {
+  const ctx = await requireOrg();
+  const { supabase, orgId, user } = ctx;
+  const name = str(input.name);
+  if (!name) return fail("Dê um nome à lista.");
+
+  try {
+    const { data, error } = await supabase
+      .from("space_todo_lists")
+      .insert({ org_id: orgId, space_id: spaceId, name, created_by: user.id })
+      .select("id")
+      .single();
+    if (error || !data) return fail(toMessage(error, "Não consegui criar a lista."));
+
+    revalidatePath(`/spaces/${spaceId}`);
+    return ok({ id: data.id });
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Renomear lista (criador ou org.manage).
+export async function renameTodoList(
+  listId: string,
+  spaceId: string,
+  input: { name?: unknown },
+): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  const name = str(input.name);
+  if (!name) return fail("Dê um nome à lista.");
+
+  try {
+    const guard = await assertCanManageList(ctx, listId);
+    if (!guard.ok) return guard.result;
+
+    const { error } = await ctx.supabase
+      .from("space_todo_lists")
+      .update({ name, updated_at: new Date().toISOString() })
+      .eq("id", listId);
+    if (error) return fail(toMessage(error, "Não consegui renomear a lista."));
+
+    revalidatePath(`/spaces/${spaceId}`);
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Arquivar lista (criador ou org.manage) — some da visão sem apagar.
+export async function archiveTodoList(listId: string, spaceId: string): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  try {
+    const guard = await assertCanManageList(ctx, listId);
+    if (!guard.ok) return guard.result;
+
+    const { error } = await ctx.supabase
+      .from("space_todo_lists")
+      .update({ archived: true, updated_at: new Date().toISOString() })
+      .eq("id", listId);
+    if (error) return fail(toMessage(error, "Não consegui arquivar a lista."));
+
+    revalidatePath(`/spaces/${spaceId}`);
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Adicionar item a uma lista. Criar = membro. Responsável/prazo/notas opcionais.
+export async function addTodo(
+  spaceId: string,
+  listId: string,
+  input: { title?: unknown; assigneeId?: unknown; dueOn?: unknown; notes?: unknown },
+): Promise<ActionResult<{ id: string }>> {
+  const ctx = await requireOrg();
+  const { supabase, orgId, user } = ctx;
+  const title = str(input.title);
+  if (!title) return fail("Escreva o título da tarefa.");
+
+  try {
+    // Nova posição = fim da fila da lista.
+    const { data: positions } = await supabase
+      .from("space_todos")
+      .select("position")
+      .eq("org_id", orgId)
+      .eq("list_id", listId);
+    const position = nextPosition(positions ?? []);
+
+    const { data, error } = await supabase
+      .from("space_todos")
+      .insert({
+        org_id: orgId,
+        space_id: spaceId,
+        list_id: listId,
+        title,
+        notes: str(input.notes) || null,
+        assignee_id: str(input.assigneeId) || null,
+        due_on: normDate(input.dueOn),
+        position,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    if (error || !data) return fail(toMessage(error, "Não consegui adicionar a tarefa."));
+
+    revalidatePath(`/spaces/${spaceId}`);
+    return ok({ id: data.id });
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Editar item (título/responsável/prazo/notas). Atualizar = qualquer membro (colaborativo).
+export async function editTodo(
+  todoId: string,
+  spaceId: string,
+  input: { title?: unknown; assigneeId?: unknown; dueOn?: unknown; notes?: unknown },
+): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  const title = str(input.title);
+  if (!title) return fail("Escreva o título da tarefa.");
+
+  try {
+    const { error } = await ctx.supabase
+      .from("space_todos")
+      .update({
+        title,
+        notes: str(input.notes) || null,
+        assignee_id: str(input.assigneeId) || null,
+        due_on: normDate(input.dueOn),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", todoId);
+    if (error) return fail(toMessage(error, "Não consegui salvar a tarefa."));
+
+    revalidatePath(`/spaces/${spaceId}`);
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Concluir/reabrir item. Qualquer membro. Grava done_at/done_by ao concluir; limpa ao reabrir.
+export async function toggleTodo(todoId: string, spaceId: string, markDone: boolean): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  const { supabase, user } = ctx;
+  try {
+    const { error } = await supabase
+      .from("space_todos")
+      .update({
+        done: markDone,
+        done_at: markDone ? new Date().toISOString() : null,
+        done_by: markDone ? user.id : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", todoId);
+    if (error) return fail(toMessage(error, "Não consegui atualizar a tarefa."));
+
+    revalidatePath(`/spaces/${spaceId}`);
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Excluir item (criador ou org.manage).
+export async function deleteTodo(todoId: string, spaceId: string): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  try {
+    const { supabase, orgId, user } = ctx;
+    const { data: t } = await supabase
+      .from("space_todos")
+      .select("created_by")
+      .eq("org_id", orgId)
+      .eq("id", todoId)
+      .maybeSingle();
+    if (!t) return fail("Tarefa não encontrada.");
+    if (!canManage(user.id, t.created_by ?? "", can(ctx, "org.manage"))) return fail(DENIED_EDIT);
+
+    const { error } = await supabase.from("space_todos").delete().eq("id", todoId);
+    if (error) return fail(toMessage(error, "Não consegui excluir a tarefa."));
+
+    revalidatePath(`/spaces/${spaceId}`);
     return done();
   } catch (e) {
     return fail(toMessage(e));

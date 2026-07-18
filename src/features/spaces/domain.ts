@@ -71,3 +71,36 @@ export function canManage(userId: string, authorId: string, canManageOrg: boolea
 export function countLabel(n: number, singular: string, plural: string): string {
   return `${n} ${n === 1 ? singular : plural}`;
 }
+
+// ---- Tarefas (Fase 2) ----
+
+// Ordena os itens de uma lista: não-concluídos primeiro, concluídos ao fim; dentro de
+// cada grupo, por `position` crescente. Não muta a entrada.
+export function sortTodos<T extends { done: boolean; position: number }>(todos: T[]): T[] {
+  return [...todos].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return a.position - b.position;
+  });
+}
+
+// Progresso de uma lista: quantas de quantas estão concluídas.
+export function todoProgress(todos: { done: boolean }[]): { done: number; total: number } {
+  return { done: todos.filter((t) => t.done).length, total: todos.length };
+}
+
+// Rótulo "X de Y concluídas" (PT-BR; concorda com "tarefas", sempre plural).
+export function progressLabel(done: number, total: number): string {
+  return `${done} de ${total} concluídas`;
+}
+
+// Vencido: tem prazo, não está concluído e o prazo é ANTES de hoje. Datas em ISO
+// (aaaa-mm-dd) comparam lexicograficamente. `todayIso` entra como parâmetro (puro).
+export function isOverdue(dueOn: string | null, done: boolean, todayIso: string): boolean {
+  if (done || !dueOn) return false;
+  return dueOn < todayIso;
+}
+
+// Próxima posição numa lista (fim da fila): maior position + 1, ou 0 se vazia.
+export function nextPosition(todos: { position: number }[]): number {
+  return todos.reduce((max, t) => Math.max(max, t.position), -1) + 1;
+}

@@ -81,3 +81,34 @@ export interface CreateSpaceOptions {
   ministries: RefOption[];
   groups: RefOption[];
 }
+
+// ---- Tarefas (Fase 2): to-dos por espaço ----
+
+// Um item de tarefa (space_todos), com o nome do responsável já resolvido.
+export interface Todo {
+  id: string;
+  listId: string;
+  title: string;
+  notes: string;
+  assigneeId: string | null;
+  assigneeName: string | null; // resolvido de memberships/profiles; null = sem responsável
+  dueOn: string | null; // ISO (aaaa-mm-dd) ou null
+  done: boolean;
+  position: number;
+  createdBy: string;
+}
+
+// Uma lista de tarefas (space_todo_lists) com seus itens.
+export interface TodoList {
+  id: string;
+  name: string;
+  archived: boolean;
+  createdBy: string;
+  todos: Todo[];
+}
+
+// Membro da org COM conta (auth.users via memberships) — candidato a responsável.
+export interface OrgMember {
+  id: string; // user id (auth.users)
+  name: string;
+}

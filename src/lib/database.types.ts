@@ -2622,6 +2622,130 @@ export type Database = {
           },
         ]
       }
+      space_todo_lists: {
+        Row: {
+          archived: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          org_id: string
+          space_id: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          org_id: string
+          space_id: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          space_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_todo_lists_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_todo_lists_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_todos: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          created_by: string | null
+          done: boolean
+          done_at: string | null
+          done_by: string | null
+          due_on: string | null
+          id: string
+          list_id: string
+          notes: string | null
+          org_id: string
+          position: number
+          space_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          due_on?: string | null
+          id?: string
+          list_id: string
+          notes?: string | null
+          org_id: string
+          position?: number
+          space_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          due_on?: string | null
+          id?: string
+          list_id?: string
+          notes?: string | null
+          org_id?: string
+          position?: number
+          space_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_todos_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "space_todo_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_todos_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_todos_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spaces: {
         Row: {
           archived: boolean

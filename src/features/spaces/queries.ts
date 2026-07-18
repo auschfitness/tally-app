@@ -7,11 +7,13 @@ import { countByKey } from "./domain";
 import type {
   Comment,
   CreateSpaceOptions,
+  OrgMember,
   PostDetail,
   PostListItem,
   Space,
   SpaceHeader,
   SpaceKind,
+  TodoList,
 } from "./types";
 
 function asKind(s: string | null): SpaceKind {
@@ -187,4 +189,67 @@ export async function getCreateSpaceOptions(supabase: DB, orgId: string): Promis
     .map((g) => ({ id: g.id, name: g.name }));
 
   return { churchExists, ministries, groups };
+}
+
+// ---- Tarefas (Fase 2) ----
+
+// Membros da org COM conta (via memberships), como candidatos a responsável. Ordenados
+// por nome. NÃO usa sticks nesta fase — só quem loga.
+export async function listOrgMembers(supabase: DB, orgId: string): Promise<OrgMember[]> {
+  const map = await memberNameMap(supabase, orgId);
+  return [...map.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+// Listas de tarefas (não arquivadas) de um espaço + seus itens, com o nome do
+// responsável resolvido. A ordenação dos itens é aplicada no domínio pela UI.
+export async function listTodoLists(supabase: DB, orgId: string, spaceId: string): Promise<TodoList[]> {
+  const { data: listRows } = await supabase
+    .from("space_todo_lists")
+    .select("id, name, archived, created_by, created_at")
+    .eq("org_id", orgId)
+    .eq("space_id", spaceId)
+    .eq("archived", false)
+    .order("created_at", { ascending: true });
+
+  const lists = listRows ?? [];
+  if (lists.length === 0) return [];
+
+  const listIds = lists.map((l) => l.id);
+  const [{ data: todoRows }, names] = await Promise.all([
+    supabase
+      .from("space_todos")
+      .select("id, list_id, title, notes, assignee_id, due_on, done, position, created_by")
+      .eq("org_id", orgId)
+      .in("list_id", listIds),
+    memberNameMap(supabase, orgId),
+  ]);
+
+  const byList = new Map<string, TodoList["todos"]>();
+  for (const id of listIds) byList.set(id, []);
+  for (const t of todoRows ?? []) {
+    const bucket = byList.get(t.list_id);
+    if (!bucket) continue;
+    bucket.push({
+      id: t.id,
+      listId: t.list_id,
+      title: t.title,
+      notes: t.notes ?? "",
+      assigneeId: t.assignee_id,
+      assigneeName: t.assignee_id ? names.get(t.assignee_id) ?? "Usuário" : null,
+      dueOn: t.due_on,
+      done: t.done,
+      position: t.position,
+      createdBy: t.created_by ?? "",
+    });
+  }
+
+  return lists.map((l) => ({
+    id: l.id,
+    name: l.name,
+    archived: l.archived,
+    createdBy: l.created_by ?? "",
+    todos: byList.get(l.id) ?? [],
+  }));
 }
