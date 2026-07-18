@@ -73,10 +73,14 @@ function caseNumGen(block: string): string[] {
   return out;
 }
 
-function decodeGreek(code: string): string[] {
+// Grego estilo Robinson/Tyndale (ex.: "V-AAI-3S", "N-NSM", "T-NSM", "N-NSM-T"). Devolve
+// "" quando a classe (POS) não é reconhecida (o chamador mostra o código cru). Sufixos
+// extras (ex.: o "-T" de "N-NSM-T") são ignorados com elegância.
+function decodeGreek(code: string): string {
   const segs = code.split("-");
   const posKey = segs[0]!.toUpperCase();
-  const parts: string[] = [GK_POS[posKey] ?? posKey];
+  if (!GK_POS[posKey]) return ""; // POS desconhecido → cru
+  const parts: string[] = [GK_POS[posKey]!];
 
   if (posKey === "V" && segs[1]) {
     // STEPBible marca 1ª/2ª forma com um dígito inicial no bloco tempo-voz-modo
@@ -94,10 +98,10 @@ function decodeGreek(code: string): string[] {
       if (tail[1] && NUM[tail[1]]) parts.push(NUM[tail[1]]!);
     }
   } else if (segs[1]) {
-    // nominal: caso-número-gênero (ex.: "NSM")
+    // nominal: caso-número-gênero (ex.: "NSM"). Sufixos extras (segs[2+]) ignorados.
     parts.push(...caseNumGen(segs[1].toUpperCase()));
   }
-  return parts;
+  return parts.join(" · ");
 }
 
 const HB_POS: Record<string, string> = {
@@ -132,48 +136,78 @@ const HB_ASPECT: Record<string, string> = {
   s: "Particípio passivo",
 };
 
-// Hebraico STEPBible costuma vir como "H" + POS + traços (ex.: "HVqp3ms"). Decodifica o
-// que der; o resto fica no código cru.
-function decodeHebrew(code: string): string[] {
-  let c = code;
-  if (c[0] === "H") c = c.slice(1);
-  const parts: string[] = [];
-  const pos = c[0];
-  if (pos && HB_POS[pos]) parts.push(HB_POS[pos]!);
-  if (pos === "V") {
-    if (c[1] && HB_STEM[c[1]]) parts.push(HB_STEM[c[1]]!);
-    if (c[2] && HB_ASPECT[c[2]]) parts.push(HB_ASPECT[c[2]]!);
-    const rest = c.slice(3);
-    if (PERS[rest[0]!]) parts.push(PERS[rest[0]!]!);
-    for (const ch of rest) {
-      if (ch === "m") parts.push("masculino");
-      else if (ch === "f") parts.push("feminino");
-      else if (ch === "s") parts.push("singular");
-      else if (ch === "p") parts.push("plural");
-    }
-  } else if (pos === "N" || pos === "A") {
-    for (const ch of c.slice(1)) {
-      if (ch === "m") parts.push("masculino");
-      else if (ch === "f") parts.push("feminino");
-      else if (ch === "s") parts.push("singular");
-      else if (ch === "p") parts.push("plural");
-    }
+// Traços de gênero/número comuns nos códigos hebraicos (m/f/s/p/d).
+function hebTraits(chars: string): string[] {
+  const out: string[] = [];
+  for (const ch of chars) {
+    if (ch === "m") out.push("masculino");
+    else if (ch === "f") out.push("feminino");
+    else if (ch === "s") out.push("singular");
+    else if (ch === "p") out.push("plural");
+    else if (ch === "d") out.push("dual");
   }
-  return parts;
+  return out;
 }
 
-// Decodifica um código morfológico para uma frase legível em PT-BR. `lang` = 'grc'|'hbo'.
-// Nunca lança; devolve o código cru se não reconhecer nada.
+// Decodifica UM segmento hebraico (ex.: "Vqp3ms", "Ncfsa", "R", "Td", "To"). Devolve "" se
+// a classe (POS) não for reconhecida — aí o chamador mostra esse segmento cru.
+function decodeHebrewSeg(seg: string): string {
+  if (!seg) return "";
+  const p = seg[0]!;
+  if (p === "V") {
+    const parts = ["Verbo"];
+    if (seg[1] && HB_STEM[seg[1]]) parts.push(HB_STEM[seg[1]]!);
+    if (seg[2] && HB_ASPECT[seg[2]]) parts.push(HB_ASPECT[seg[2]]!);
+    const rest = seg.slice(3);
+    if (PERS[rest[0]!]) parts.push(PERS[rest[0]!]!);
+    parts.push(...hebTraits(rest));
+    return parts.join(" · ");
+  }
+  if (p === "N") {
+    // N + c(comum)/p(próprio) + gênero/número/estado.
+    const parts = [seg[1] === "p" ? "Substantivo próprio" : "Substantivo"];
+    parts.push(...hebTraits(seg.slice(2)));
+    return parts.join(" · ");
+  }
+  if (p === "A") return ["Adjetivo", ...hebTraits(seg.slice(1))].join(" · ");
+  if (p === "T") {
+    if (seg[1] === "d") return "Artigo";
+    if (seg[1] === "o") return "Partícula de objeto";
+    if (seg[1] === "n") return "Partícula de negação";
+    return "Partícula";
+  }
+  if (HB_POS[p]) return HB_POS[p]!;
+  return ""; // desconhecido → cru
+}
+
+// Hebraico estilo STEPBible: prefixo "H" e "/" separando palavras compostas (prefixos +
+// palavra), ex.: "HR/Ncfsa" (preposição + substantivo), "HTd/Ncmpa" (artigo + substantivo),
+// "HVqp3ms". Decodifica cada segmento; os não reconhecidos ficam crus. Devolve "" se
+// nenhum segmento foi reconhecido (o chamador mostra o código inteiro cru).
+function decodeHebrew(code: string): string {
+  let c = code;
+  if (c[0] === "H") c = c.slice(1);
+  let anyOk = false;
+  const out = c.split("/").map((seg) => {
+    const d = decodeHebrewSeg(seg);
+    if (d) {
+      anyOk = true;
+      return d;
+    }
+    return seg;
+  });
+  return anyOk ? out.join(" + ") : "";
+}
+
+// Decodifica um código morfológico para uma frase legível em PT-BR. `lang` = 'grc'|'hbo'
+// (grego Robinson/Tyndale vs hebraico STEPBible). Nunca lança; devolve o código CRU se não
+// reconhecer nada.
 export function decodeMorph(code: string | null | undefined, lang: string): string {
   const raw = (code || "").trim();
   if (!raw) return "";
   try {
-    const parts = lang === "hbo" ? decodeHebrew(raw) : decodeGreek(raw);
-    // Só considera decodificado se foi além do próprio código (mais de 1 parte, ou 1
-    // parte que não seja o código literal).
-    if (parts.length && !(parts.length === 1 && parts[0] === raw)) {
-      return parts.join(" · ");
-    }
+    const decoded = lang === "hbo" ? decodeHebrew(raw) : decodeGreek(raw);
+    if (decoded) return decoded;
   } catch {
     /* cai no cru */
   }
