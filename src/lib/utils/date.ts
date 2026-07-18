@@ -32,6 +32,14 @@ export function brDate(iso: string | null | undefined): string {
   return iso ? iso.split("-").reverse().join("/") : "";
 }
 
+// "2024-03-09" -> "03/09/2024" (convenção mm/dd/aaaa dos EUA). Usado em documentos
+// dirigidos pelo país (ex.: recibo de doação em US), onde a data deve seguir o local.
+export function usDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return y && m && d ? `${m}/${d}/${y}` : "";
+}
+
 // "Hoje" (YYYY-MM-DD) no fuso IANA dado — robusto no SSR (o servidor da Vercel roda
 // em UTC, então `today()` cruza a meia-noite antes do usuário no Brasil/EUA e
 // destaca o dia errado). Usa Intl no fuso da organização. Fuso inválido → cai para

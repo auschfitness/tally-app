@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { brDate, brToIso, maskBrDate, zonedTodayIso } from "./date";
+import { brDate, usDate, brToIso, maskBrDate, zonedTodayIso } from "./date";
 
 describe("brDate (ISO → dd/mm/aaaa)", () => {
   it("converte data ISO", () => {
@@ -8,6 +8,18 @@ describe("brDate (ISO → dd/mm/aaaa)", () => {
   it("vazio para nulo/indefinido", () => {
     expect(brDate(null)).toBe("");
     expect(brDate(undefined)).toBe("");
+  });
+});
+
+describe("usDate (ISO → mm/dd/aaaa)", () => {
+  it("converte data ISO na convenção dos EUA", () => {
+    expect(usDate("2026-07-12")).toBe("07/12/2026");
+    expect(usDate("2026-05-10")).toBe("05/10/2026");
+  });
+  it("vazio para nulo/indefinido/incompleto", () => {
+    expect(usDate(null)).toBe("");
+    expect(usDate(undefined)).toBe("");
+    expect(usDate("2026-07")).toBe("");
   });
 });
 

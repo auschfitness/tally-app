@@ -5,7 +5,7 @@
 // 501c3 + frase de bens/serviços). Imprimível (o chrome do app some no @media print).
 import Link from "next/link";
 import { money } from "@/lib/utils/money";
-import { brDate } from "@/lib/utils/date";
+import { brDate, usDate } from "@/lib/utils/date";
 import type { Country, DonationMethod, ReceiptSnapshot } from "../types";
 import styles from "../giving.module.css";
 
@@ -80,6 +80,8 @@ function labelsFor(country: Country, snap: ReceiptSnapshot): Labels {
 export function ReceiptView({ snapshot }: { snapshot: ReceiptSnapshot }) {
   const s = snapshot;
   const L = labelsFor(s.country, s);
+  // Data segue o país do recibo: BR dd/mm/aaaa, US mm/dd/aaaa (o valor já segue a moeda).
+  const fmtDate = (iso: string) => (s.country === "US" ? usDate(iso) : brDate(iso));
 
   return (
     <div className={styles.receiptWrap}>
@@ -105,7 +107,7 @@ export function ReceiptView({ snapshot }: { snapshot: ReceiptSnapshot }) {
           <div className={styles.receiptNo}>
             <div className={styles.receiptTitle}>{L.title}</div>
             <div className={styles.receiptMuted}>{L.receiptNo} {s.receiptNo}</div>
-            <div className={styles.receiptMuted}>{L.issued} {brDate(s.issuedAt.slice(0, 10))}</div>
+            <div className={styles.receiptMuted}>{L.issued} {fmtDate(s.issuedAt.slice(0, 10))}</div>
           </div>
         </header>
 
@@ -127,7 +129,7 @@ export function ReceiptView({ snapshot }: { snapshot: ReceiptSnapshot }) {
           <tbody>
             {s.lines.map((ln, i) => (
               <tr key={i}>
-                <td>{brDate(ln.date)}</td>
+                <td>{fmtDate(ln.date)}</td>
                 <td>{ln.fundName}</td>
                 <td>{L.method(ln.method)}</td>
                 <td style={{ textAlign: "right" }}>{money(ln.amount, s.currency)}</td>
