@@ -17,7 +17,6 @@
 
 import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
-import readline from "node:readline";
 
 const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -67,8 +66,11 @@ async function flush() {
   process.stdout.write(`\rInseridas: ${total}`);
 }
 
-const rl = readline.createInterface({ input: fs.createReadStream(file), crlfDelay: Infinity });
-for await (const line of rl) {
+// Lê o arquivo inteiro e itera por linha (o TSV tem ~8 MB — cabe em memória). Evitamos
+// o `readline` async iterator, que no Node 24 lança ERR_USE_AFTER_CLOSE ao fim do stream
+// e faria o último lote parcial se perder.
+const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
+for (const line of lines) {
   const t = line.trim();
   if (!t || t.startsWith("#") || t.startsWith("From")) continue; // vazio / comentário / cabeçalho
   const [fromV, toV, votesStr] = t.split("\t");
