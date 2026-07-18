@@ -99,8 +99,9 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   CRUD por **Server Actions** (`listTextNotesAction`/`saveTextNoteAction`/
   `deleteTextNoteAction`, `requireOrg` → `org_id` no insert; `author_id` sai do default).
   Aba: textarea + "Guardar nota" (cria, ancorada a `verse_start`/`verse_end` ou só
-  capítulo); lista por livro+capítulo (`updated_at` desc); editar em linha + excluir (com
-  confirmação); **otimista com rollback** em rede ruim. Estado sem sessão ("Entre para
+  capítulo); lista por livro+capítulo (`updated_at` desc); editar em linha + excluir
+  (confirmação **inline** "Sim/Não" — sem `window.confirm` nativo, por design-principles);
+  **otimista com rollback** em rede ruim. Estado sem sessão ("Entre para
   guardar notas") e estado vazio elegante. RLS já filtra por autor — sem UI de
   compartilhamento. Tipos regenerados (study_text_notes). O hub agora tem as 6 lentes.
 - **Aba Referências — cross-refs TSK (Fase 1b):** ligada à tabela GLOBAL

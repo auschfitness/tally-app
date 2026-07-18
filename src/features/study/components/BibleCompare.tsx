@@ -268,6 +268,7 @@ export function BibleCompare({
   const [noteErr, setNoteErr] = useState<string>("");
   const [editId, setEditId] = useState<string>("");
   const [editBody, setEditBody] = useState<string>("");
+  const [confirmDel, setConfirmDel] = useState<string>(""); // nota aguardando confirmação de exclusão
 
   useEffect(() => {
     let alive = true;
@@ -584,8 +585,9 @@ export function BibleCompare({
       setNoteErr(res.message || "Não foi possível salvar a nota.");
     }
   }
+  // Exclusão confirmada inline (sem window.confirm nativo — controle temático). Otimista.
   async function delNote(n: TextNote) {
-    if (!window.confirm("Excluir esta nota?")) return;
+    setConfirmDel("");
     setNotes((s) => ({ ...s, items: s.items.filter((x) => x.id !== n.id) }));
     const res = await deleteTextNoteAction(n.id);
     if (!res.success) {
@@ -1064,10 +1066,18 @@ export function BibleCompare({
                           <>
                             <div className={styles.stNoteHead}>
                               <span className={styles.stNoteRef}>{noteRefLabel(n)}</span>
-                              <span className={styles.stNoteActions}>
-                                <button className="link" type="button" onClick={() => { setEditId(n.id); setEditBody(n.body); setNoteErr(""); }}>Editar</button>
-                                <button className="link" type="button" onClick={() => delNote(n)}>Excluir</button>
-                              </span>
+                              {confirmDel === n.id ? (
+                                <span className={styles.stNoteActions}>
+                                  <span className="muted" style={{ fontSize: 12.5 }}>Excluir?</span>
+                                  <button className="link" type="button" onClick={() => delNote(n)}>Sim</button>
+                                  <button className="link" type="button" onClick={() => setConfirmDel("")}>Não</button>
+                                </span>
+                              ) : (
+                                <span className={styles.stNoteActions}>
+                                  <button className="link" type="button" onClick={() => { setEditId(n.id); setEditBody(n.body); setNoteErr(""); }}>Editar</button>
+                                  <button className="link" type="button" onClick={() => { setConfirmDel(n.id); setNoteErr(""); }}>Excluir</button>
+                                </span>
+                              )}
                             </div>
                             <div className={styles.stNoteBody}>{n.body}</div>
                           </>
