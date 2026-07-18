@@ -1,0 +1,172 @@
+/* Espaços (Comunicação estilo Basecamp). O global já traz panel, btn, field, link,
+   empty, muted, gerr, page, sub, row2. Aqui só o específico da feature. Tema claro E
+   escuro via CSS vars com fallback. */
+
+/* ---- Hub: seções por tipo + cartões ---- */
+.section {
+  margin-top: 26px;
+}
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2, #6b7280);
+  margin: 0 2px 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.spaceCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 16px 14px;
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--dur-micro, 0.14s) var(--ease, ease),
+    transform var(--dur-micro, 0.14s) var(--ease, ease),
+    box-shadow var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.spaceCard:hover {
+  border-color: var(--blue, #2b5ce6);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(43, 92, 230, 0.08);
+}
+.spaceName {
+  font-weight: 600;
+  font-size: 15px;
+}
+.spaceDesc {
+  font-size: 13px;
+  color: var(--text-2, #6b7280);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.spaceMeta {
+  font-size: 12.5px;
+  color: var(--text-2, #6b7280);
+  margin-top: 2px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #e6e8ee);
+  color: var(--text-2, #6b7280);
+  align-self: flex-start;
+}
+
+/* ---- Quadro: lista de posts ---- */
+.postList {
+  display: flex;
+  flex-direction: column;
+}
+.postItem {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+}
+.postItem:last-child {
+  border-bottom: none;
+}
+.postMain {
+  min-width: 0;
+  margin-right: auto;
+}
+.postTitle {
+  font-weight: 600;
+  font-size: 14.5px;
+  text-decoration: none;
+  color: inherit;
+}
+.postTitle:hover {
+  color: var(--blue, #2b5ce6);
+}
+.postMeta {
+  font-size: 12.5px;
+  color: var(--text-2, #6b7280);
+  margin-top: 3px;
+}
+.pin {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue, #2b5ce6);
+}
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ---- Novo post / edição inline ---- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+/* ---- Post aberto + comentários ---- */
+.postBody {
+  white-space: pre-wrap;
+  line-height: 1.65;
+  font-size: 14.5px;
+  margin-top: 10px;
+}
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.comment {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+}
+.comment:last-child {
+  border-bottom: none;
+}
+.commentHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.commentAuthor {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.commentBody {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.commentActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}

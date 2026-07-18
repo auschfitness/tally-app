@@ -71,7 +71,10 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "comunicacao",
     label: "Comunicação",
-    items: [{ key: "communication", label: "Comunicação", href: "/communication" }],
+    // Comunicação = hub de espaços (estilo Basecamp). O fluxo antigo de e-mail
+    // (/communication compor/preparar/"Enviar agora") continua no código, mas sai do
+    // menu — a nav "Comunicação" agora aponta para /spaces.
+    items: [{ key: "spaces", label: "Comunicação", href: "/spaces" }],
   },
 ];
 
