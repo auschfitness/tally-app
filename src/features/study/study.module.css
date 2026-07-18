@@ -670,6 +670,81 @@
   margin: 0;
   color: var(--text);
 }
+
+/* Aba Notas — editor simples + lista de notas da passagem (privadas por autor) */
+.stNotes {
+  min-height: 120px;
+  max-width: 620px;
+}
+.stNoteNew {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 10px 12px;
+}
+.stNoteInput {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  resize: vertical;
+  min-height: 60px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.stNoteFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+.stNoteErr {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: #c0392b;
+}
+.stNoteList {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stNoteItem {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+}
+.stNoteHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.stNoteRef {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-2);
+}
+.stNoteActions {
+  display: inline-flex;
+  gap: 12px;
+}
+.stNoteBody {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .cmpCols {
   display: grid;
   gap: 12px;

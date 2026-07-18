@@ -70,3 +70,15 @@ export interface StudyNote {
   topic: string;
   tags: string[];
 }
+
+// Nota de estudo ancorada a uma passagem (aba Notas do hub "Estudo do Texto";
+// tabela study_text_notes, privada por autor via RLS).
+export interface TextNote {
+  id: string;
+  book: string;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+  body: string;
+  updated_at: string;
+}

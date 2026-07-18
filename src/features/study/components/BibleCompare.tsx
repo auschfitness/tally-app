@@ -21,6 +21,8 @@ import { aggregateRelated, type CrossRefRow, type RelatedRef } from "@/lib/bible
 import { decodeMorph } from "@/lib/bible/morph";
 import { buildKeywords, type Keyword } from "@/lib/bible/keywords";
 import type { ScriptureRef } from "@/lib/bible/parse";
+import { listTextNotesAction, saveTextNoteAction, deleteTextNoteAction } from "../actions";
+import type { TextNote } from "../types";
 import styles from "../study.module.css";
 
 type LangCode = "por" | "eng" | "spa";
@@ -145,14 +147,6 @@ const TABS = [
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
-// Abas ainda sem dado (placeholders "Em breve"). As demais têm conteúdo próprio.
-const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs" | "original" | "keywords" | "context">, { title: string; desc: string }> = {
-  notes: {
-    title: "Notas de estudo",
-    desc: "Suas anotações sobre o texto, guardadas junto do estudo. Em breve.",
-  },
-};
-
 interface RelatedState {
   key: string;
   status: "loading" | "ok" | "error";
@@ -211,6 +205,12 @@ interface ContextState {
   status: "loading" | "ok" | "error";
   data: ContextRow | null;
 }
+// Notas de estudo da passagem (study_text_notes, privadas por autor).
+interface NotesState {
+  key: string; // book(osis)-chapter
+  status: "loading" | "ok" | "error" | "noauth";
+  items: TextNote[];
+}
 
 export function BibleCompare({
   initialRef,
@@ -260,6 +260,14 @@ export function BibleCompare({
 
   const [context, setContext] = useState<ContextState>({ book: "", status: "ok", data: null });
   const fetchedCtxBook = useRef<string>("");
+
+  const [notes, setNotes] = useState<NotesState>({ key: "", status: "ok", items: [] });
+  const fetchedNotesKey = useRef<string>("");
+  const [draft, setDraft] = useState<string>("");
+  const [noteBusy, setNoteBusy] = useState(false);
+  const [noteErr, setNoteErr] = useState<string>("");
+  const [editId, setEditId] = useState<string>("");
+  const [editBody, setEditBody] = useState<string>("");
 
   useEffect(() => {
     let alive = true;
@@ -496,6 +504,95 @@ export function BibleCompare({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, ref.book]);
+
+  // Notas de estudo (study_text_notes) — privadas por autor (RLS). Listadas por livro+
+  // capítulo. Requer sessão; sem login mostra estado neutro. Dedupe por useRef (livro-cap).
+  useEffect(() => {
+    if (tab !== "notes") return;
+    const osis = usfmToOsis(ref.book);
+    const key = `${osis}-${ref.chapter}`;
+    if (fetchedNotesKey.current === key) return;
+    fetchedNotesKey.current = key;
+    setEditId("");
+    setNoteErr("");
+    if (!osis || !ref.chapter) {
+      setNotes({ key, status: "ok", items: [] });
+      return;
+    }
+    let alive = true;
+    setNotes({ key, status: "loading", items: [] });
+    void (async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!alive) return;
+      if (!user) {
+        setNotes({ key, status: "noauth", items: [] });
+        return;
+      }
+      const res = await listTextNotesAction(osis, ref.chapter);
+      if (!alive) return;
+      if (res.success) setNotes({ key, status: "ok", items: res.data });
+      else {
+        fetchedNotesKey.current = "";
+        setNotes({ key, status: "error", items: [] });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, ref.book, ref.chapter]);
+
+  function noteRefLabel(n: TextNote): string {
+    const usfm = osisToUsfm(n.book) || n.book;
+    return bookName(usfm) + " " + n.chapter + (n.verse_start ? ":" + n.verse_start + (n.verse_end && n.verse_end !== n.verse_start ? "-" + n.verse_end : "") : "");
+  }
+  // Cria nota (otimista: entra na hora; some e restaura o rascunho se a rede falhar).
+  async function saveNote() {
+    const bodyText = draft.trim();
+    if (!bodyText || noteBusy) return;
+    const osis = usfmToOsis(ref.book);
+    if (!osis) return;
+    const temp: TextNote = { id: `tmp-${Date.now()}`, book: osis, chapter: ref.chapter, verse_start: ref.verse_start, verse_end: ref.verse_end, body: bodyText, updated_at: new Date().toISOString() };
+    setNoteErr("");
+    setNotes((s) => ({ ...s, items: [temp, ...s.items] }));
+    setDraft("");
+    setNoteBusy(true);
+    const res = await saveTextNoteAction({ book: osis, chapter: ref.chapter, verse_start: ref.verse_start, verse_end: ref.verse_end, body: bodyText });
+    setNoteBusy(false);
+    if (res.success) {
+      setNotes((s) => ({ ...s, items: s.items.map((n) => (n.id === temp.id ? res.data : n)) }));
+    } else {
+      setNotes((s) => ({ ...s, items: s.items.filter((n) => n.id !== temp.id) }));
+      setDraft(bodyText);
+      setNoteErr(res.message || "Não foi possível guardar a nota.");
+    }
+  }
+  async function saveEdit(n: TextNote) {
+    const bodyText = editBody.trim();
+    if (!bodyText) return;
+    const prev = n.body;
+    setEditId("");
+    setNotes((s) => ({ ...s, items: s.items.map((x) => (x.id === n.id ? { ...x, body: bodyText } : x)) }));
+    const res = await saveTextNoteAction({ id: n.id, book: n.book, chapter: n.chapter, verse_start: n.verse_start, verse_end: n.verse_end, body: bodyText });
+    if (res.success) {
+      setNotes((s) => ({ ...s, items: s.items.map((x) => (x.id === n.id ? res.data : x)) }));
+    } else {
+      setNotes((s) => ({ ...s, items: s.items.map((x) => (x.id === n.id ? { ...x, body: prev } : x)) }));
+      setNoteErr(res.message || "Não foi possível salvar a nota.");
+    }
+  }
+  async function delNote(n: TextNote) {
+    if (!window.confirm("Excluir esta nota?")) return;
+    setNotes((s) => ({ ...s, items: s.items.filter((x) => x.id !== n.id) }));
+    const res = await deleteTextNoteAction(n.id);
+    if (!res.success) {
+      setNotes((s) => ({ ...s, items: [n, ...s.items] }));
+      setNoteErr(res.message || "Não foi possível excluir a nota.");
+    }
+  }
 
   // Palavras-chave da passagem (puro): descarta funcionais, agrupa por Strong, ranqueia.
   const keywords = useMemo<Keyword[]>(() => {
@@ -921,11 +1018,66 @@ export function BibleCompare({
               <a href="https://www.openbible.info/labs/cross-references/" target="_blank" rel="noreferrer">openbible.info</a> (CC BY).
             </div>
           </div>
-        ) : tab !== "trans" ? (
-          <div className={styles.stPh}>
-            <div className={styles.stPhTitle}>{PLACEHOLDERS[tab].title}</div>
-            <div className="muted" style={{ maxWidth: 380 }}>{PLACEHOLDERS[tab].desc}</div>
-            <span className={styles.stSoon}>Em breve</span>
+        ) : tab === "notes" ? (
+          <div className={styles.stNotes}>
+            {notes.status === "noauth" ? (
+              <div className={styles.stPh}>
+                <div className={styles.stPhTitle}>Entre para guardar notas</div>
+                <div className="muted" style={{ maxWidth: 380 }}>Faça login para escrever e ver suas anotações de estudo desta passagem.</div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.stNoteNew}>
+                  <textarea
+                    className={styles.stNoteInput}
+                    value={draft}
+                    placeholder={`Anotar sobre ${refLabel}…`}
+                    onChange={(e) => setDraft(e.target.value)}
+                  />
+                  <div className={styles.stNoteFoot}>
+                    <span className="muted" style={{ fontSize: 12 }}>Só você vê suas notas.</span>
+                    <button className="btn sm" type="button" disabled={!draft.trim() || noteBusy} onClick={saveNote}>
+                      {noteBusy ? "Guardando…" : "Guardar nota"}
+                    </button>
+                  </div>
+                </div>
+                {noteErr ? <div className={styles.stNoteErr}>{noteErr}</div> : null}
+                {notes.status === "loading" ? (
+                  <div className="muted">Carregando notas…</div>
+                ) : notes.status === "error" ? (
+                  <div className="muted">Não foi possível carregar as notas agora.</div>
+                ) : notes.items.length === 0 ? (
+                  <div className="muted" style={{ padding: "10px 0" }}>Nenhuma nota para esta passagem ainda.</div>
+                ) : (
+                  <ul className={styles.stNoteList}>
+                    {notes.items.map((n) => (
+                      <li key={n.id} className={styles.stNoteItem}>
+                        {editId === n.id ? (
+                          <>
+                            <textarea className={styles.stNoteInput} value={editBody} onChange={(e) => setEditBody(e.target.value)} />
+                            <div className={styles.stNoteActions}>
+                              <button className="link" type="button" onClick={() => saveEdit(n)}>Salvar</button>
+                              <button className="link" type="button" onClick={() => setEditId("")}>Cancelar</button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className={styles.stNoteHead}>
+                              <span className={styles.stNoteRef}>{noteRefLabel(n)}</span>
+                              <span className={styles.stNoteActions}>
+                                <button className="link" type="button" onClick={() => { setEditId(n.id); setEditBody(n.body); setNoteErr(""); }}>Editar</button>
+                                <button className="link" type="button" onClick={() => delNote(n)}>Excluir</button>
+                              </span>
+                            </div>
+                            <div className={styles.stNoteBody}>{n.body}</div>
+                          </>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
         ) : (
           <>

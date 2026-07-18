@@ -2709,6 +2709,53 @@ export type Database = {
           },
         ]
       }
+      study_text_notes: {
+        Row: {
+          author_id: string
+          body: string
+          book: string
+          chapter: number | null
+          created_at: string
+          id: string
+          org_id: string
+          updated_at: string
+          verse_end: number | null
+          verse_start: number | null
+        }
+        Insert: {
+          author_id?: string
+          body: string
+          book: string
+          chapter?: number | null
+          created_at?: string
+          id?: string
+          org_id: string
+          updated_at?: string
+          verse_end?: number | null
+          verse_start?: number | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          book?: string
+          chapter?: number | null
+          created_at?: string
+          id?: string
+          org_id?: string
+          updated_at?: string
+          verse_end?: number | null
+          verse_start?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_text_notes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           availability: string | null

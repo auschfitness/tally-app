@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { requireOrg, type DB } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { coerceSermon, parseNoteInput, parseSeriesInput, type SermonSaveInput } from "./schema";
+import type { TextNote } from "./types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function uuidOrNull(v: string | null): string | null {
@@ -247,4 +248,82 @@ export async function deleteNoteAction(fd: FormData): Promise<void> {
   const { supabase } = await requireOrg();
   await supabase.from("study_notes").delete().eq("id", id);
   revalidatePath("/study/notes");
+}
+
+// --- Notas de estudo ancoradas à passagem (aba Notas do hub "Estudo do Texto") ---
+// Privadas por autor (RLS: select/update/delete = author_id = auth.uid()). O insert
+// exige is_org_member(org_id): mandamos o org do contexto (requireOrg); author_id sai
+// do default auth.uid() no banco. NÃO filtramos por autor no client — o RLS já faz.
+const NOTE_COLS = "id, book, chapter, verse_start, verse_end, body, updated_at";
+
+export async function listTextNotesAction(book: string, chapter: number): Promise<ActionResult<TextNote[]>> {
+  try {
+    if (!book || !chapter) return ok([]);
+    const { supabase, orgId } = await requireOrg();
+    const { data, error } = await supabase
+      .from("study_text_notes")
+      .select(NOTE_COLS)
+      .eq("org_id", orgId)
+      .eq("book", book)
+      .eq("chapter", chapter)
+      .order("updated_at", { ascending: false });
+    if (error) return fail(toMessage(error, "Não consegui carregar as notas."));
+    return ok((data ?? []) as TextNote[]);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+export async function saveTextNoteAction(input: {
+  id?: string | null;
+  book: string;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+  body: string;
+}): Promise<ActionResult<TextNote>> {
+  try {
+    const body = (input.body ?? "").trim();
+    if (!body) return fail("Escreva algo para guardar.");
+    const { supabase, orgId } = await requireOrg();
+    if (input.id) {
+      if (!UUID.test(input.id)) return fail("Nota inválida.");
+      const { data, error } = await supabase
+        .from("study_text_notes")
+        .update({ body, updated_at: new Date().toISOString() })
+        .eq("id", input.id)
+        .select(NOTE_COLS)
+        .single();
+      if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
+      return ok(data as TextNote);
+    }
+    const { data, error } = await supabase
+      .from("study_text_notes")
+      .insert({
+        org_id: orgId,
+        book: input.book,
+        chapter: input.chapter,
+        verse_start: input.verse_start,
+        verse_end: input.verse_end,
+        body,
+      })
+      .select(NOTE_COLS)
+      .single();
+    if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
+    return ok(data as TextNote);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+export async function deleteTextNoteAction(id: string): Promise<ActionResult<null>> {
+  try {
+    if (!UUID.test(id)) return fail("Nota inválida.");
+    const { supabase } = await requireOrg();
+    const { error } = await supabase.from("study_text_notes").delete().eq("id", id);
+    if (error) return fail(toMessage(error, "Não consegui excluir a nota."));
+    return ok(null);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
 }

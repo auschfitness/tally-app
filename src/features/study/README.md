@@ -93,8 +93,16 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   por `useRef`). Card calmo (design-principles): eyebrow AT/NT + `title_pt`; `theme` em
   destaque (azul); `summary` como corpo; `author`/`date_range`/`audience` como metadados
   (Autoria/Época/Público). Sem crédito externo (conteúdo editorial do Tally). Tipos
-  regenerados (bible_book_context). **Aba Notas** segue placeholder — depende do banco
-  `study_text_notes` (m37, ainda não aplicado) + decisão de privacidade.
+  regenerados (bible_book_context).
+- **Aba Notas (Fase 3):** anotações de estudo ancoradas à passagem, em `study_text_notes`
+  (m37, **privadas por autor** via RLS: select/update/delete = `author_id = auth.uid()`).
+  CRUD por **Server Actions** (`listTextNotesAction`/`saveTextNoteAction`/
+  `deleteTextNoteAction`, `requireOrg` → `org_id` no insert; `author_id` sai do default).
+  Aba: textarea + "Guardar nota" (cria, ancorada a `verse_start`/`verse_end` ou só
+  capítulo); lista por livro+capítulo (`updated_at` desc); editar em linha + excluir (com
+  confirmação); **otimista com rollback** em rede ruim. Estado sem sessão ("Entre para
+  guardar notas") e estado vazio elegante. RLS já filtra por autor — sem UI de
+  compartilhamento. Tipos regenerados (study_text_notes). O hub agora tem as 6 lentes.
 - **Aba Referências — cross-refs TSK (Fase 1b):** ligada à tabela GLOBAL
   `cross_references` (m33, leitura livre, sem org_id) via cliente do navegador. Ao abrir
   uma passagem, consulta por `from_book/from_chapter/from_verse` (versículos em foco),
