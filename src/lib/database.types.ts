@@ -2555,6 +2555,24 @@ export type Database = {
           },
         ]
       }
+      strong_frequency: {
+        Row: {
+          lang: string
+          occurrences: number
+          strong: string
+        }
+        Insert: {
+          lang: string
+          occurrences: number
+          strong: string
+        }
+        Update: {
+          lang?: string
+          occurrences?: number
+          strong?: string
+        }
+        Relationships: []
+      }
       strongs_lexicon: {
         Row: {
           definition: string | null

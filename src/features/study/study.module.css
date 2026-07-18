@@ -545,6 +545,83 @@
   margin: 0;
   color: var(--text);
 }
+
+/* Aba Palavras-chave — lista ranqueada (raras primeiro) + ver ocorrências */
+.stKw {
+  min-height: 120px;
+}
+.stKwList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stKwItem {
+  border-bottom: 1px solid var(--border);
+}
+.stKwItem:last-child {
+  border-bottom: 0;
+}
+.stKwHead {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  padding: 10px 6px;
+  color: inherit;
+  border-radius: 8px;
+  transition: background var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.stKwHead:hover {
+  background: rgba(43, 92, 230, 0.06);
+}
+.stKwHead.on {
+  background: rgba(43, 92, 230, 0.1);
+}
+.stKwLemma {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+  min-width: 72px;
+}
+.stKwMeaning {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stKwMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.stKwCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue);
+  background: rgba(43, 92, 230, 0.1);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.stKwFreq {
+  font-size: 11.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.stKwOcc {
+  padding: 4px 6px 12px;
+}
 .cmpCols {
   display: grid;
   gap: 12px;

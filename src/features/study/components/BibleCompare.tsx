@@ -16,9 +16,10 @@ import { Select } from "@/components/shared/Select";
 import { createClient } from "@/lib/supabase/client";
 import { BOOKS, bookName } from "@/lib/bible/books";
 import { fetchPassage, listTranslations, type PassageVerse, type Translation } from "@/lib/bible/source";
-import { usfmToOsis } from "@/lib/bible/osis";
+import { usfmToOsis, osisToUsfm } from "@/lib/bible/osis";
 import { aggregateRelated, type CrossRefRow, type RelatedRef } from "@/lib/bible/crossref";
 import { decodeMorph } from "@/lib/bible/morph";
+import { buildKeywords, type Keyword } from "@/lib/bible/keywords";
 import type { ScriptureRef } from "@/lib/bible/parse";
 import styles from "../study.module.css";
 
@@ -144,13 +145,9 @@ const TABS = [
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
-// Abas ainda sem dado (placeholders "Em breve"). Traduções (trans), Referências (refs)
-// e Original têm conteúdo próprio e não entram aqui.
-const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs" | "original">, { title: string; desc: string }> = {
-  keywords: {
-    title: "Palavras-chave",
-    desc: "Termos importantes do texto e onde mais aparecem na Bíblia. Chega junto com o original.",
-  },
+// Abas ainda sem dado (placeholders "Em breve"). Traduções/Referências/Original/
+// Palavras-chave têm conteúdo próprio e não entram aqui.
+const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs" | "original" | "keywords">, { title: string; desc: string }> = {
   context: {
     title: "Contexto",
     desc: "Autor, data, público e tema do texto, na voz do Tally. Em breve.",
@@ -193,6 +190,17 @@ interface OriginalState {
   tokens: OrigToken[];
   lex: Record<string, LexEntry>;
 }
+// Frequência global por Strong (strong_frequency), buscada por passagem.
+interface FreqState {
+  key: string;
+  map: Record<string, number>;
+}
+// Ocorrências de UM Strong no cânone (aba Palavras-chave → "ver ocorrências").
+interface OccState {
+  strong: string;
+  status: "loading" | "ok" | "error";
+  refs: RelatedRef[];
+}
 
 export function BibleCompare({
   initialRef,
@@ -234,6 +242,11 @@ export function BibleCompare({
   const [original, setOriginal] = useState<OriginalState>({ key: "", status: "ok", lang: "", tokens: [], lex: {} });
   const [selTok, setSelTok] = useState<string>(""); // "verse-position" da palavra tocada
   const fetchedOrigKey = useRef<string>("");
+
+  const [freq, setFreq] = useState<FreqState>({ key: "", map: {} });
+  const fetchedFreqKey = useRef<string>("");
+  const [openKw, setOpenKw] = useState<string>(""); // Strong da palavra-chave expandida
+  const [occ, setOcc] = useState<OccState>({ strong: "", status: "ok", refs: [] });
 
   useEffect(() => {
     let alive = true;
@@ -303,7 +316,7 @@ export function BibleCompare({
   // num 2º passo, o léxico dos Strong presentes (para enriquecer o popover). Vazio
   // elegante enquanto o banco (m34) não tiver os dados.
   useEffect(() => {
-    if (tab !== "original") return;
+    if (tab !== "original" && tab !== "keywords") return;
     const key = refKeyOf(ref);
     if (fetchedOrigKey.current === key) return;
     fetchedOrigKey.current = key;
@@ -358,6 +371,92 @@ export function BibleCompare({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, ref]);
+
+  // Frequência global (strong_frequency) dos Strong da passagem — para ranquear as
+  // palavras-chave (raras primeiro). Busca quando a aba está aberta e os tokens chegaram.
+  useEffect(() => {
+    if (tab !== "keywords" || original.status !== "ok") return;
+    const key = refKeyOf(ref);
+    if (fetchedFreqKey.current === key) return;
+    const strongs = [...new Set(original.tokens.map((t) => t.strong).filter((s): s is string => !!s))];
+    if (!strongs.length) {
+      fetchedFreqKey.current = key;
+      setFreq({ key, map: {} });
+      return;
+    }
+    fetchedFreqKey.current = key;
+    setOpenKw("");
+    let alive = true;
+    const supabase = createClient();
+    void supabase
+      .from("strong_frequency")
+      .select("strong,occurrences")
+      .in("strong", strongs)
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error) {
+          fetchedFreqKey.current = "";
+          return;
+        }
+        const map: Record<string, number> = {};
+        for (const r of (data ?? []) as { strong: string; occurrences: number }[]) map[r.strong] = r.occurrences;
+        setFreq({ key, map });
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, ref, original.status]);
+
+  // "Ver ocorrências" de uma palavra-chave: versículos onde aquele Strong aparece.
+  useEffect(() => {
+    if (!openKw) return;
+    let alive = true;
+    setOcc({ strong: openKw, status: "loading", refs: [] });
+    const supabase = createClient();
+    void supabase
+      .from("bible_original_tokens")
+      .select("book,chapter,verse")
+      .eq("strong", openKw)
+      .order("book", { ascending: true })
+      .order("chapter", { ascending: true })
+      .order("verse", { ascending: true })
+      .limit(400)
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error) {
+          setOcc({ strong: openKw, status: "error", refs: [] });
+          return;
+        }
+        const seen = new Set<string>();
+        const refs: RelatedRef[] = [];
+        for (const r of (data ?? []) as { book: string; chapter: number; verse: number }[]) {
+          const usfm = osisToUsfm(r.book);
+          if (!usfm) continue;
+          const k = `${usfm}-${r.chapter}-${r.verse}`;
+          if (seen.has(k)) continue; // 1 chip por versículo (a palavra pode repetir no versículo)
+          seen.add(k);
+          refs.push({ book: usfm, chapter: r.chapter, verse_start: r.verse, verse_end: null, label: labelForRef({ book: usfm, chapter: r.chapter, verse_start: r.verse, verse_end: null }), votes: 0 });
+          if (refs.length >= 40) break;
+        }
+        setOcc({ strong: openKw, status: "ok", refs });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [openKw]);
+
+  // Palavras-chave da passagem (puro): descarta funcionais, agrupa por Strong, ranqueia.
+  const keywords = useMemo<Keyword[]>(() => {
+    if (original.status !== "ok") return [];
+    return buildKeywords(
+      original.tokens.map((t) => ({ strong: t.strong, lemma: t.lemma, morph: t.morph, gloss: t.gloss })),
+      original.lang,
+      original.lex,
+      freq.key === refKeyOf(ref) ? freq.map : {},
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [original, freq, ref]);
 
   const versionsForLang = useMemo(
     () => (translations ?? []).filter((t) => (t.language || "").toLowerCase() === lang),
@@ -588,7 +687,66 @@ export function BibleCompare({
           ))}
         </div>
 
-        {tab === "original" ? (
+        {tab === "keywords" ? (
+          <div className={styles.stKw}>
+            {original.status === "loading" ? (
+              <div className="muted">Analisando as palavras…</div>
+            ) : original.status === "error" ? (
+              <div className="muted">Não foi possível carregar as palavras agora.</div>
+            ) : keywords.length === 0 ? (
+              <div className={styles.stPh}>
+                <div className={styles.stPhTitle}>Palavras-chave em breve</div>
+                <div className="muted" style={{ maxWidth: 380 }}>
+                  Sem palavras de conteúdo para <b>{refLabel}</b> ainda. Elas vêm do texto original (grego/hebraico) — aparecem assim que a base for carregada.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                  Palavras de conteúdo de <b>{refLabel}</b> · as mais <b>raras</b> no cânone primeiro
+                </div>
+                <ul className={styles.stKwList}>
+                  {keywords.map((k) => {
+                    const on = openKw === k.strong;
+                    return (
+                      <li key={k.strong} className={styles.stKwItem}>
+                        <button type="button" className={`${styles.stKwHead}${on ? " " + styles.on : ""}`} onClick={() => setOpenKw(on ? "" : k.strong)}>
+                          <span className={styles.stKwLemma} lang={original.lang === "hbo" ? "he" : "el"} dir={original.lang === "hbo" ? "rtl" : "ltr"}>{k.lemma}</span>
+                          <span className={styles.stKwMeaning}>{k.meaning || "—"}</span>
+                          <span className={styles.stKwMeta}>
+                            {k.count > 1 ? <span className={styles.stKwCount}>{k.count}× aqui</span> : null}
+                            <span className={styles.stKwFreq}>{k.occurrences != null ? `${k.occurrences}× no cânone` : "freq. —"}</span>
+                          </span>
+                        </button>
+                        {on ? (
+                          <div className={styles.stKwOcc}>
+                            {occ.strong !== k.strong || occ.status === "loading" ? (
+                              <span className="muted">Buscando ocorrências…</span>
+                            ) : occ.status === "error" ? (
+                              <span className="muted">Não foi possível carregar as ocorrências.</span>
+                            ) : occ.refs.length === 0 ? (
+                              <span className="muted">Sem outras ocorrências no texto disponível.</span>
+                            ) : (
+                              <>
+                                <div className="muted" style={{ fontSize: 11.5, marginBottom: 6 }}>Onde mais aparece (Strong {k.strong})</div>
+                                <div className={styles.stRelChips}>
+                                  {occ.refs.map((rr) => (
+                                    <button key={rr.label} type="button" className={styles.stRelChip} onClick={() => openRelated(rr)}>{rr.label}</button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+            <div className={styles.stCredit}>Dados originais © STEPBible.org, CC BY 4.0.</div>
+          </div>
+        ) : tab === "original" ? (
           <div className={styles.stOrig}>
             {original.status === "loading" ? (
               <div className="muted">Carregando o texto original…</div>

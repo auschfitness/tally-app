@@ -199,6 +199,26 @@ function decodeHebrew(code: string): string {
   return anyOk ? out.join(" + ") : "";
 }
 
+// Classifica se um token é PALAVRA FUNCIONAL (artigo, partícula, conjunção, preposição) —
+// para a aba Palavras-chave descartar e focar nas palavras de conteúdo. `lang`='grc'|'hbo'.
+// Grego (Robinson): descarta cabeça T-/CONJ/PREP/PRT/COND. Hebraico (STEPBible): a palavra
+// principal é a ÚLTIMA sub-palavra do composto (prefixos R//C//Td/ vêm antes) — descarta se
+// a classe dela for R (preposição), C (conjunção) ou T (partícula/artigo). Sem morph → não
+// descarta (deixa o token seguir; o filtro real é ter Strong).
+export function isFunctionWord(morph: string | null | undefined, lang: string): boolean {
+  const m = (morph || "").trim();
+  if (!m) return false;
+  if (lang === "hbo") {
+    let c = m;
+    if (c[0] === "H") c = c.slice(1);
+    const segs = c.split("/");
+    const main = segs[segs.length - 1] || "";
+    return ["R", "C", "T"].includes(main[0] || "");
+  }
+  const head = m.split("-")[0]!.toUpperCase();
+  return ["T", "CONJ", "PREP", "PRT", "COND"].includes(head);
+}
+
 // Decodifica um código morfológico para uma frase legível em PT-BR. `lang` = 'grc'|'hbo'
 // (grego Robinson/Tyndale vs hebraico STEPBible). Nunca lança; devolve o código CRU se não
 // reconhecer nada.

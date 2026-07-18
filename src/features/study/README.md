@@ -78,6 +78,15 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   "Dados originais © STEPBible.org, CC BY 4.0". Loader `scripts/seed-original-text.mjs`
   (carga do dono, precisa service key). Mesmo padrão de fetch da aba Referências
   (dedupe via `useRef`, deps `[tab, ref]`).
+- **Aba Palavras-chave (Fase 2):** reusa os tokens da aba Original (mesma passagem/OSIS).
+  Descarta palavras funcionais (artigo/partícula/conjunção/preposição) por morfologia
+  (`isFunctionWord` em `lib/bible/morph.ts`; hebraico olha a última sub-palavra do
+  composto), agrupa por Strong e ordena por relevância — **raras primeiro** (`strong_
+  frequency.occurrences`; freq. desconhecida no fim). Lógica pura+testada em
+  `lib/bible/keywords.ts` (`buildKeywords`). Cada palavra-chave abre "ver ocorrências"
+  (query `bible_original_tokens` por `strong`, top ~40 versículos) como chips que abrem
+  a passagem via `openRelated`. Crédito STEPBible CC BY. `strong_frequency` (strong/lang/
+  occurrences) entrou nos tipos nesta fatia (regen).
 - **Aba Referências — cross-refs TSK (Fase 1b):** ligada à tabela GLOBAL
   `cross_references` (m33, leitura livre, sem org_id) via cliente do navegador. Ao abrir
   uma passagem, consulta por `from_book/from_chapter/from_verse` (versículos em foco),
