@@ -1379,6 +1379,164 @@ export type Database = {
           },
         ]
       }
+      message_recipients: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          message_id: string
+          org_id: string
+          read_at: string | null
+          sent_at: string | null
+          status: string
+          stick_id: string | null
+          to_email: string | null
+          to_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          message_id: string
+          org_id: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string
+          stick_id?: string | null
+          to_email?: string | null
+          to_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          message_id?: string
+          org_id?: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string
+          stick_id?: string | null
+          to_email?: string | null
+          to_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_recipients_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_recipients_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_recipients_stick_id_fkey"
+            columns: ["stick_id"]
+            isOneToOne: false
+            referencedRelation: "sticks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          org_id: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          org_id: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          audience_kind: string
+          audience_ref: Json
+          body: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          audience_kind: string
+          audience_ref?: Json
+          body: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          audience_kind?: string
+          audience_ref?: Json
+          body?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       milestone_types: {
         Row: {
           auto: boolean
@@ -1728,6 +1886,32 @@ export type Database = {
           locale?: string
         }
         Relationships: []
+      }
+      receipt_counters: {
+        Row: {
+          last_no: number
+          org_id: string
+          year: number
+        }
+        Insert: {
+          last_no?: number
+          org_id: string
+          year: number
+        }
+        Update: {
+          last_no?: number
+          org_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_counters_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resources: {
         Row: {

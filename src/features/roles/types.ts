@@ -14,7 +14,8 @@ export type PermissionKey =
   | "prayer.view_private"
   | "prayer.manage"
   | "groups.manage_all"
-  | "groups.manage_assigned";
+  | "groups.manage_assigned"
+  | "communication.send";
 
 export interface PermissionOption {
   key: PermissionKey;

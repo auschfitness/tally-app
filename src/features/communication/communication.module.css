@@ -1,0 +1,122 @@
+/* Comunicação. O global já traz panel, row2, table, ministrip, btn, field,
+   filtchips/fchip, empty, muted, meta, gerr. Aqui só o específico da feature. */
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.compose {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .compose {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+.audienceHints {
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin-top: 6px;
+}
+
+/* Contadores da pré-visualização */
+.counts {
+  display: flex;
+  gap: 22px;
+  padding: 12px 0 4px;
+}
+.countBig {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.previewList {
+  max-height: 320px;
+  overflow: auto;
+  margin-top: 8px;
+}
+.recRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+.recRow:last-child {
+  border-bottom: none;
+}
+.recRow .em {
+  color: var(--text-2);
+  margin-left: auto;
+  font-size: 12.5px;
+}
+
+/* Seletor manual de pessoas */
+.manualBox {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  max-height: 260px;
+  overflow: auto;
+}
+.manualRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 6px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.manualRow:hover {
+  background: var(--surface-2, rgba(0, 0, 0, 0.03));
+}
+
+/* Prévia do corpo com {nome} resolvido */
+.bodyPreview {
+  white-space: pre-wrap;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--surface-2, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.deliveryNote {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+/* Histórico */
+.msgSubject {
+  font-weight: 600;
+}
+.pill {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.logRow {
+  cursor: pointer;
+}

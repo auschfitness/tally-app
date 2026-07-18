@@ -68,6 +68,11 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "giving", label: "Doações", href: "/giving" },
     ],
   },
+  {
+    key: "comunicacao",
+    label: "Comunicação",
+    items: [{ key: "communication", label: "Comunicação", href: "/communication" }],
+  },
 ];
 
 export const SETTINGS_ITEM: NavItem = { key: "settings", label: "Configurações", href: "/settings" };
