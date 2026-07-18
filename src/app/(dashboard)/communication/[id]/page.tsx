@@ -4,7 +4,8 @@ import { requireOrg } from "@/lib/auth/session";
 import { brDate } from "@/lib/utils/date";
 import { canSendCommunication } from "@/features/communication/access";
 import { getMessageDetail } from "@/features/communication/queries";
-import { audienceLabel, messageStatusLabel, recipientStatusLabel } from "@/features/communication/domain";
+import { audienceLabel, isSendable, messageStatusLabel, recipientStatusLabel } from "@/features/communication/domain";
+import { SendNowButton } from "@/features/communication/components/SendNowButton";
 
 // Detalhe de uma mensagem (Server Component) — o registro no app: cabeçalho + os
 // destinatários com status. Gated por communication.send (o RLS é a barreira real).
@@ -26,6 +27,8 @@ export default async function MessageDetailPage({ params }: { params: Promise<{ 
 
   const receiving = recipients.filter((r) => r.status === "pending" || r.status === "sent").length;
   const skipped = recipients.filter((r) => r.status === "skipped").length;
+  const pending = recipients.filter((r) => r.status === "pending").length;
+  const sendable = isSendable(message.status, pending);
 
   return (
     <>
@@ -56,6 +59,21 @@ export default async function MessageDetailPage({ params }: { params: Promise<{ 
           <div className="mi-v">{brDate(message.createdAt.slice(0, 10))}</div>
         </div>
       </div>
+
+      {sendable ? (
+        <div
+          className="panel"
+          style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}
+        >
+          <div style={{ marginRight: "auto" }}>
+            <b>Preparada — ainda não enviada.</b>
+            <div className="muted" style={{ fontSize: 13, marginTop: 2, lineHeight: 1.6 }}>
+              {pending} destinatário(s) na fila. “Enviar agora” dispara a entrega dos e-mails.
+            </div>
+          </div>
+          <SendNowButton messageId={message.id} pending={pending} />
+        </div>
+      ) : null}
 
       <div className="row2" style={{ marginTop: 16 }}>
         <div className="panel">
@@ -96,8 +114,8 @@ export default async function MessageDetailPage({ params }: { params: Promise<{ 
           <div className="mi-k">Mensagem</div>
           <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, marginTop: 4 }}>{message.body}</div>
           <div className="muted" style={{ fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
-            A entrega dos e-mails fica pendente da configuração do provedor de envio. O <code>{"{nome}"}</code> é
-            aplicado por destinatário no envio.
+            Preparar uma mensagem só registra os destinatários; a entrega dos e-mails acontece ao
+            usar “Enviar agora”. O <code>{"{nome}"}</code> é aplicado por destinatário no envio.
           </div>
         </div>
       </div>

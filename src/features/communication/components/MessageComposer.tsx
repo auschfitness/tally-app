@@ -283,7 +283,7 @@ export function MessageComposer({
             {done.queued} destinatário(s) na fila{done.skipped > 0 ? `, ${done.skipped} pulado(s)` : ""}. Veja no
             histórico.
             <div className={styles.deliveryNote}>
-              A entrega dos e-mails fica pendente da configuração do provedor de envio.
+              Preparado ≠ enviado: abra a mensagem no histórico e use “Enviar agora” para disparar a entrega.
             </div>
           </div>
         ) : null}
@@ -324,7 +324,7 @@ export function MessageComposer({
                 {sending ? "Preparando…" : `Preparar envio (${preview.recipients.length})`}
               </button>
               <div className={styles.deliveryNote}>
-                Isso registra o envio no app. A entrega dos e-mails fica pendente da configuração do provedor.
+                Isso só registra e prepara o envio. A entrega é disparada depois, em “Enviar agora”.
               </div>
             </div>
           </div>

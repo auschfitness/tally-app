@@ -3,10 +3,12 @@ import {
   applyPlaceholder,
   audienceLabel,
   displayName,
+  isSendable,
   messageStatusLabel,
   partitionByConsent,
   recipientStatusLabel,
   storableAudienceRef,
+  summarizeSend,
   usesPlaceholder,
 } from "./domain";
 import type { Candidate } from "./types";
@@ -80,6 +82,37 @@ describe("domain — rótulos", () => {
     expect(messageStatusLabel("sent")).toBe("Enviada");
     expect(recipientStatusLabel("skipped")).toBe("Pulado");
     expect(recipientStatusLabel("pending")).toBe("Na fila");
+  });
+});
+
+describe("domain — enviável (Enviar agora)", () => {
+  it("é enviável só com pending>0 E status queued/sending/failed", () => {
+    expect(isSendable("queued", 3)).toBe(true);
+    expect(isSendable("sending", 1)).toBe(true);
+    expect(isSendable("failed", 2)).toBe(true);
+  });
+  it("não é enviável sem destinatário na fila", () => {
+    expect(isSendable("queued", 0)).toBe(false);
+    expect(isSendable("failed", 0)).toBe(false);
+  });
+  it("não é enviável quando já enviada ou ainda rascunho", () => {
+    expect(isSendable("sent", 5)).toBe(false);
+    expect(isSendable("draft", 5)).toBe(false);
+  });
+});
+
+describe("domain — resumo do envio", () => {
+  it("soma enviados e falhados do processed", () => {
+    expect(summarizeSend([{ message_id: "m", sent: 4, failed: 1 }])).toEqual({ sent: 4, failed: 1 });
+    expect(
+      summarizeSend([
+        { message_id: "m1", sent: 2, failed: 0 },
+        { message_id: "m2", sent: 1, failed: 3 },
+      ]),
+    ).toEqual({ sent: 3, failed: 3 });
+  });
+  it("processed vazio vira zero", () => {
+    expect(summarizeSend([])).toEqual({ sent: 0, failed: 0 });
   });
 });
 

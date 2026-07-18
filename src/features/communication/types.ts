@@ -117,6 +117,19 @@ export interface MessageRecipientRow {
   readAt: string | null;
 }
 
+// Uma entrada do `processed` que a edge function `send-message` devolve.
+export interface ProcessedEntry {
+  message_id: string;
+  sent: number;
+  failed: number;
+}
+
+// Resumo do envio (soma do `processed`) devolvido pela Server Action à UI.
+export interface SendOutcome {
+  sent: number;
+  failed: number;
+}
+
 // Cabeçalho da mensagem na tela de detalhe.
 export interface MessageDetail {
   id: string;

@@ -7,8 +7,11 @@ import type {
   AudienceKind,
   AudienceRef,
   Candidate,
+  MessageStatus,
+  ProcessedEntry,
   Recipient,
   Resolution,
+  SendOutcome,
   Skipped,
 } from "./types";
 
@@ -59,6 +62,28 @@ export function partitionByConsent(candidates: Candidate[]): Resolution {
   }
 
   return { recipients, skipped };
+}
+
+// ---- Envio ("Enviar agora") ----
+
+// Status em que a mensagem ainda tem entrega a fazer. "sent" e "draft" ficam de fora:
+// enviada não se reenvia; rascunho não foi nem preparado.
+export const SENDABLE_STATUSES: MessageStatus[] = ["queued", "sending", "failed"];
+
+// Decide se a ação "Enviar agora" deve aparecer/habilitar: precisa de destinatário na
+// fila (pending) E de um status que ainda admita entrega. Lógica pura, testável — a UI
+// só reflete o veredito. (A edge function é idempotente: só toca em pending.)
+export function isSendable(status: MessageStatus, pendingCount: number): boolean {
+  return pendingCount > 0 && SENDABLE_STATUSES.includes(status);
+}
+
+// Soma o `processed` da edge function num total de enviados/falhados para a UI. Uma
+// invocação com message_id trata uma mensagem, mas somamos por robustez.
+export function summarizeSend(processed: ProcessedEntry[]): SendOutcome {
+  return processed.reduce<SendOutcome>(
+    (acc, p) => ({ sent: acc.sent + (p.sent ?? 0), failed: acc.failed + (p.failed ?? 0) }),
+    { sent: 0, failed: 0 },
+  );
 }
 
 // ---- Rótulos (PT-BR) ----
