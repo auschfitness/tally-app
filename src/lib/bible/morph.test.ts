@@ -8,6 +8,12 @@ describe("decodeMorph — grego", () => {
   it("decodifica verbo presente ativo indicativo 1ª pl", () => {
     expect(decodeMorph("V-PAI-1P", "grc")).toBe("Verbo · Presente · Ativa · Indicativo · 1ª pessoa · plural");
   });
+  it("ignora o dígito de 2ª forma (V-2AAI-3S = 2º aoristo)", () => {
+    expect(decodeMorph("V-2AAI-3S", "grc")).toBe("Verbo · Aoristo · Ativa · Indicativo · 3ª pessoa · singular");
+  });
+  it("decodifica particípio 2º aoristo V-2AAP-NSM", () => {
+    expect(decodeMorph("V-2AAP-NSM", "grc")).toBe("Verbo · Aoristo · Ativa · Particípio · Nominativo · singular · masculino");
+  });
   it("decodifica nominal N-NSM (caso/número/gênero)", () => {
     expect(decodeMorph("N-NSM", "grc")).toBe("Substantivo · Nominativo · singular · masculino");
   });

@@ -79,7 +79,9 @@ function decodeGreek(code: string): string[] {
   const parts: string[] = [GK_POS[posKey] ?? posKey];
 
   if (posKey === "V" && segs[1]) {
-    const tvm = segs[1].toUpperCase();
+    // STEPBible marca 1ª/2ª forma com um dígito inicial no bloco tempo-voz-modo
+    // (ex.: "2AAI" = 2º aoristo). O dígito não muda a análise — descarta.
+    const tvm = segs[1].toUpperCase().replace(/^\d/, "");
     if (GK_TENSE[tvm[0]!]) parts.push(GK_TENSE[tvm[0]!]!);
     if (tvm[1] && GK_VOICE[tvm[1]]) parts.push(GK_VOICE[tvm[1]]!);
     if (tvm[2] && GK_MOOD[tvm[2]]) parts.push(GK_MOOD[tvm[2]]!);
