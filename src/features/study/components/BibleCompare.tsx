@@ -11,7 +11,7 @@
 //
 // Persistência de preferência do pastor (favoritos + histórico) fica em localStorage
 // por aparelho (cross-device fica p/ depois). Diff de versões é calculado no cliente.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Select } from "@/components/shared/Select";
 import { createClient } from "@/lib/supabase/client";
 import { BOOKS, bookName } from "@/lib/bible/books";
@@ -202,6 +202,10 @@ export function BibleCompare({
   const [favs, setFavs] = useState<string[]>(() => readLS<string[]>(FAV_KEY, []));
   const [history, setHistory] = useState<HistItem[]>(() => readLS<HistItem[]>(HIST_KEY, []));
   const [related, setRelated] = useState<RelatedState>({ key: "", status: "ok", items: [] });
+  // Passagem já buscada (ou em busca) na aba Referências — dedupe SEM entrar nas deps do
+  // efeito (senão o setRelated de "loading" reexecutaria o efeito e cancelaria a própria
+  // busca via cleanup, prendendo em "Buscando…").
+  const fetchedRefKey = useRef<string>("");
 
   useEffect(() => {
     let alive = true;
@@ -227,7 +231,8 @@ export function BibleCompare({
   useEffect(() => {
     if (tab !== "refs") return;
     const key = refKeyOf(ref);
-    if (related.key === key) return; // já buscado para esta passagem
+    if (fetchedRefKey.current === key) return; // já buscado (ou em busca) esta passagem
+    fetchedRefKey.current = key;
     const osis = usfmToOsis(ref.book);
     if (!osis || !ref.chapter) {
       setRelated({ key, status: "ok", items: [] });
@@ -253,6 +258,7 @@ export function BibleCompare({
       .then(({ data, error }) => {
         if (!alive) return;
         if (error) {
+          fetchedRefKey.current = ""; // erro → permite nova tentativa ao revisitar
           setRelated({ key, status: "error", items: [] });
           return;
         }
@@ -262,7 +268,7 @@ export function BibleCompare({
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, ref, related.key]);
+  }, [tab, ref]);
 
   const versionsForLang = useMemo(
     () => (translations ?? []).filter((t) => (t.language || "").toLowerCase() === lang),
