@@ -23,6 +23,15 @@ import { buildKeywords, type Keyword } from "@/lib/bible/keywords";
 import type { ScriptureRef } from "@/lib/bible/parse";
 import { listTextNotesAction, saveTextNoteAction, deleteTextNoteAction } from "../actions";
 import type { TextNote } from "../types";
+import {
+  buildTranslationBlock,
+  buildRelatedBlock,
+  buildKeywordBlock,
+  buildOriginalBlock,
+  buildContextBlock,
+  type SectionKey,
+} from "../domain";
+import { AddToSermon } from "./AddToSermon";
 import styles from "../study.module.css";
 
 type LangCode = "por" | "eng" | "spa";
@@ -220,7 +229,7 @@ export function BibleCompare({
 }: {
   initialRef?: ScriptureRef | null;
   locale: string;
-  onAddToSermon?: (block: string) => void;
+  onAddToSermon?: (block: string, section: SectionKey) => void;
   onClose: () => void;
 }) {
   const [ref, setRef] = useState<CmpRef>(() =>
@@ -732,8 +741,22 @@ export function BibleCompare({
     const res = results[id];
     if (!res || res.status !== "ok") return "";
     const short = (translations ?? []).find((t) => t.id === id)?.shortName || id;
-    const text = res.verses.map((v) => v.n + " " + v.text).join(" ");
-    return `${refLabel} (${short})\n${text}`;
+    return buildTranslationBlock(refLabel, short, res.verses);
+  }
+  // Blocos das demais lentes (Fase 4) — montados sob demanda a partir do estado atual.
+  function relatedBlock(): string {
+    return related.status === "ok" && related.items.length ? buildRelatedBlock(refLabel, related.items) : "";
+  }
+  function keywordBlock(k: Keyword): string {
+    return buildKeywordBlock({ lemma: k.lemma, strong: k.strong, meaning: k.meaning, occurrences: k.occurrences });
+  }
+  function originalBlock(t: OrigToken): string {
+    return buildOriginalBlock(t.surface, t.strong, t.lemma, decodeMorph(t.morph, original.lang));
+  }
+  function contextBlock(): string {
+    const d = context.data;
+    if (!d) return "";
+    return buildContextBlock(d.title_pt || bookName(ref.book), d.theme, d.summary);
   }
 
   const okPicks = picks.filter((id) => results[id]?.status === "ok");
@@ -768,7 +791,6 @@ export function BibleCompare({
   }
 
   const cols = Math.min(picks.length, 3);
-  const firstOk = okPicks[0];
 
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -778,23 +800,7 @@ export function BibleCompare({
             <div className={styles.stEyebrow}>Estudo do Texto</div>
             <h2 className={styles.stRef}>{refLabel}</h2>
           </div>
-          {onAddToSermon ? (
-            <button
-              className="btn sm"
-              type="button"
-              style={{ marginLeft: "auto" }}
-              disabled={!firstOk}
-              onClick={() => {
-                if (firstOk) {
-                  onAddToSermon(blockFor(firstOk));
-                  onClose();
-                }
-              }}
-            >
-              → Adicionar ao sermão
-            </button>
-          ) : null}
-          <button className="iconbtn" type="button" aria-label="Fechar" style={onAddToSermon ? undefined : { marginLeft: "auto" }} onClick={onClose}>
+          <button className="iconbtn" type="button" aria-label="Fechar" style={{ marginLeft: "auto" }} onClick={onClose}>
             ×
           </button>
         </div>
@@ -861,6 +867,11 @@ export function BibleCompare({
                     {context.data.audience ? (<><dt>Público</dt><dd>{context.data.audience}</dd></>) : null}
                   </dl>
                 ) : null}
+                {onAddToSermon ? (
+                  <div style={{ marginTop: 16 }}>
+                    <AddToSermon getBlock={contextBlock} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
+                  </div>
+                ) : null}
               </>
             )}
           </div>
@@ -897,6 +908,11 @@ export function BibleCompare({
                         </button>
                         {on ? (
                           <div className={styles.stKwOcc}>
+                            {onAddToSermon ? (
+                              <div style={{ marginBottom: 10 }}>
+                                <AddToSermon getBlock={() => keywordBlock(k)} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
+                              </div>
+                            ) : null}
                             {occ.strong !== k.strong || occ.status === "loading" ? (
                               <span className="muted">Buscando ocorrências…</span>
                             ) : occ.status === "error" ? (
@@ -981,6 +997,11 @@ export function BibleCompare({
                         {meaning ? (<><dt>Significado</dt><dd>{meaning}</dd></>) : null}
                         {morph ? (<><dt>Morfologia</dt><dd>{morph}{morph !== (t.morph || "") ? <span className="muted"> · {t.morph}</span> : null}</dd></>) : null}
                       </dl>
+                      {onAddToSermon ? (
+                        <div style={{ marginTop: 12 }}>
+                          <AddToSermon getBlock={() => originalBlock(t)} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })()}
@@ -1013,6 +1034,11 @@ export function BibleCompare({
                     </button>
                   ))}
                 </div>
+                {onAddToSermon ? (
+                  <div style={{ marginTop: 12 }}>
+                    <AddToSermon getBlock={relatedBlock} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
+                  </div>
+                ) : null}
               </>
             )}
             <div className={styles.stCredit}>
@@ -1080,6 +1106,11 @@ export function BibleCompare({
                               )}
                             </div>
                             <div className={styles.stNoteBody}>{n.body}</div>
+                            {onAddToSermon ? (
+                              <div className={styles.asstNoteFoot}>
+                                <AddToSermon getBlock={() => n.body} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
+                              </div>
+                            ) : null}
                           </>
                         )}
                       </li>
@@ -1153,7 +1184,7 @@ export function BibleCompare({
                           <div className={styles.cmpActions}>
                             <button className="link" type="button" onClick={() => void navigator.clipboard?.writeText(blockFor(id))}>Copiar</button>
                             {onAddToSermon ? (
-                              <button className="link" type="button" onClick={() => { onAddToSermon(blockFor(id)); onClose(); }}>Adicionar ao sermão</button>
+                              <AddToSermon getBlock={() => blockFor(id)} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
                             ) : null}
                           </div>
                         </>

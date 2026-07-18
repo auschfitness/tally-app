@@ -745,6 +745,83 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+/* --- Fase 4: "Adicionar ao sermão" com seletor de seção (revelação progressiva) --- */
+/* Gatilho discreto por lente (link azul, sem caixa). */
+.addLens {
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 2px;
+  cursor: pointer;
+}
+.addLens:hover {
+  text-decoration: underline;
+}
+.addLens:disabled {
+  color: var(--text-2);
+  cursor: default;
+  text-decoration: none;
+}
+/* Linha de escolha revelada: rótulo + chips das 5 seções + cancelar. */
+.addPick {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.addPickLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-2);
+}
+.addPickBtn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color var(--dur-micro, 0.14s) var(--ease, ease), color var(--dur-micro, 0.14s) var(--ease, ease), background var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.addPickBtn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+/* "Notas" — destino padrão, com destaque sutil. */
+.addPickBtn.on {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: rgba(43, 92, 230, 0.08);
+}
+
+/* Painel de notas de estudo da passagem no Assistente (item 3). */
+.asstNotes {
+  margin-top: 18px;
+}
+.asstNoteItem {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  margin-top: 8px;
+}
+.asstNoteBody {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.asstNoteFoot {
+  display: flex;
+  margin-top: 8px;
+}
+
 .cmpCols {
   display: grid;
   gap: 12px;

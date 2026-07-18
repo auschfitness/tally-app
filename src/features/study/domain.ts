@@ -52,6 +52,9 @@ export interface SectionDef {
   label: string;
   ph: string;
 }
+export type SectionKey = SectionDef["key"];
+// Seção de destino padrão ao "Adicionar ao sermão" (o pastor pode escolher outra).
+export const DEFAULT_SECTION: SectionKey = "notes";
 export const SECTIONS: SectionDef[] = [
   { key: "outline", label: "Esboço", ph: "Introdução, pontos, sub-pontos…" },
   { key: "notes", label: "Notas", ph: "Texto livre de estudo" },
@@ -114,4 +117,51 @@ export function sermonIdsUsing(scriptures: Scripture[], book: string, chapter: n
     if (x.book === book && x.chapter === chapter && x.sermon_id !== exceptSermonId) ids.add(x.sermon_id);
   }
   return [...ids];
+}
+
+// --- Fase 4: lentes do estudo → blocos para o sermão (lógica PURA, testável) ---
+// Cada lente do hub "Estudo do Texto" vira um bloco de texto bem formatado, anexado ao
+// fim da seção escolhida do canvas. A montagem do texto fica aqui; o acesso a dados e a
+// escolha de seção ficam nos componentes.
+
+// Anexa um bloco ao fim de uma seção, preservando o que já existe (2 linhas de respiro).
+export function appendBlock(existing: string, block: string): string {
+  const b = (block ?? "").trim();
+  if (!b) return existing;
+  return (existing ? existing.replace(/\s+$/, "") + "\n\n" : "") + b;
+}
+
+// Traduções: "Referência (SIGLA)\n<texto dos versículos>".
+export function buildTranslationBlock(refLabel: string, short: string, verses: { n: number; text: string }[]): string {
+  const text = verses.map((v) => v.n + " " + v.text).join(" ");
+  return `${refLabel} (${short})\n${text}`;
+}
+
+// Referências: "Textos relacionados a <ref>:\n- <ref1>\n- <ref2>…".
+export function buildRelatedBlock(refLabel: string, related: { label: string }[]): string {
+  const lines = related.map((r) => `- ${r.label}`);
+  return `Textos relacionados a ${refLabel}:` + (lines.length ? "\n" + lines.join("\n") : "");
+}
+
+// Palavras-chave: "<lema> (<Strong>) — <significado> · aparece <N>× na Bíblia".
+export function buildKeywordBlock(k: { lemma: string; strong: string; meaning: string; occurrences: number | null }): string {
+  let s = `${k.lemma} (${k.strong})`;
+  if (k.meaning) s += ` — ${k.meaning}`;
+  if (k.occurrences != null) s += ` · aparece ${k.occurrences}× na Bíblia`;
+  return s;
+}
+
+// Original: "<surface> (<Strong>) — <lema>; <morfologia decodificada>".
+export function buildOriginalBlock(surface: string, strong: string | null, lemma: string | null, morphDecoded: string): string {
+  let head = surface;
+  if (strong) head += ` (${strong})`;
+  const detail = [lemma, morphDecoded].map((x) => (x || "").trim()).filter(Boolean).join("; ");
+  return detail ? `${head} — ${detail}` : head;
+}
+
+// Contexto: "<title_pt> — <theme>\n<summary>".
+export function buildContextBlock(title: string, theme: string | null, summary: string | null): string {
+  let head = title;
+  if (theme) head += ` — ${theme}`;
+  return summary ? `${head}\n${summary}` : head;
 }

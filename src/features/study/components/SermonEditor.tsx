@@ -8,16 +8,17 @@ import { Select } from "@/components/shared/Select";
 import { DateField } from "@/components/shared/DateField";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveSermonAction, syncSermonScripturesAction } from "../actions";
-import { OPTIONAL_SECTIONS, SECTIONS, STATUS_LBL, VIS_LBL } from "../domain";
-import type { Sermon, SermonContent } from "../types";
+import { listTextNotesAction, saveSermonAction, syncSermonScripturesAction } from "../actions";
+import { OPTIONAL_SECTIONS, STATUS_LBL, VIS_LBL, appendBlock, type SectionKey } from "../domain";
+import type { Sermon, SermonContent, TextNote } from "../types";
 import type { Series } from "../types";
 import { parseRefs, type ScriptureRef } from "@/lib/bible/parse";
 import { fetchPassage, type PassageResult } from "@/lib/bible/source";
+import { usfmToOsis } from "@/lib/bible/osis";
 import { BibleCompare } from "./BibleCompare";
+import { AddToSermon } from "./AddToSermon";
 import styles from "../study.module.css";
 
-type SectionKey = (typeof SECTIONS)[number]["key"];
 interface SectionValues {
   outline: string;
   notes: string;
@@ -225,13 +226,37 @@ export function SermonEditor({
     setPassage(res);
   }
 
-  function addBlockToNotes(block: string) {
-    setValues((prev) => ({ ...prev, notes: (prev.notes ? prev.notes.replace(/\s+$/, "") + "\n\n" : "") + block }));
+  // Anexa um bloco (de uma lente do estudo) ao fim da SEÇÃO escolhida do canvas. Se a
+  // seção era opcional e estava oculta, passa a aparecer (agora tem conteúdo).
+  function addBlockToSection(block: string, section: SectionKey) {
+    setValues((prev) => ({ ...prev, [section]: appendBlock(prev[section], block) }));
+    if (section !== "notes") setPresent((prev) => new Set(prev).add(section));
     scheduleSave();
   }
 
   const addable = OPTIONAL_SECTIONS.filter((s) => !present.has(s.key));
   const detected = refsFor(meta.main_passage, values, recognizeOn);
+
+  // Notas de estudo da passagem principal (item 3): livro/capítulo derivados do
+  // main_passage pelo mesmo parser do editor. Carregadas quando o Assistente abre
+  // (revelação progressiva); a RLS já filtra por autor. Sem notas, o painel some.
+  const mainRef = parseRefs(meta.main_passage)[0] ?? null;
+  const mainOsis = mainRef ? usfmToOsis(mainRef.book) : null;
+  const mainChapter = mainRef?.chapter ?? null;
+  const [studyNotes, setStudyNotes] = useState<TextNote[]>([]);
+  useEffect(() => {
+    if (!assistantOpen || !mainOsis || !mainChapter) {
+      setStudyNotes([]);
+      return;
+    }
+    let alive = true;
+    void listTextNotesAction(mainOsis, mainChapter).then((res) => {
+      if (alive) setStudyNotes(res.success ? res.data : []);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [assistantOpen, mainOsis, mainChapter]);
 
   return (
     <div>
@@ -327,6 +352,20 @@ export function SermonEditor({
                 )}
               </div>
             ) : null}
+
+            {studyNotes.length ? (
+              <div className={styles.asstNotes}>
+                <div className={styles.seclabel}>Notas de estudo {mainRef ? `· ${mainRef.reference}` : ""}</div>
+                {studyNotes.map((n) => (
+                  <div key={n.id} className={styles.asstNoteItem}>
+                    <div className={styles.asstNoteBody}>{n.body}</div>
+                    <div className={styles.asstNoteFoot}>
+                      <AddToSermon getBlock={() => n.body} onAdd={addBlockToSection} label="→ usar no sermão" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </aside>
         </>
       ) : null}
@@ -335,7 +374,7 @@ export function SermonEditor({
         <BibleCompare
           initialRef={compareRef}
           locale={locale}
-          onAddToSermon={addBlockToNotes}
+          onAddToSermon={addBlockToSection}
           onClose={() => setCompareOpen(false)}
         />
       ) : null}
