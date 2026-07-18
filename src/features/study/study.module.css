@@ -462,6 +462,89 @@
 .stCredit a:hover {
   color: var(--blue);
 }
+
+/* Aba Original (texto grego/hebraico, palavra a palavra + popover) */
+.stOrig {
+  min-height: 120px;
+}
+.stOrigText {
+  font-size: 20px;
+  line-height: 2.1;
+  color: var(--text);
+}
+.stOrigVerse {
+  display: inline;
+}
+.stOrigVn {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  margin: 0 4px;
+  vertical-align: super;
+}
+/* Palavra do original — alvo de toque; realça a selecionada. */
+.stWord {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 1px 3px;
+  margin: 0 1px;
+  border-radius: 6px;
+  transition: background var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.stWord:hover {
+  background: rgba(43, 92, 230, 0.08);
+}
+.stWord.on {
+  background: rgba(43, 92, 230, 0.16);
+  color: var(--blue);
+}
+.stWordHint {
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+/* Card de detalhe da palavra (popover-like, revelado ao tocar). */
+.stWordCard {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 14px 16px;
+}
+.stWordHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.stWordSurface {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+}
+.stWordTranslit {
+  font-size: 13px;
+  color: var(--text-2);
+  font-style: italic;
+}
+.stWordDl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 13.5px;
+}
+.stWordDl dt {
+  color: var(--text-2);
+  font-weight: 600;
+}
+.stWordDl dd {
+  margin: 0;
+  color: var(--text);
+}
 .cmpCols {
   display: grid;
   gap: 12px;

@@ -66,7 +66,18 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   no topo) e **"Capítulo inteiro"**. Arquitetura **agnóstica de tradução** (só domínio
   público; nada de texto protegido no repo; uma API licenciada futura entra no mesmo
   ponto). Aberto do assistente ("Estudo do Texto") e por referência ("Estudar texto").
-  Fases 2+ (original grego/hebraico + Strong, contexto) têm handoffs próprios.
+  Fases 2+ (contexto) têm handoffs próprios.
+- **Aba Original — texto grego/hebraico (Fase 2):** ligada às tabelas GLOBAIS
+  `bible_original_tokens` + `strongs_lexicon` (m34, leitura livre, STEPBible CC BY 4.0).
+  Ao abrir a passagem, busca os tokens por `book(OSIS)/chapter/verse` (ordena por
+  `verse,position`) e o léxico dos Strong presentes; renderiza o versículo palavra a
+  palavra. Tocar numa palavra abre um card com surface/translit/lema/Strong/significado
+  + **morfologia decodificada** (`lib/bible/morph.ts`, puro + teste; ex.: `V-AAI-3S` →
+  "Verbo · Aoristo · Ativa · Indicativo · 3ª pessoa · singular"; cai no código cru se não
+  reconhecer). Hebraico renderiza **RTL**. Estado vazio elegante até a carga; crédito
+  "Dados originais © STEPBible.org, CC BY 4.0". Loader `scripts/seed-original-text.mjs`
+  (carga do dono, precisa service key). Mesmo padrão de fetch da aba Referências
+  (dedupe via `useRef`, deps `[tab, ref]`).
 - **Aba Referências — cross-refs TSK (Fase 1b):** ligada à tabela GLOBAL
   `cross_references` (m33, leitura livre, sem org_id) via cliente do navegador. Ao abrir
   uma passagem, consulta por `from_book/from_chapter/from_verse` (versículos em foco),

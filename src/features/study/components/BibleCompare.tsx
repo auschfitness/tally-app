@@ -18,6 +18,7 @@ import { BOOKS, bookName } from "@/lib/bible/books";
 import { fetchPassage, listTranslations, type PassageVerse, type Translation } from "@/lib/bible/source";
 import { usfmToOsis } from "@/lib/bible/osis";
 import { aggregateRelated, type CrossRefRow, type RelatedRef } from "@/lib/bible/crossref";
+import { decodeMorph } from "@/lib/bible/morph";
 import type { ScriptureRef } from "@/lib/bible/parse";
 import styles from "../study.module.css";
 
@@ -143,13 +144,9 @@ const TABS = [
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
-// Abas ainda sem dado (placeholders "Em breve"). Referências (refs) e Traduções (trans)
-// têm conteúdo próprio e não entram aqui.
-const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs">, { title: string; desc: string }> = {
-  original: {
-    title: "Idiomas originais",
-    desc: "Grego e hebraico com Strong e morfologia — tocar numa palavra abre o significado. Chega na próxima fase.",
-  },
+// Abas ainda sem dado (placeholders "Em breve"). Traduções (trans), Referências (refs)
+// e Original têm conteúdo próprio e não entram aqui.
+const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs" | "original">, { title: string; desc: string }> = {
   keywords: {
     title: "Palavras-chave",
     desc: "Termos importantes do texto e onde mais aparecem na Bíblia. Chega junto com o original.",
@@ -168,6 +165,33 @@ interface RelatedState {
   key: string;
   status: "loading" | "ok" | "error";
   items: RelatedRef[];
+}
+
+// Token do texto original (bible_original_tokens) + entrada do léxico (strongs_lexicon).
+interface OrigToken {
+  verse: number;
+  position: number;
+  surface: string;
+  lemma: string | null;
+  strong: string | null;
+  morph: string | null;
+  gloss: string | null;
+  translit: string | null;
+}
+interface LexEntry {
+  strong: string;
+  lemma: string | null;
+  translit: string | null;
+  pronunciation: string | null;
+  gloss: string | null;
+  definition: string | null;
+}
+interface OriginalState {
+  key: string;
+  status: "loading" | "ok" | "error";
+  lang: string;
+  tokens: OrigToken[];
+  lex: Record<string, LexEntry>;
 }
 
 export function BibleCompare({
@@ -206,6 +230,10 @@ export function BibleCompare({
   // efeito (senão o setRelated de "loading" reexecutaria o efeito e cancelaria a própria
   // busca via cleanup, prendendo em "Buscando…").
   const fetchedRefKey = useRef<string>("");
+
+  const [original, setOriginal] = useState<OriginalState>({ key: "", status: "ok", lang: "", tokens: [], lex: {} });
+  const [selTok, setSelTok] = useState<string>(""); // "verse-position" da palavra tocada
+  const fetchedOrigKey = useRef<string>("");
 
   useEffect(() => {
     let alive = true;
@@ -263,6 +291,67 @@ export function BibleCompare({
           return;
         }
         setRelated({ key, status: "ok", items: aggregateRelated((data ?? []) as CrossRefRow[], 12) });
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, ref]);
+
+  // Texto original (STEPBible) — busca sob demanda na aba "Original". Mesmo padrão da
+  // aba Referências (dedupe por useRef, deps [tab, ref]). Busca os tokens da passagem e,
+  // num 2º passo, o léxico dos Strong presentes (para enriquecer o popover). Vazio
+  // elegante enquanto o banco (m34) não tiver os dados.
+  useEffect(() => {
+    if (tab !== "original") return;
+    const key = refKeyOf(ref);
+    if (fetchedOrigKey.current === key) return;
+    fetchedOrigKey.current = key;
+    setSelTok("");
+    const osis = usfmToOsis(ref.book);
+    if (!osis || !ref.chapter) {
+      setOriginal({ key, status: "ok", lang: "", tokens: [], lex: {} });
+      return;
+    }
+    let alive = true;
+    setOriginal({ key, status: "loading", lang: "", tokens: [], lex: {} });
+    const supabase = createClient();
+    let q = supabase
+      .from("bible_original_tokens")
+      .select("verse,position,surface,lemma,strong,morph,gloss,translit,lang")
+      .eq("book", osis)
+      .eq("chapter", ref.chapter);
+    if (ref.verse_start) {
+      const ve = ref.verse_end && ref.verse_end >= ref.verse_start ? ref.verse_end : ref.verse_start;
+      const verses: number[] = [];
+      for (let n = ref.verse_start; n <= ve; n++) verses.push(n);
+      q = q.in("verse", verses);
+    }
+    void q
+      .order("verse", { ascending: true })
+      .order("position", { ascending: true })
+      .limit(2000)
+      .then(async ({ data, error }) => {
+        if (!alive) return;
+        if (error) {
+          fetchedOrigKey.current = "";
+          setOriginal({ key, status: "error", lang: "", tokens: [], lex: {} });
+          return;
+        }
+        const tokens = (data ?? []) as (OrigToken & { lang: string })[];
+        const lang = tokens[0]?.lang || "";
+        // 2º passo: léxico dos Strong presentes (enriquecimento do popover).
+        const strongs = [...new Set(tokens.map((t) => t.strong).filter((s): s is string => !!s))];
+        const lex: Record<string, LexEntry> = {};
+        if (strongs.length) {
+          const { data: lx } = await supabase
+            .from("strongs_lexicon")
+            .select("strong,lemma,translit,pronunciation,gloss,definition")
+            .in("strong", strongs);
+          for (const e of (lx ?? []) as LexEntry[]) lex[e.strong] = e;
+        }
+        if (!alive) return;
+        setOriginal({ key, status: "ok", lang, tokens, lex });
       });
     return () => {
       alive = false;
@@ -499,7 +588,72 @@ export function BibleCompare({
           ))}
         </div>
 
-        {tab === "refs" ? (
+        {tab === "original" ? (
+          <div className={styles.stOrig}>
+            {original.status === "loading" ? (
+              <div className="muted">Carregando o texto original…</div>
+            ) : original.status === "error" ? (
+              <div className="muted">Não foi possível carregar o texto original agora.</div>
+            ) : original.tokens.length === 0 ? (
+              <div className={styles.stPh}>
+                <div className={styles.stPhTitle}>Texto original em breve</div>
+                <div className="muted" style={{ maxWidth: 380 }}>
+                  Ainda não temos o grego/hebraico de <b>{refLabel}</b>. Assim que a base do original for carregada, esta aba mostra a passagem palavra a palavra, com Strong e morfologia.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                  {original.lang === "hbo" ? "Hebraico" : "Grego"} · toque numa palavra para ver Strong, lema e morfologia
+                </div>
+                <div className={styles.stOrigText} dir={original.lang === "hbo" ? "rtl" : "ltr"} lang={original.lang === "hbo" ? "he" : "el"}>
+                  {[...new Set(original.tokens.map((t) => t.verse))].map((vn) => (
+                    <span key={vn} className={styles.stOrigVerse}>
+                      <sup className={styles.stOrigVn} dir="ltr">{vn}</sup>
+                      {original.tokens.filter((t) => t.verse === vn).map((t) => {
+                        const id = `${t.verse}-${t.position}`;
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className={`${styles.stWord}${selTok === id ? " " + styles.on : ""}`}
+                            onClick={() => setSelTok(selTok === id ? "" : id)}
+                          >
+                            {t.surface}
+                          </button>
+                        );
+                      })}
+                    </span>
+                  ))}
+                </div>
+                {(() => {
+                  const t = original.tokens.find((x) => `${x.verse}-${x.position}` === selTok);
+                  if (!t) {
+                    return <div className={styles.stWordHint}>Toque numa palavra acima.</div>;
+                  }
+                  const lex = t.strong ? original.lex[t.strong] : undefined;
+                  const morph = decodeMorph(t.morph, original.lang);
+                  const meaning = lex?.definition || lex?.gloss || t.gloss || "";
+                  return (
+                    <div className={styles.stWordCard}>
+                      <div className={styles.stWordHead}>
+                        <span className={styles.stWordSurface} lang={original.lang === "hbo" ? "he" : "el"}>{t.surface}</span>
+                        {t.translit ? <span className={styles.stWordTranslit}>{t.translit}</span> : null}
+                      </div>
+                      <dl className={styles.stWordDl}>
+                        {t.lemma ? (<><dt>Lema</dt><dd lang={original.lang === "hbo" ? "he" : "el"}>{t.lemma}</dd></>) : null}
+                        {t.strong ? (<><dt>Strong</dt><dd>{t.strong}</dd></>) : null}
+                        {meaning ? (<><dt>Significado</dt><dd>{meaning}</dd></>) : null}
+                        {morph ? (<><dt>Morfologia</dt><dd>{morph}{morph !== (t.morph || "") ? <span className="muted"> · {t.morph}</span> : null}</dd></>) : null}
+                      </dl>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+            <div className={styles.stCredit}>Dados originais © STEPBible.org, CC BY 4.0.</div>
+          </div>
+        ) : tab === "refs" ? (
           <div className={styles.stRefs}>
             {related.status === "loading" ? (
               <div className="muted">Buscando textos relacionados…</div>
