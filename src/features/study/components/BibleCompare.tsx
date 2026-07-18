@@ -145,13 +145,8 @@ const TABS = [
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
-// Abas ainda sem dado (placeholders "Em breve"). Traduções/Referências/Original/
-// Palavras-chave têm conteúdo próprio e não entram aqui.
-const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs" | "original" | "keywords">, { title: string; desc: string }> = {
-  context: {
-    title: "Contexto",
-    desc: "Autor, data, público e tema do texto, na voz do Tally. Em breve.",
-  },
+// Abas ainda sem dado (placeholders "Em breve"). As demais têm conteúdo próprio.
+const PLACEHOLDERS: Record<Exclude<TabKey, "trans" | "refs" | "original" | "keywords" | "context">, { title: string; desc: string }> = {
   notes: {
     title: "Notas de estudo",
     desc: "Suas anotações sobre o texto, guardadas junto do estudo. Em breve.",
@@ -201,6 +196,21 @@ interface OccState {
   status: "loading" | "ok" | "error";
   refs: RelatedRef[];
 }
+// Contexto editorial de UM livro (bible_book_context).
+interface ContextRow {
+  testament: string;
+  title_pt: string | null;
+  author: string | null;
+  date_range: string | null;
+  audience: string | null;
+  theme: string | null;
+  summary: string | null;
+}
+interface ContextState {
+  book: string; // código USFM do livro carregado
+  status: "loading" | "ok" | "error";
+  data: ContextRow | null;
+}
 
 export function BibleCompare({
   initialRef,
@@ -247,6 +257,9 @@ export function BibleCompare({
   const fetchedFreqKey = useRef<string>("");
   const [openKw, setOpenKw] = useState<string>(""); // Strong da palavra-chave expandida
   const [occ, setOcc] = useState<OccState>({ strong: "", status: "ok", refs: [] });
+
+  const [context, setContext] = useState<ContextState>({ book: "", status: "ok", data: null });
+  const fetchedCtxBook = useRef<string>("");
 
   useEffect(() => {
     let alive = true;
@@ -448,6 +461,41 @@ export function BibleCompare({
       alive = false;
     };
   }, [openKw]);
+
+  // Contexto editorial do LIVRO (bible_book_context) — cartão calmo. Por livro, então só
+  // refaz quando o livro muda (não a cada capítulo/versículo). Dedupe por useRef.
+  useEffect(() => {
+    if (tab !== "context") return;
+    const osis = usfmToOsis(ref.book);
+    if (!osis) {
+      fetchedCtxBook.current = ref.book;
+      setContext({ book: ref.book, status: "ok", data: null });
+      return;
+    }
+    if (fetchedCtxBook.current === ref.book) return;
+    fetchedCtxBook.current = ref.book;
+    let alive = true;
+    setContext({ book: ref.book, status: "loading", data: null });
+    const supabase = createClient();
+    void supabase
+      .from("bible_book_context")
+      .select("testament,title_pt,author,date_range,audience,theme,summary")
+      .eq("book", osis)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error) {
+          fetchedCtxBook.current = "";
+          setContext({ book: ref.book, status: "error", data: null });
+          return;
+        }
+        setContext({ book: ref.book, status: "ok", data: (data as ContextRow) ?? null });
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, ref.book]);
 
   // Palavras-chave da passagem (puro): descarta funcionais, agrupa por Strong, ranqueia.
   const keywords = useMemo<Keyword[]>(() => {
@@ -690,7 +738,34 @@ export function BibleCompare({
           ))}
         </div>
 
-        {tab === "keywords" ? (
+        {tab === "context" ? (
+          <div className={styles.stCtx}>
+            {context.status === "loading" ? (
+              <div className="muted">Carregando o contexto…</div>
+            ) : context.status === "error" ? (
+              <div className="muted">Não foi possível carregar o contexto agora.</div>
+            ) : !context.data ? (
+              <div className={styles.stPh}>
+                <div className={styles.stPhTitle}>Contexto em breve</div>
+                <div className="muted" style={{ maxWidth: 380 }}>Ainda não temos o contexto de <b>{bookName(ref.book)}</b>.</div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.stCtxEyebrow}>{context.data.testament === "NT" ? "Novo Testamento" : "Antigo Testamento"}</div>
+                <h3 className={styles.stCtxTitle}>{context.data.title_pt || bookName(ref.book)}</h3>
+                {context.data.theme ? <div className={styles.stCtxTheme}>{context.data.theme}</div> : null}
+                {context.data.summary ? <p className={styles.stCtxSummary}>{context.data.summary}</p> : null}
+                {(context.data.author || context.data.date_range || context.data.audience) ? (
+                  <dl className={styles.stCtxMeta}>
+                    {context.data.author ? (<><dt>Autoria</dt><dd>{context.data.author}</dd></>) : null}
+                    {context.data.date_range ? (<><dt>Época</dt><dd>{context.data.date_range}</dd></>) : null}
+                    {context.data.audience ? (<><dt>Público</dt><dd>{context.data.audience}</dd></>) : null}
+                  </dl>
+                ) : null}
+              </>
+            )}
+          </div>
+        ) : tab === "keywords" ? (
           <div className={styles.stKw}>
             {original.status === "loading" ? (
               <div className="muted">Analisando as palavras…</div>

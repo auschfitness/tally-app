@@ -145,6 +145,42 @@ export type Database = {
           },
         ]
       }
+      bible_book_context: {
+        Row: {
+          audience: string | null
+          author: string | null
+          book: string
+          date_range: string | null
+          summary: string | null
+          testament: string
+          theme: string | null
+          title_pt: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string | null
+          author?: string | null
+          book: string
+          date_range?: string | null
+          summary?: string | null
+          testament: string
+          theme?: string | null
+          title_pt: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string | null
+          author?: string | null
+          book?: string
+          date_range?: string | null
+          summary?: string | null
+          testament?: string
+          theme?: string | null
+          title_pt?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bible_original_tokens: {
         Row: {
           book: string

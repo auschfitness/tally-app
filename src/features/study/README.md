@@ -87,6 +87,14 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   (query `bible_original_tokens` por `strong`, top ~40 versículos) como chips que abrem
   a passagem via `openRelated`. Crédito STEPBible CC BY. `strong_frequency` (strong/lang/
   occurrences) entrou nos tipos nesta fatia (regen).
+- **Aba Contexto (Fase 3):** cartão editorial por LIVRO, de `bible_book_context` (m36,
+  GLOBAL, leitura livre; 66 livros semeados pelo orquestrador na voz do Tally). Busca 1
+  linha por `usfmToOsis(ref.book)` (`maybeSingle`), só refaz quando o livro muda (dedupe
+  por `useRef`). Card calmo (design-principles): eyebrow AT/NT + `title_pt`; `theme` em
+  destaque (azul); `summary` como corpo; `author`/`date_range`/`audience` como metadados
+  (Autoria/Época/Público). Sem crédito externo (conteúdo editorial do Tally). Tipos
+  regenerados (bible_book_context). **Aba Notas** segue placeholder — depende do banco
+  `study_text_notes` (m37, ainda não aplicado) + decisão de privacidade.
 - **Aba Referências — cross-refs TSK (Fase 1b):** ligada à tabela GLOBAL
   `cross_references` (m33, leitura livre, sem org_id) via cliente do navegador. Ao abrir
   uma passagem, consulta por `from_book/from_chapter/from_verse` (versículos em foco),
