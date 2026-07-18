@@ -272,19 +272,157 @@
 .cmpVer {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   font-size: 12.5px;
   color: var(--text);
   border: 1px solid var(--border);
   background: var(--surface-2);
   border-radius: 999px;
-  padding: 5px 11px;
-  cursor: pointer;
+  padding: 4px 8px 4px 11px;
 }
 .cmpVer.on {
   border-color: var(--blue);
   color: var(--blue);
   background: rgba(43, 92, 230, 0.08);
+}
+.cmpVerLbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+/* Estrela de favoritar versão — âncora sutil, ganha cor quando marcada. */
+.cmpStar {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  color: var(--text-2);
+  transition: color var(--dur-micro, 0.14s) var(--ease, ease), transform var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.cmpStar:hover {
+  transform: scale(1.12);
+  color: var(--blue);
+}
+.cmpStar.on {
+  color: #e5a41a;
+}
+/* Toggle de destaque de diferenças. */
+.cmpDiffToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+/* Palavra que diverge entre versões — realce sutil (cor contida). */
+.cmpDiff {
+  background: rgba(43, 92, 230, 0.12);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* --- Hub "Estudo do Texto": cabeçalho, abas, histórico, placeholders --- */
+.stEyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
+}
+.stRef {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 2px 0 0;
+  line-height: 1.15;
+}
+.stHist {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.stHistLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  margin-right: 2px;
+}
+.stHistChip {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color var(--dur-micro, 0.14s) var(--ease, ease), color var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.stHistChip:hover {
+  border-color: var(--blue);
+  color: var(--text);
+}
+.stTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.stTab {
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--dur-micro, 0.14s) var(--ease, ease), border-color var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.stTab:hover {
+  color: var(--text);
+}
+.stTab.on {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+  font-weight: 600;
+}
+.stPh {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 40px 16px;
+}
+.stPhTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.stSoon {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
 }
 .cmpCols {
   display: grid;

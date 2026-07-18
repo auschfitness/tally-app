@@ -1,11 +1,16 @@
 "use client";
 
-// Comparar Bíblia — buscar/ler/comparar passagens em versões de domínio público,
-// lado a lado. Restaura a integração bíblica do app legado (regressão da migração
-// Next). Texto vem da Free Use Bible API (helloao, client-side); nada no nosso banco.
-// Gate de licença: só versões que temos direito de exibir — o catálogo helloao é de
-// uso livre/comercial, então todas passam (ponto único onde uma fonte licenciada
-// futura, ESV/NIV, seria barrada). Interlinear grego/hebraico segue ADIADO.
+// Estudo do Texto — hub de estudo da passagem (a passagem é a estrela). Reframe do
+// antigo "Comparar Bíblia": comparar traduções vira UMA das lentes. Abas de revelação
+// progressiva (Traduções ativa; Original/Palavras-chave/Contexto/Referências/Notas
+// como placeholders elegantes até o dado chegar do orquestrador). Texto vem da Free
+// Use Bible API (helloao, client-side); nada no nosso banco. Arquitetura AGNÓSTICA de
+// tradução — nunca hard-code de versão; só domínio público (o gate vive na fonte;
+// uma fonte licenciada futura, ESV/NIV, seria barrada ali). Interlinear grego/hebraico
+// e o resto das lentes chegam nas Fases 2+.
+//
+// Persistência de preferência do pastor (favoritos + histórico) fica em localStorage
+// por aparelho (cross-device fica p/ depois). Diff de versões é calculado no cliente.
 import { useEffect, useMemo, useState } from "react";
 import { Select } from "@/components/shared/Select";
 import { BOOKS, bookName } from "@/lib/bible/books";
@@ -35,16 +40,128 @@ function isCurated(t: Translation, lang: LangCode): boolean {
   return CURATED[lang].some((tok) => hay.includes(tok));
 }
 
+// --- Preferências por aparelho (localStorage). Guardadas por chave estável. ---
+const FAV_KEY = "tally.bible.favVersions";
+const HIST_KEY = "tally.bible.history";
+const HIST_MAX = 8;
+
+function readLS<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? (v as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function writeLS(key: string, value: unknown): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* cota cheia / modo privado — ignorar */
+  }
+}
+
 interface CmpRef {
   book: string;
   chapter: number;
   verse_start: number | null;
   verse_end: number | null;
 }
+interface HistItem {
+  key: string;
+  book: string;
+  chapter: number;
+  verse_start: number | null;
+  verse_end: number | null;
+  label: string;
+}
 type ColResult =
   | { status: "loading" }
   | { status: "error"; error?: string }
   | { status: "ok"; verses: PassageVerse[] };
+
+function refKeyOf(r: CmpRef): string {
+  return r.book + "-" + r.chapter + "-" + (r.verse_start || "") + "-" + (r.verse_end || "");
+}
+function labelForRef(r: CmpRef): string {
+  return (
+    bookName(r.book) +
+    " " +
+    r.chapter +
+    (r.verse_start ? ":" + r.verse_start + (r.verse_end && r.verse_end !== r.verse_start ? "-" + r.verse_end : "") : "")
+  );
+}
+
+// Normaliza uma palavra p/ comparação de diff: minúscula, sem pontuação nas pontas.
+function normWord(w: string): string {
+  return w.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+}
+
+// Diff por versículo entre as versões escolhidas: para cada nº de versículo, devolve o
+// conjunto de palavras COMUNS a todas as versões que têm aquele versículo. Uma palavra
+// fora desse conjunto é uma divergência (destacada). Só marca quando 2+ versões têm o
+// versículo — versão única não gera destaque.
+function commonWordsByVerse(results: Record<string, ColResult>, picks: string[]): Map<number, Set<string>> {
+  const perVerse = new Map<number, Set<string>[]>();
+  for (const id of picks) {
+    const res = results[id];
+    if (!res || res.status !== "ok") continue;
+    for (const v of res.verses) {
+      const toks = new Set(v.text.split(/\s+/).map(normWord).filter(Boolean));
+      if (!perVerse.has(v.n)) perVerse.set(v.n, []);
+      perVerse.get(v.n)!.push(toks);
+    }
+  }
+  const out = new Map<number, Set<string>>();
+  for (const [n, sets] of perVerse) {
+    if (sets.length < 2) continue; // nada a comparar
+    let common = new Set(sets[0]);
+    for (let i = 1; i < sets.length; i++) {
+      const next = new Set<string>();
+      for (const w of common) if (sets[i]!.has(w)) next.add(w);
+      common = next;
+    }
+    out.set(n, common);
+  }
+  return out;
+}
+
+const TABS = [
+  { key: "trans", label: "Traduções" },
+  { key: "original", label: "Original" },
+  { key: "keywords", label: "Palavras-chave" },
+  { key: "context", label: "Contexto" },
+  { key: "refs", label: "Referências" },
+  { key: "notes", label: "Notas" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
+const PLACEHOLDERS: Record<Exclude<TabKey, "trans">, { title: string; desc: string }> = {
+  original: {
+    title: "Idiomas originais",
+    desc: "Grego e hebraico com Strong e morfologia — tocar numa palavra abre o significado. Chega na próxima fase.",
+  },
+  keywords: {
+    title: "Palavras-chave",
+    desc: "Termos importantes do texto e onde mais aparecem na Bíblia. Chega junto com o original.",
+  },
+  context: {
+    title: "Contexto",
+    desc: "Autor, data, público e tema do texto, na voz do Tally. Em breve.",
+  },
+  refs: {
+    title: "Textos relacionados",
+    desc: "Referências cruzadas — outras passagens que conversam com esta. Em breve.",
+  },
+  notes: {
+    title: "Notas de estudo",
+    desc: "Suas anotações sobre o texto, guardadas junto do estudo. Em breve.",
+  },
+};
 
 export function BibleCompare({
   initialRef,
@@ -71,6 +188,13 @@ export function BibleCompare({
   const [vsStr, setVsStr] = useState(ref.verse_start ? String(ref.verse_start) : "");
   const [veStr, setVeStr] = useState(ref.verse_end ? String(ref.verse_end) : "");
 
+  const [tab, setTab] = useState<TabKey>("trans");
+  const [diffOn, setDiffOn] = useState(true);
+  // Preferências por aparelho — só o cliente renderiza este componente (fica atrás de
+  // um estado aberto por interação), então ler o localStorage no init é seguro.
+  const [favs, setFavs] = useState<string[]>(() => readLS<string[]>(FAV_KEY, []));
+  const [history, setHistory] = useState<HistItem[]>(() => readLS<HistItem[]>(HIST_KEY, []));
+
   useEffect(() => {
     let alive = true;
     listTranslations()
@@ -81,19 +205,26 @@ export function BibleCompare({
     };
   }, []);
 
+  // Registra a passagem inicial no histórico, uma vez.
+  useEffect(() => {
+    if (ref.book && ref.chapter) pushHistory(ref);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const versionsForLang = useMemo(
     () => (translations ?? []).filter((t) => (t.language || "").toLowerCase() === lang),
     [translations, lang],
   );
 
-  // Poucas versões por padrão (curadas); o resto atrás de "Mais versões". Se nenhuma
-  // versão casar a curadoria nesta língua, mostra as 3 primeiras como fallback (nunca
-  // um padrão vazio).
+  // Poucas versões por padrão (curadas + favoritas); o resto atrás de "Mais versões".
+  // Se nada casar a curadoria nesta língua, mostra as 3 primeiras (nunca padrão vazio).
   const { primary, extra } = useMemo(() => {
-    const cur = versionsForLang.filter((t) => isCurated(t, lang));
-    if (cur.length) return { primary: cur, extra: versionsForLang.filter((t) => !isCurated(t, lang)) };
+    const favSet = new Set(favs);
+    const isPrimary = (t: Translation) => isCurated(t, lang) || favSet.has(t.id);
+    const cur = versionsForLang.filter(isPrimary);
+    if (cur.length) return { primary: cur, extra: versionsForLang.filter((t) => !isPrimary(t)) };
     return { primary: versionsForLang.slice(0, 3), extra: versionsForLang.slice(3) };
-  }, [versionsForLang, lang]);
+  }, [versionsForLang, lang, favs]);
 
   function runFor(ids: string[], r: CmpRef) {
     if (!ids.length) return;
@@ -112,14 +243,35 @@ export function BibleCompare({
     }
   }
 
-  // Ao carregar as versões: seleciona as 2 primeiras curadas e busca.
+  // Ao carregar as versões: pré-seleciona as favoritas disponíveis nesta língua; sem
+  // favoritas, as 2 primeiras curadas. Depois busca.
   useEffect(() => {
     if (!translations) return;
-    const def = primary.slice(0, 2).map((t) => t.id);
+    const favAvail = favs.filter((id) => versionsForLang.some((t) => t.id === id));
+    const def = (favAvail.length ? favAvail : primary.map((t) => t.id)).slice(0, favAvail.length ? 3 : 2);
     setPicks(def);
     runFor(def, ref);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [translations, lang]);
+
+  function pushHistory(r: CmpRef) {
+    const key = refKeyOf(r);
+    setHistory((prev) => {
+      const next = [
+        { key, book: r.book, chapter: r.chapter, verse_start: r.verse_start, verse_end: r.verse_end, label: labelForRef(r) },
+        ...prev.filter((h) => h.key !== key),
+      ].slice(0, HIST_MAX);
+      writeLS(HIST_KEY, next);
+      return next;
+    });
+  }
+  function toggleFav(id: string) {
+    setFavs((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      writeLS(FAV_KEY, next);
+      return next;
+    });
+  }
 
   function applyInputs(): CmpRef {
     const r: CmpRef = {
@@ -131,8 +283,10 @@ export function BibleCompare({
     setRef(r);
     return r;
   }
-  function compareNow() {
-    runFor(picks, applyInputs());
+  function openNow() {
+    const r = applyInputs();
+    runFor(picks, r);
+    pushHistory(r);
   }
   function wholeChapter() {
     const r: CmpRef = { ...ref, chapter: parseInt(chapStr, 10) || ref.chapter, verse_start: null, verse_end: null };
@@ -140,6 +294,17 @@ export function BibleCompare({
     setVsStr("");
     setVeStr("");
     runFor(picks, r);
+    pushHistory(r);
+  }
+  function selectHistory(h: HistItem) {
+    const r: CmpRef = { book: h.book, chapter: h.chapter, verse_start: h.verse_start, verse_end: h.verse_end };
+    setRef(r);
+    setChapStr(String(h.chapter));
+    setVsStr(h.verse_start ? String(h.verse_start) : "");
+    setVeStr(h.verse_end ? String(h.verse_end) : "");
+    setTab("trans");
+    runFor(picks, r);
+    pushHistory(r);
   }
   function togglePick(id: string) {
     setPicks((prev) => {
@@ -149,11 +314,7 @@ export function BibleCompare({
     });
   }
 
-  const refLabel =
-    bookName(ref.book) +
-    " " +
-    ref.chapter +
-    (ref.verse_start ? ":" + ref.verse_start + (ref.verse_end && ref.verse_end !== ref.verse_start ? "-" + ref.verse_end : "") : "");
+  const refLabel = labelForRef(ref);
 
   function labelFor(id: string): string {
     const tr = (translations ?? []).find((t) => t.id === id);
@@ -168,19 +329,70 @@ export function BibleCompare({
     return `${refLabel} (${short})\n${text}`;
   }
 
+  const okPicks = picks.filter((id) => results[id]?.status === "ok");
+  const common = useMemo(
+    () => (diffOn && okPicks.length >= 2 ? commonWordsByVerse(results, picks) : new Map<number, Set<string>>()),
+    [diffOn, okPicks.length, results, picks],
+  );
+
+  // Renderiza um versículo, destacando as palavras que divergem entre as versões.
+  function renderVerse(v: PassageVerse) {
+    const commonSet = common.get(v.n);
+    return (
+      <span key={v.n}>
+        <sup style={{ color: "var(--text-2)", marginRight: 3 }}>{v.n}</sup>
+        {!commonSet
+          ? v.text + " "
+          : v.text.split(/(\s+)/).map((seg, i) => {
+              if (/^\s+$/.test(seg) || seg === "") return seg;
+              const nw = normWord(seg);
+              const diff = nw && !commonSet.has(nw);
+              return diff ? (
+                <mark key={i} className={styles.cmpDiff}>
+                  {seg}
+                </mark>
+              ) : (
+                <span key={i}>{seg}</span>
+              );
+            })}
+        {commonSet ? " " : null}
+      </span>
+    );
+  }
+
   const cols = Math.min(picks.length, 3);
+  const firstOk = okPicks[0];
 
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <form className={`modal ${styles.cmp}`} onSubmit={(e) => e.preventDefault()}>
         <div className={styles.cmpHead}>
-          <h3>Comparar Bíblia</h3>
-          <button className="iconbtn" type="button" aria-label="Fechar" style={{ marginLeft: "auto" }} onClick={onClose}>×</button>
-        </div>
-        <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
-          Versões de domínio público. Passagem: <b>{refLabel}</b>
+          <div>
+            <div className={styles.stEyebrow}>Estudo do Texto</div>
+            <h2 className={styles.stRef}>{refLabel}</h2>
+          </div>
+          {onAddToSermon ? (
+            <button
+              className="btn sm"
+              type="button"
+              style={{ marginLeft: "auto" }}
+              disabled={!firstOk}
+              onClick={() => {
+                if (firstOk) {
+                  onAddToSermon(blockFor(firstOk));
+                  onClose();
+                }
+              }}
+            >
+              → Adicionar ao sermão
+            </button>
+          ) : null}
+          <button className="iconbtn" type="button" aria-label="Fechar" style={onAddToSermon ? undefined : { marginLeft: "auto" }} onClick={onClose}>
+            ×
+          </button>
         </div>
 
+        {/* Seletor da passagem (a estrela) + histórico recente */}
         <div className={styles.cmpSel}>
           <Select value={ref.book} compact onChange={(e) => setRef((r) => ({ ...r, book: e.target.value }))}>
             {BOOKS.map((b) => <option key={b.code} value={b.code}>{b.pt}</option>)}
@@ -188,66 +400,117 @@ export function BibleCompare({
           <input type="number" min={1} placeholder="cap" value={chapStr} onChange={(e) => setChapStr(e.target.value)} style={{ width: 62 }} />
           <input type="number" min={1} placeholder="v. ini" value={vsStr} onChange={(e) => setVsStr(e.target.value)} style={{ width: 62 }} />
           <input type="number" min={1} placeholder="v. fim" value={veStr} onChange={(e) => setVeStr(e.target.value)} style={{ width: 62 }} />
-          <button className="btn" type="button" onClick={compareNow}>Comparar</button>
+          <button className="btn" type="button" onClick={openNow}>Ver passagem</button>
           <button className="link" type="button" onClick={wholeChapter}>Capítulo inteiro</button>
         </div>
+        {history.length > 1 ? (
+          <div className={styles.stHist}>
+            <span className={styles.stHistLabel}>Recentes</span>
+            {history.filter((h) => h.key !== refKeyOf(ref)).slice(0, 6).map((h) => (
+              <button key={h.key} type="button" className={styles.stHistChip} onClick={() => selectHistory(h)}>
+                {h.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
-        <div className={styles.cmpVers}>
-          {!translations ? (
-            <span className="muted">Carregando versões…</span>
-          ) : versionsForLang.length === 0 ? (
-            <span className="muted">Sem versões de domínio público nesta língua.</span>
-          ) : (
-            <>
-              {[...primary, ...(showMore ? extra : extra.filter((t) => picks.includes(t.id)))].map((t) => (
-                <label key={t.id} className={`${styles.cmpVer}${picks.includes(t.id) ? " " + styles.on : ""}`}>
-                  <input type="checkbox" checked={picks.includes(t.id)} onChange={() => togglePick(t.id)} />
-                  {" "}
-                  {t.name || t.shortName || t.id}
-                  {t.shortName ? ` (${t.shortName})` : ""}
-                </label>
-              ))}
-              {extra.length ? (
-                <button type="button" className={styles.cmpMore} onClick={() => setShowMore((v) => !v)}>
-                  {showMore ? "Menos versões" : `Mais versões (${extra.length})`}
-                </button>
-              ) : null}
-            </>
-          )}
+        {/* Abas de revelação progressiva */}
+        <div className={styles.stTabs} role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.key}
+              className={`${styles.stTab}${tab === t.key ? " " + styles.on : ""}`}
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        {picks.length === 0 ? (
-          <div className="empty">Escolha ao menos uma versão.</div>
-        ) : (
-          <div className={styles.cmpCols} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-            {picks.map((id) => {
-              const res = results[id];
-              return (
-                <div key={id} className={styles.cmpCol}>
-                  <div className={styles.cmpColh}>{labelFor(id)}</div>
-                  {!res || res.status === "loading" ? (
-                    <div className="muted">Carregando…</div>
-                  ) : res.status === "error" ? (
-                    <div className="muted">{res.error || "Não foi possível carregar."}</div>
-                  ) : (
-                    <>
-                      <div className={styles.cmpText}>
-                        {res.verses.map((v) => (
-                          <span key={v.n}><sup style={{ color: "var(--text-2)", marginRight: 3 }}>{v.n}</sup>{v.text} </span>
-                        ))}
-                      </div>
-                      <div className={styles.cmpActions}>
-                        <button className="link" type="button" onClick={() => void navigator.clipboard?.writeText(blockFor(id))}>Copiar</button>
-                        {onAddToSermon ? (
-                          <button className="link" type="button" onClick={() => { onAddToSermon(blockFor(id)); onClose(); }}>Adicionar ao sermão</button>
-                        ) : null}
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+        {tab !== "trans" ? (
+          <div className={styles.stPh}>
+            <div className={styles.stPhTitle}>{PLACEHOLDERS[tab].title}</div>
+            <div className="muted" style={{ maxWidth: 380 }}>{PLACEHOLDERS[tab].desc}</div>
+            <span className={styles.stSoon}>Em breve</span>
           </div>
+        ) : (
+          <>
+            <div className={styles.cmpVers}>
+              {!translations ? (
+                <span className="muted">Carregando versões…</span>
+              ) : versionsForLang.length === 0 ? (
+                <span className="muted">Sem versões de domínio público nesta língua.</span>
+              ) : (
+                <>
+                  {[...primary, ...(showMore ? extra : extra.filter((t) => picks.includes(t.id)))].map((t) => (
+                    <span key={t.id} className={`${styles.cmpVer}${picks.includes(t.id) ? " " + styles.on : ""}`}>
+                      <label className={styles.cmpVerLbl}>
+                        <input type="checkbox" checked={picks.includes(t.id)} onChange={() => togglePick(t.id)} />
+                        {" "}
+                        {t.name || t.shortName || t.id}
+                        {t.shortName ? ` (${t.shortName})` : ""}
+                      </label>
+                      <button
+                        type="button"
+                        className={`${styles.cmpStar}${favs.includes(t.id) ? " " + styles.on : ""}`}
+                        aria-label={favs.includes(t.id) ? "Desfavoritar versão" : "Favoritar versão"}
+                        aria-pressed={favs.includes(t.id)}
+                        title={favs.includes(t.id) ? "Versão favorita" : "Favoritar versão"}
+                        onClick={() => toggleFav(t.id)}
+                      >
+                        {favs.includes(t.id) ? "★" : "☆"}
+                      </button>
+                    </span>
+                  ))}
+                  {extra.length ? (
+                    <button type="button" className={styles.cmpMore} onClick={() => setShowMore((v) => !v)}>
+                      {showMore ? "Menos versões" : `Mais versões (${extra.length})`}
+                    </button>
+                  ) : null}
+                </>
+              )}
+            </div>
+
+            {okPicks.length >= 2 ? (
+              <label className={styles.cmpDiffToggle}>
+                <input type="checkbox" checked={diffOn} onChange={(e) => setDiffOn(e.target.checked)} />
+                <span>Destacar diferenças entre as versões</span>
+              </label>
+            ) : null}
+
+            {picks.length === 0 ? (
+              <div className="empty">Escolha ao menos uma versão.</div>
+            ) : (
+              <div className={styles.cmpCols} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+                {picks.map((id) => {
+                  const res = results[id];
+                  return (
+                    <div key={id} className={styles.cmpCol}>
+                      <div className={styles.cmpColh}>{labelFor(id)}</div>
+                      {!res || res.status === "loading" ? (
+                        <div className="muted">Carregando…</div>
+                      ) : res.status === "error" ? (
+                        <div className="muted">{res.error || "Não foi possível carregar."}</div>
+                      ) : (
+                        <>
+                          <div className={styles.cmpText}>{res.verses.map((v) => renderVerse(v))}</div>
+                          <div className={styles.cmpActions}>
+                            <button className="link" type="button" onClick={() => void navigator.clipboard?.writeText(blockFor(id))}>Copiar</button>
+                            {onAddToSermon ? (
+                              <button className="link" type="button" onClick={() => { onAddToSermon(blockFor(id)); onClose(); }}>Adicionar ao sermão</button>
+                            ) : null}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </form>
     </div>

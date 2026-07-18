@@ -279,7 +279,7 @@ export function SermonEditor({
           <aside className={styles.drawer}>
             <div className={styles.cmpHead}>
               <h3 style={{ fontSize: 14 }}>Assistente de estudo</h3>
-              <button className="btn ghost sm" type="button" style={{ marginLeft: "auto" }} onClick={() => { setCompareRef(selRef ?? detected[0] ?? null); setCompareOpen(true); }}>Comparar Bíblia</button>
+              <button className="btn ghost sm" type="button" style={{ marginLeft: "auto" }} onClick={() => { setCompareRef(selRef ?? detected[0] ?? null); setCompareOpen(true); }}>Estudo do Texto</button>
               <button className="iconbtn" type="button" aria-label="Fechar" onClick={() => setAssistantOpen(false)}>×</button>
             </div>
             <label className="field check" style={{ marginTop: 8 }}>
@@ -305,7 +305,7 @@ export function SermonEditor({
                   <button className="link" style={{ marginLeft: "auto" }} onClick={() => openPassage(selRef, !panelWhole)}>
                     {panelWhole ? "Só o versículo" : "Capítulo inteiro"}
                   </button>
-                  <button className="link" onClick={() => { setCompareRef(selRef); setCompareOpen(true); }}>Comparar</button>
+                  <button className="link" onClick={() => { setCompareRef(selRef); setCompareOpen(true); }}>Estudar texto</button>
                 </div>
                 {loadingPassage ? (
                   <div className="muted" style={{ marginTop: 6 }}>Carregando o texto…</div>

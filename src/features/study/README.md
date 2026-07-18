@@ -51,13 +51,22 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   `/study/map`).
 - **Trilha (material de ensino)** no editor: o select de Trilha fica para quando
   **Tracks** migrar; o `content.track_id` já é preservado no jsonb.
-- **Comparar Bíblia (RESTAURADO — Onda 0, item 2):** regressão da migração corrigida.
-  `components/BibleCompare.tsx` — modal que busca/lê/compara passagens em versões de
-  **domínio público** (helloao, client-side) lado a lado, com toggle PT/EN/ES (default
-  = locale do usuário via `profiles.locale`), **Copiar** e **Adicionar ao sermão**.
-  Aberto do assistente de Escrituras ("Comparar Bíblia") e por referência ("Comparar").
-  O painel de passagem ganhou **"Capítulo inteiro"** (com realce dos versículos-alvo).
-  Interlinear grego/hebraico segue ADIADO (módulo grande, à parte).
+- **Estudo do Texto (hub — Estudo Bíblico Fase 1):** `components/BibleCompare.tsx` foi
+  reposicionado de "Comparar Bíblia" para o hub **"Estudo do Texto"** — a passagem é a
+  estrela; comparar traduções vira **uma lente**. Cabeçalho com a referência + abas de
+  revelação progressiva: **Traduções** (ativa) · Original · Palavras-chave · Contexto ·
+  Referências · Notas (as demais são placeholders "Em breve" até o dado chegar do
+  orquestrador — TSK/STEPBible). Idioma vem só da conta (`profiles.locale` via prop
+  `locale`; sem toggle en/es/pt). Lista de versões **curada** por idioma (domínio
+  público) + "Mais versões". Novidades da Fase 1: **favoritar versões** (★, pré-
+  selecionadas ao abrir — `localStorage` `tally.bible.favVersions`), **histórico** de
+  textos recentes (`tally.bible.history`) e **destaque de diferenças** entre versões
+  (diff por versículo no cliente, palavras divergentes realçadas; toggle). Mantidos:
+  comparar lado a lado, **Copiar**, **Adicionar ao sermão** (por versão e ação primária
+  no topo) e **"Capítulo inteiro"**. Arquitetura **agnóstica de tradução** (só domínio
+  público; nada de texto protegido no repo; uma API licenciada futura entra no mesmo
+  ponto). Aberto do assistente ("Estudo do Texto") e por referência ("Estudar texto").
+  Fases 2+ (original grego/hebraico + Strong, contexto, cross-refs) têm handoffs próprios.
 - **Diferido, documentado (não escondido):** aba **Recursos** (tabela fora do handoff
   das 4 — precisa de handoff próprio do orquestrador); **Buscar** no Estudo (busca de
   conteúdo: sermões/notas/séries) e **Memória de sermão** (sugestões de relacionados)
