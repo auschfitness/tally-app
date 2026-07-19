@@ -5,6 +5,7 @@
 import type { DB } from "@/lib/auth/session";
 import { asVisibility, countByKey } from "./domain";
 import type {
+  ChatMessage,
   Comment,
   CreateSpaceOptions,
   OrgMember,
@@ -253,4 +254,48 @@ export async function listTodoLists(supabase: DB, orgId: string, spaceId: string
     createdBy: l.created_by ?? "",
     todos: byList.get(l.id) ?? [],
   }));
+}
+
+// ---- Chat ao vivo (Fase 4) ----
+
+export const CHAT_PAGE_SIZE = 50;
+
+// Últimas mensagens do chat de um espaço, em ordem cronológica (mais antigas no topo). O
+// RLS (can_see_space) já barra quem não enxerga o espaço. `before` (ISO) pagina para trás
+// ("carregar mais antigas"); `hasMore` diz se ainda há histórico além do lote.
+export async function listChatMessages(
+  supabase: DB,
+  orgId: string,
+  spaceId: string,
+  opts: { limit?: number; before?: string } = {},
+): Promise<{ messages: ChatMessage[]; hasMore: boolean }> {
+  const limit = opts.limit ?? CHAT_PAGE_SIZE;
+
+  let q = supabase
+    .from("space_chat_messages")
+    .select("id, sender_id, body, created_at")
+    .eq("org_id", orgId)
+    .eq("space_id", spaceId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (opts.before) q = q.lt("created_at", opts.before);
+
+  const { data: rows } = await q;
+  const batch = rows ?? [];
+  const hasMore = batch.length === limit;
+
+  const names = await memberNameMap(supabase, orgId);
+  // Vem do mais novo pro mais antigo; invertemos para exibir cronológico.
+  const messages: ChatMessage[] = batch
+    .slice()
+    .reverse()
+    .map((m) => ({
+      id: m.id,
+      senderId: m.sender_id,
+      senderName: nameOf(names, m.sender_id),
+      body: m.body,
+      createdAt: m.created_at,
+    }));
+
+  return { messages, hasMore };
 }

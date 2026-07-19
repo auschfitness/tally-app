@@ -118,3 +118,14 @@ export interface OrgMember {
   id: string; // user id (auth.users)
   name: string;
 }
+
+// ---- Chat ao vivo (Fase 4): sala contínua por espaço (space_chat_messages) ----
+
+// Uma mensagem do chat, com o nome do remetente já resolvido.
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  body: string;
+  createdAt: string; // ISO
+}

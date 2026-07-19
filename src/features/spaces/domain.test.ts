@@ -2,12 +2,18 @@ import { describe, it, expect } from "vitest";
 import {
   asVisibility,
   canManage,
+  chatDayLabel,
   countByKey,
   countLabel,
+  dedupeById,
+  groupChatByDay,
   groupSpacesByKind,
   isOverdue,
+  mergeChat,
   nextPosition,
   progressLabel,
+  showAuthorLine,
+  sortChatAsc,
   sortCommentsOldestFirst,
   sortPostsForBoard,
   sortTodos,
@@ -16,7 +22,18 @@ import {
   spaceVisibilityLabel,
   todoProgress,
 } from "./domain";
-import type { Space } from "./types";
+import type { ChatMessage, Space } from "./types";
+
+function chat(p: Partial<ChatMessage>): ChatMessage {
+  return {
+    id: "m",
+    senderId: "u1",
+    senderName: "Ana",
+    body: "oi",
+    createdAt: "2026-07-19T12:00:00Z",
+    ...p,
+  };
+}
 
 function space(p: Partial<Space>): Space {
   return {
@@ -184,5 +201,81 @@ describe("domain — tarefas: próxima posição", () => {
   });
   it("lista vazia começa em 0", () => {
     expect(nextPosition([])).toBe(0);
+  });
+});
+
+describe("domain — chat: dedupe por id", () => {
+  it("mantém a primeira ocorrência e a ordem", () => {
+    const out = dedupeById([{ id: "a" }, { id: "b" }, { id: "a" }, { id: "c" }]);
+    expect(out.map((x) => x.id)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("domain — chat: ordenar por data", () => {
+  it("crescente por createdAt, desempate por id", () => {
+    const out = sortChatAsc([
+      { id: "z", createdAt: "2026-07-19T12:00:00Z" },
+      { id: "a", createdAt: "2026-07-19T12:00:00Z" },
+      { id: "b", createdAt: "2026-07-19T11:00:00Z" },
+    ]);
+    expect(out.map((x) => x.id)).toEqual(["b", "a", "z"]);
+  });
+  it("não muta a entrada", () => {
+    const input = [
+      { id: "a", createdAt: "2026-07-19T12:00:00Z" },
+      { id: "b", createdAt: "2026-07-19T11:00:00Z" },
+    ];
+    sortChatAsc(input);
+    expect(input.map((x) => x.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("domain — chat: merge (tempo real / carregar antigas)", () => {
+  it("junta, remove duplicata por id e reordena", () => {
+    const existing = [chat({ id: "2", createdAt: "2026-07-19T12:00:00Z" })];
+    const incoming = [
+      chat({ id: "1", createdAt: "2026-07-19T11:00:00Z" }),
+      chat({ id: "2", createdAt: "2026-07-19T12:00:00Z" }), // eco da própria mensagem
+    ];
+    const out = mergeChat(existing, incoming);
+    expect(out.map((m) => m.id)).toEqual(["1", "2"]);
+  });
+});
+
+describe("domain — chat: agrupar por dia", () => {
+  it("agrupa dias consecutivos preservando a ordem", () => {
+    const groups = groupChatByDay([
+      chat({ id: "1", createdAt: "2026-07-18T23:00:00Z" }),
+      chat({ id: "2", createdAt: "2026-07-19T00:30:00Z" }),
+      chat({ id: "3", createdAt: "2026-07-19T08:00:00Z" }),
+    ]);
+    expect(groups.map((g) => g.day)).toEqual(["2026-07-18", "2026-07-19"]);
+    expect(groups[1]!.messages.map((m) => m.id)).toEqual(["2", "3"]);
+  });
+});
+
+describe("domain — chat: rótulo do dia", () => {
+  const TODAY = "2026-07-19";
+  it("hoje / ontem / data", () => {
+    expect(chatDayLabel("2026-07-19", TODAY)).toBe("Hoje");
+    expect(chatDayLabel("2026-07-18", TODAY)).toBe("Ontem");
+    expect(chatDayLabel("2026-07-10", TODAY)).toBe("10/07/2026");
+  });
+  it("atravessa a virada do mês para 'Ontem'", () => {
+    expect(chatDayLabel("2026-06-30", "2026-07-01")).toBe("Ontem");
+  });
+});
+
+describe("domain — chat: cabeçalho do autor", () => {
+  const a1 = chat({ id: "1", senderId: "u1", createdAt: "2026-07-19T10:00:00Z" });
+  const a2 = chat({ id: "2", senderId: "u1", createdAt: "2026-07-19T10:01:00Z" });
+  const b1 = chat({ id: "3", senderId: "u2", createdAt: "2026-07-19T10:02:00Z" });
+  const a3 = chat({ id: "4", senderId: "u1", createdAt: "2026-07-20T09:00:00Z" });
+  it("mostra no início, ao trocar de autor e ao virar o dia", () => {
+    expect(showAuthorLine(null, a1)).toBe(true); // início
+    expect(showAuthorLine(a1, a2)).toBe(false); // mesmo autor, mesmo dia
+    expect(showAuthorLine(a2, b1)).toBe(true); // trocou de autor
+    expect(showAuthorLine(b1, a3)).toBe(true); // virou o dia (e trocou autor)
+    expect(showAuthorLine(a2, a3)).toBe(true); // mesmo autor, outro dia
   });
 });

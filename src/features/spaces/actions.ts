@@ -9,6 +9,8 @@ import { revalidatePath } from "next/cache";
 import { requireOrg, can } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, done, toMessage } from "@/lib/errors";
 import { canManage, nextPosition } from "./domain";
+import { listChatMessages } from "./queries";
+import type { ChatMessage } from "./types";
 
 const DENIED_MANAGE = "Você não tem permissão para administrar espaços.";
 const DENIED_EDIT = "Só o autor ou quem administra a igreja pode editar isto.";
@@ -557,6 +559,69 @@ export async function deleteTodo(todoId: string, spaceId: string): Promise<Actio
 
     revalidatePath(`/spaces/${spaceId}`);
     return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// ==================== Chat ao vivo (Fase 4) ====================
+
+// Envia uma mensagem no chat do espaço. Inserir = quem enxerga o espaço (RLS can_see_space);
+// sender_id é sempre o usuário logado. Devolve id/created_at para o cliente exibir na hora
+// (otimista); o eco do tempo real é deduplicado por id. Revalida a rota para reentradas.
+export async function sendChatMessage(
+  spaceId: string,
+  input: { body?: unknown },
+): Promise<ActionResult<{ id: string; createdAt: string }>> {
+  const ctx = await requireOrg();
+  const { supabase, orgId, user } = ctx;
+  const body = str(input.body);
+  if (!body) return fail("Escreva uma mensagem.");
+
+  try {
+    const { data, error } = await supabase
+      .from("space_chat_messages")
+      .insert({ org_id: orgId, space_id: spaceId, sender_id: user.id, body })
+      .select("id, created_at")
+      .single();
+    if (error || !data) return fail(toMessage(error, "Não consegui enviar a mensagem."));
+
+    revalidatePath(`/spaces/${spaceId}/chat`);
+    return ok({ id: data.id, createdAt: data.created_at });
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Apaga uma mensagem do chat. O RLS só deixa o remetente ou quem tem org.manage; o filtro
+// explícito por org é defesa em profundidade. A UI só oferece o botão nessas condições.
+export async function deleteChatMessage(messageId: string, spaceId: string): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  const { supabase, orgId } = ctx;
+  try {
+    const { error } = await supabase
+      .from("space_chat_messages")
+      .delete()
+      .eq("org_id", orgId)
+      .eq("id", messageId);
+    if (error) return fail(toMessage(error, "Não consegui excluir a mensagem."));
+
+    revalidatePath(`/spaces/${spaceId}/chat`);
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Carrega um lote de mensagens ANTERIORES a `before` (ISO) — o "carregar mais antigas".
+export async function loadOlderChat(
+  spaceId: string,
+  before: string,
+): Promise<ActionResult<{ messages: ChatMessage[]; hasMore: boolean }>> {
+  const { supabase, orgId } = await requireOrg();
+  try {
+    const page = await listChatMessages(supabase, orgId, spaceId, { before });
+    return ok(page);
   } catch (e) {
     return fail(toMessage(e));
   }

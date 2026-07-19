@@ -9,8 +9,15 @@ import { SpaceVisibility } from "@/features/spaces/components/SpaceVisibility";
 
 // Espaço (Server Component): cabeçalho + a casca com abas Mensagens/Tarefas. Posts
 // (fixados primeiro), listas de tarefas e membros da org vêm prontos daqui. RLS = membro.
-export default async function SpaceBoardPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SpaceBoardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { id } = await params;
+  const { tab } = await searchParams;
   const ctx = await requireOrg();
   const { supabase, orgId, user } = ctx;
 
@@ -45,6 +52,7 @@ export default async function SpaceBoardPage({ params }: { params: Promise<{ id:
         lists={lists}
         members={members}
         todayIso={isoDate(today())}
+        initialTab={tab === "todos" ? "todos" : "messages"}
       />
     </>
   );

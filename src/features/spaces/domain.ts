@@ -2,7 +2,7 @@
 // tipo (na ordem Igreja · Ministérios · Grupos), ordenar posts (fixados primeiro,
 // depois mais recentes), montar contadores e decidir quem pode gerenciar (autor ou
 // org.manage). A leitura do banco vive em queries.ts; aqui só a lógica.
-import type { Space, SpaceGroup, SpaceKind, SpaceVisibility } from "./types";
+import type { ChatMessage, Space, SpaceGroup, SpaceKind, SpaceVisibility } from "./types";
 
 // Ordem canônica das seções do hub.
 export const SPACE_KIND_ORDER: SpaceKind[] = ["church", "ministry", "group"];
@@ -122,4 +122,71 @@ export function isOverdue(dueOn: string | null, done: boolean, todayIso: string)
 // Próxima posição numa lista (fim da fila): maior position + 1, ou 0 se vazia.
 export function nextPosition(todos: { position: number }[]): number {
   return todos.reduce((max, t) => Math.max(max, t.position), -1) + 1;
+}
+
+// ---- Chat ao vivo (Fase 4) ----
+
+// Remove duplicatas por id, mantendo a PRIMEIRA ocorrência e a ordem. Base do dedupe do
+// tempo real: a própria mensagem chega otimista e volta pelo canal — só uma fica.
+export function dedupeById<T extends { id: string }>(list: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const item of list) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    out.push(item);
+  }
+  return out;
+}
+
+// Ordena mensagens por data (ISO crescente), desempate estável pelo id. Não muta.
+export function sortChatAsc<T extends { createdAt: string; id: string }>(list: T[]): T[] {
+  return [...list].sort((a, b) => {
+    if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? -1 : 1;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+}
+
+// Junta o que já está na tela com o que chegou (tempo real ou "carregar mais antigas"):
+// concatena, remove duplicatas por id e reordena por data. Ordem dos argumentos não
+// importa para o resultado final.
+export function mergeChat<T extends { id: string; createdAt: string }>(existing: T[], incoming: T[]): T[] {
+  return sortChatAsc(dedupeById([...existing, ...incoming]));
+}
+
+// Agrupa mensagens (cronológicas) por dia — separadores de data na sala.
+export function groupChatByDay(messages: ChatMessage[]): { day: string; messages: ChatMessage[] }[] {
+  const groups: { day: string; messages: ChatMessage[] }[] = [];
+  for (const m of messages) {
+    const day = m.createdAt.slice(0, 10);
+    const last = groups[groups.length - 1];
+    if (last && last.day === day) last.messages.push(m);
+    else groups.push({ day, messages: [m] });
+  }
+  return groups;
+}
+
+// Mostrar o cabeçalho do autor? Sim no início, quando muda o remetente, ou quando vira o
+// dia — assim mensagens seguidas da mesma pessoa aparecem agrupadas (estilo Campfire).
+export function showAuthorLine(prev: ChatMessage | null, curr: ChatMessage): boolean {
+  if (!prev) return true;
+  if (prev.senderId !== curr.senderId) return true;
+  return prev.createdAt.slice(0, 10) !== curr.createdAt.slice(0, 10);
+}
+
+// aaaa-mm-dd menos um dia (para o rótulo "Ontem"). Puro: constrói o Date em UTC a partir
+// da própria string, sem ler o relógio.
+function isoMinusOneDay(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return dt.toISOString().slice(0, 10);
+}
+
+// Rótulo do separador de dia no chat: "Hoje" / "Ontem" / dd/mm/aaaa. `todayIso` entra como
+// parâmetro (puro — a página passa o "hoje").
+export function chatDayLabel(day: string, todayIso: string): string {
+  if (day === todayIso) return "Hoje";
+  if (day === isoMinusOneDay(todayIso)) return "Ontem";
+  return day.split("-").reverse().join("/");
 }

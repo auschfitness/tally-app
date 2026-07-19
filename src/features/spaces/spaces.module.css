@@ -170,6 +170,84 @@
   gap: 8px;
   margin-top: 14px;
 }
+.composerRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.composerRow textarea {
+  flex: 1;
+  resize: vertical;
+}
+
+/* ---- Chat ao vivo (Fase 4) ---- */
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  max-height: min(60vh, 560px);
+  overflow-y: auto;
+}
+.chatLoadMore {
+  text-align: center;
+  padding: 2px 0 10px;
+}
+.daySep {
+  align-self: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-2, #6b7280);
+  background: var(--surface-2, #f7f8fb);
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 999px;
+  padding: 2px 12px;
+  margin: 12px auto 6px;
+}
+.chatMsg {
+  display: flex;
+  flex-direction: column;
+}
+.chatAuthor {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.chatName {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.chatTime {
+  font-size: 11px;
+  color: var(--text-2, #6b7280);
+}
+.chatRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.chatBody {
+  min-width: 0;
+  margin-right: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  font-size: 14px;
+}
+.chatActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.chatDel {
+  flex-shrink: 0;
+  opacity: 0;
+  font-size: 12px;
+  transition: opacity var(--dur-micro, 0.14s) var(--ease, ease);
+}
+.chatRow:hover .chatDel {
+  opacity: 0.7;
+}
 
 /* ---- Tarefas ---- */
 .listHead {
