@@ -1,6 +1,7 @@
-import { requireOrg } from "@/lib/auth/session";
+import { requireOrg, can } from "@/lib/auth/session";
 import { resolveActiveCampus } from "@/lib/campus";
 import { listSticks, listGroupNames } from "@/features/sticks/queries";
+import { pendingInviteStickIds } from "@/features/invites/queries";
 import { SticksBoard } from "@/features/sticks/components/SticksBoard";
 
 type RelFilter = "" | "visitor" | "member" | "leader" | "inactive";
@@ -16,13 +17,16 @@ export default async function SticksPage({
 }: {
   searchParams: Promise<{ q?: string; rel?: string; care?: string; campus?: string }>;
 }) {
-  const { supabase, orgId } = await requireOrg();
+  const ctx = await requireOrg();
+  const { supabase, orgId } = ctx;
+  const canManageMembers = can(ctx, "members.manage");
   const sp = await searchParams;
 
-  const [people, groups, campusRes] = await Promise.all([
+  const [people, groups, campusRes, pendingIds] = await Promise.all([
     listSticks(supabase, orgId),
     listGroupNames(supabase, orgId),
     supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
+    canManageMembers ? pendingInviteStickIds(supabase, orgId, new Date().toISOString()) : Promise.resolve([]),
   ]);
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
@@ -41,6 +45,8 @@ export default async function SticksPage({
       groups={groups}
       campuses={campuses}
       activeCampus={activeCampus}
+      canManageMembers={canManageMembers}
+      pendingInviteStickIds={pendingIds}
       initial={initial}
     />
   );

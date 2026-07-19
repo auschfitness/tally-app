@@ -71,6 +71,7 @@ function rowFromInput(input: PersonInput, campusId: string | null) {
     primary_campus_id: campusId,
     last_seen_at: input.lastSeen || null,
     followup_open: input.followup,
+    email: input.email || null,
   };
 }
 

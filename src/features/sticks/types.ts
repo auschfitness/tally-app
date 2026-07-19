@@ -17,6 +17,8 @@ export interface Person {
   birthDate: string | null;
   journeyStage: string;
   group: string;
+  email: string | null; // e-mail da pessoa (para convidar ao app); nulo = sem e-mail
+  userId: string | null; // conta ligada (auth.users) via sticks.user_id; nulo = ficha sem login
 }
 
 // Entrada validada de formulário (o que a UI pode enviar). O servidor deriva o
@@ -29,4 +31,5 @@ export interface PersonInput {
   group: string;
   lastSeen: string;
   followup: boolean;
+  email: string; // "" = sem e-mail
 }

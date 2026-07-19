@@ -1,0 +1,66 @@
+/* Convites de membro. O global já traz panel, btn, link, empty, muted, gerr, page, sub,
+   chip. Aqui só o específico da feature. Tema claro E escuro via CSS vars com fallback. */
+
+.section {
+  margin-top: 22px;
+}
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2, #6b7280);
+  margin: 0 2px 10px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+}
+.row:last-child {
+  border-bottom: none;
+}
+.main {
+  min-width: 0;
+  margin-right: auto;
+}
+.name {
+  font-weight: 600;
+  font-size: 14.5px;
+}
+.meta {
+  font-size: 12.5px;
+  color: var(--text-2, #6b7280);
+  margin-top: 2px;
+}
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+/* Linha do link do convite (input read-only + copiar). */
+.linkRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.linkRow input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: var(--surface-2, #f7f8fb);
+  color: var(--text, #1f2430);
+}

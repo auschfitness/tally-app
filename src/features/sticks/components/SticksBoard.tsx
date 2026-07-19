@@ -43,14 +43,19 @@ export function SticksBoard({
   groups,
   campuses,
   activeCampus,
+  canManageMembers,
+  pendingInviteStickIds,
   initial,
 }: {
   people: Person[];
   groups: string[];
   campuses: string[];
   activeCampus: string;
+  canManageMembers: boolean;
+  pendingInviteStickIds: string[];
   initial: { q: string; rel: RelFilter; care: CareFilter };
 }) {
+  const pendingInvites = useMemo(() => new Set(pendingInviteStickIds), [pendingInviteStickIds]);
   const [q, setQ] = useState(initial.q);
   const [rel, setRel] = useState<RelFilter>(initial.rel);
   const [care, setCare] = useState<CareFilter>(initial.care);
@@ -224,6 +229,11 @@ export function SticksBoard({
                     <td>
                       <b>{p.name}</b>
                       {age != null ? <span className="muted"> · {age}a</span> : null}
+                      {p.userId ? (
+                        <span className="chip member" style={{ marginLeft: 6 }}>app</span>
+                      ) : pendingInvites.has(p.id) ? (
+                        <span className="chip" style={{ marginLeft: 6 }}>convite</span>
+                      ) : null}
                     </td>
                     <td><RelCell p={p} /></td>
                     <td>{journeyLabel(p.journeyStage)}</td>
@@ -243,6 +253,8 @@ export function SticksBoard({
           groups={groups}
           campuses={campuses}
           activeCampus={activeCampus}
+          canManageMembers={canManageMembers}
+          hasPendingInvite={modal.person ? pendingInvites.has(modal.person.id) : false}
           onClose={() => setModal({ open: false, person: null })}
         />
       ) : null}

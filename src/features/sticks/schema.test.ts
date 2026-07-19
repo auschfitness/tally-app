@@ -53,4 +53,22 @@ describe("parsePersonInput (validação de fronteira)", () => {
       expect(r.ok, name).toBe(true);
     }
   });
+
+  it("e-mail é opcional: ausente vira string vazia", () => {
+    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member" }));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.email).toBe("");
+  });
+
+  it("aceita e-mail válido e normaliza (trim)", () => {
+    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member", email: "  ana@igreja.com " }));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.email).toBe("ana@igreja.com");
+  });
+
+  it("e-mail malformado é erro de campo", () => {
+    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member", email: "ana(arroba)igreja" }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.fieldErrors.email).toBeDefined();
+  });
 });

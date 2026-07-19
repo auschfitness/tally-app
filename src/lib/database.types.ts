@@ -1411,6 +1411,63 @@ export type Database = {
           },
         ]
       }
+      member_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          org_id: string
+          status: string
+          stick_id: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          org_id: string
+          status?: string
+          stick_id: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          org_id?: string
+          status?: string
+          stick_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_invites_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_invites_stick_id_fkey"
+            columns: ["stick_id"]
+            isOneToOne: false
+            referencedRelation: "sticks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           created_at: string
@@ -2603,6 +2660,48 @@ export type Database = {
           },
         ]
       }
+      space_chat_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          org_id: string
+          sender_id: string
+          space_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          org_id: string
+          sender_id: string
+          space_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          sender_id?: string
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_chat_messages_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_chat_messages_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       space_post_comments: {
         Row: {
           author_id: string
@@ -2838,6 +2937,7 @@ export type Database = {
           org_id: string
           ref_id: string | null
           updated_at: string
+          visibility: string
         }
         Insert: {
           archived?: boolean
@@ -2850,6 +2950,7 @@ export type Database = {
           org_id: string
           ref_id?: string | null
           updated_at?: string
+          visibility?: string
         }
         Update: {
           archived?: boolean
@@ -2862,6 +2963,7 @@ export type Database = {
           org_id?: string
           ref_id?: string | null
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -2994,6 +3096,7 @@ export type Database = {
           state: string | null
           tags: string[]
           updated_at: string
+          user_id: string | null
           whatsapp: string | null
           whatsapp_allowed: boolean
         }
@@ -3039,6 +3142,7 @@ export type Database = {
           state?: string | null
           tags?: string[]
           updated_at?: string
+          user_id?: string | null
           whatsapp?: string | null
           whatsapp_allowed?: boolean
         }
@@ -3084,6 +3188,7 @@ export type Database = {
           state?: string | null
           tags?: string[]
           updated_at?: string
+          user_id?: string | null
           whatsapp?: string | null
           whatsapp_allowed?: boolean
         }
@@ -3644,7 +3749,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_member_invite: { Args: { p_token: string }; Returns: string }
       can_manage_org_fiscal: { Args: { p_org: string }; Returns: boolean }
+      can_see_post: { Args: { p_post: string }; Returns: boolean }
+      can_see_space: { Args: { p_space: string }; Returns: boolean }
       create_org: {
         Args: {
           p_campus: string

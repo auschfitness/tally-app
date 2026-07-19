@@ -16,6 +16,8 @@ function person(p: Partial<Person>): Person {
     birthDate: null,
     journeyStage: "connected",
     group: p.group ?? "",
+    email: null,
+    userId: null,
   };
 }
 

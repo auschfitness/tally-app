@@ -30,6 +30,12 @@ export function parsePersonInput(formData: FormData): Validated {
     fieldErrors.lastSeen = ["Data inválida."];
   }
 
+  // E-mail é opcional (necessário só para convidar ao app). Se vier, valida o formato.
+  const email = String(formData.get("email") ?? "").trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    fieldErrors.email = ["E-mail inválido."];
+  }
+
   if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
 
   return {
@@ -42,6 +48,7 @@ export function parsePersonInput(formData: FormData): Validated {
       group,
       lastSeen,
       followup: bool(formData.get("followup")),
+      email,
     },
   };
 }

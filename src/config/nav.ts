@@ -31,6 +31,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Pessoas",
     items: [
       { key: "people", label: "Sticks", href: "/sticks", count: "people" },
+      { key: "members", label: "Membros", href: "/members" },
       { key: "groups", label: "Saúde dos Grupos", href: "/groups" },
       { key: "teams", label: "Times", href: "/teams" },
       { key: "coord", label: "Coordenação", href: "/coordination", count: "tasks" },

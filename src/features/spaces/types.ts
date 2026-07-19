@@ -6,6 +6,11 @@
 // "group" apontam para ministries/groups via ref_id.
 export type SpaceKind = "church" | "ministry" | "group";
 
+// Quem enxerga o espaço (spaces.visibility). "leaders" (padrão) = só a liderança;
+// "members" = todos os membros com conta. O RLS filtra tudo em cascata (posts,
+// comentários, listas, tarefas, chat) — o front só expõe o controle.
+export type SpaceVisibility = "leaders" | "members";
+
 // Um espaço, com a contagem de posts já resolvida (para os cartões do hub).
 export interface Space {
   id: string;
@@ -32,6 +37,7 @@ export interface SpaceHeader {
   name: string;
   description: string;
   archived: boolean;
+  visibility: SpaceVisibility;
 }
 
 // Um post na lista do quadro (com autor e nº de comentários).

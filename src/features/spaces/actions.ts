@@ -13,6 +13,33 @@ import { canManage, nextPosition } from "./domain";
 const DENIED_MANAGE = "Você não tem permissão para administrar espaços.";
 const DENIED_EDIT = "Só o autor ou quem administra a igreja pode editar isto.";
 
+// Define quem enxerga o espaço (só liderança × todos os membros). Gated org.manage. O RLS
+// (can_see_space) aplica a regra em cascata; aqui só gravamos a escolha.
+export async function setSpaceVisibility(
+  spaceId: string,
+  visibility: unknown,
+): Promise<ActionResult<{ visibility: "leaders" | "members" }>> {
+  const ctx = await requireOrg();
+  if (!can(ctx, "org.manage")) return fail(DENIED_MANAGE);
+  if (visibility !== "leaders" && visibility !== "members") {
+    return fail("Escolha uma visibilidade válida.");
+  }
+  try {
+    const { error } = await ctx.supabase
+      .from("spaces")
+      .update({ visibility })
+      .eq("org_id", ctx.orgId)
+      .eq("id", spaceId);
+    if (error) return fail(toMessage(error, "Não consegui salvar a visibilidade."));
+
+    revalidatePath(`/spaces/${spaceId}`);
+    revalidatePath("/spaces");
+    return ok({ visibility });
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
 function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }

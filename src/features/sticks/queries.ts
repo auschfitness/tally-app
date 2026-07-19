@@ -16,7 +16,7 @@ export async function listSticks(supabase: DB, orgId: string): Promise<Person[]>
     supabase
       .from("sticks")
       .select(
-        "id, full_name, relationship_status, is_leader, primary_campus_id, last_seen_at, followup_open, first_visit_date, source, birth_date, journey_stage_id",
+        "id, full_name, relationship_status, is_leader, primary_campus_id, last_seen_at, followup_open, first_visit_date, source, birth_date, journey_stage_id, email, user_id",
       )
       .eq("org_id", orgId)
       .eq("archived", false)
@@ -58,6 +58,8 @@ export async function listSticks(supabase: DB, orgId: string): Promise<Person[]>
     birthDate: row.birth_date,
     journeyStage: journeyCodeForPosition(row.journey_stage_id ? positionById.get(row.journey_stage_id) : null),
     group: groupByStick.get(row.id) ?? "",
+    email: row.email,
+    userId: row.user_id,
   }));
 }
 

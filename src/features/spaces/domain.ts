@@ -2,7 +2,7 @@
 // tipo (na ordem Igreja · Ministérios · Grupos), ordenar posts (fixados primeiro,
 // depois mais recentes), montar contadores e decidir quem pode gerenciar (autor ou
 // org.manage). A leitura do banco vive em queries.ts; aqui só a lógica.
-import type { Space, SpaceGroup, SpaceKind } from "./types";
+import type { Space, SpaceGroup, SpaceKind, SpaceVisibility } from "./types";
 
 // Ordem canônica das seções do hub.
 export const SPACE_KIND_ORDER: SpaceKind[] = ["church", "ministry", "group"];
@@ -26,6 +26,25 @@ export function spaceKindLabel(kind: SpaceKind): string {
 
 export function spaceKindSingular(kind: SpaceKind): string {
   return KIND_SINGULAR[kind] ?? "Espaço";
+}
+
+// ---- Visibilidade (quem enxerga o espaço) ----
+
+export const SPACE_VISIBILITIES: SpaceVisibility[] = ["leaders", "members"];
+
+const VISIBILITY_LABEL: Record<SpaceVisibility, string> = {
+  leaders: "Só liderança",
+  members: "Todos os membros",
+};
+
+// Coage o texto do banco (spaces.visibility é `string`) para o enum; default "leaders"
+// (espaços nascem fechados).
+export function asVisibility(v: string | null): SpaceVisibility {
+  return v === "members" ? "members" : "leaders";
+}
+
+export function spaceVisibilityLabel(v: SpaceVisibility): string {
+  return VISIBILITY_LABEL[v] ?? VISIBILITY_LABEL.leaders;
 }
 
 // Agrupa os espaços por tipo, na ordem canônica. Seções vazias somem — o hub só mostra

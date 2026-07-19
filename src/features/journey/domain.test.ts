@@ -6,7 +6,7 @@ function person(stage: string, id: string): Person {
   return {
     id, name: id, relationship: "member", isLeader: false, campus: "Sede",
     lastSeen: "2026-07-01", followup: false, firstVisit: null, source: null,
-    birthDate: null, journeyStage: stage, group: "",
+    birthDate: null, journeyStage: stage, group: "", email: null, userId: null,
   };
 }
 

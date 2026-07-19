@@ -6,7 +6,7 @@ import { signInAction, signUpAction, type AuthState } from "./actions";
 
 const INITIAL: AuthState = { error: null };
 
-export function LoginForm() {
+export function LoginForm({ next = "/" }: { next?: string }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [state, formAction, pending] = useActionState(
     mode === "login" ? signInAction : signUpAction,
@@ -15,9 +15,10 @@ export function LoginForm() {
 
   async function handleGoogle() {
     const supabase = createClient();
+    const cb = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: cb },
     });
   }
 
@@ -26,6 +27,7 @@ export function LoginForm() {
       <div className="gtitle">Tally</div>
       <div className="gsub">{mode === "login" ? "Entre na sua conta" : "Crie a sua conta"}</div>
 
+      <input type="hidden" name="next" value={next} />
       <div className="gfield">
         <input name="email" type="email" placeholder="E-mail" autoComplete="email" required />
       </div>

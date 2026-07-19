@@ -15,27 +15,37 @@ function readCredentials(formData: FormData): { email: string; password: string 
   return { email, password };
 }
 
+// Destino pós-login. Só aceita caminho interno (começa com "/", não "//") — evita open
+// redirect. Default: início do app. Usado no fluxo de convite (?next=/convite/token).
+function safeNext(formData: FormData): string {
+  const raw = String(formData.get("next") ?? "").trim();
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  return "/";
+}
+
 export async function signInAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const creds = readCredentials(formData);
   if (!creds) return { error: "Preencha e-mail e senha." };
+  const next = safeNext(formData);
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(creds);
   if (error) return { error: error.message };
 
-  redirect("/");
+  redirect(next);
 }
 
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const creds = readCredentials(formData);
   if (!creds) return { error: "Preencha e-mail e senha." };
+  const next = safeNext(formData);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp(creds);
   if (error) return { error: error.message };
 
   // Com "Confirm email" desligado (config do Tally) já vem sessão → entra direto.
-  if (data.session) redirect("/");
+  if (data.session) redirect(next);
 
   return { error: "Conta criada. Se a confirmação de e-mail estiver ligada, confirme pelo link e depois entre." };
 }

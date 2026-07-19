@@ -3,7 +3,7 @@
 // autor + nº de comentários), post aberto (+ comentários) e as opções para criar um
 // espaço (ministérios/grupos ainda sem espaço, e se a Igreja já existe).
 import type { DB } from "@/lib/auth/session";
-import { countByKey } from "./domain";
+import { asVisibility, countByKey } from "./domain";
 import type {
   Comment,
   CreateSpaceOptions,
@@ -73,7 +73,7 @@ export async function listSpaces(supabase: DB, orgId: string): Promise<Space[]> 
 export async function getSpace(supabase: DB, orgId: string, id: string): Promise<SpaceHeader | null> {
   const { data: s } = await supabase
     .from("spaces")
-    .select("id, kind, name, description, archived")
+    .select("id, kind, name, description, archived, visibility")
     .eq("org_id", orgId)
     .eq("id", id)
     .maybeSingle();
@@ -84,6 +84,7 @@ export async function getSpace(supabase: DB, orgId: string, id: string): Promise
     name: s.name,
     description: s.description ?? "",
     archived: s.archived,
+    visibility: asVisibility(s.visibility),
   };
 }
 

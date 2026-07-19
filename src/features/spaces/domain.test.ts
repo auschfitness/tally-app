@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  asVisibility,
   canManage,
   countByKey,
   countLabel,
@@ -12,6 +13,7 @@ import {
   sortTodos,
   spaceKindLabel,
   spaceKindSingular,
+  spaceVisibilityLabel,
   todoProgress,
 } from "./domain";
 import type { Space } from "./types";
@@ -112,6 +114,19 @@ describe("domain — rótulos de tipo", () => {
     expect(spaceKindSingular("ministry")).toBe("Ministério");
     expect(spaceKindLabel("church")).toBe("Igreja");
     expect(spaceKindSingular("group")).toBe("Grupo");
+  });
+});
+
+describe("domain — visibilidade do espaço", () => {
+  it("asVisibility coage o texto do banco (default fechado)", () => {
+    expect(asVisibility("members")).toBe("members");
+    expect(asVisibility("leaders")).toBe("leaders");
+    expect(asVisibility(null)).toBe("leaders");
+    expect(asVisibility("qualquer_coisa")).toBe("leaders");
+  });
+  it("rótulos em PT-BR", () => {
+    expect(spaceVisibilityLabel("leaders")).toBe("Só liderança");
+    expect(spaceVisibilityLabel("members")).toBe("Todos os membros");
   });
 });
 
