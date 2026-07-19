@@ -627,6 +627,86 @@ export type Database = {
         }
         Relationships: []
       }
+      dm_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          org_id: string
+          read_at: string | null
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          org_id: string
+          read_at?: string | null
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          read_at?: string | null
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_messages_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dm_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_threads: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          org_id: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          org_id: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          org_id?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_threads_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donation_receipts: {
         Row: {
           country: string
@@ -3576,6 +3656,7 @@ export type Database = {
         Returns: string
       }
       has_perm: { Args: { p_org: string; p_perm: string }; Returns: boolean }
+      is_dm_participant: { Args: { p_thread: string }; Returns: boolean }
       is_org_member: { Args: { p_org: string }; Returns: boolean }
       next_receipt_number: { Args: { p_org: string }; Returns: string }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }

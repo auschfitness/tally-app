@@ -1,0 +1,191 @@
+/* Mensagens diretas (DM — Fase 3). O global já traz panel, btn, field, link, empty,
+   muted, gerr, page, sub, overlay, modal, actions. Aqui só o específico da feature.
+   Tema claro E escuro via CSS vars com fallback. */
+
+/* ---- Lista de conversas ---- */
+.threadList {
+  display: flex;
+  flex-direction: column;
+}
+.threadRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 4px;
+  border-bottom: 1px solid var(--border, #e6e8ee);
+  text-decoration: none;
+  color: inherit;
+}
+.threadRow:last-child {
+  border-bottom: none;
+}
+.threadRow:hover {
+  background: var(--surface-2, #f7f8fb);
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue, #2b5ce6);
+  background: color-mix(in srgb, var(--blue, #2b5ce6) 12%, transparent);
+  border: 1px solid var(--border, #e6e8ee);
+}
+
+.threadMain {
+  min-width: 0;
+  margin-right: auto;
+}
+.threadTop {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.threadName {
+  font-weight: 600;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.threadWhen {
+  font-size: 12px;
+  color: var(--text-2, #6b7280);
+  white-space: nowrap;
+  margin-left: auto;
+}
+.threadPreview {
+  font-size: 13px;
+  color: var(--text-2, #6b7280);
+  line-height: 1.5;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.threadPreview.unreadPreview {
+  color: var(--text, #1f2430);
+  font-weight: 500;
+}
+
+.badge {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--blue, #2b5ce6);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+}
+
+/* ---- Conversa aberta ---- */
+.convHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.backLink {
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--text-2, #6b7280);
+}
+.backLink:hover {
+  color: var(--blue, #2b5ce6);
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 2px 2px;
+}
+
+.daySep {
+  align-self: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-2, #6b7280);
+  background: var(--surface-2, #f7f8fb);
+  border: 1px solid var(--border, #e6e8ee);
+  border-radius: 999px;
+  padding: 2px 12px;
+  margin: 12px 0 6px;
+}
+
+.msgRow {
+  display: flex;
+  flex-direction: column;
+  max-width: 76%;
+}
+.msgRow.mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.msgRow.theirs {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.bubble {
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.mine .bubble {
+  background: var(--blue, #2b5ce6);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.theirs .bubble {
+  background: var(--surface-2, #f2f3f7);
+  color: var(--text, #1f2430);
+  border: 1px solid var(--border, #e6e8ee);
+  border-bottom-left-radius: 4px;
+}
+
+.msgFoot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 4px 0;
+  font-size: 11px;
+  color: var(--text-2, #6b7280);
+}
+
+/* ---- Caixa de envio ---- */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.composerRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.composerRow textarea {
+  flex: 1;
+  resize: vertical;
+}
+
+/* ---- Picker "Nova conversa" ---- */
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
