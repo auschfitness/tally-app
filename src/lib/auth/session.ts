@@ -44,12 +44,18 @@ export async function requireOrg(): Promise<OrgContext> {
   // RLS libera (ex.: quem é Pastor pelo cargo, sem permissão avulsa).
   const { data, error } = await supabase
     .from("memberships")
-    .select("org_id, is_owner, role, permissions, role_id, roles(name, permissions)")
+    .select("org_id, is_owner, role, permissions, role_id, roles(name, permissions), organizations(status)")
     .limit(1)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
   if (!data) redirect("/onboarding");
+
+  // Bloqueio de igreja suspensa: se a org do usuário está 'suspended', não entra no app
+  // normal — vai para /suspensa (que roda só com requireUser, sem passar por aqui, então
+  // sem loop). Como este é o ÚNICO ponto por onde toda página/action protegida passa, um
+  // único edit barra o app inteiro. O painel /admin usa requireUser e NÃO é afetado.
+  if (data.organizations?.status === "suspended") redirect("/suspensa");
 
   const roleRow = data.roles;
   return {

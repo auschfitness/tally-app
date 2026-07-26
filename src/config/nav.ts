@@ -83,3 +83,7 @@ export const NAV_GROUPS: NavGroup[] = [
 ];
 
 export const SETTINGS_ITEM: NavItem = { key: "settings", label: "Configurações", href: "/settings" };
+
+// Painel super-admin da plataforma. Só aparece para quem é platform-admin (a visibilidade
+// é decidida no servidor e passada ao Sidebar) — e o /admin gateia de novo no servidor.
+export const ADMIN_ITEM: NavItem = { key: "admin", label: "Admin", href: "/admin" };

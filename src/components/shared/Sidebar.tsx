@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark } from "@/components/shared/LogoMark";
-import { NAV_GROUPS, TOP_ITEMS, SETTINGS_ITEM, type NavGroup, type NavItem } from "@/config/nav";
+import { NAV_GROUPS, TOP_ITEMS, SETTINGS_ITEM, ADMIN_ITEM, type NavGroup, type NavItem } from "@/config/nav";
 import { logoutAction } from "@/app/(dashboard)/actions";
 
 export interface NavCounts {
@@ -34,7 +34,15 @@ function Item({ item, counts, active }: { item: NavItem; counts: NavCounts; acti
   );
 }
 
-export function Sidebar({ userLabel, counts }: { userLabel: string; counts: NavCounts }) {
+export function Sidebar({
+  userLabel,
+  counts,
+  isPlatformAdmin = false,
+}: {
+  userLabel: string;
+  counts: NavCounts;
+  isPlatformAdmin?: boolean;
+}) {
   const pathname = usePathname();
 
   // Estado inicial determinístico (server + 1º render client): abre só o grupo do
@@ -131,6 +139,9 @@ export function Sidebar({ userLabel, counts }: { userLabel: string; counts: NavC
 
       <div className="navsep" />
       <Item item={SETTINGS_ITEM} counts={counts} active={isActive(pathname, SETTINGS_ITEM.href)} />
+      {isPlatformAdmin ? (
+        <Item item={ADMIN_ITEM} counts={counts} active={isActive(pathname, ADMIN_ITEM.href)} />
+      ) : null}
       <div className="foot">
         <span>{userLabel}</span>
         <br />

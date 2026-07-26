@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { isPlatformAdmin } from "@/features/admin/queries";
 import { resolveActiveCampus } from "@/lib/campus";
 import { Sidebar, type NavCounts } from "@/components/shared/Sidebar";
 import { Topbar } from "@/components/shared/Topbar";
@@ -11,10 +12,11 @@ import { visibleSignals } from "@/features/inbox/domain";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user, orgId } = await requireOrg();
 
-  const [orgRes, campusRes, peopleRes] = await Promise.all([
+  const [orgRes, campusRes, peopleRes, isAdmin] = await Promise.all([
     supabase.from("organizations").select("name").eq("id", orgId).maybeSingle(),
     supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
     supabase.from("sticks").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("archived", false),
+    isPlatformAdmin(supabase),
   ]);
 
   const orgName = orgRes.data?.name ?? "Minha igreja";
@@ -43,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="app">
-      <Sidebar userLabel={userLabel} counts={counts} />
+      <Sidebar userLabel={userLabel} counts={counts} isPlatformAdmin={isAdmin} />
       <div className="main">
         <Topbar orgName={orgName} />
         <div className="content view-in">{children}</div>

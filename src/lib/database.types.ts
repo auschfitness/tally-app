@@ -1903,6 +1903,8 @@ export type Database = {
           currency: string
           id: string
           name: string
+          plan: string
+          status: string
         }
         Insert: {
           country?: string
@@ -1910,6 +1912,8 @@ export type Database = {
           currency?: string
           id?: string
           name: string
+          plan?: string
+          status?: string
         }
         Update: {
           country?: string
@@ -1917,6 +1921,26 @@ export type Database = {
           currency?: string
           id?: string
           name?: string
+          plan?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -3750,6 +3774,35 @@ export type Database = {
     }
     Functions: {
       accept_member_invite: { Args: { p_token: string }; Returns: string }
+      admin_list_orgs: {
+        Args: never
+        Returns: {
+          country: string
+          created_at: string
+          currency: string
+          groups: number
+          members: number
+          name: string
+          org_id: string
+          plan: string
+          status: string
+          sticks: number
+        }[]
+      }
+      admin_platform_stats: {
+        Args: never
+        Returns: {
+          active: number
+          members: number
+          orgs: number
+          sticks: number
+          suspended: number
+        }[]
+      }
+      admin_set_org_status: {
+        Args: { p_org: string; p_status: string }
+        Returns: undefined
+      }
       can_manage_org_fiscal: { Args: { p_org: string }; Returns: boolean }
       can_see_post: { Args: { p_post: string }; Returns: boolean }
       can_see_space: { Args: { p_space: string }; Returns: boolean }
@@ -3766,6 +3819,7 @@ export type Database = {
       has_perm: { Args: { p_org: string; p_perm: string }; Returns: boolean }
       is_dm_participant: { Args: { p_thread: string }; Returns: boolean }
       is_org_member: { Args: { p_org: string }; Returns: boolean }
+      is_platform_admin: { Args: never; Returns: boolean }
       next_receipt_number: { Args: { p_org: string }; Returns: string }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
       seed_default_finance_categories: {
