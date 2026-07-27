@@ -4,11 +4,12 @@ import type { Dictionary } from "./pt-BR";
 
 export const es: Dictionary = {
   settings: {
-    title: "Configuración",
-    subtitle: "Ajustes de la institución y de tu cuenta",
-    tabInstitution: "Institución",
-    tabTeam: "Equipo y cargos",
+    title: "Administración",
+    subtitle: "Gestiona tu iglesia y tu cuenta",
+    tabInstitution: "General",
+    tabTeam: "Cargos y permisos",
     tabLegal: "Legal",
+    tabMembers: "Miembros",
     tabAccount: "Cuenta",
     yourName: "Tu nombre",
     yourNamePlaceholder: "Cómo apareces ante tu equipo",

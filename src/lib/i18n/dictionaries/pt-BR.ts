@@ -5,11 +5,12 @@
 // entram aqui — ficam em inglês em qualquer idioma.
 export const ptBR = {
   settings: {
-    title: "Configurações",
-    subtitle: "Ajustes da instituição e da sua conta",
-    tabInstitution: "Instituição",
-    tabTeam: "Equipe e cargos",
+    title: "Administração",
+    subtitle: "Gerencie a igreja e a sua conta",
+    tabInstitution: "Geral",
+    tabTeam: "Cargos e permissões",
     tabLegal: "Jurídico",
+    tabMembers: "Membros",
     tabAccount: "Conta",
     yourName: "Seu nome",
     yourNamePlaceholder: "Como você aparece na equipe",
