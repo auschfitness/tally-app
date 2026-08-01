@@ -1322,6 +1322,135 @@ export type Database = {
           },
         ]
       }
+      journal_entries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          fund_id: string | null
+          id: string
+          memo: string | null
+          org_id: string
+          posted_at: string | null
+          reference: string | null
+          reverses_entry_id: string | null
+          status: Database["public"]["Enums"]["journal_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entry_date: string
+          fund_id?: string | null
+          id?: string
+          memo?: string | null
+          org_id: string
+          posted_at?: string | null
+          reference?: string | null
+          reverses_entry_id?: string | null
+          status?: Database["public"]["Enums"]["journal_status"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          fund_id?: string | null
+          id?: string
+          memo?: string | null
+          org_id?: string
+          posted_at?: string | null
+          reference?: string | null
+          reverses_entry_id?: string | null
+          status?: Database["public"]["Enums"]["journal_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_reverses_entry_id_fkey"
+            columns: ["reverses_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_lines: {
+        Row: {
+          account_id: string
+          credit: number
+          debit: number
+          description: string | null
+          entry_id: string
+          fund_id: string | null
+          id: string
+          line_no: number
+          org_id: string
+        }
+        Insert: {
+          account_id: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          entry_id: string
+          fund_id?: string | null
+          id?: string
+          line_no?: number
+          org_id: string
+        }
+        Update: {
+          account_id?: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          entry_id?: string
+          fund_id?: string | null
+          id?: string
+          line_no?: number
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journey_stages: {
         Row: {
           color: string | null
@@ -1407,6 +1536,54 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_accounts: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          org_id: string
+          parent_id: string | null
+          type: Database["public"]["Enums"]["ledger_account_type"]
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          org_id: string
+          parent_id?: string | null
+          type: Database["public"]["Enums"]["ledger_account_type"]
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          org_id?: string
+          parent_id?: string | null
+          type?: Database["public"]["Enums"]["ledger_account_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_accounts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -3822,12 +3999,30 @@ export type Database = {
       is_platform_admin: { Args: never; Returns: boolean }
       next_receipt_number: { Args: { p_org: string }; Returns: string }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
+      post_journal_entry: { Args: { p_entry: string }; Returns: undefined }
+      seed_default_chart_of_accounts: {
+        Args: { p_org: string }
+        Returns: undefined
+      }
       seed_default_finance_categories: {
         Args: { p_org: string }
         Returns: undefined
       }
       seed_default_system_roles: { Args: { p_org: string }; Returns: undefined }
       shares_org: { Args: { p_other: string }; Returns: boolean }
+      trial_balance: {
+        Args: { p_as_of?: string; p_org: string }
+        Returns: {
+          account_id: string
+          balance: number
+          code: string
+          credit: number
+          debit: number
+          name: string
+          type: Database["public"]["Enums"]["ledger_account_type"]
+        }[]
+      }
+      void_journal_entry: { Args: { p_entry: string }; Returns: undefined }
     }
     Enums: {
       attendance_context: "service" | "group" | "event" | "teaching"
@@ -3841,6 +4036,13 @@ export type Database = {
         | "closed"
       entry_type: "in" | "out"
       group_member_role: "member" | "leader" | "co_leader" | "host"
+      journal_status: "draft" | "posted" | "void"
+      ledger_account_type:
+        | "asset"
+        | "liability"
+        | "equity"
+        | "revenue"
+        | "expense"
       prayer_privacy: "church" | "group" | "leader" | "private"
       relationship_status:
         | "visitor_first"
@@ -3998,6 +4200,14 @@ export const Constants = {
       ],
       entry_type: ["in", "out"],
       group_member_role: ["member", "leader", "co_leader", "host"],
+      journal_status: ["draft", "posted", "void"],
+      ledger_account_type: [
+        "asset",
+        "liability",
+        "equity",
+        "revenue",
+        "expense",
+      ],
       prayer_privacy: ["church", "group", "leader", "private"],
       relationship_status: [
         "visitor_first",

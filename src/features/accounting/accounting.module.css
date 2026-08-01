@@ -1,0 +1,244 @@
+/* Contabilidade — estilos da feature. Apoia-se no sistema global (.btn/.panel/.stat/
+   .tabs) e adiciona só o que é próprio: linhas do plano de contas, o editor de partidas
+   e as tabelas de relatório. Temático claro E escuro via tokens globais. */
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Barra de estatísticas (totais, DRE) */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* ---- Plano de contas (árvore) ---- */
+.tree {
+  display: flex;
+  flex-direction: column;
+}
+.acctRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.acctRow:last-child {
+  border-bottom: none;
+}
+.acctCode {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  font-weight: 600;
+  font-size: 12px;
+  min-width: 58px;
+}
+.acctName {
+  font-weight: 500;
+  color: var(--text);
+}
+.acctName.root {
+  font-weight: 700;
+}
+.acctName.inactive {
+  color: var(--text-2);
+  text-decoration: line-through;
+}
+.acctSpacer {
+  flex: 1;
+}
+.acctActions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--dur-micro) var(--ease);
+}
+.acctRow:hover .acctActions {
+  opacity: 1;
+}
+
+/* ---- Editor de lançamento (partidas) ---- */
+.entryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.entryGrid .full {
+  grid-column: 1 / -1;
+}
+.linesTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+.linesTable th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  font-weight: 600;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.linesTable th.num,
+.linesTable td.num {
+  text-align: right;
+  width: 130px;
+}
+.linesTable td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.linesTable input,
+.linesTable select {
+  width: 100%;
+}
+.lineDrop {
+  width: 34px;
+  text-align: center;
+}
+
+.totals {
+  display: flex;
+  justify-content: flex-end;
+  gap: 26px;
+  padding: 12px 8px 2px;
+  font-variant-numeric: tabular-nums;
+}
+.totals .tk {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  font-weight: 600;
+  display: block;
+}
+.totals .tv {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+.diffOk {
+  color: var(--green);
+}
+.diffBad {
+  color: var(--coral);
+}
+
+.hintList {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hintList li {
+  font-size: 12.5px;
+  color: var(--coral);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.footerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---- Tabelas de relatório / lista ---- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  font-weight: 600;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.table tr:last-child td {
+  border-bottom: none;
+}
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table .code {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.rowLink {
+  cursor: pointer;
+}
+.rowLink:hover td {
+  background: var(--surface-2, rgba(43, 92, 230, 0.05));
+}
+.groupHd td {
+  font-weight: 700;
+  color: var(--text);
+  background: transparent;
+  padding-top: 16px;
+}
+.totalRow td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.badge.draft {
+  background: rgba(107, 79, 214, 0.16);
+  color: #8b74e8;
+}
+.badge.posted {
+  background: rgba(31, 169, 122, 0.16);
+  color: var(--green);
+}
+.badge.void {
+  background: rgba(234, 91, 76, 0.16);
+  color: var(--coral);
+}
+
+.err {
+  color: var(--coral);
+  font-size: 13px;
+  margin: 8px 0 0;
+}

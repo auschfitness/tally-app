@@ -66,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Financeiro",
     items: [
       { key: "finance", label: "Finance Lite", href: "/finance" },
+      { key: "accounting", label: "Contabilidade", href: "/accounting" },
       { key: "giving", label: "Doações", href: "/giving" },
     ],
   },
