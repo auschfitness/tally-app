@@ -3,13 +3,20 @@ import { careLevel, riskDist, flaggedPeople, weeklyAttendance, communityInsights
 import type { Session, Signal, SignalPerson } from "@/features/signals/domain";
 import type { GroupHealth } from "@/features/groups/domain";
 
+// "Recente" relativo ao relógio REAL: riskDist/flaggedPeople chamam careReasons, que mede
+// weeksSince(lastSeen) contra new Date() (não há injeção de `now`). Uma data fixa apodrece
+// com o calendário (um fixture "de ontem" vira "sem aparecer há semanas"); derivar de hoje
+// mantém o default "em dia" verdadeiro em qualquer data. Datas EXPLÍCITAS antigas nos
+// fixtures continuam antigas de propósito.
+const RECENT_ISO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 function person(o: Partial<SignalPerson> & { id: string }): SignalPerson {
   return {
     id: o.id,
     name: o.name ?? o.id,
     relationship: o.relationship ?? "member",
     campus: o.campus ?? "Sede",
-    lastSeen: o.lastSeen ?? "2026-07-14", // recente → em dia
+    lastSeen: o.lastSeen ?? RECENT_ISO, // recente → em dia
     group: o.group ?? "GA",
     followup: o.followup ?? false,
   };
