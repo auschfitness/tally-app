@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark } from "@/components/shared/LogoMark";
-import { NAV_GROUPS, TOP_ITEMS, SETTINGS_ITEM, ADMIN_ITEM, type NavGroup, type NavItem } from "@/config/nav";
+import { NAV_GROUPS, TOP_ITEMS, PLANS_ITEM, SETTINGS_ITEM, ADMIN_ITEM, type NavGroup, type NavItem } from "@/config/nav";
+import { planAllows, type PlanCode } from "@/features/plans/catalog";
 import { logoutAction } from "@/app/(dashboard)/actions";
 
 export interface NavCounts {
@@ -24,12 +25,22 @@ function groupHasActive(pathname: string, group: NavGroup): boolean {
   return group.items.some((it) => isActive(pathname, it.href));
 }
 
-function Item({ item, counts, active }: { item: NavItem; counts: NavCounts; active: boolean }) {
+function Item({ item, counts, active, locked = false }: { item: NavItem; counts: NavCounts; active: boolean; locked?: boolean }) {
   const count = item.count ? counts[item.count] : null;
   return (
-    <Link href={item.href} className={`navitem${active ? " active" : ""}`}>
-      <span>{item.label}</span>
-      {count ? <span className="cnt">{count}</span> : null}
+    <Link
+      href={item.href}
+      className={`navitem${active ? " active" : ""}`}
+      title={locked ? "Recurso do plano Igreja" : undefined}
+    >
+      <span style={locked ? { opacity: 0.55 } : undefined}>{item.label}</span>
+      {locked ? (
+        <span aria-label="Recurso do plano Igreja" style={{ marginLeft: "auto", fontSize: 11, opacity: 0.6 }}>
+          🔒
+        </span>
+      ) : count ? (
+        <span className="cnt">{count}</span>
+      ) : null}
     </Link>
   );
 }
@@ -38,12 +49,15 @@ export function Sidebar({
   userLabel,
   counts,
   isPlatformAdmin = false,
+  plan = "free",
 }: {
   userLabel: string;
   counts: NavCounts;
   isPlatformAdmin?: boolean;
+  plan?: PlanCode;
 }) {
   const pathname = usePathname();
+  const isLocked = (item: NavItem) => Boolean(item.feature) && !planAllows(plan, item.feature!);
 
   // Estado inicial determinístico (server + 1º render client): abre só o grupo do
   // item ativo — revelação progressiva (design-principles #2). A preferência salva
@@ -90,7 +104,7 @@ export function Sidebar({
       </div>
 
       {TOP_ITEMS.map((item) => (
-        <Item key={item.key} item={item} counts={counts} active={isActive(pathname, item.href)} />
+        <Item key={item.key} item={item} counts={counts} active={isActive(pathname, item.href)} locked={isLocked(item)} />
       ))}
 
       {NAV_GROUPS.map((group) => {
@@ -129,6 +143,7 @@ export function Sidebar({
                     item={item}
                     counts={counts}
                     active={isActive(pathname, item.href)}
+                    locked={isLocked(item)}
                   />
                 ))}
               </div>
@@ -138,6 +153,7 @@ export function Sidebar({
       })}
 
       <div className="navsep" />
+      <Item item={PLANS_ITEM} counts={counts} active={isActive(pathname, PLANS_ITEM.href)} />
       <Item item={SETTINGS_ITEM} counts={counts} active={isActive(pathname, SETTINGS_ITEM.href)} />
       {isPlatformAdmin ? (
         <Item item={ADMIN_ITEM} counts={counts} active={isActive(pathname, ADMIN_ITEM.href)} />

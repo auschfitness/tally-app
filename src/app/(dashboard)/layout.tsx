@@ -10,7 +10,7 @@ import { visibleSignals } from "@/features/inbox/domain";
 // Casca protegida. Toda rota deste grupo passa por requireOrg no servidor:
 // sem sessão → /login; sem org → /onboarding. Nada aqui confia no navegador.
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, user, orgId } = await requireOrg();
+  const { supabase, user, orgId, plan } = await requireOrg();
 
   const [orgRes, campusRes, peopleRes, isAdmin] = await Promise.all([
     supabase.from("organizations").select("name").eq("id", orgId).maybeSingle(),
@@ -45,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="app">
-      <Sidebar userLabel={userLabel} counts={counts} isPlatformAdmin={isAdmin} />
+      <Sidebar userLabel={userLabel} counts={counts} isPlatformAdmin={isAdmin} plan={plan} />
       <div className="main">
         <Topbar orgName={orgName} />
         <div className="content view-in">{children}</div>

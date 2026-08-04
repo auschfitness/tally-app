@@ -8,14 +8,14 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import { brDate } from "@/lib/utils/date";
-import { setOrgStatusAction } from "../actions";
+import { setOrgStatusAction, setOrgPlanAction } from "../actions";
+import { PLAN_ORDER, PLANS } from "@/features/plans/catalog";
 import {
   buildStatTiles,
   filterOrgs,
   nextStatus,
   orgStatusBand,
   orgStatusLabel,
-  planLabel,
   sortOrgs,
   statusActionLabel,
   type OrgSortKey,
@@ -71,6 +71,16 @@ export function AdminDashboard({ stats, orgs }: { stats: PlatformStats; orgs: Ad
     setBusyId(org.orgId);
     setErr(null);
     const res = await setOrgStatusAction(org.orgId, target);
+    setBusyId(null);
+    if (res.success) router.refresh();
+    else setErr(res.message);
+  }
+
+  async function applyPlan(org: AdminOrg, plan: string) {
+    if (plan === org.plan) return;
+    setBusyId(org.orgId);
+    setErr(null);
+    const res = await setOrgPlanAction(org.orgId, plan);
     setBusyId(null);
     if (res.success) router.refresh();
     else setErr(res.message);
@@ -170,7 +180,19 @@ export function AdminDashboard({ stats, orgs }: { stats: PlatformStats; orgs: Ad
                       <td className={styles.orgName}>{o.name}</td>
                       <td className={styles.muted2}>{o.country || "—"}</td>
                       <td>
-                        <span className="chip">{planLabel(o.plan)}</span>
+                        <Select
+                          compact
+                          value={PLANS[o.plan === "pro" ? "pro" : "free"].code}
+                          disabled={busyId === o.orgId}
+                          onChange={(e) => applyPlan(o, e.target.value)}
+                          aria-label={`Plano de ${o.name}`}
+                        >
+                          {PLAN_ORDER.map((code) => (
+                            <option key={code} value={code}>
+                              {code === "pro" ? "Pro" : "Free"} · {PLANS[code].name}
+                            </option>
+                          ))}
+                        </Select>
                       </td>
                       <td>
                         <span className={`hb ${orgStatusBand(o.status)}`}>{orgStatusLabel(o.status)}</span>

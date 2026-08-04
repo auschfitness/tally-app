@@ -1,0 +1,108 @@
+/* Planos — vitrine + upsell. Apoia-se no sistema global (.panel/.btn/.chip); adiciona só
+   os cartões de plano e a grade de comparação. Temático claro E escuro via tokens. */
+
+.upsell {
+  text-align: center;
+  padding: 40px 24px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.upsellIcon {
+  font-size: 30px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.upsellTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.upsellText {
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card.current {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue) inset;
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.planName {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.planPrice {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.planTag {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 40px;
+}
+.featureList {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.featureList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.featureList li.off {
+  color: var(--text-2);
+}
+.check {
+  color: var(--green);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.dash {
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.currentBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(43, 92, 230, 0.15);
+  color: var(--blue);
+}
+.coreNote {
+  margin-top: 16px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.6;
+}

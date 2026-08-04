@@ -8,6 +8,7 @@
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { asPlanCode, type PlanCode } from "@/features/plans/catalog";
 
 // O tipo do cliente é derivado do próprio createClient (evita divergência de
 // parâmetros genéricos do SupabaseClient entre versões).
@@ -25,6 +26,7 @@ export interface OrgContext extends UserContext {
   roleId: string | null; // cargo atual (roles.id); null = sem cargo atribuído
   roleName: string | null; // nome do cargo (ex.: "Pastor"), para exibir na UI
   permissions: string[]; // UNIÃO: permissões do próprio membership + as do cargo
+  plan: PlanCode; // plano da igreja (organizations.plan) — trava comercial de recursos
 }
 
 export async function requireUser(): Promise<UserContext> {
@@ -44,7 +46,7 @@ export async function requireOrg(): Promise<OrgContext> {
   // RLS libera (ex.: quem é Pastor pelo cargo, sem permissão avulsa).
   const { data, error } = await supabase
     .from("memberships")
-    .select("org_id, is_owner, role, permissions, role_id, roles(name, permissions), organizations(status)")
+    .select("org_id, is_owner, role, permissions, role_id, roles(name, permissions), organizations(status, plan)")
     .limit(1)
     .maybeSingle();
 
@@ -67,6 +69,7 @@ export async function requireOrg(): Promise<OrgContext> {
     roleId: data.role_id,
     roleName: roleRow?.name ?? null,
     permissions: [...new Set([...(data.permissions ?? []), ...(roleRow?.permissions ?? [])])],
+    plan: asPlanCode(data.organizations?.plan),
   };
 }
 

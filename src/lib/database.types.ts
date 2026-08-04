@@ -3976,6 +3976,10 @@ export type Database = {
           suspended: number
         }[]
       }
+      admin_set_org_plan: {
+        Args: { p_org: string; p_plan: string }
+        Returns: undefined
+      }
       admin_set_org_status: {
         Args: { p_org: string; p_status: string }
         Returns: undefined

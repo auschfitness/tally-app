@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { type ActionResult, done, fail, toMessage } from "@/lib/errors";
 import { isPlatformAdmin } from "./queries";
-import { isUuid, parseOrgStatus } from "./schema";
+import { isUuid, parseOrgStatus, parseOrgPlan } from "./schema";
 
 const DENIED = "Acesso restrito ao Tally.";
 
@@ -24,6 +24,26 @@ export async function setOrgStatusAction(orgId: string, status: string): Promise
   try {
     const { error } = await supabase.rpc("admin_set_org_status", { p_org: orgId, p_status: target });
     if (error) return fail(toMessage(error, "Não consegui atualizar o status da igreja."));
+    revalidatePath("/admin");
+    return done();
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Aplica um novo plano ('free' | 'pro') a uma igreja. Passa pela RPC SECURITY DEFINER
+// admin_set_org_plan (m50), que exige is_platform_admin() por dentro — barreira real.
+export async function setOrgPlanAction(orgId: string, plan: string): Promise<ActionResult> {
+  if (!isUuid(orgId)) return fail("Igreja inválida.");
+  const target = parseOrgPlan(plan);
+  if (!target) return fail("Plano inválido.");
+
+  const { supabase } = await requireUser();
+  if (!(await isPlatformAdmin(supabase))) return fail(DENIED);
+
+  try {
+    const { error } = await supabase.rpc("admin_set_org_plan", { p_org: orgId, p_plan: target });
+    if (error) return fail(toMessage(error, "Não consegui atualizar o plano da igreja."));
     revalidatePath("/admin");
     return done();
   } catch (e) {
