@@ -17,7 +17,7 @@ O Tally é um Church OS com muitos módulos — não vai ser uma tela só, e nã
 8. **Cor contida.** Neutros dominam; o azul (#2B5CE6) é ACENTO — ação primária, seleção, link. Cor não é decoração; carrega significado.
 
 ## Linguagem visual (macOS-grade)
-- **Tipografia lidera** a hierarquia (tamanho/peso), não bordas. Poppins.
+- **Tipografia lidera** a hierarquia (tamanho/peso), não bordas. A família depende do sistema de design em vigor: **v1 usa Poppins; v2 usa a stack do sistema** (`--font-ui`, ver `docs/design-tokens.md`), atrás da flag `ui.design_v2`. Não reintroduza Poppins no v2 — a troca é deliberada, é o que tira a cara de template. Quando o v2 for aprovado e o v1 aposentado, esta linha passa a dizer só "stack do sistema".
 - **Superfícies quietas**: fundo calmo, cartões sutis (sombra leve/leve elevação), poucas linhas divisórias. Preferir espaçamento a borda.
 - **Cantos arredondados** consistentes; **profundidade suave** (sombra/blur discretos), nunca borda grossa.
 - **Alinhamento disciplinado**: grid consistente, margens iguais, nada "quase alinhado".
