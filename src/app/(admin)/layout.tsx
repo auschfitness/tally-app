@@ -23,6 +23,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <span className={styles.badge}>Admin</span>
         </div>
         <nav className={styles.topnav}>
+          <Link href="/admin" className="btn ghost sm">
+            Igrejas
+          </Link>
+          <Link href="/admin/flags" className="btn ghost sm">
+            Flags
+          </Link>
           <Link href="/" className="btn ghost sm">
             Voltar ao app
           </Link>

@@ -3,6 +3,7 @@
 // admin_platform_stats) e são mapeadas nas queries, já com os números como number e o
 // status coeragido para a união conhecida.
 import type { AdminOrgRow } from "./domain";
+import type { FlagKey, Rollout } from "@/features/flags/catalog";
 
 export type {
   OrgStatus,
@@ -20,4 +21,14 @@ export type {
 export interface AdminOrg extends AdminOrgRow {
   orgId: string;
   currency: string | null;
+}
+
+// Uma feature flag no painel: o default global (feature_flags) + os overrides por igreja
+// (feature_flag_orgs), indexados por org_id para a UI consultar direto.
+export interface AdminFlag {
+  key: FlagKey;
+  description: string;
+  enabled: boolean;
+  rollout: Rollout;
+  overrides: Record<string, boolean>;
 }

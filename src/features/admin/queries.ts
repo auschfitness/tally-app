@@ -4,8 +4,9 @@
 // (doações/mensagens/Care ficam fechadas pelo RLS por org). Se o caller não for
 // platform-admin, as admin_* levantam forbidden (42501) e is_platform_admin() → false.
 import type { DB } from "@/lib/auth/session";
+import { ALL_FLAGS, isFlagKey, parseRollout } from "@/features/flags/catalog";
 import { coerceOrgStatus, type PlatformStats } from "./domain";
-import type { AdminOrg } from "./types";
+import type { AdminFlag, AdminOrg } from "./types";
 
 // É o usuário logado um admin da plataforma? Defensivo: qualquer erro → false (nega).
 export async function isPlatformAdmin(supabase: DB): Promise<boolean> {
@@ -47,4 +48,39 @@ export async function loadAdminOrgs(supabase: DB): Promise<AdminOrg[]> {
     sticks: o.sticks,
     groups: o.groups,
   }));
+}
+
+// Catálogo de flags + overrides por igreja, para o painel. Leitura direta das tabelas
+// (não há RPC de listagem): o RLS libera SELECT em feature_flags para logado e em
+// feature_flag_orgs só para a própria org ou platform admin — e esta tela só renderiza
+// depois do gate is_platform_admin(). A ordem e o conjunto vêm do catálogo em código:
+// chave que só existe no banco não aparece (e o teste do catálogo impede isso).
+export async function loadAdminFlags(supabase: DB): Promise<AdminFlag[]> {
+  const [flags, overrides] = await Promise.all([
+    supabase.from("feature_flags").select("key, description, enabled, rollout"),
+    supabase.from("feature_flag_orgs").select("flag_key, org_id, enabled"),
+  ]);
+  if (flags.error || !flags.data) return [];
+
+  const byKey = new Map(flags.data.filter((f) => isFlagKey(f.key)).map((f) => [f.key, f]));
+  const byOrg = new Map<string, Record<string, boolean>>();
+  for (const o of overrides.data ?? []) {
+    const bucket = byOrg.get(o.flag_key) ?? {};
+    bucket[o.org_id] = o.enabled;
+    byOrg.set(o.flag_key, bucket);
+  }
+
+  return ALL_FLAGS.flatMap((key) => {
+    const row = byKey.get(key);
+    if (!row) return [];
+    return [
+      {
+        key,
+        description: row.description,
+        enabled: row.enabled,
+        rollout: parseRollout(row.rollout) ?? "off",
+        overrides: byOrg.get(key) ?? {},
+      },
+    ];
+  });
 }

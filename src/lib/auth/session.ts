@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { asPlanCode, type PlanCode } from "@/features/plans/catalog";
+import { isFlagKey, type FlagKey } from "@/features/flags/catalog";
 
 // O tipo do cliente é derivado do próprio createClient (evita divergência de
 // parâmetros genéricos do SupabaseClient entre versões).
@@ -27,6 +28,7 @@ export interface OrgContext extends UserContext {
   roleName: string | null; // nome do cargo (ex.: "Pastor"), para exibir na UI
   permissions: string[]; // UNIÃO: permissões do próprio membership + as do cargo
   plan: PlanCode; // plano da igreja (organizations.plan) — trava comercial de recursos
+  flags: FlagKey[]; // feature flags LIGADAS para esta org — trava de maturidade (ver features/flags)
 }
 
 export async function requireUser(): Promise<UserContext> {
@@ -59,6 +61,12 @@ export async function requireOrg(): Promise<OrgContext> {
   // único edit barra o app inteiro. O painel /admin usa requireUser e NÃO é afetado.
   if (data.organizations?.status === "suspended") redirect("/suspensa");
 
+  // Feature flags da org: UMA chamada por request (org_flags devolve todas as ligadas de
+  // uma vez, com a precedência resolvida no banco), nunca uma por flag. Depende do org_id,
+  // então só pode vir depois da query acima. Falhou? Lista vazia — fechar é o seguro: o
+  // pior caso é um módulo em obra não aparecer, nunca um módulo em obra aparecer.
+  const { data: flagRows } = await supabase.rpc("org_flags", { p_org: data.org_id });
+
   const roleRow = data.roles;
   return {
     supabase,
@@ -70,6 +78,7 @@ export async function requireOrg(): Promise<OrgContext> {
     roleName: roleRow?.name ?? null,
     permissions: [...new Set([...(data.permissions ?? []), ...(roleRow?.permissions ?? [])])],
     plan: asPlanCode(data.organizations?.plan),
+    flags: (flagRows ?? []).filter(isFlagKey),
   };
 }
 
