@@ -23,6 +23,63 @@
   --dur-micro: 140ms;
   --dur-panel: 220ms;
   --ease: cubic-bezier(.2, .8, .2, 1);
+  /* Entrada de painel/sheet — a curva "iOS" (docs/design-tokens.md §Movimento).
+     Vale nas duas versões; hoje só o v2 a consome. */
+  --ease-spring: cubic-bezier(.32, .72, 0, 1);
+
+  /* --- Ar: grid base de 4px. Literal, igual em v1 e v2. --- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+
+  /* ============================================================
+     ESCALAS — BLOCO v1 (valores de HOJE).
+
+     ponytail: este bloco é ANDAIME TEMPORÁRIO. Os NOMES são os do v2
+     (docs/design-tokens.md), os VALORES são os que o app usa hoje de fato — por isso
+     `--t-15: 14px` e `--r-14: 16px` parecem mentira. É proposital: permite trocar
+     valor cru por token nos *.module.css sem alterar uma vírgula do visual atual,
+     enquanto a flag `ui.design_v2` estiver desligada.
+
+     GATILHO PARA DELETAR: quando o dono aprovar o v2 e a flag for aposentada
+     (rollout 'all' e sem volta). Aí este bloco some, o conteúdo do bloco
+     [data-design="v2"] sobe para o :root, e os nomes voltam a dizer a verdade.
+     ============================================================ */
+
+  /* Tipografia. `--lh-*: normal` no v1 = aplicar o token não muda entrelinha. */
+  --font-ui: var(--font-poppins), 'Poppins', system-ui, -apple-system, sans-serif;
+  --t-11: 11px;
+  --lh-11: normal;
+  --t-13: 13px;
+  --lh-13: normal;
+  --t-15: 14px;
+  --lh-15: normal;
+  --t-17: 15px;
+  --lh-17: normal;
+  --t-22: 24px;
+  --lh-22: normal;
+  --t-28: 26px;
+  --lh-28: normal;
+  --t-34: 26px;
+  --lh-34: normal;
+  --track-tight: normal; /* letter-spacing dos tamanhos grandes */
+
+  /* Raios. `--r-pill` é FORMA (pílula/avatar), não degrau da escala. */
+  --r-6: 8px;
+  --r-10: 9px;
+  --r-14: 16px;
+  --r-20: 16px;
+  --r-pill: 20px;
+
+  /* Elevação (as duas combinações ad-hoc que existem hoje). */
+  --e-1: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .05);
+  --e-2: 0 1px 2px rgba(16, 24, 40, .04), 0 6px 20px rgba(16, 24, 40, .05);
+
+  --pad-card: 16px;
 }
 
 :root[data-theme="dark"] {
@@ -37,13 +94,67 @@
   --blue: #4C7BFF;
 }
 
+/* ============================================================
+   ESCALAS — BLOCO v2 (docs/design-tokens.md), atrás da flag `ui.design_v2`.
+
+   Token de CSS não liga/desliga por Server Component, então o gate vira um atributo
+   no elemento raiz do app — mesmo truque do `data-theme` acima. Quem escreve o
+   atributo é o layout do dashboard, a partir de flagOn(ctx, "ui.design_v2").
+   Flag desligada → nenhum destes seletores casa → o app é byte-a-byte o v1.
+
+   O seletor é `[data-design="v2"]` (sem `:root`) de propósito: hoje o atributo mora
+   no <div class="app">, e continua valendo se um dia subir para o <html>.
+   ============================================================ */
+[data-design="v2"] {
+  /* Stack do sistema: é o que dá o "cheiro" macOS de graça e tira um webfont do
+     carregamento (o Poppins não é nem baixado — ver preload:false em app/layout.tsx). */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable",
+    "Inter", system-ui, sans-serif;
+  --t-11: 11px;
+  --lh-11: 16px;
+  --t-13: 13px;
+  --lh-13: 18px;
+  --t-15: 15px;
+  --lh-15: 22px;
+  --t-17: 17px;
+  --lh-17: 24px;
+  --t-22: 22px;
+  --lh-22: 28px;
+  --t-28: 28px;
+  --lh-28: 34px;
+  --t-34: 34px;
+  --lh-34: 40px;
+  --track-tight: -0.01em;
+
+  --r-6: 6px;
+  --r-10: 10px;
+  --r-14: 14px;
+  --r-20: 20px;
+  --r-pill: 999px;
+
+  --e-1: 0 1px 2px rgba(16, 24, 40, .05);
+  --e-2: 0 8px 24px rgba(16, 24, 40, .08);
+
+  --pad-card: 20px;
+
+  /* A troca de fonte precisa ser DECLARADA aqui: `body` resolve `var(--font-ui)` no
+     próprio body (onde o v2 não alcança) e os filhos herdam o valor já computado. */
+  font-family: var(--font-ui);
+}
+
+/* Elevação no escuro: sombra clara não existe sobre fundo escuro. */
+:root[data-theme="dark"] [data-design="v2"] {
+  --e-1: 0 1px 2px rgba(0, 0, 0, .40);
+  --e-2: 0 8px 24px rgba(0, 0, 0, .45);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: var(--font-poppins), 'Poppins', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--t-15);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -51,7 +162,7 @@ button { font-family: inherit; cursor: pointer; }
 a { color: inherit; }
 
 /* --- Botões base (compartilhado) --- */
-.btn { background: var(--blue); color: #fff; border: none; border-radius: 9px; padding: 9px 15px; font-weight: 600; font-size: 13px; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease), transform var(--dur-micro) var(--ease), box-shadow var(--dur-micro) var(--ease); }
+.btn { background: var(--blue); color: #fff; border: none; border-radius: var(--r-10); padding: 9px 15px; font-weight: 600; font-size: 13px; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease), transform var(--dur-micro) var(--ease), box-shadow var(--dur-micro) var(--ease); }
 .btn:hover { background: var(--blue-deep); }
 .btn:active { transform: translateY(1px); }
 .btn.ghost { background: rgba(43, 92, 230, .12); color: var(--blue); }
@@ -60,7 +171,7 @@ a { color: inherit; }
 
 .link { color: var(--blue); background: none; border: none; font-size: 12.5px; font-weight: 600; cursor: pointer; }
 /* Botão de ícone (ex.: fechar ×) — controle discreto, estilizado ao tema claro/escuro. */
-.iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; border: none; background: none; color: var(--text-2); font-size: 20px; line-height: 1; cursor: pointer; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease); }
+.iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--r-6); border: none; background: none; color: var(--text-2); font-size: 20px; line-height: 1; cursor: pointer; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease); }
 .iconbtn:hover { background: var(--surface-2); color: var(--text); }
 .muted { color: var(--text-2); font-size: 12px; }
 .empty { color: var(--text-2); font-size: 13px; padding: 18px 0; text-align: center; }
@@ -92,9 +203,9 @@ a { color: inherit; }
 
 /* Cartões de estatística */
 .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .05); }
-.stat .k { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); font-weight: 600; margin-bottom: 6px; }
-.stat .v { font-size: 26px; font-weight: 600; line-height: 1; color: var(--text); }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); padding: var(--pad-card); box-shadow: var(--e-1); }
+.stat .k { font-size: var(--t-11); letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); font-weight: 600; margin-bottom: 6px; }
+.stat .v { font-size: var(--t-28); font-weight: 600; line-height: 1; color: var(--text); }
 .stat.alert { border-color: rgba(234, 91, 76, .4); background: rgba(234, 91, 76, .07); }
 .stat.alert .v { color: var(--coral); }
 .stat .v.pos { color: var(--green); }
@@ -102,9 +213,9 @@ a { color: inherit; }
 /* Painéis lado a lado sobem ao tamanho do conteúdo (sem esticar e criar vão
    morto) — ar de verdade, não caixa vazia (design-principles §ar no lugar de caixas). */
 .row2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; margin-bottom: 20px; align-items: start; }
-.panel { box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 6px 20px rgba(16, 24, 40, .05); }
+.panel { box-shadow: var(--e-2); }
 .panel .ph { display: flex; align-items: center; margin-bottom: 12px; gap: 10px; }
-.panel h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.panel h3 { font-size: var(--t-17); line-height: var(--lh-17); font-weight: 600; color: var(--text); }
 
 /* Faixa de métricas + barras de engajamento (Sticks, Teams) */
 .ministrip { display: flex; gap: 22px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -128,7 +239,7 @@ a { color: inherit; }
 .gbar > i.risk { background: var(--coral); }
 
 /* Selo de saúde (Grupos, Home) */
-.hb { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.hb { font-size: var(--t-11); font-weight: 600; padding: 3px 10px; border-radius: var(--r-pill); white-space: nowrap; }
 .hb.healthy { background: rgba(31, 169, 122, .16); color: var(--green); }
 .hb.attention { background: rgba(232, 131, 58, .18); color: #E8833A; }
 .hb.risk { background: rgba(234, 91, 76, .16); color: var(--coral); }
@@ -141,7 +252,7 @@ a { color: inherit; }
 .li .right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 .av { width: 30px; height: 30px; border-radius: 50%; background: rgba(43, 92, 230, .13); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; color: var(--blue); flex-shrink: 0; }
 .av.c { background: rgba(234, 91, 76, .16); color: var(--coral); }
-.flag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: rgba(234, 91, 76, .15); color: var(--coral); }
+.flag { font-size: var(--t-11); font-weight: 600; padding: 3px 9px; border-radius: var(--r-pill); background: rgba(234, 91, 76, .15); color: var(--coral); }
 
 /* Tabelas */
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
@@ -151,7 +262,7 @@ tr:last-child td { border-bottom: none; }
 tr[data-stick]:hover td, tr.rowlink:hover td { background: var(--surface-2); }
 
 /* Chips */
-.chip { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.chip { font-size: var(--t-11); font-weight: 600; padding: 3px 9px; border-radius: var(--r-pill); }
 .chip.member { background: rgba(31, 169, 122, .16); color: var(--green); }
 .chip.visitor { background: rgba(43, 92, 230, .15); color: var(--blue); }
 .chip.leader { background: rgba(107, 79, 214, .18); color: #8b74e8; }
@@ -205,13 +316,13 @@ tr[data-stick]:hover td, tr.rowlink:hover td { background: var(--surface-2); }
 /* Formulários (base compartilhada de campos) */
 .field { margin-bottom: 13px; }
 .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 5px; }
-.field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 13.5px; color: var(--text); background: var(--surface-2); }
+.field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--r-10); padding: 9px 11px; font-family: inherit; font-size: 13.5px; color: var(--text); background: var(--surface-2); }
 .field textarea { resize: vertical; line-height: 1.5; }
 .field.check { display: flex; align-items: center; gap: 9px; }
 .field.check label { margin: 0; cursor: pointer; }
 .mrow { display: flex; gap: 10px; }
 .mrow .field { flex: 1; }
-.sel { font-size: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; background: var(--surface); color: var(--text); font-family: inherit; }
+.sel { font-size: 12px; border: 1px solid var(--border); border-radius: var(--r-6); padding: 5px 8px; background: var(--surface); color: var(--text); font-family: inherit; }
 .searchbox { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; font-family: inherit; font-size: 13.5px; color: var(--text); background: var(--surface-2); margin-bottom: 8px; }
 .switch { width: 44px; height: 25px; border-radius: 20px; background: var(--border); position: relative; border: none; flex-shrink: 0; }
 .switch.on { background: var(--blue); }
@@ -255,7 +366,7 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 
 /* Modal (overlay + cartão) */
 .overlay { position: fixed; inset: 0; background: rgba(6, 10, 20, .55); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
-.modal { background: var(--surface); border-radius: 16px; padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0, 0, 0, .4); }
+.modal { background: var(--surface); border-radius: var(--r-20); padding: 24px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0, 0, 0, .4); }
 .modal.wide { max-width: 540px; }
 .modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
 .modal .msub { font-size: 12.5px; color: var(--text-2); margin-bottom: 14px; }
@@ -336,12 +447,62 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 .iconbtn { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); display: flex; align-items: center; justify-content: center; transition: color var(--dur-micro) var(--ease); }
 .iconbtn:hover { color: var(--text); }
 .content { padding: 24px; overflow: auto; }
-h1.page { font-size: 24px; font-weight: 600; margin-bottom: 3px; color: var(--text); }
-.sub { color: var(--text-2); font-size: 13px; margin-bottom: 20px; }
-.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var(--track-tight); font-weight: 600; margin-bottom: 3px; color: var(--text); }
+.sub { color: var(--text-2); font-size: var(--t-13); margin-bottom: 20px; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); padding: 20px; }
 
 [data-theme="dark"] .gcard { box-shadow: none; }
 [data-theme="dark"] .panel { box-shadow: none; }
+
+/* ============================================================
+   v2 — FIM DO SEMÁFORO (docs/design-tokens.md §Cor) + ar.
+
+   Verde/laranja/coral deixam de ser FUNDO e viram PONTO + texto na cor do corpo.
+   O azul da marca fica como o único fill colorido da interface. Tudo aqui depende de
+   [data-design="v2"]: com a flag desligada, o semáforo é exatamente o de hoje.
+   Seletores de tom repetem o prefixo de propósito — precisam vencer `.hb.risk`
+   (mesma especificidade) sem depender da ordem do arquivo.
+   ============================================================ */
+
+/* Selo de saúde: pílula preenchida → ponto de 6px + texto. */
+[data-design="v2"] .hb {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  padding: 0; border-radius: 0; font-size: var(--t-13); line-height: var(--lh-13); font-weight: 500;
+}
+[data-design="v2"] .hb.healthy, [data-design="v2"] .hb.attention, [data-design="v2"] .hb.risk {
+  background: none; color: var(--text);
+}
+[data-design="v2"] .hb::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--text-2);
+}
+[data-design="v2"] .hb.healthy::before { background: var(--green); }
+[data-design="v2"] .hb.attention::before { background: var(--warn); }
+[data-design="v2"] .hb.risk::before { background: var(--coral); }
+
+/* Barras de saúde/progresso: a LARGURA é o dado (quanto); a cor era decoração (que
+   estado) — e o estado já está no ponto/número ao lado. Some o semáforo, fica o azul.
+   Trocar a barra por um ponto destruiria a quantidade, então a geometria permanece. */
+[data-design="v2"] .engbar > i, [data-design="v2"] .gbar > i,
+[data-design="v2"] .engbar > i.healthy, [data-design="v2"] .engbar > i.attention, [data-design="v2"] .engbar > i.risk,
+[data-design="v2"] .gbar > i.healthy, [data-design="v2"] .gbar > i.attention, [data-design="v2"] .gbar > i.risk {
+  background: var(--blue);
+}
+
+/* Cartão em alerta: fundo/borda coral → cartão normal com um ponto no rótulo. */
+[data-design="v2"] .stat.alert { border-color: var(--border); background: var(--surface); }
+[data-design="v2"] .stat.alert .v { color: var(--text); }
+[data-design="v2"] .stat.alert .k { display: flex; align-items: center; gap: 6px; }
+[data-design="v2"] .stat.alert .k::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--coral);
+}
+
+/* Ar: cartões deixam de ser 4 colunas fixas (docs/design-tokens.md §Ar). */
+[data-design="v2"] .cards { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+/* Movimento: entrada de painel/sheet na curva iOS. O bloco de prefers-reduced-motion
+   abaixo desliga com !important, então nada novo escapa dele. */
+[data-design="v2"] .overlay .modal { animation: modalIn var(--dur-panel) var(--ease-spring); }
+[data-design="v2"] .drawer { animation: drawerIn var(--dur-panel) var(--ease-spring); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }

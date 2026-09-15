@@ -1,4 +1,5 @@
 import { requireOrg } from "@/lib/auth/session";
+import { flagOn } from "@/features/flags/gate";
 import { isPlatformAdmin } from "@/features/admin/queries";
 import { resolveActiveCampus } from "@/lib/campus";
 import { Sidebar, type NavCounts } from "@/components/shared/Sidebar";
@@ -10,7 +11,14 @@ import { visibleSignals } from "@/features/inbox/domain";
 // Casca protegida. Toda rota deste grupo passa por requireOrg no servidor:
 // sem sessão → /login; sem org → /onboarding. Nada aqui confia no navegador.
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, user, orgId, plan } = await requireOrg();
+  const ctx = await requireOrg();
+  const { supabase, user, orgId, plan } = ctx;
+
+  // Sistema de design v2 (docs/design-tokens.md): token de CSS não liga/desliga por
+  // Server Component, então a flag vira um atributo no elemento raiz do app e o
+  // globals.css faz o resto — mesmo truque do `data-theme` no layout raiz. Desligada
+  // (o caso de produção hoje), o atributo nem existe e nada muda de aparência.
+  const design = flagOn(ctx, "ui.design_v2") ? "v2" : undefined;
 
   const [orgRes, campusRes, peopleRes, isAdmin] = await Promise.all([
     supabase.from("organizations").select("name").eq("id", orgId).maybeSingle(),
@@ -44,7 +52,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const counts: NavCounts = { inbox, people: peopleRes.count ?? 0, tasks: 0 };
 
   return (
-    <div className="app">
+    <div className="app" data-design={design}>
       <Sidebar userLabel={userLabel} counts={counts} isPlatformAdmin={isAdmin} plan={plan} />
       <div className="main">
         <Topbar orgName={orgName} />
