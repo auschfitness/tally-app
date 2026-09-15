@@ -408,14 +408,6 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .view-in { animation: viewIn var(--dur-panel) var(--ease); }
 
-/* Responsivo: some a sidebar e colapsa grids em telas estreitas. */
-@media (max-width: 880px) {
-  .app { grid-template-columns: 1fr; }
-  .side { display: none; }
-  .cards { grid-template-columns: 1fr 1fr; }
-  .row2 { grid-template-columns: 1fr; }
-}
-
 /* --- Casca do app (frame + navegação) --- */
 .app { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
 .side { background: var(--sidebar); color: #AEB8CC; padding: 20px 14px; display: flex; flex-direction: column; gap: 3px; }
@@ -520,6 +512,20 @@ h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var
    abaixo desliga com !important, então nada novo escapa dele. */
 [data-design="v2"] .overlay .modal { animation: modalIn var(--dur-panel) var(--ease-spring); }
 [data-design="v2"] .drawer { animation: drawerIn var(--dur-panel) var(--ease-spring); }
+
+/* Responsivo: some a sidebar e colapsa grids em telas estreitas.
+   ESTE BLOCO FICA DEPOIS DAS REGRAS BASE, E ISSO IMPORTA. Ele vivia antes de
+   `.app`/`.side` (a casca, mais abaixo no arquivo): mesma especificidade, regra
+   posterior vence, entao a sidebar de 230px continuava renderizada em QUALQUER
+   largura e o app inteiro nunca colapsou no celular — o responsivo era codigo
+   morto. Media query com seletor de mesma especificidade da base precisa vir
+   depois. Nao mova para cima. */
+@media (max-width: 880px) {
+  .app { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .cards { grid-template-columns: 1fr 1fr; }
+  .row2 { grid-template-columns: 1fr; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
