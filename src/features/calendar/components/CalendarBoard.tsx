@@ -103,7 +103,7 @@ function AgendaView({ sources, activeCampus, typeFilter, now0, todayIso }: { sou
   const byDay = groupByDay(occurrences(now0, to, sources, activeCampus, typeFilter));
   const days = [...byDay.keys()];
   if (days.length === 0) {
-    return <div className="empty">Nada agendado nos próximos 60 dias. Cadastre cultos e eventos, ou monte a escala em Times.</div>;
+    return <div className="empty">Nada agendado nos próximos 60 dias. Cadastre cultos e eventos, ou monte a escala em Escalas.</div>;
   }
   return (
     <>

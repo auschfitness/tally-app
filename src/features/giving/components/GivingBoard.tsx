@@ -96,7 +96,7 @@ export function GivingBoard({
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
         <div style={{ marginRight: "auto" }}>
           <h1 className="page">Doações</h1>
-          <p className="sub" style={{ margin: 0 }}>Giving por doador, com recibos. Ledger separado do Finance Lite.</p>
+          <p className="sub" style={{ margin: 0 }}>Giving por doador, com recibos. Ledger separado do Financeiro.</p>
         </div>
         <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="giving" align="right" />
         <button className="btn" onClick={() => setModalOpen(true)}>+ Registrar doação</button>

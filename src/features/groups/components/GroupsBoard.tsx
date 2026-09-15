@@ -35,7 +35,7 @@ export function GroupsBoard({
     <>
       <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 18 }}>
         <div>
-          <h1 className="page">Saúde dos Grupos</h1>
+          <h1 className="page">Células</h1>
           <p className="sub" style={{ margin: 0 }}>
             {activeCampus} · toque num grupo para ver o relatório
             {band ? <button className="link" style={{ marginLeft: 8 }} onClick={() => setBand(null)}>limpar</button> : null}

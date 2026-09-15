@@ -21,7 +21,7 @@ export function InstitutionPanel({ orgName, currency }: { orgName: string; curre
     <div className="panel">
       {/* Nome + moeda (organizations) */}
       <form action={orgAction} className={styles.setrow}>
-        <div className={styles.lbl}>Instituição<small>Nome e moeda (usada no Finance Lite)</small></div>
+        <div className={styles.lbl}>Instituição<small>Nome e moeda (usada no Financeiro)</small></div>
         <div className={styles.ctrl}>
           <input name="name" defaultValue={orgName} placeholder="Nome da instituição" />
           {orgErr?.name ? <div className="gerr">{orgErr.name[0]}</div> : null}

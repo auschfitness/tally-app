@@ -55,7 +55,7 @@ export function FinanceBoard({
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-        <h1 className="page" style={{ marginRight: "auto" }}>Finance Lite</h1>
+        <h1 className="page" style={{ marginRight: "auto" }}>Financeiro</h1>
         <PeriodFilter
           onChange={onPeriod}
           defaultPreset="thisMonth"

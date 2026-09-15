@@ -55,7 +55,7 @@ export function DonationModal({
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <form className="modal" action={formAction}>
         <h3>Registrar doação</h3>
-        <p className="msub">Contribuição atribuída a um doador, com recibo. Fica no ledger de giving (separado do Finance Lite).</p>
+        <p className="msub">Contribuição atribuída a um doador, com recibo. Fica no ledger de giving (separado do Financeiro).</p>
 
         <input type="hidden" name="donorMode" value={mode} />
 

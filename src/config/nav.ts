@@ -1,6 +1,15 @@
-// Navegação principal. Onda 2 / Fatia B: os itens agora ficam agrupados por
-// domínio (arquitetura de informação), mas as ROTAS e os RÓTULOS de produto são
-// preservados — aqui só reorganizamos o menu, nunca renomeamos termos do CLAUDE.md.
+// Navegação principal. Os itens ficam agrupados por domínio (arquitetura de informação).
+//
+// RÓTULO ≠ ROTA. A Fase 0/Parte C renomeou rótulos GENÉRICOS de menu para o que o pastor
+// ganha ("Finance Lite" → Financeiro, Times → Escalas, Saúde dos Grupos → Células,
+// Comunicação → Espaços). As chaves de rota e as pastas NÃO mudam (`/teams`,
+// `features/teams`): renomear pasta destrói o histórico do git sem ganho nenhum.
+// Termos de produto do Tally continuam intocados: Stick, Signal, Care, Journey,
+// Milestone, Inbox, Timeline.
+//
+// "Células" é o PADRÃO em PT-BR, não uma escolha final: a spec 04 prevê rótulo
+// configurável por igreja (célula, GC, conexão, casa de paz), e o inglês recebe "Groups"
+// quando a i18n entrar.
 // `key` = feature; `href` = rota no App Router; `count` marca itens com contador.
 // `feature` = recurso travável: se presente e o plano da igreja não o libera, o item
 // aparece com cadeado (a página mostra o upsell). Sem `feature` = núcleo, sempre liberado.
@@ -37,8 +46,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { key: "people", label: "Sticks", href: "/sticks", count: "people" },
       { key: "members", label: "Membros", href: "/members", feature: "members" },
-      { key: "groups", label: "Saúde dos Grupos", href: "/groups" },
-      { key: "teams", label: "Times", href: "/teams", feature: "teams" },
+      { key: "groups", label: "Células", href: "/groups" },
+      { key: "teams", label: "Escalas", href: "/teams", feature: "teams" },
       { key: "coord", label: "Coordenação", href: "/coordination", count: "tasks" },
       { key: "journey", label: "Journey", href: "/journey" },
       { key: "study", label: "Trilhas", href: "/tracks" },
@@ -70,7 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "financeiro",
     label: "Financeiro",
     items: [
-      { key: "finance", label: "Finance Lite", href: "/finance", feature: "finance" },
+      { key: "finance", label: "Financeiro", href: "/finance", feature: "finance" },
       { key: "accounting", label: "Contabilidade", href: "/accounting", feature: "accounting" },
       { key: "giving", label: "Doações", href: "/giving", feature: "giving" },
     ],
@@ -82,7 +91,7 @@ export const NAV_GROUPS: NavGroup[] = [
     // antigo de e-mail (/communication compor/preparar/"Enviar agora") continua no
     // código, mas sai do menu — a nav "Comunicação" agora aponta para /spaces.
     items: [
-      { key: "spaces", label: "Comunicação", href: "/spaces", feature: "communication" },
+      { key: "spaces", label: "Espaços", href: "/spaces", feature: "communication" },
       { key: "dm", label: "Mensagens", href: "/dm", feature: "communication" },
     ],
   },

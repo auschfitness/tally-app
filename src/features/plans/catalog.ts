@@ -33,12 +33,12 @@ export const ALL_FEATURES: FeatureKey[] = [
 
 // Rótulo humano de cada recurso (para a vitrine de planos).
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
-  finance: "Finance Lite",
+  finance: "Financeiro",
   accounting: "Contabilidade",
   giving: "Doações e recibos",
   communication: "Comunicação (Espaços, Mensagens, Chat)",
   study: "Estudo (sermões + estudo bíblico)",
-  teams: "Times e escala",
+  teams: "Escalas",
   events: "Eventos",
   members: "Contas de membro e convites",
 };

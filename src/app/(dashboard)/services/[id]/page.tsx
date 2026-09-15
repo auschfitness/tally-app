@@ -143,7 +143,7 @@ export default async function ServiceDetailPage({
         <div className="panel">
           <div className="ph"><h3>Times escalados</h3></div>
           {assignments.length === 0 ? (
-            <div className="empty">Nenhum time escalado para este culto ainda. A escala por time vive em Times › Escala.</div>
+            <div className="empty">Nenhum time escalado para este culto ainda. A escala por time vive em Escalas.</div>
           ) : (
             assignments.map((a) => (
               <div className="li" key={a.id}>

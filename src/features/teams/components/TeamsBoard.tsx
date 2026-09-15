@@ -60,7 +60,7 @@ export function TeamsBoard({
     <>
       <div className={styles.headerRow}>
         <div>
-          <h1 className="page">Times</h1>
+          <h1 className="page">Escalas</h1>
           <p className="sub" style={{ margin: 0 }}>
             Quem serve e onde. Times são onde a pessoa serve; ministérios agrupam times. Consciência operacional, não nota.
           </p>
