@@ -13,18 +13,20 @@ import {
 import { flagOn } from "./gate";
 
 describe("integridade do catálogo", () => {
-  it("tem exatamente as 8 chaves, sem duplicata", () => {
-    expect(ALL_FLAGS).toHaveLength(8);
-    expect(new Set(ALL_FLAGS).size).toBe(8);
+  it("tem exatamente as 9 chaves, sem duplicata", () => {
+    expect(ALL_FLAGS).toHaveLength(9);
+    expect(new Set(ALL_FLAGS).size).toBe(9);
   });
 
-  it("as chaves batem com as que a migration m51 semeou", () => {
+  it("as chaves batem com as que as migrations semearam", () => {
     // Guarda contra a divergência clássica: alguém acrescenta flag no SQL e esquece o
-    // catálogo (ou o contrário), e a flag simplesmente não existe para o app.
+    // catálogo (ou o contrário), e a flag simplesmente não existe para o app. Varre
+    // TODA migration de feature_flags (m51 semeou o lote inicial; cada flag nova entra
+    // numa migration própria) — senão o guarda só cobriria a primeira.
     const dir = fileURLToPath(new URL("../../../supabase/migrations/", import.meta.url));
-    const file = readdirSync(dir).find((f) => f.endsWith("m51_feature_flags.sql"));
-    if (!file) throw new Error("migration m51_feature_flags.sql não encontrada");
-    const sql = readFileSync(dir + file, "utf8");
+    const files = readdirSync(dir).filter((f) => f.endsWith("feature_flags.sql"));
+    if (!files.length) throw new Error("nenhuma migration *feature_flags.sql encontrada");
+    const sql = files.map((f) => readFileSync(dir + f, "utf8")).join("\n");
     const seeded = [...sql.matchAll(/^\s*\('([a-z0-9_.]+)',/gm)].map((m) => m[1]);
     expect(seeded.sort()).toEqual([...ALL_FLAGS].sort());
   });

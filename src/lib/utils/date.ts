@@ -42,6 +42,17 @@ export function brDate(iso: string | null | undefined): string {
   return iso ? iso.split("-").reverse().join("/") : "";
 }
 
+// "2024-03-09" -> "09/03" no ano corrente, "09/03/2024" fora dele. O ano só aparece
+// quando ele é informação: numa lista de sermões deste ano, "/2026" em toda linha é
+// ruído que repete a mesma coisa. `now` entra por parâmetro para o teste não depender
+// do relógio.
+export function brDateCompact(iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return "";
+  return y === String(now.getFullYear()) ? `${d}/${m}` : `${d}/${m}/${y}`;
+}
+
 // "2024-03-09" -> "03/09/2024" (convenção mm/dd/aaaa dos EUA). Usado em documentos
 // dirigidos pelo país (ex.: recibo de doação em US), onde a data deve seguir o local.
 export function usDate(iso: string | null | undefined): string {

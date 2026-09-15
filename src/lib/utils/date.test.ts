@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { brDate, usDate, brToIso, maskBrDate, zonedTodayIso } from "./date";
+import { brDate, brDateCompact, usDate, brToIso, maskBrDate, zonedTodayIso } from "./date";
 
 describe("brDate (ISO → dd/mm/aaaa)", () => {
   it("converte data ISO", () => {
@@ -68,5 +68,23 @@ describe("zonedTodayIso (hoje no fuso, SSR em UTC)", () => {
   });
   it("fuso inválido cai para a data do servidor (não quebra)", () => {
     expect(zonedTodayIso("Zzz/Invalid", new Date("2026-07-17T12:00:00Z"))).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("brDateCompact", () => {
+  const now = new Date(2026, 8, 15); // 15/09/2026
+
+  it("esconde o ano quando ele é o corrente — '/2026' em toda linha é ruído", () => {
+    expect(brDateCompact("2026-03-09", now)).toBe("09/03");
+  });
+
+  it("mostra o ano quando ele difere (aí é informação)", () => {
+    expect(brDateCompact("2024-03-09", now)).toBe("09/03/2024");
+  });
+
+  it("sem data ou data malformada → string vazia (o campo some, não vira '—')", () => {
+    expect(brDateCompact("", now)).toBe("");
+    expect(brDateCompact(null, now)).toBe("");
+    expect(brDateCompact("2026-03", now)).toBe("");
   });
 });

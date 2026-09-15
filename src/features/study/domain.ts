@@ -165,3 +165,57 @@ export function buildContextBlock(title: string, theme: string | null, summary: 
   if (theme) head += ` — ${theme}`;
   return summary ? `${head}\n${summary}` : head;
 }
+
+// --- Biblioteca v2 (spec 06, Erro nº 2) — atrás da flag `study.library_v2`. ---
+
+// Os status que ainda são TRABALHO. `preached`/`archived` são histórico: não entram
+// no padrão do filtro nem no bloco "Continuando".
+export const OPEN_STATUSES: SermonStatus[] = ["draft", "preparing", "ready"];
+const OPEN = new Set<SermonStatus>(OPEN_STATUSES);
+
+// O sermão que o pastor está continuando: o mais recentemente SALVO entre os que
+// ainda estão em aberto. `updated_at` (e não a data de pregação) porque retomar é
+// sobre o trabalho tocado; o filtro por status é o que impede que abrir um sermão
+// antigo só para reler o promova a "Continuando". Nenhum em aberto → null, e o bloco
+// simplesmente não aparece (nada de estado vazio decorativo no lugar).
+export function inProgressSermon(sermons: Sermon[]): Sermon | null {
+  let best: Sermon | null = null;
+  for (const s of sermons) {
+    if (!OPEN.has(s.status)) continue;
+    if (!best || s.updated_at > best.updated_at) best = s;
+  }
+  return best;
+}
+
+// O corpo do sermão está vazio? Checa TODAS as seções do canvas, não só `notes` —
+// quem escreveu só no Esboço escreveu o sermão.
+export function isBodyEmpty(s: Sermon): boolean {
+  return SECTIONS.every((sec) => !String(s.content?.[sec.key] ?? "").trim());
+}
+
+// O que falta neste sermão, em palavras do pastor. Sai de dado real; lista vazia
+// quando não falta nada (e aí a linha some da tela).
+export function missingParts(s: Sermon): string[] {
+  const out: string[] = [];
+  if (!s.main_passage.trim()) out.push("falta a passagem");
+  if (!s.big_idea.trim()) out.push("falta a ideia central");
+  if (isBodyEmpty(s)) out.push("o corpo ainda está em branco");
+  return out;
+}
+
+// Minúsculas, sem acento — para comparar busca com texto digitado em PT-BR.
+function fold(s: string): string {
+  return (s || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Busca na biblioteca: título, passagem, ideia central e NOME DA SÉRIE (é por isso
+// que a série não precisa de lugar no filtro). Consulta vazia → devolve a lista
+// inteira, e quem chama decide o que fazer com ela.
+export function searchSermons(sermons: Sermon[], q: string, seriesTitleById: Map<string, string>): Sermon[] {
+  const needle = fold(q).trim();
+  if (!needle) return sermons;
+  return sermons.filter((s) => {
+    const hay = [s.title, s.main_passage, s.big_idea, (s.series_id && seriesTitleById.get(s.series_id)) || ""];
+    return hay.some((h) => fold(h).includes(needle));
+  });
+}

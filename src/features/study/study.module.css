@@ -855,3 +855,260 @@
   border-top: 1px solid var(--border);
   padding-top: 8px;
 }
+
+/* ============================================================
+   Biblioteca v2 (spec 06) — atrás da flag `study.library_v2`.
+   Só tokens (docs/design-tokens.md): nada de px/hex cru daqui para baixo.
+   ============================================================ */
+
+/* Sub-nav: itens à esquerda, "···" à direita. Teto de 3 itens — ver StudyTabs.tsx. */
+.subnav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+.more {
+  position: relative;
+  margin-left: var(--s-1);
+}
+/* O disclosure nativo com cara de chip: sem o triângulo do navegador. */
+.moreBtn {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--s-8);
+  height: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  color: var(--text-2);
+  font-size: var(--t-13);
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease);
+}
+.moreBtn::-webkit-details-marker {
+  display: none;
+}
+.moreBtn:hover,
+.moreBtn.on {
+  border-color: var(--blue);
+  color: var(--text);
+}
+.moreMenu {
+  position: absolute;
+  top: calc(100% + var(--s-1));
+  right: 0;
+  z-index: 20;
+  min-width: max-content;
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-10);
+  box-shadow: var(--e-2);
+  transform-origin: top right;
+  animation: studyMenuIn var(--dur-micro) var(--ease);
+}
+@keyframes studyMenuIn {
+  from { opacity: 0; transform: scale(.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.moreItem {
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-6);
+  color: var(--text);
+  font-size: var(--t-13);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--dur-micro) var(--ease);
+}
+.moreItem:hover {
+  background: var(--surface-2);
+}
+
+/* Coluna de leitura da biblioteca. Mesma medida do canvas do editor (.canvas) — é a
+   largura em que uma lista de sermões se lê. Sem ela o painel "Continuando" vira
+   caixa esticada em 1440 e a coluna de estado some a um palmo do título.
+   Em `rem` (não px) para acompanhar quem aumenta o tamanho do texto no sistema. */
+.lib {
+  max-width: 48rem;
+}
+
+/* Cabeçalho da biblioteca. Próprio (não o .headerRow compartilhado) porque precisa
+   quebrar em telas estreitas sem mexer nas telas que a flag não toca. */
+.libHeader {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+}
+.libHeaderText {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.libAction {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* "Continuando" — o que o pastor veio fazer. Só aparece com sermão em aberto; o
+   painel sobe ao tamanho do conteúdo (a linha do que falta some quando nada falta). */
+.cont {
+  display: block;
+  margin-bottom: var(--s-6);
+  padding: var(--pad-card);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-14);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--dur-micro) var(--ease), box-shadow var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cont:hover {
+    border-color: var(--blue);
+    box-shadow: var(--e-1);
+  }
+}
+.cont:active {
+  transform: scale(.995);
+}
+.contLabel {
+  display: block;
+  font-size: var(--t-11);
+  line-height: var(--lh-11);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-2);
+}
+.contTitle {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: var(--t-17);
+  line-height: var(--lh-17);
+  font-weight: 600;
+  color: var(--text);
+}
+.contMeta {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.contMissing {
+  display: block;
+  margin-top: var(--s-2);
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+  color: var(--text);
+}
+/* Barra da biblioteca: busca + um filtro de status. Dois controles, e é o teto. */
+.libBar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+/* Altura única para os dois controles: lado a lado, um degrau de 2px entre eles é o
+   tipo de acabamento que ninguém sabe nomear e que faz o produto parecer amador. */
+.libBar > * {
+  height: var(--s-8);
+}
+.libSearch {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 20rem;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-radius: var(--r-6);
+  background: var(--surface);
+  font-size: var(--t-13);
+}
+.libCount {
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+  color: var(--text-2);
+  margin-bottom: var(--s-2);
+}
+
+/* Lista de sermões. Duas linhas por item — funciona igual em 1440 e em 390. */
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: block;
+  padding: var(--s-3) var(--s-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--r-6);
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--dur-micro) var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--surface-2);
+  }
+}
+.rowHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+.rowTitle {
+  font-size: var(--t-15);
+  line-height: var(--lh-15);
+  font-weight: 500;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Coluna de estado: só existe quando a lista mistura estados.
+   A suavidade da troca NÃO mora aqui. Tentou-se colapsar a largura com transition, e
+   não funciona: mudar o filtro troca o conjunto de linhas, o React destrói e recria os
+   nós, e transição em nó novo não roda (medido: max-width já era 0 em t≈60ms). Quem
+   comunica a mudança é a lista inteira, que reentra com `.rowsIn` — a mudança chega
+   dentro de um fade em vez de um corte seco, e o título nem se desloca (a coluna é
+   right-aligned por margin-left:auto). */
+.rowState {
+  margin-left: auto;
+  flex: 0 0 auto;
+  max-width: 14ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: right;
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+  color: var(--text-2);
+}
+/* Reentrada da lista a cada mudança de filtro/busca. É consequência direta de uma
+   ação do usuário — movimento como função, não enfeite. `prefers-reduced-motion` já é
+   desligado pelo bloco global do globals.css. */
+.rowsIn {
+  animation: studyRowsIn var(--dur-micro) var(--ease);
+}
+@keyframes studyRowsIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.rowMeta {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}

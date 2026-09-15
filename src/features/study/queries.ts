@@ -35,7 +35,7 @@ export async function listSermons(supabase: DB, orgId: string): Promise<Sermon[]
   const [res, campusMap] = await Promise.all([
     supabase
       .from("sermons")
-      .select("id, title, subtitle, description, campus_id, sermon_date, series_id, service_id, status, visibility, main_passage, big_idea, content")
+      .select("id, title, subtitle, description, campus_id, sermon_date, series_id, service_id, status, visibility, main_passage, big_idea, content, updated_at")
       .eq("org_id", orgId)
       .order("sermon_date", { ascending: false, nullsFirst: false })
       .order("updated_at", { ascending: false }),
@@ -56,6 +56,7 @@ export async function listSermons(supabase: DB, orgId: string): Promise<Sermon[]
     main_passage: r.main_passage ?? "",
     big_idea: r.big_idea ?? "",
     content: asContent(r.content),
+    updated_at: r.updated_at ?? "",
   }));
 }
 

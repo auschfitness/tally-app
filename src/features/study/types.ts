@@ -36,6 +36,9 @@ export interface Sermon {
   main_passage: string;
   big_idea: string;
   content: SermonContent;
+  // Última vez que o sermão foi salvo. É o relógio do "Continuando" da biblioteca —
+  // retomar trabalho é sobre o que foi TOCADO, não sobre a data de pregação.
+  updated_at: string;
 }
 
 export interface Series {

@@ -14,6 +14,10 @@ import {
   buildKeywordBlock,
   buildOriginalBlock,
   buildContextBlock,
+  inProgressSermon,
+  isBodyEmpty,
+  missingParts,
+  searchSermons,
 } from "./domain";
 import type { Scripture, Sermon } from "./types";
 
@@ -32,6 +36,7 @@ function sermon(o: Partial<Sermon>): Sermon {
     main_passage: o.main_passage ?? "",
     big_idea: o.big_idea ?? "",
     content: o.content ?? {},
+    updated_at: o.updated_at ?? "",
   };
 }
 
@@ -173,5 +178,67 @@ describe("Fase 4 — blocos das lentes → sermão", () => {
   });
   it("buildContextBlock sem tema nem resumo: só o título", () => {
     expect(buildContextBlock("Evangelho de João", null, null)).toBe("Evangelho de João");
+  });
+});
+
+describe("biblioteca v2 — 'Continuando' (spec 06)", () => {
+  const preparing = sermon({ id: "a", status: "preparing", updated_at: "2026-09-01T10:00:00Z" });
+  const draft = sermon({ id: "b", status: "draft", updated_at: "2026-09-10T10:00:00Z" });
+  const preached = sermon({ id: "c", status: "preached", updated_at: "2026-09-14T10:00:00Z" });
+  const archived = sermon({ id: "d", status: "archived", updated_at: "2026-09-15T10:00:00Z" });
+
+  it("pega o mais recentemente salvo entre os EM ABERTO", () => {
+    expect(inProgressSermon([preparing, draft])?.id).toBe("b");
+  });
+
+  it("abrir um sermão antigo só pra reler não o promove a 'Continuando'", () => {
+    // preached/archived são os mais recentes por updated_at e mesmo assim perdem —
+    // senão o bloco mentiria no dia em que o pastor reabre um sermão já pregado.
+    expect(inProgressSermon([preparing, draft, preached, archived])?.id).toBe("b");
+  });
+
+  it("sem nenhum em aberto → null (o bloco some, não vira estado vazio)", () => {
+    expect(inProgressSermon([preached, archived])).toBeNull();
+    expect(inProgressSermon([])).toBeNull();
+  });
+});
+
+describe("biblioteca v2 — o que falta no sermão", () => {
+  it("sai de dado real, e a lista é vazia quando não falta nada", () => {
+    const cheio = sermon({ main_passage: "João 10:1-18", big_idea: "O Bom Pastor dá a vida", content: { notes: "texto" } });
+    expect(missingParts(cheio)).toEqual([]);
+  });
+
+  it("aponta passagem, ideia central e corpo em branco", () => {
+    expect(missingParts(sermon({}))).toEqual(["falta a passagem", "falta a ideia central", "o corpo ainda está em branco"]);
+  });
+
+  it("corpo escrito em QUALQUER seção conta como corpo (não só em 'notes')", () => {
+    expect(isBodyEmpty(sermon({ content: { outline: "1. Introdução" } }))).toBe(false);
+    expect(isBodyEmpty(sermon({ content: { prayer_response: "Ore por…" } }))).toBe(false);
+    expect(isBodyEmpty(sermon({ content: { notes: "   " } }))).toBe(true);
+    expect(isBodyEmpty(sermon({ content: { track_id: "x" } }))).toBe(true); // não é seção
+  });
+});
+
+describe("biblioteca v2 — busca", () => {
+  const titles = new Map([["se1", "O Bom Pastor"]]);
+  const a = sermon({ id: "a", title: "A porta das ovelhas", main_passage: "João 10:1-18", series_id: "se1" });
+  const b = sermon({ id: "b", title: "Graça sobre graça", big_idea: "A graça é suficiente" });
+
+  it("encontra por título, passagem, ideia central e NOME DA SÉRIE", () => {
+    expect(searchSermons([a, b], "ovelhas", titles).map((s) => s.id)).toEqual(["a"]);
+    expect(searchSermons([a, b], "joão 10", titles).map((s) => s.id)).toEqual(["a"]);
+    expect(searchSermons([a, b], "suficiente", titles).map((s) => s.id)).toEqual(["b"]);
+    expect(searchSermons([a, b], "bom pastor", titles).map((s) => s.id)).toEqual(["a"]);
+  });
+
+  it("ignora acento e caixa (ninguém digita 'Joao' com til no celular)", () => {
+    expect(searchSermons([a, b], "JOAO", titles).map((s) => s.id)).toEqual(["a"]);
+    expect(searchSermons([a, b], "graca", titles).map((s) => s.id)).toEqual(["b"]);
+  });
+
+  it("consulta vazia devolve a lista inteira", () => {
+    expect(searchSermons([a, b], "   ", titles)).toHaveLength(2);
   });
 });
