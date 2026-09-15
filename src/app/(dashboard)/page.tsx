@@ -3,7 +3,6 @@ import { resolveActiveCampus } from "@/lib/campus";
 import { signals } from "@/features/signals/domain";
 import { loadHomeData } from "@/features/home/queries";
 import {
-  riskDist,
   flaggedPeople,
   weeklyAttendance,
   communityInsights,
@@ -34,7 +33,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       greetingName={user.email?.split("@")[0] ?? ""}
       activeCampus={activeCampus}
       today={todayCounts(visible, data.input.groupsHealth, data.input.people, activeCampus, data.prayersAnswered)}
-      risk={riskDist(data.input.people, activeCampus)}
       attendance={weeklyAttendance(data.input.sessions, now, 8)}
       flagged={flaggedPeople(data.input.people, activeCampus)}
       groups={data.input.groupsHealth}

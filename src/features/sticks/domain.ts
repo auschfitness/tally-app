@@ -2,7 +2,7 @@
 // (Care, Home, Journey importam estes tipos/regras, não o interior de Sticks).
 // Regras portadas 1:1 de src/core/helpers.js e derived.js — sem inventar score,
 // só contexto/padrões (DNA #3). "Uma pessoa = uma Stick."
-import { weeksSince } from "@/lib/utils/date";
+import { absenceLabel, weeksSince } from "@/lib/utils/date";
 
 export type Relationship =
   | "visitor_first"
@@ -90,8 +90,9 @@ export function careReasons(
   careWeeks: number = CARE_WEEKS_DEFAULT,
 ): CareReason[] {
   const reasons: CareReason[] = [];
-  if (weeksSince(p.lastSeen) >= careWeeks) {
-    reasons.push({ short: "sem aparecer", full: "Sem aparecer há um tempo" });
+  const weeks = weeksSince(p.lastSeen);
+  if (weeks >= careWeeks) {
+    reasons.push({ short: "sem aparecer", full: absenceLabel(p.lastSeen, weeks) });
   }
   if (!p.group) reasons.push({ short: "sem grupo", full: "Ainda não está em um grupo" });
   if (p.followup) reasons.push({ short: "follow-up", full: "Follow-up em aberto" });

@@ -9,6 +9,43 @@
   align-items: center;
 }
 
+/* Itens da faixa "Hoje no Tally". No v1 o número é colorido (idêntico aos estilos
+   inline que existiam aqui). No v2 vale a regra de cor (docs/design-tokens.md §Cor):
+   ponto de 6px + número na cor do corpo — cor deixa de ser preenchimento. */
+.stripItem b {
+  font-size: 16px; /* v1: idêntico ao estilo inline que existia aqui */
+}
+.stripItem[data-tone="care"] b { color: var(--coral); }
+.stripItem[data-tone="groups"] b { color: var(--warn); }
+.stripItem[data-tone="comm"] b { color: var(--blue); }
+.stripItem[data-tone="celeb"] b { color: #8b74e8; }
+.stripItem[data-tone="prayer"] b { color: var(--green); }
+
+:global([data-design="v2"]) .stripItem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+:global([data-design="v2"]) .stripItem::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-2);
+}
+:global([data-design="v2"]) .stripItem b {
+  color: var(--text);
+  font-size: var(--t-17);
+  line-height: var(--lh-17);
+  font-variant-numeric: tabular-nums;
+}
+:global([data-design="v2"]) .stripItem[data-tone="care"]::before { background: var(--coral); }
+:global([data-design="v2"]) .stripItem[data-tone="groups"]::before { background: var(--warn); }
+:global([data-design="v2"]) .stripItem[data-tone="comm"]::before { background: var(--blue); }
+:global([data-design="v2"]) .stripItem[data-tone="celeb"]::before { background: #8b74e8; }
+:global([data-design="v2"]) .stripItem[data-tone="prayer"]::before { background: var(--green); }
+
 .neg {
   color: var(--coral, #ea5b4c);
 }

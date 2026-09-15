@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { careLevel, riskDist, flaggedPeople, weeklyAttendance, communityInsights, homeVisibleSignals, celebrations, todayCounts } from "./domain";
+import { flaggedPeople, weeklyAttendance, communityInsights, homeVisibleSignals, celebrations, todayCounts } from "./domain";
 import type { Session, Signal, SignalPerson } from "@/features/signals/domain";
 import type { GroupHealth } from "@/features/groups/domain";
 
-// "Recente" relativo ao relógio REAL: riskDist/flaggedPeople chamam careReasons, que mede
+// "Recente" relativo ao relógio REAL: flaggedPeople chama careReasons, que mede
 // weeksSince(lastSeen) contra new Date() (não há injeção de `now`). Uma data fixa apodrece
 // com o calendário (um fixture "de ontem" vira "sem aparecer há semanas"); derivar de hoje
 // mantém o default "em dia" verdadeiro em qualquer data. Datas EXPLÍCITAS antigas nos
@@ -25,26 +25,6 @@ function sig(o: Partial<Signal> & { key: string }): Signal {
   return { key: o.key, type: "t", level: o.level ?? "notice", title: o.title ?? "T", why: o.why ?? [], date: o.date ?? "2026-07-14", category: o.category ?? "Journey", stickId: o.stickId, stickName: o.stickName };
 }
 const NOW = new Date("2026-07-15T00:00:00Z");
-
-describe("careLevel", () => {
-  it("0=em, 1=at, ≥2=ri", () => {
-    expect(careLevel(0)).toBe("em");
-    expect(careLevel(1)).toBe("at");
-    expect(careLevel(3)).toBe("ri");
-  });
-});
-
-describe("riskDist", () => {
-  it("distribui por nível só no campus ativo", () => {
-    const people = [
-      person({ id: "a" }), // em dia
-      person({ id: "b", group: "" }), // 1 motivo → atenção
-      person({ id: "c", group: "", followup: true, lastSeen: "2026-01-01" }), // 3 motivos → risco
-      person({ id: "d", campus: "Outro", group: "" }), // fora do campus
-    ];
-    expect(riskDist(people, "Sede")).toEqual({ em: 1, at: 1, ri: 1, total: 3 });
-  });
-});
 
 describe("flaggedPeople", () => {
   it("só sinalizados, mais motivos primeiro", () => {

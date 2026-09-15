@@ -137,9 +137,14 @@
 
   --pad-card: 20px;
 
-  /* A troca de fonte precisa ser DECLARADA aqui: `body` resolve `var(--font-ui)` no
-     próprio body (onde o v2 não alcança) e os filhos herdam o valor já computado. */
+  /* Fonte e corpo precisam ser DECLARADOS aqui, não só redefinidos como token: o
+     `body` resolve `var(--font-ui)` / `var(--t-15)` no PRÓPRIO body — que é PAI do
+     elemento com [data-design="v2"] — e os filhos herdam o valor já computado (v1).
+     Sem estas duas linhas o corpo continuaria em Poppins 14px no v2.
+     Vale para todo token que o bloco v2 redefine e o `body` consome: hoje só estes
+     dois (`background`/`color` usam --bg/--text, que o v2 não toca). */
   font-family: var(--font-ui);
+  font-size: var(--t-15);
 }
 
 /* Elevação no escuro: sombra clara não existe sobre fundo escuro. */
@@ -487,6 +492,12 @@ h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var
 [data-design="v2"] .gbar > i.healthy, [data-design="v2"] .gbar > i.attention, [data-design="v2"] .gbar > i.risk {
   background: var(--blue);
 }
+
+/* Legenda de gráfico: o quadradinho de 10px vira o mesmo ponto de 6px do resto do
+   app. A COR fica — numa legenda ela é a chave do gráfico (é o dado), não decoração;
+   o texto é que sai do cinza e volta para a cor do corpo. */
+[data-design="v2"] .leg { color: var(--text); font-size: var(--t-13); line-height: var(--lh-13); }
+[data-design="v2"] .leg i { width: 6px; height: 6px; border-radius: 50%; }
 
 /* Cartão em alerta: fundo/borda coral → cartão normal com um ponto no rótulo. */
 [data-design="v2"] .stat.alert { border-color: var(--border); background: var(--surface); }

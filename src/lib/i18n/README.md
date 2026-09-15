@@ -36,5 +36,6 @@ folhas (Client Components recebem `dict` por prop; não importam dicionário).
    passe `dict.<area>` às folhas (client) por prop.
 3. Troque as strings hardcoded pelas do dicionário.
 4. **NÃO traduza os termos de produto** (Stick, Signal, Care, Journey, Milestone,
-   Pulse, Inbox, Finance Lite, Care Radar, Journey Map, Timeline) — ficam em inglês em
-   qualquer idioma.
+   Pulse, Inbox, Journey Map, Timeline) — ficam em inglês em qualquer idioma.
+   "Care Radar" e "Finance Lite" saíram da lista: viraram **Care** e **Financeiro**
+   (o termo protegido é só `Care`; "Radar" e "Lite" não eram termos de produto).

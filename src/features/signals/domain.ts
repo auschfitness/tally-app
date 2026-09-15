@@ -10,7 +10,7 @@
 // "interface limpa" entre features exigida pelo playbook.
 import type { GroupHealth } from "@/features/groups/domain";
 import { isVisitor, type Relationship } from "@/features/sticks/domain";
-import { isoDate } from "@/lib/utils/date";
+import { absenceLabel, isoDate } from "@/lib/utils/date";
 
 // --- Saída ---
 export type SignalLevel = "attention" | "notice" | "celebration";
@@ -164,7 +164,7 @@ export function peopleSignals(
         stickId: p.id,
         stickName: p.name,
         title: p.name + " pode precisar de atenção",
-        why: ["Sem aparecer há " + w + " semanas"]
+        why: [absenceLabel(p.lastSeen, w)]
           .concat(!p.group ? ["Não está em um grupo"] : [])
           .concat(p.followup ? ["Follow-up em aberto"] : []),
         date: nowIso,

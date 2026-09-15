@@ -8,35 +8,7 @@ import { careReasons, type CareReason, type Relationship } from "@/features/stic
 import type { GroupHealth } from "@/features/groups/domain";
 import type { Session, Signal, SignalPerson } from "@/features/signals/domain";
 
-export type RiskLevel = "em" | "at" | "ri";
-export const RISK_COLOR: Record<RiskLevel, string> = { em: "#1FA97A", at: "#E8833A", ri: "#EA5B4C" };
-
-// Nível pastoral por nº de motivos de cuidado (0=em dia, 1=atenção, ≥2=risco).
-export function careLevel(n: number): RiskLevel {
-  return n === 0 ? "em" : n === 1 ? "at" : "ri";
-}
-
-export interface RiskDist {
-  em: number;
-  at: number;
-  ri: number;
-  total: number;
-}
-export function riskDist(people: SignalPerson[], activeCampus: string, careWeeks?: number): RiskDist {
-  let em = 0;
-  let at = 0;
-  let ri = 0;
-  for (const p of people) {
-    if (p.campus !== activeCampus) continue;
-    const lvl = careLevel(careReasons(p, careWeeks).length);
-    if (lvl === "em") em += 1;
-    else if (lvl === "at") at += 1;
-    else ri += 1;
-  }
-  return { em, at, ri, total: em + at + ri };
-}
-
-// Pessoas sinalizadas para o Care Radar, mais motivos primeiro.
+// Pessoas sinalizadas para o painel Care, mais motivos primeiro.
 export interface FlaggedPerson {
   id: string;
   name: string;

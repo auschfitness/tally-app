@@ -1,7 +1,7 @@
 # Feature: Home / Pulse (/)
 
-A tela de entrada: o "Pulse" da igreja — quem precisa de atenção, frequência,
-risco pastoral, Care Radar, grupos em atenção, comunidade, estudo e "Para celebrar".
+A tela de entrada: o "Pulse" da igreja — Care (quem precisa de atenção), frequência,
+grupos em atenção, comunidade, estudo e "Para celebrar".
 A **última** tela migrada. Ver `docs/handoffs/home-supabase.md`.
 
 ## Agregação pura (sem tabela/view/RPC nova)
@@ -11,8 +11,8 @@ migradas + a saída do **Signals engine**. `loadHomeData` reaproveita o **mesmo
 presença/milestones) e soma orações, estudo e jornada — tudo em paralelo no RSC.
 
 ## Arquivos-chave
-- `domain.ts` — puro + testes: `riskDist`/`careLevel` (via `careReasons`),
-  `flaggedPeople` (Care Radar), `weeklyAttendance` (frequência REAL), `communityInsights`,
+- `domain.ts` — puro + testes: `flaggedPeople` (painel Care, via `careReasons`),
+  `weeklyAttendance` (frequência REAL), `communityInsights`,
   `homeVisibleSignals`, `celebrations`, `todayCounts`.
 - `queries.ts` — `loadHomeData` (assembler: buildSignalsInput + prayers + study + journey).
 - `components/` — `HomeView` (Server; todos os painéis), `FrequencyChart` (SVG).
@@ -33,8 +33,14 @@ Mesmo motor do Inbox: `signals(input, new Date())`. A Home usa `homeVisibleSigna
 
 ## Decisões / paridade
 - **Quase tudo é Server Component** (leitura). As AÇÕES moram nas features: o botão
-  "Marquei presença" do Care Radar legado foi **omitido** (presença se registra em
+  "Marquei presença" do Care legado foi **omitido** (presença se registra em
   Groups/Services); "Ver Stick" idem (sem rota `/sticks/[id]`). A Home é dashboard.
+- **Sem donut de "Risco pastoral"** (removido): era um score de risco, proibido pelo
+  DNA #3 ("sem score de risco/engajamento/espiritual"). O painel **Care** ao lado já
+  entrega a mesma informação de forma acionável — nome + contexto — e herdou a única
+  contagem que o donut tinha: uma linha "N de M pessoas do campus". Nenhum gráfico
+  entrou no lugar. Com isso a linha de baixo virou **Frequência + Grupos em atenção**
+  (o `.row2` de duas colunas não pode ficar com uma coluna só: vira vão morto).
 - **Filtros de risco e seleção de semana** (`dashRisk`/`dashWeek`) do legado foram
   omitidos (eram conveniências de cliente) — a Home mostra a visão padrão. Reintroduzir
   como searchParams é fácil se necessário.

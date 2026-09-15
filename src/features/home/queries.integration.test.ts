@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { hasTestFixture, signInTestUser } from "@/test-support/supabase";
 import { loadHomeData } from "./queries";
 import { signals } from "@/features/signals/domain";
-import { riskDist, weeklyAttendance, communityInsights, homeVisibleSignals, todayCounts } from "./domain";
+import { weeklyAttendance, communityInsights, homeVisibleSignals, todayCounts } from "./domain";
 
 // Integração: a Home agrega as fontes reais da org de teste e o domínio projeta o
 // Pulse sem quebrar. Sem tabela nova (reuso do assembler do Inbox + orações/estudo/
@@ -22,9 +22,6 @@ describe.skipIf(!hasTestFixture)("Home (integração, org de teste)", () => {
     const all = signals(data.input, NOW);
     const visible = homeVisibleSignals(all, data.overrides);
     expect(visible.length).toBeLessThanOrEqual(all.length);
-
-    const rd = riskDist(data.input.people, activeCampus);
-    expect(rd.em + rd.at + rd.ri).toBe(rd.total);
 
     const att = weeklyAttendance(data.input.sessions, NOW, 8);
     expect(att.length).toBe(8);

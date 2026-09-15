@@ -25,11 +25,17 @@ describe("careReasons (paridade com derived.js)", () => {
     expect(careLevel(r.length)).toBe("em");
   });
 
-  it("sem aparecer há 4 semanas → 1 motivo (atenção)", () => {
+  it("sem aparecer há 4 semanas → 1 motivo (atenção), com o tempo REAL no texto", () => {
     const r = careReasons({ lastSeen: daysAgoIso(28), group: "Célula A", followup: false });
     expect(r.map((x) => x.short)).toContain("sem aparecer");
     expect(r).toHaveLength(1);
+    expect(r[0]!.full).toBe("Sem aparecer há 4 semanas"); // nunca "há um tempo"
     expect(careLevel(r.length)).toBe("at");
+  });
+
+  it("uma semana → singular", () => {
+    const r = careReasons({ lastSeen: daysAgoIso(7), group: "G", followup: false }, 1);
+    expect(r[0]!.full).toBe("Sem aparecer há 1 semana");
   });
 
   it("sem grupo + follow-up aberto → 2 motivos (risco)", () => {
@@ -44,9 +50,10 @@ describe("careReasons (paridade com derived.js)", () => {
     expect(careReasons({ lastSeen: daysAgoIso(14), group: "G", followup: false }, 2)).toHaveLength(1);
   });
 
-  it("sem data de última presença → conta como sumido", () => {
+  it("sem data de última presença → conta como sumido, sem inventar número de semanas", () => {
     const r = careReasons({ lastSeen: null, group: "G", followup: false });
     expect(r.map((x) => x.short)).toContain("sem aparecer");
+    expect(r[0]!.full).toBe("Nunca apareceu");
   });
 });
 

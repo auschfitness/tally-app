@@ -18,6 +18,16 @@ export function weeksSince(iso: string | null | undefined): number {
   return Math.floor(diff / 7);
 }
 
+// Texto de ausência — o TEMPO REAL, nunca "há um tempo". `weeks` vem de quem já
+// calculou (weeksSince aqui, ou weeksSinceOn(now) no engine de Signals), porque só o
+// chamador sabe contra que relógio medir. Sem `lastSeen` a pessoa nunca apareceu — e
+// aí não existe "há N semanas" (o 999 sentinela viraria texto absurdo).
+export function absenceLabel(iso: string | null | undefined, weeks: number): string {
+  if (!iso) return "Nunca apareceu";
+  if (weeks < 1) return "Sem aparecer esta semana";
+  return "Sem aparecer há " + weeks + " semana" + (weeks > 1 ? "s" : "");
+}
+
 export function agoLabel(iso: string | null | undefined): string {
   if (!iso) return "nunca";
   const d = Math.round((today().getTime() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));

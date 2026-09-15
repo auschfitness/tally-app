@@ -3,12 +3,11 @@
 // features (Care/Inbox/Groups). Painéis de Estudo e "Para celebrar" somem inteiros
 // quando não há dado (evita seção vazia), como no legado.
 import Link from "next/link";
-import { ConicDonut } from "@/components/shared/ConicDonut";
 import { initials, agoLabel, brDate } from "@/lib/utils/date";
 import { isVisitor } from "@/features/sticks/domain";
 import type { GroupHealth } from "@/features/groups/domain";
 import type { Signal } from "@/features/signals/domain";
-import { RISK_COLOR, type CommunityInsights, type FlaggedPerson, type RiskDist, type TodayCounts, type WeekPoint } from "../domain";
+import type { CommunityInsights, FlaggedPerson, TodayCounts, WeekPoint } from "../domain";
 import type { StudySurface } from "../queries";
 import { FrequencyChart } from "./FrequencyChart";
 import styles from "../home.module.css";
@@ -19,7 +18,6 @@ export function HomeView({
   greetingName,
   activeCampus,
   today,
-  risk,
   attendance,
   flagged,
   groups,
@@ -30,7 +28,6 @@ export function HomeView({
   greetingName: string;
   activeCampus: string;
   today: TodayCounts;
-  risk: RiskDist;
   attendance: WeekPoint[];
   flagged: FlaggedPerson[];
   groups: GroupHealth[];
@@ -50,43 +47,22 @@ export function HomeView({
       {/* Hoje no Tally */}
       <div className={`panel ${styles.strip}`}>
         <div className="mi-k">Hoje no Tally</div>
-        <div><b style={{ color: "var(--coral)", fontSize: 16 }}>{today.care}</b> <span className="muted">precisam de follow-up</span></div>
-        <div><b style={{ color: "#E8833A", fontSize: 16 }}>{today.groupsAtt}</b> <span className="muted">grupos em atenção</span></div>
-        <div><b style={{ color: "var(--blue)", fontSize: 16 }}>{today.noComm}</b> <span className="muted">sem comunidade</span></div>
-        <div><b style={{ color: "#8b74e8", fontSize: 16 }}>{today.celeb}</b> <span className="muted">avançaram</span></div>
-        <div><b style={{ color: "var(--green)", fontSize: 16 }}>{today.prayersAnswered}</b> <span className="muted">orações respondidas</span></div>
+        <div className={styles.stripItem} data-tone="care"><b>{today.care}</b> <span className="muted">precisam de follow-up</span></div>
+        <div className={styles.stripItem} data-tone="groups"><b>{today.groupsAtt}</b> <span className="muted">grupos em atenção</span></div>
+        <div className={styles.stripItem} data-tone="comm"><b>{today.noComm}</b> <span className="muted">sem comunidade</span></div>
+        <div className={styles.stripItem} data-tone="celeb"><b>{today.celeb}</b> <span className="muted">avançaram</span></div>
+        <div className={styles.stripItem} data-tone="prayer"><b>{today.prayersAnswered}</b> <span className="muted">orações respondidas</span></div>
       </div>
 
-      {/* Frequência + Risco pastoral */}
-      <div className="row2">
-        <div className="panel">
-          <div className="ph"><h3>Frequência</h3><span className="muted" style={{ marginLeft: "auto" }}>presença real de células</span></div>
-          <FrequencyChart points={attendance} />
-        </div>
-        <div className="panel">
-          <div className="ph"><h3>Risco pastoral</h3></div>
-          <div className="donutwrap">
-            <ConicDonut segments={[{ value: risk.em, color: RISK_COLOR.em }, { value: risk.at, color: RISK_COLOR.at }, { value: risk.ri, color: RISK_COLOR.ri }]}>
-              <b>{risk.total}</b>
-              <span>pessoas</span>
-            </ConicDonut>
-          </div>
-          <div className="leg">
-            <span><i style={{ background: RISK_COLOR.em }} />Em dia · {risk.em}</span>
-            <span><i style={{ background: RISK_COLOR.at }} />Atenção · {risk.at}</span>
-            <span><i style={{ background: RISK_COLOR.ri }} />Em risco · {risk.ri}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Care Radar + Grupos em atenção */}
-      <div className="row2">
-        <div className="panel">
-          <div className="ph"><h3>Care Radar</h3><span className="muted" style={{ marginLeft: "auto" }}>Pessoas que precisam de atenção</span></div>
-          {flagged.length === 0 ? (
-            <div className="empty">Ninguém precisa de atenção agora.</div>
-          ) : (
-            flagged.slice(0, 8).map((p) => (
+      {/* Care — quem precisa de atenção, com nome e contexto (largura cheia: é o
+          que o pastor vem ver primeiro na segunda de manhã). */}
+      <div className="panel" style={{ marginBottom: 20 }}>
+        <div className="ph"><h3>Care</h3><span className="muted" style={{ marginLeft: "auto" }}>Pessoas que precisam de atenção</span></div>
+        {flagged.length === 0 ? (
+          <div className="empty">Ninguém precisa de atenção agora.</div>
+        ) : (
+          <>
+            {flagged.slice(0, 8).map((p) => (
               <div key={p.id} className="li">
                 <div className="av c">{initials(p.name)}</div>
                 <div style={{ flex: 1 }}>
@@ -94,8 +70,19 @@ export function HomeView({
                   <div className="meta">{p.reasons[0]?.full ?? ""}</div>
                 </div>
               </div>
-            ))
-          )}
+            ))}
+            {/* A contagem que morava no centro do donut de "Risco pastoral" — uma
+                linha de texto, sem classificar ninguém por score (DNA #3). */}
+            <div className="meta" style={{ paddingTop: 10 }}>{flagged.length} de {community.total} pessoas do campus</div>
+          </>
+        )}
+      </div>
+
+      {/* Frequência + Grupos em atenção */}
+      <div className="row2">
+        <div className="panel">
+          <div className="ph"><h3>Frequência</h3><span className="muted" style={{ marginLeft: "auto" }}>presença real de células</span></div>
+          <FrequencyChart points={attendance} />
         </div>
         <div className="panel">
           <div className="ph"><h3>Grupos em atenção</h3><Link className="link" href="/groups" style={{ marginLeft: "auto" }}>Ver grupos</Link></div>

@@ -27,7 +27,13 @@ Os tokens vivem em `src/app/globals.css`, definidos **duas vezes**:
 O `[data-design="v2"]` é escrito pelo layout do dashboard a partir de
 `flagOn(ctx, "ui.design_v2")` — mesmo truque que o `data-theme` do layout raiz usa para
 o tema escuro. **Flag desligada → nenhum seletor v2 casa → o app é exatamente o de
-hoje.** Em produção a flag está desligada.
+hoje.** Em produção a flag está **ligada** (`rollout='all'`), em avaliação do dono.
+
+⚠️ **Redefinir o token não basta quando quem consome é o `body`.** O atributo
+`data-design` mora no `<div class="app">`, que é FILHO do `body`: o `body` resolve
+`var(--font-ui)`/`var(--t-15)` no escopo v1 e os filhos herdam o valor já computado.
+Por isso `font-family` e `font-size` são **re-declarados** dentro do bloco v2. Todo token
+novo que o `body` (ou o `html`) consumir precisa do mesmo tratamento.
 
 Consequência que confunde na primeira leitura: no bloco v1 o nome do token **mente**
 (`--t-15: 14px`, `--r-14: 16px`). É andaime proposital. Sem isso, trocar `14px` por
@@ -121,7 +127,12 @@ Verde, laranja e coral **não são fundo**. São texto e ponto.
 
 O `.hb` é o mesmo elemento — quem muda é o CSS sob `[data-design="v2"]`. Essa única
 troca remove a maior parte da cara de dashboard gerado. Já aplicado em `.hb`,
-`.stat.alert`, `.engbar > i` e `.gbar > i`.
+`.stat.alert`, `.engbar > i`, `.gbar > i`, na legenda de gráfico (`.leg`) e na faixa
+"Hoje no Tally" da Home (`home.module.css`, `.stripItem`).
+
+**Ponto substitui pílula e bolinha de status — não substitui quantidade.** O número
+continua número (só perde a cor e ganha um ponto ao lado); a barra continua barra. Na
+legenda de gráfico a cor do ponto FICA: ali ela é a chave do gráfico, ou seja, é o dado.
 
 **Barra de saúde é exceção deliberada.** Numa barra a *largura* é o dado; a cor só
 repetia o que o número ao lado já dizia. Então a barra continua barra (trocá-la por um
@@ -169,7 +180,8 @@ reintroduza animação em `style` inline, que escapa dele.
 ## O que ainda falta (não feito nesta passada)
 
 1. **Varredura dos `*.module.css`** das features (≈877 valores crus). Cada um vira token.
-2. **Restos de semáforo fora da lista acima**: `.flag`, `.chip.*`, `.wk.present/.absent`,
+2. **Restos de semáforo fora da lista acima**: `.av.c` (avatar coral — hoje o mais
+   visível, aparece 8x na Home), `.flag`, `.chip.*`, `.wk.present/.absent`,
    `.jstep.cur .jdot`, `.tlrow::before`, `.pos`/`.neg`, `.seg button.on`. Mesma regra:
    fundo colorido → ponto + texto.
 3. **Ajuste componente a componente**, só depois que 1 e 2 estiverem prontos.
