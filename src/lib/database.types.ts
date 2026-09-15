@@ -1004,6 +1004,63 @@ export type Database = {
           },
         ]
       }
+      feature_flag_orgs: {
+        Row: {
+          enabled: boolean
+          flag_key: string
+          org_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          flag_key: string
+          org_id: string
+        }
+        Update: {
+          enabled?: boolean
+          flag_key?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flag_orgs_flag_key_fkey"
+            columns: ["flag_key"]
+            isOneToOne: false
+            referencedRelation: "feature_flags"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "feature_flag_orgs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          key: string
+          rollout: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled?: boolean
+          key: string
+          rollout?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          key?: string
+          rollout?: string
+        }
+        Relationships: []
+      }
       finance_categories: {
         Row: {
           created_at: string
@@ -3976,6 +4033,14 @@ export type Database = {
           suspended: number
         }[]
       }
+      admin_set_flag: {
+        Args: { p_enabled: boolean; p_key: string; p_rollout: string }
+        Returns: undefined
+      }
+      admin_set_flag_org: {
+        Args: { p_enabled: boolean; p_key: string; p_org: string }
+        Returns: undefined
+      }
       admin_set_org_plan: {
         Args: { p_org: string; p_plan: string }
         Returns: undefined
@@ -3997,11 +4062,13 @@ export type Database = {
         }
         Returns: string
       }
+      flag_on: { Args: { p_key: string; p_org: string }; Returns: boolean }
       has_perm: { Args: { p_org: string; p_perm: string }; Returns: boolean }
       is_dm_participant: { Args: { p_thread: string }; Returns: boolean }
       is_org_member: { Args: { p_org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       next_receipt_number: { Args: { p_org: string }; Returns: string }
+      org_flags: { Args: { p_org: string }; Returns: string[] }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
       post_journal_entry: { Args: { p_entry: string }; Returns: undefined }
       seed_default_chart_of_accounts: {
@@ -4080,12 +4147,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4109,11 +4176,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4134,11 +4201,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4159,11 +4226,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4176,11 +4243,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
