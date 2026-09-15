@@ -1,4 +1,4 @@
-/* Estilos da feature Journey Map (CSS Module). Migrados de styles.css. */
+/* Estilos da feature Journey (CSS Module). Migrados de styles.css. */
 .jmapRow { display: block; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 10px; margin-bottom: 6px; cursor: pointer; font-family: inherit; transition: background var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease); }
 .jmapRow:hover { background: var(--surface-2); }
 .jmapOn { border-color: var(--blue); background: rgba(43, 92, 230, .07); }

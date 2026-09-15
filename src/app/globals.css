@@ -499,6 +499,12 @@ h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var
 [data-design="v2"] .leg { color: var(--text); font-size: var(--t-13); line-height: var(--lh-13); }
 [data-design="v2"] .leg i { width: 6px; height: 6px; border-radius: 50%; }
 
+/* Avatar de quem precisa de Care: o coral era o preenchimento mais gritante da tela
+   (8 de uma vez no painel Care em largura cheia). Cinza é o material da interface; o
+   estado já está dito no texto ao lado, não precisa colorir a pessoa. Pega Care e
+   Inbox junto, que usam o mesmo `.av.c`. */
+[data-design="v2"] .av.c { background: var(--surface-2); color: var(--text-2); }
+
 /* Cartão em alerta: fundo/borda coral → cartão normal com um ponto no rótulo. */
 [data-design="v2"] .stat.alert { border-color: var(--border); background: var(--surface); }
 [data-design="v2"] .stat.alert .v { color: var(--text); }

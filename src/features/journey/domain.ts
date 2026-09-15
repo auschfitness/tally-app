@@ -1,4 +1,4 @@
-// Domínio Journey Map. Analytics portadas 1:1 de derived.js — SÓ dado real, nunca
+// Domínio Journey. Analytics portadas 1:1 de derived.js — SÓ dado real, nunca
 // inventado. Estágio é caminho OPERACIONAL, não ranking espiritual (DNA #3).
 import { JOURNEY } from "@/features/sticks/domain";
 import type { Person } from "@/features/sticks/types";

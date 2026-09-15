@@ -1,4 +1,4 @@
-# Feature: Journey Map (read-only)
+# Feature: Journey (read-only)
 
 Como as pessoas se movem pelos estágios: distribuição, tempo no estágio, funil/
 evasão e tendência de movimento. **Só dado real** (DNA #2/#3) — sem ranking espiritual.

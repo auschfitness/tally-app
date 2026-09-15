@@ -1,7 +1,7 @@
 // Dicionário FONTE (pt-BR). O tipo `Dictionary` é derivado deste objeto — en/es
 // devem preencher TODAS as chaves (o typecheck cobra completude). Cresce por feature
 // nas próximas fatias (3b). Termos de produto (Stick, Signal, Care, Journey,
-// Milestone, Pulse, Inbox, Journey Map, Timeline) NÃO
+// Milestone, Pulse, Inbox, Journey, Timeline) NÃO
 // entram aqui — ficam em inglês em qualquer idioma.
 export const ptBR = {
   settings: {

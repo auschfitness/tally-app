@@ -35,7 +35,7 @@ export function JourneyBoard({
   return (
     <>
       <div style={{ marginBottom: 14 }}>
-        <h1 className="page">Journey Map</h1>
+        <h1 className="page">Journey</h1>
         <p className="sub" style={{ margin: 0 }}>
           Como as pessoas se movem pela vida da igreja. Caminho operacional definido pela igreja, não um ranking espiritual.
         </p>

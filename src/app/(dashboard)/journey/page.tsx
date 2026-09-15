@@ -5,7 +5,7 @@ import { loadJourneyData } from "@/features/journey/queries";
 import { journeyStats, journeyFunnel, journeyMovement, firstVisitDrop } from "@/features/journey/domain";
 import { JourneyBoard } from "@/features/journey/components/JourneyBoard";
 
-// Journey Map (Server Component, read-only): analytics puras computadas no servidor
+// Journey (Server Component, read-only): analytics puras computadas no servidor
 // a partir de dados relacionais reais. Só o foco de estágio é interativo (cliente).
 export default async function JourneyPage({
   searchParams,
