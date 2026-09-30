@@ -61,6 +61,8 @@ export function SermonEditor({
   locale = "pt-BR",
   embedded = false,
   incoming = null,
+  onSaved,
+  onIncomingDone,
 }: {
   sermon: Sermon | null;
   series: Series[];
@@ -70,6 +72,10 @@ export function SermonEditor({
   locale?: string;
   embedded?: boolean; // dentro da tela de leitura: não troca a URL nem volta à biblioteca
   incoming?: { block: string; section: SectionKey; seq: number } | null;
+  // Recebe o sermão como está sendo gravado, para quem reabre o editor não partir do
+  // retrato velho do servidor (a aba Sermão da leitura).
+  onSaved?: (s: Sermon) => void;
+  onIncomingDone?: (seq: number) => void; // bloco de `incoming` já entrou no texto
 }) {
   const router = useRouter();
   const initialContent = useRef<SermonContent>(sermon?.content ?? {});
@@ -142,6 +148,16 @@ export function SermonEditor({
       application: v.application,
       prayer_response: v.prayer_response,
     };
+    const snapshot = (id: string): Sermon => ({
+      ...m,
+      id,
+      description: sermon?.description ?? "",
+      series_id: m.series_id || null,
+      service_id: m.service_id || null,
+      content,
+      updated_at: new Date().toISOString(),
+    });
+    if (idRef.current) onSaved?.(snapshot(idRef.current));
     savingRef.current = true;
     setStatus("Salvando…");
     const res = await saveSermonAction({
@@ -161,6 +177,7 @@ export function SermonEditor({
     savingRef.current = false;
     if (res.success) {
       setStatus("Salvo");
+      onSaved?.(snapshot(res.data.id));
       if (!idRef.current) {
         idRef.current = res.data.id;
         initialContent.current = content;
@@ -182,13 +199,23 @@ export function SermonEditor({
     dirtyRef.current = true;
     setStatus("Editando…");
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => void doSave(), 900);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      void doSave();
+    }, 900);
   }
 
+  // Desmontar com save pendente (troca de sermão, fechar a aba, sair da página) grava
+  // na hora em vez de perder os últimos 900ms. doSave só lê refs; setState depois de
+  // desmontado é ignorado pelo React.
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (!timerRef.current) return;
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      void doSave();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function setField<K extends keyof typeof meta>(k: K, val: (typeof meta)[K]) {
@@ -215,6 +242,7 @@ export function SermonEditor({
 
   async function backToLibrary() {
     if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
     if (dirtyRef.current && meta.title.trim()) await doSave();
     router.push("/study");
   }
@@ -244,6 +272,7 @@ export function SermonEditor({
     if (!incoming || incoming.seq === lastSeq.current) return;
     lastSeq.current = incoming.seq;
     addBlockToSection(incoming.block, incoming.section);
+    onIncomingDone?.(incoming.seq);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incoming]);
 

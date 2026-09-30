@@ -2,22 +2,36 @@
 
 // Aba "Sermão": escolher um sermão em andamento (ou começar um novo) e escrever ao lado
 // do texto. O editor é o mesmo de /study/sermon, com autosave; `slot` só muda quando o
-// pastor escolhe outro sermão, para o editor não remontar no meio da escrita.
+// pastor escolhe outro sermão, para o editor não remontar no meio da escrita. `saved`
+// (id → último retrato gravado, vindo da área de trabalho) vence o que o servidor mandou
+// ao carregar a página: reabrir um sermão nunca parte de texto velho, e o sermão novo
+// criado aqui entra na lista.
 import { useState } from "react";
-import type { SectionKey } from "../../domain";
-import type { SermonStatus } from "../../types";
+import type { Sermon, SermonStatus } from "../../types";
 import { SermonEditor } from "../SermonEditor";
-import type { EditorData } from "./ReaderView";
+import type { EditorData, Incoming } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
-type Incoming = { block: string; section: SectionKey; seq: number };
 const OPEN = new Set<SermonStatus>(["draft", "preparing", "ready"]);
 
-export function SermonTab({ editor, incoming }: { editor: EditorData; incoming: Incoming | null }) {
+export function SermonTab({
+  editor,
+  incoming,
+  saved,
+  onSaved,
+  onIncomingDone,
+}: {
+  editor: EditorData;
+  incoming: Incoming | null;
+  saved: Record<string, Sermon>;
+  onSaved: (s: Sermon) => void;
+  onIncomingDone: (seq: number) => void;
+}) {
   const [pick, setPick] = useState<{ id: string | null; slot: number } | null>(null);
-  // Bloco já entregue a um sermão não entra de novo quando o pastor troca de sermão.
-  const [consumed, setConsumed] = useState(0);
-  const inProgress = editor.sermons.filter((s) => OPEN.has(s.status));
+  const latest = (s: Sermon): Sermon => saved[s.id] ?? s;
+  const known = new Set(editor.sermons.map((s) => s.id));
+  const all = [...Object.values(saved).filter((s) => !known.has(s.id)), ...editor.sermons.map(latest)];
+  const inProgress = all.filter((s) => OPEN.has(s.status));
 
   if (!pick) {
     return (
@@ -37,14 +51,17 @@ export function SermonTab({ editor, incoming }: { editor: EditorData; incoming: 
     );
   }
 
-  const sermon = pick.id ? editor.sermons.find((s) => s.id === pick.id) ?? null : null;
+  const sermon = pick.id ? all.find((s) => s.id === pick.id) ?? null : null;
   return (
     <div data-testid="sermon-tab">
-      <button type="button" className="link" onClick={() => { setConsumed(incoming?.seq ?? 0); setPick(null); }}>‹ Trocar sermão</button>
+      {/* Trocar desmonta o editor, que grava na hora o que estava pendente. */}
+      <button type="button" className="link" onClick={() => setPick(null)}>‹ Trocar sermão</button>
       <SermonEditor
         key={pick.slot}
         embedded
-        incoming={incoming && incoming.seq > consumed ? incoming : null}
+        incoming={incoming}
+        onIncomingDone={onIncomingDone}
+        onSaved={onSaved}
         sermon={sermon}
         series={editor.series}
         services={editor.services}

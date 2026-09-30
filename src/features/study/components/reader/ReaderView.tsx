@@ -1,20 +1,15 @@
 "use client";
 
 // Tela de leitura (spec 07): barra, texto, chave Interlinear, balão, modo Original.
-// Área de trabalho em abas à direita (gaveta no celular).
+// Remonta a cada capítulo; a área de trabalho mora no ReaderWorkspace (layout) e
+// sobrevive à troca. Este componente só publica o capítulo e pede abas.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
-import { bookName } from "@/lib/bible/books";
-import type { Sermon, Series } from "../../types";
-import { DEFAULT_SECTION, buildKeywordBlock, type SectionKey } from "../../domain";
+import { DEFAULT_SECTION, buildKeywordBlock } from "../../domain";
 import {
-  EMPTY_WS,
   LAST_READ_KEY,
   adjacentChapter,
-  closeTab,
-  openTab,
-  tabKey,
   chapterLabel,
   glossOf,
   groupOriginal,
@@ -23,26 +18,12 @@ import {
   type OrigWord,
   type ReaderVerse,
   type Span,
-  type Workspace,
   type WsTab,
 } from "../../reader";
-import { BibleCompare } from "../BibleCompare";
 import { ChapterPicker } from "./ChapterPicker";
-import { NotesTab } from "./NotesTab";
-import { SermonTab } from "./SermonTab";
-import { WordTab } from "./WordTab";
-import { WorkspacePane } from "./WorkspacePane";
+import { useWorkspace, type EditorData } from "./ReaderWorkspace";
 import { WordPopover, popoverAt, type PopoverState } from "./WordPopover";
 import styles from "./reader.module.css";
-
-export interface EditorData {
-  sermons: Sermon[];
-  series: Series[];
-  services: { id: string; name: string }[];
-  campuses: string[];
-  activeCampus: string;
-  locale: string;
-}
 
 type Mode = "bible" | "original";
 const TOGGLE_KEY = "tally.reader.interlinear";
@@ -80,29 +61,16 @@ export function ReaderView({
     opener.current = el;
     setPop(popoverAt(el.getBoundingClientRect(), strong, verse, key));
   }
-  const [ws, setWs] = useState<Workspace>(EMPTY_WS);
-  const [closing, setClosing] = useState(false);
-  const [noteVerse, setNoteVerse] = useState<number | null>(null);
-  const [incoming, setIncoming] = useState<{ block: string; section: SectionKey; seq: number } | null>(null);
-  const sermonOpen = ws.tabs.some((t) => t.kind === "sermon");
-  const open = useCallback((t: WsTab): void => {
+  const wsApi = useWorkspace();
+  const { publish, sermonOpen, sendBlock } = wsApi;
+  function open(t: WsTab): void {
     setPop(null);
-    setClosing(false);
-    setWs((w) => openTab(w, t));
-  }, []);
-  // Fechar tudo anima a saída (mesmo caminho da entrada) e só então desmonta.
-  const closeAll = useCallback((): void => {
-    setClosing(true);
-    window.setTimeout(() => {
-      setWs(EMPTY_WS);
-      setClosing(false);
-    }, 200);
-  }, []);
-  function closeOne(key: string): void {
-    const nextWs = closeTab(ws, key);
-    if (nextWs.tabs.length === 0) closeAll();
-    else setWs(nextWs);
+    wsApi.open(t);
   }
+
+  useEffect(() => {
+    publish(refNow, lex, editor);
+  }, [publish, refNow, lex, editor]);
 
   useEffect(() => {
     try {
@@ -141,6 +109,7 @@ export function ReaderView({
       const t = e.target as HTMLElement | null;
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return; // Alt+← é do navegador
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (t?.closest('[data-testid="workspace"]')) return; // setas dentro da área de trabalho são dela
       if (e.key === "ArrowLeft") go(prev);
       if (e.key === "ArrowRight") go(next);
     }
@@ -170,119 +139,82 @@ export function ReaderView({
 
   const byVerse = mode === "original" ? groupOriginal(original) : [];
 
-  function sendBlock(block: string, section: SectionKey): void {
-    setIncoming((p) => ({ block, section, seq: (p?.seq ?? 0) + 1 }));
-  }
   function sendToSermon(strong: string, verse: number): void {
     const l = lex[strong];
     sendBlock(`${chapterLabel(refNow)}:${verse} · ` + buildKeywordBlock({ lemma: l?.lemma || strong, strong, meaning: glossOf(l), occurrences: null }), DEFAULT_SECTION);
     open({ kind: "sermon" });
   }
-  function openAdd(k: "notes" | "sermon"): void {
-    if (k === "notes") setNoteVerse(null);
-    open({ kind: k });
-  }
-  const addable: { kind: "notes" | "sermon"; label: string }[] = [];
-  if (!ws.tabs.some((t) => t.kind === "notes")) addable.push({ kind: "notes", label: "Notas" });
-  if (!sermonOpen) addable.push({ kind: "sermon", label: "Sermão" });
-
-  function renderTab(t: WsTab): ReactNode {
-    if (t.kind === "word") return <WordTab strong={t.strong} lex={lex} onGo={go} />;
-    if (t.kind === "verse") {
-      const r = { book: refNow.book, chapter: refNow.chapter, verse_start: t.verse, verse_end: null, reference: `${bookName(refNow.book)} ${refNow.chapter}:${t.verse}` };
-      return <BibleCompare embedded initialRef={r} locale={editor.locale} onAddToSermon={sermonOpen ? sendBlock : undefined} onClose={() => closeOne(tabKey(t))} />;
-    }
-    if (t.kind === "notes") return <NotesTab refNow={refNow} verse={noteVerse} />;
-    return <SermonTab editor={editor} incoming={incoming} />;
-  }
 
   return (
-    <div className={`${styles.reader} ${ws.tabs.length ? styles.withPane : ""}`}>
-      <div className={styles.main}>
-        <div className={styles.bar}>
-          <ChapterPicker current={refNow} onPick={go} />
-          <span className={styles.sep} aria-hidden />
-          <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => { setPop(null); setMode(e.target.value === "original" ? "original" : "bible"); }}>
-            <option value="bible">Bíblia</option>
-            <option value="original">Original</option>
-          </Select>
-          {tagged && mode === "bible" ? (
-            <label className={styles.toggle}>
-              <input type="checkbox" role="switch" checked={interlinear} onChange={toggleInterlinear} data-testid="interlinear-toggle" />
-              Interlinear
-            </label>
-          ) : null}
-        </div>
-
-        {mode === "bible" ? (
-          <article className={styles.text} lang="pt-BR" data-testid="reader-text">
-            <div className={styles.eyebrow}>{chapterLabel(refNow)} · Bíblia Livre</div>
-            {textError ? <p className={styles.muted}>{textError}</p> : null}
-            <p className={styles.para}>
-              <span className={styles.dropcap} aria-hidden>{refNow.chapter}</span>
-              {verses.map((v) => (
-                <span key={v.n}>
-                  <button type="button" className={styles.vnum} aria-label={`Estudar ${chapterLabel(refNow)}:${v.n}`} onClick={() => open({ kind: "verse", verse: v.n })}>{v.n}</button>
-                  {v.spans.map((s, i) => renderSpan(s, v.n, i))}{" "}
-                </span>
-              ))}
-            </p>
-            <p className={styles.attrib}>Bíblia Livre (BLIVRE), CC BY 4.0{showWords ? ` · ${lexCredit}` : ""}</p>
-          </article>
-        ) : (
-          <article className={styles.text} data-testid="reader-original">
-            <div className={styles.eyebrow}>{chapterLabel(refNow)} · texto original</div>
-            {byVerse.length === 0 ? <p className={styles.muted}>O texto original deste capítulo ainda não está no Tally.</p> : null}
-            {byVerse.map((v) => (
-              <div key={v.n} className={styles.il} dir={v.words[0]?.lang === "hbo" ? "rtl" : "ltr"}>
-                <span className={styles.ilVerse}>{v.n}</span>
-                {v.words.map((w) => {
-                  const strong = w.strong;
-                  const key = `o${v.n}:${w.position}`;
-                  return (
-                    <button
-                      key={w.position}
-                      type="button"
-                      data-strong={strong ?? undefined}
-                      disabled={!strong}
-                      className={`${styles.ilw} ${pop?.key === key ? styles.hit : ""}`}
-                      onClick={(e) => { if (strong) openPop(e.currentTarget, strong, v.n, key); }}
-                    >
-                      <span className={styles.ilSurface} lang={w.lang === "hbo" ? "he" : "grc"}>{w.surface}</span>
-                      <span className={styles.ilTr}>{w.translit}</span>
-                      <span className={styles.ilGloss}>{strong ? glossOf(lex[strong]) : ""}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-            <p className={styles.attrib}>Texto original: STEPBible (CC BY 4.0) · {lexCredit}</p>
-          </article>
-        )}
-
-        <nav className={styles.chapNav} aria-label="Capítulos">
-          {prev ? <button type="button" className="link" onClick={() => go(prev)}>‹ {chapterLabel(prev)}</button> : <span />}
-          {next ? <button type="button" className="link" onClick={() => go(next)}>{chapterLabel(next)} ›</button> : <span />}
-        </nav>
+    <div className={styles.main}>
+      <div className={styles.bar}>
+        <ChapterPicker current={refNow} onPick={go} />
+        <span className={styles.sep} aria-hidden />
+        <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => { setPop(null); setMode(e.target.value === "original" ? "original" : "bible"); }}>
+          <option value="bible">Bíblia</option>
+          <option value="original">Original</option>
+        </Select>
+        {tagged && mode === "bible" ? (
+          <label className={styles.toggle}>
+            <input type="checkbox" role="switch" checked={interlinear} onChange={toggleInterlinear} data-testid="interlinear-toggle" />
+            Interlinear
+          </label>
+        ) : null}
       </div>
 
-      {pop ? (
-        <WordPopover state={pop} lex={lex} canSendToSermon={sermonOpen} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={() => { setNoteVerse(pop.verse); open({ kind: "notes" }); }} onSermon={() => sendToSermon(pop.strong, pop.verse)} onClose={closePop} />
-      ) : null}
+      {mode === "bible" ? (
+        <article className={styles.text} lang="pt-BR" data-testid="reader-text" tabIndex={-1}>
+          <div className={styles.eyebrow}>{chapterLabel(refNow)} · Bíblia Livre</div>
+          {textError ? <p className={styles.muted}>{textError}</p> : null}
+          <p className={styles.para}>
+            <span className={styles.dropcap} aria-hidden>{refNow.chapter}</span>
+            {verses.map((v) => (
+              <span key={v.n}>
+                <button type="button" className={styles.vnum} aria-label={`Estudar ${chapterLabel(refNow)}:${v.n}`} onClick={() => open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: v.n })}>{v.n}</button>
+                {v.spans.map((s, i) => renderSpan(s, v.n, i))}{" "}
+              </span>
+            ))}
+          </p>
+          <p className={styles.attrib}>Bíblia Livre (BLIVRE), CC BY 4.0{showWords ? ` · ${lexCredit}` : ""}</p>
+        </article>
+      ) : (
+        <article className={styles.text} data-testid="reader-original" tabIndex={-1}>
+          <div className={styles.eyebrow}>{chapterLabel(refNow)} · texto original</div>
+          {byVerse.length === 0 ? <p className={styles.muted}>O texto original deste capítulo ainda não está no Tally.</p> : null}
+          {byVerse.map((v) => (
+            <div key={v.n} className={styles.il} dir={v.words[0]?.lang === "hbo" ? "rtl" : "ltr"}>
+              <span className={styles.ilVerse}>{v.n}</span>
+              {v.words.map((w) => {
+                const strong = w.strong;
+                const key = `o${v.n}:${w.position}`;
+                return (
+                  <button
+                    key={w.position}
+                    type="button"
+                    data-strong={strong ?? undefined}
+                    disabled={!strong}
+                    className={`${styles.ilw} ${pop?.key === key ? styles.hit : ""}`}
+                    onClick={(e) => { if (strong) openPop(e.currentTarget, strong, v.n, key); }}
+                  >
+                    <span className={styles.ilSurface} lang={w.lang === "hbo" ? "he" : "grc"}>{w.surface}</span>
+                    <span className={styles.ilTr}>{w.translit}</span>
+                    <span className={styles.ilGloss}>{strong ? glossOf(lex[strong]) : ""}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+          <p className={styles.attrib}>Texto original: STEPBible (CC BY 4.0) · {lexCredit}</p>
+        </article>
+      )}
 
-      {ws.tabs.length ? (
-        <WorkspacePane
-          ws={ws}
-          lex={lex}
-          closing={closing}
-          onActivate={(key) => setWs((w) => ({ ...w, active: key }))}
-          onCloseTab={closeOne}
-          onCloseAll={closeAll}
-          renderTab={renderTab}
-          addable={addable}
-          onAdd={openAdd}
-          verseLabel={(v) => `${chapterLabel(refNow)}:${v}`}
-        />
+      <nav className={styles.chapNav} aria-label="Capítulos">
+        {prev ? <button type="button" className="link" onClick={() => go(prev)}>‹ {chapterLabel(prev)}</button> : <span />}
+        {next ? <button type="button" className="link" onClick={() => go(next)}>{chapterLabel(next)} ›</button> : <span />}
+      </nav>
+
+      {pop ? (
+        <WordPopover state={pop} lex={lex} canSendToSermon={sermonOpen} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={() => { setPop(null); wsApi.openNotes({ book: refNow.book, chapter: refNow.chapter, verse: pop.verse }); }} onSermon={() => sendToSermon(pop.strong, pop.verse)} onClose={closePop} />
       ) : null}
     </div>
   );

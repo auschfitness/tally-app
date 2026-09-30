@@ -160,8 +160,13 @@ export function groupOccurrences(rows: OccRow[]): OccBook[] {
     .map((b) => ({ ...b, chapters: [...b.chapters].sort((x, y) => x.chapter - y.chapter) }));
 }
 
-// Área de trabalho: abas com chave estável. Abrir o que já está aberto só ativa.
-export type WsTab = { kind: "word"; strong: string } | { kind: "verse"; verse: number } | { kind: "notes" } | { kind: "sermon" };
+// Área de trabalho: abas com chave estável. Abrir o que já está aberto só ativa. A área
+// sobrevive à troca de capítulo, então a aba Versículo guarda o próprio capítulo.
+export type WsTab =
+  | { kind: "word"; strong: string }
+  | { kind: "verse"; book: string; chapter: number; verse: number }
+  | { kind: "notes" }
+  | { kind: "sermon" };
 export interface Workspace {
   tabs: WsTab[];
   active: string | null;
@@ -171,7 +176,7 @@ export const EMPTY_WS: Workspace = { tabs: [], active: null };
 
 export function tabKey(t: WsTab): string {
   if (t.kind === "word") return "word:" + t.strong;
-  if (t.kind === "verse") return "verse:" + t.verse;
+  if (t.kind === "verse") return `verse:${t.book}.${t.chapter}.${t.verse}`;
   return t.kind;
 }
 
@@ -179,7 +184,9 @@ export function openTab(ws: Workspace, t: WsTab): Workspace {
   const key = tabKey(t);
   if (ws.tabs.some((x) => tabKey(x) === key)) return { tabs: ws.tabs, active: key };
   const tabs = [...ws.tabs, t];
-  return { tabs: tabs.length > MAX_TABS ? tabs.slice(tabs.length - MAX_TABS) : tabs, active: key };
+  // Passou do limite: sai a mais antiga que não seja o Sermão (o editor não pode sumir).
+  if (tabs.length > MAX_TABS) tabs.splice(tabs.findIndex((x) => x.kind !== "sermon"), 1);
+  return { tabs, active: key };
 }
 
 export function closeTab(ws: Workspace, key: string): Workspace {
@@ -208,4 +215,13 @@ export function sheetAfterDrag(state: SheetState, dy: number, velocity: number):
 export function rubberband(overshoot: number, dimension: number): number {
   const c = 0.55;
   return (overshoot * dimension * c) / (dimension + c * Math.abs(overshoot));
+}
+
+// Velocidade de soltura (px/ms) só com as amostras dos últimos `windowMs`: um arrasto
+// lento que termina num peteleco conta como peteleco.
+export function releaseVelocity(samples: { y: number; t: number }[], windowMs = 80): number {
+  const last = samples[samples.length - 1];
+  if (!last) return 0;
+  const first = samples.find((p) => last.t - p.t <= windowMs) ?? last;
+  return last.t === first.t ? 0 : (last.y - first.y) / (last.t - first.t);
 }

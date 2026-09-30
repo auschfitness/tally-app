@@ -1,10 +1,13 @@
 /* Tela de leitura (spec 07). Tokens do app; nada de cor solta além da marca via --blue. */
 /* Quem rola na página é a janela e `.content` (globals) tem overflow: auto, então sticky
-   não gruda. A tela tem altura fixa e cada coluna rola sozinha; --reader-top é o que
-   fica acima (topo do app + padding + sub-nav): ajuste aqui se o topo mudar. */
+   não gruda. A tela (montada pelo layout de /study/bible) tem altura fixa e cada coluna
+   rola sozinha. --reader-top = o que sobra fora dela (topo do app + padding), medido pelo
+   ReaderWorkspace; 160px só até a medida chegar. */
 .reader { --reader-top: 160px; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100dvh - var(--reader-top)); }
 .withPane { grid-template-columns: minmax(0, 1fr) minmax(340px, 44%); }
-.main { min-width: 0; overflow-y: auto; }
+.col { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.main { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
+.text:focus { outline: none; }
 .muted { color: var(--text-2); font-family: var(--font-ui); font-size: var(--t-13); }
 
 .bar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--font-ui); }

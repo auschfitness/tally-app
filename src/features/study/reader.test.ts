@@ -9,6 +9,7 @@ import {
   groupOccurrences,
   groupOriginal,
   openTab,
+  releaseVelocity,
   parseLastRead,
   parseRouteRef,
   pushRecent,
@@ -119,10 +120,23 @@ describe("área de trabalho", () => {
 
   it("a 6ª aba derruba a mais antiga", () => {
     let ws: Workspace = EMPTY_WS;
-    for (let v = 1; v <= MAX_TABS + 1; v++) ws = openTab(ws, { kind: "verse", verse: v });
+    for (let v = 1; v <= MAX_TABS + 1; v++) ws = openTab(ws, { kind: "verse", book: "JHN", chapter: 1, verse: v });
     expect(ws.tabs.length).toBe(MAX_TABS);
-    expect(ws.tabs.map(tabKey)[0]).toBe("verse:2");
-    expect(ws.active).toBe("verse:6");
+    expect(ws.tabs.map(tabKey)[0]).toBe("verse:JHN.1.2");
+    expect(ws.active).toBe("verse:JHN.1.6");
+  });
+
+  it("o Sermão nunca é a aba derrubada, mesmo sendo a mais antiga", () => {
+    let ws: Workspace = openTab(EMPTY_WS, { kind: "sermon" });
+    for (let v = 1; v <= MAX_TABS; v++) ws = openTab(ws, { kind: "verse", book: "JHN", chapter: 1, verse: v });
+    expect(ws.tabs.length).toBe(MAX_TABS);
+    expect(ws.tabs.map(tabKey)).toEqual(["sermon", "verse:JHN.1.2", "verse:JHN.1.3", "verse:JHN.1.4", "verse:JHN.1.5"]);
+    expect(ws.active).toBe("verse:JHN.1.5");
+  });
+
+  it("o mesmo versículo em capítulos diferentes são abas diferentes", () => {
+    const ws = openTab(openTab(EMPTY_WS, { kind: "verse", book: "JHN", chapter: 1, verse: 1 }), { kind: "verse", book: "JHN", chapter: 2, verse: 1 });
+    expect(ws.tabs.length).toBe(2);
   });
 
   it("fechar a ativa ativa a vizinha; fechar a última esvazia", () => {
@@ -135,6 +149,13 @@ describe("área de trabalho", () => {
 });
 
 describe("gaveta (celular)", () => {
+  it("velocidade de soltura usa só os últimos 80ms", () => {
+    const samples = [{ y: 0, t: 0 }, { y: 10, t: 500 }, { y: 20, t: 940 }, { y: 60, t: 1000 }];
+    expect(releaseVelocity(samples)).toBeCloseTo(40 / 60);
+    expect(releaseVelocity([{ y: 5, t: 10 }])).toBe(0);
+    expect(releaseVelocity([])).toBe(0);
+  });
+
   it("peteleco para baixo fecha a meia gaveta e baixa a cheia", () => {
     expect(sheetAfterDrag("half", 30, 0.5)).toBe("closed");
     expect(sheetAfterDrag("full", 30, 0.5)).toBe("half");
