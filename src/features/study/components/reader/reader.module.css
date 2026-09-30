@@ -1,7 +1,10 @@
 /* Tela de leitura (spec 07). Tokens do app; nada de cor solta além da marca via --blue. */
-.reader { display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - 140px); }
+/* Quem rola na página é a janela e `.content` (globals) tem overflow: auto, então sticky
+   não gruda. A tela tem altura fixa e cada coluna rola sozinha; --reader-top é o que
+   fica acima (topo do app + padding + sub-nav): ajuste aqui se o topo mudar. */
+.reader { --reader-top: 160px; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100dvh - var(--reader-top)); }
 .withPane { grid-template-columns: minmax(0, 1fr) minmax(340px, 44%); }
-.main { min-width: 0; }
+.main { min-width: 0; overflow-y: auto; }
 .muted { color: var(--text-2); font-family: var(--font-ui); font-size: var(--t-13); }
 
 .bar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--font-ui); }
@@ -12,7 +15,7 @@
 .pickBtn { font: 600 var(--t-15)/1 var(--font-ui); color: var(--text); background: none; border: 0; padding: 8px 10px; border-radius: var(--r-6); cursor: pointer; }
 .pickBtn:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) { .pickBtn:hover { background: var(--surface-2); } }
-.picker { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(560px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); padding: var(--s-3); transform-origin: top left; animation: popIn 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.picker { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(560px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); padding: var(--s-3); transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
 .pickSearch { width: 100%; margin-bottom: var(--s-2); }
 .pickCols { display: grid; grid-template-columns: 180px 1fr; gap: var(--s-3); max-height: 320px; }
 .pickBooks { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
@@ -26,8 +29,7 @@
 .eyebrow { font: 600 var(--t-11)/1.4 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: var(--s-4); }
 .para { margin: 0; }
 .dropcap { float: left; font-size: 3.4em; line-height: 0.85; margin: 0.06em 0.14em 0 0; }
-.vnum { font: 600 0.62em/1 var(--font-ui); color: var(--blue); vertical-align: super; padding: 0 3px 0 6px; }
-.vnum { background: none; border: 0; cursor: pointer; }
+.vnum { font: 600 0.62em/1 var(--font-ui); color: var(--blue); vertical-align: super; padding: 0 3px 0 6px; background: none; border: 0; cursor: pointer; }
 .word { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; border-radius: 3px; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; text-decoration-color: color-mix(in srgb, var(--blue) 35%, transparent); }
 .hit { background: color-mix(in srgb, var(--blue) 12%, transparent); text-decoration-color: var(--blue); }
 @media (hover: hover) and (pointer: fine) { .word:hover { background: color-mix(in srgb, var(--blue) 8%, transparent); } }
@@ -45,7 +47,8 @@
 .ilGloss { font: var(--t-13)/1.2 var(--font-ui); color: var(--blue); }
 
 /* Balão */
-.pop { position: fixed; z-index: 60; width: 264px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); padding: var(--s-3) var(--s-4); font-family: var(--font-ui); transform-origin: top left; animation: popIn 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.pop { position: fixed; z-index: 60; width: 264px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); padding: var(--s-3) var(--s-4); font-family: var(--font-ui); transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
+.popAbove { transform-origin: bottom left; }
 .popHead { display: flex; align-items: baseline; gap: 8px; }
 .popLemma { font-family: Georgia, "Times New Roman", serif; font-size: 1.35rem; color: var(--text); }
 .popMeta { font-size: var(--t-11); color: var(--text-2); }
@@ -54,7 +57,7 @@
 .popActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 
 /* Área de trabalho */
-.pane { position: sticky; top: 0; height: calc(100dvh - 140px); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); animation: paneIn var(--dur-panel) var(--ease); }
+.pane { min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); animation: paneIn var(--dur-panel) var(--ease); }
 .paneOut { animation: paneOut var(--dur-micro) var(--ease) forwards; }
 .grab { display: none; }
 .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--border); overflow-x: auto; font-family: var(--font-ui); }

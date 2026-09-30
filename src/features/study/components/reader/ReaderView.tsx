@@ -2,7 +2,7 @@
 
 // Tela de leitura (spec 07): barra, texto, chave Interlinear, balão, modo Original.
 // Área de trabalho em abas à direita (gaveta no celular).
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import { bookName } from "@/lib/bible/books";
@@ -65,12 +65,21 @@ export function ReaderView({
   editor: EditorData;
 }) {
   const router = useRouter();
-  const prev = adjacentChapter(refNow, -1);
-  const next = adjacentChapter(refNow, 1);
+  const prev = useMemo(() => adjacentChapter(refNow, -1), [refNow]);
+  const next = useMemo(() => adjacentChapter(refNow, 1), [refNow]);
   const [mode, setMode] = useState<Mode>("bible");
   const [interlinear, setInterlinear] = useState(false);
   const [pop, setPop] = useState<PopoverState | null>(null);
-  const closePop = useCallback((): void => setPop(null), []);
+  // Foco: o balão foca "Ver detalhes" ao abrir; ao fechar, o foco volta a quem o abriu.
+  const opener = useRef<HTMLElement | null>(null);
+  const closePop = useCallback((): void => {
+    setPop(null);
+    opener.current?.focus({ preventScroll: true });
+  }, []);
+  function openPop(el: HTMLElement, strong: string, verse: number, key: string): void {
+    opener.current = el;
+    setPop(popoverAt(el.getBoundingClientRect(), strong, verse, key));
+  }
   const [ws, setWs] = useState<Workspace>(EMPTY_WS);
   const [closing, setClosing] = useState(false);
   const [noteVerse, setNoteVerse] = useState<number | null>(null);
@@ -130,6 +139,7 @@ export function ReaderView({
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
       const t = e.target as HTMLElement | null;
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return; // Alt+← é do navegador
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       if (e.key === "ArrowLeft") go(prev);
       if (e.key === "ArrowRight") go(next);
@@ -139,6 +149,7 @@ export function ReaderView({
   }, [go, prev, next]);
 
   const showWords = tagged && interlinear && mode === "bible";
+  const lexCredit = `léxico STEPBible (CC BY 4.0)${Object.values(lex).some((l) => l.gloss_pt) ? ", tradução Tally" : ""}`;
 
   function renderSpan(s: Span, verse: number, i: number): ReactNode {
     const strong = s.strong;
@@ -150,7 +161,7 @@ export function ReaderView({
         type="button"
         data-strong={strong}
         className={`${styles.word} ${pop?.key === key ? styles.hit : ""}`}
-        onClick={(e) => setPop(popoverAt(e.currentTarget.getBoundingClientRect(), strong, verse, key))}
+        onClick={(e) => openPop(e.currentTarget, strong, verse, key)}
       >
         {s.text}
       </button>
@@ -216,7 +227,7 @@ export function ReaderView({
                 </span>
               ))}
             </p>
-            <p className={styles.attrib}>Bíblia Livre (BLIVRE), CC BY 4.0</p>
+            <p className={styles.attrib}>Bíblia Livre (BLIVRE), CC BY 4.0{showWords ? ` · ${lexCredit}` : ""}</p>
           </article>
         ) : (
           <article className={styles.text} data-testid="reader-original">
@@ -235,7 +246,7 @@ export function ReaderView({
                       data-strong={strong ?? undefined}
                       disabled={!strong}
                       className={`${styles.ilw} ${pop?.key === key ? styles.hit : ""}`}
-                      onClick={(e) => { if (strong) setPop(popoverAt(e.currentTarget.getBoundingClientRect(), strong, v.n, key)); }}
+                      onClick={(e) => { if (strong) openPop(e.currentTarget, strong, v.n, key); }}
                     >
                       <span className={styles.ilSurface} lang={w.lang === "hbo" ? "he" : "grc"}>{w.surface}</span>
                       <span className={styles.ilTr}>{w.translit}</span>
@@ -245,7 +256,7 @@ export function ReaderView({
                 })}
               </div>
             ))}
-            <p className={styles.attrib}>Texto original e léxico: STEPBible (CC BY 4.0)</p>
+            <p className={styles.attrib}>Texto original: STEPBible (CC BY 4.0) · {lexCredit}</p>
           </article>
         )}
 
