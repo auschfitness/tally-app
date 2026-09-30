@@ -26,7 +26,7 @@
 .eyebrow { font: 600 var(--t-11)/1.4 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: var(--s-4); }
 .para { margin: 0; }
 .dropcap { float: left; font-size: 3.4em; line-height: 0.85; margin: 0.06em 0.14em 0 0; }
-.vnumPlain, .vnum { font: 600 0.62em/1 var(--font-ui); color: var(--blue); vertical-align: super; padding: 0 3px 0 6px; }
+.vnum { font: 600 0.62em/1 var(--font-ui); color: var(--blue); vertical-align: super; padding: 0 3px 0 6px; }
 .vnum { background: none; border: 0; cursor: pointer; }
 .word { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; border-radius: 3px; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; text-decoration-color: color-mix(in srgb, var(--blue) 35%, transparent); }
 .hit { background: color-mix(in srgb, var(--blue) 12%, transparent); text-decoration-color: var(--blue); }

@@ -1112,3 +1112,6 @@
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
+
+/* BibleCompare dentro da área de trabalho da leitura (spec 07): sem cartão de modal. */
+.cmpEmbedded { display: block; width: 100%; }

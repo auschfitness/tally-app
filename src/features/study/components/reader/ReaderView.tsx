@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
+import { bookName } from "@/lib/bible/books";
 import type { Sermon, Series } from "../../types";
 import {
   EMPTY_WS,
@@ -12,6 +13,7 @@ import {
   adjacentChapter,
   closeTab,
   openTab,
+  tabKey,
   chapterLabel,
   glossOf,
   groupOriginal,
@@ -23,7 +25,9 @@ import {
   type Workspace,
   type WsTab,
 } from "../../reader";
+import { BibleCompare } from "../BibleCompare";
 import { ChapterPicker } from "./ChapterPicker";
+import { NotesTab } from "./NotesTab";
 import { WordTab } from "./WordTab";
 import { WorkspacePane } from "./WorkspacePane";
 import { WordPopover, popoverAt, type PopoverState } from "./WordPopover";
@@ -48,6 +52,7 @@ export function ReaderView({
   original,
   lex,
   textError,
+  editor,
 }: {
   refNow: ChapterRef;
   verses: ReaderVerse[];
@@ -66,6 +71,7 @@ export function ReaderView({
   const closePop = useCallback((): void => setPop(null), []);
   const [ws, setWs] = useState<Workspace>(EMPTY_WS);
   const [closing, setClosing] = useState(false);
+  const [noteVerse, setNoteVerse] = useState<number | null>(null);
   const open = useCallback((t: WsTab): void => {
     setPop(null);
     setClosing(false);
@@ -151,6 +157,11 @@ export function ReaderView({
 
   function renderTab(t: WsTab): ReactNode {
     if (t.kind === "word") return <WordTab strong={t.strong} lex={lex} onGo={go} />;
+    if (t.kind === "verse") {
+      const r = { book: refNow.book, chapter: refNow.chapter, verse_start: t.verse, verse_end: null, reference: `${bookName(refNow.book)} ${refNow.chapter}:${t.verse}` };
+      return <BibleCompare embedded initialRef={r} locale={editor.locale} onClose={() => closeOne(tabKey(t))} />;
+    }
+    if (t.kind === "notes") return <NotesTab refNow={refNow} verse={noteVerse} />;
     return null;
   }
 
@@ -180,7 +191,7 @@ export function ReaderView({
               <span className={styles.dropcap} aria-hidden>{refNow.chapter}</span>
               {verses.map((v) => (
                 <span key={v.n}>
-                  <sup className={styles.vnumPlain}>{v.n}</sup>
+                  <button type="button" className={styles.vnum} aria-label={`Estudar ${chapterLabel(refNow)}:${v.n}`} onClick={() => open({ kind: "verse", verse: v.n })}>{v.n}</button>
                   {v.spans.map((s, i) => renderSpan(s, v.n, i))}{" "}
                 </span>
               ))}
@@ -225,7 +236,7 @@ export function ReaderView({
       </div>
 
       {pop ? (
-        <WordPopover state={pop} lex={lex} canSendToSermon={false} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={closePop} onSermon={closePop} onClose={closePop} />
+        <WordPopover state={pop} lex={lex} canSendToSermon={false} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={() => { setNoteVerse(pop.verse); open({ kind: "notes" }); }} onSermon={closePop} onClose={closePop} />
       ) : null}
 
       {ws.tabs.length ? (
@@ -237,8 +248,8 @@ export function ReaderView({
           onCloseTab={closeOne}
           onCloseAll={closeAll}
           renderTab={renderTab}
-          addable={[]}
-          onAdd={() => undefined}
+          addable={ws.tabs.some((t) => t.kind === "notes") ? [] : [{ kind: "notes", label: "Notas" }]}
+          onAdd={(k) => { if (k === "notes") { setNoteVerse(null); open({ kind: "notes" }); } }}
           verseLabel={(v) => `${chapterLabel(refNow)}:${v}`}
         />
       ) : null}

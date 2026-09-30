@@ -226,11 +226,13 @@ export function BibleCompare({
   locale,
   onAddToSermon,
   onClose,
+  embedded = false,
 }: {
   initialRef?: ScriptureRef | null;
   locale: string;
   onAddToSermon?: (block: string, section: SectionKey) => void;
   onClose: () => void;
+  embedded?: boolean; // dentro da área de trabalho da leitura: sem overlay nem ×
 }) {
   const [ref, setRef] = useState<CmpRef>(() =>
     initialRef && initialRef.book
@@ -792,17 +794,18 @@ export function BibleCompare({
 
   const cols = Math.min(picks.length, 3);
 
-  return (
-    <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <form className={`modal ${styles.cmp}`} onSubmit={(e) => e.preventDefault()}>
+  const content = (
+      <form className={embedded ? styles.cmpEmbedded : `modal ${styles.cmp}`} onSubmit={(e) => e.preventDefault()}>
         <div className={styles.cmpHead}>
           <div>
             <div className={styles.stEyebrow}>Estudo do Texto</div>
             <h2 className={styles.stRef}>{refLabel}</h2>
           </div>
-          <button className="iconbtn" type="button" aria-label="Fechar" style={{ marginLeft: "auto" }} onClick={onClose}>
-            ×
-          </button>
+          {embedded ? null : (
+            <button className="iconbtn" type="button" aria-label="Fechar" style={{ marginLeft: "auto" }} onClick={onClose}>
+              ×
+            </button>
+          )}
         </div>
 
         {/* Seletor da passagem (a estrela) + histórico recente */}
@@ -1197,6 +1200,10 @@ export function BibleCompare({
           </>
         )}
       </form>
+  );
+  return embedded ? content : (
+    <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      {content}
     </div>
   );
 }
