@@ -35,8 +35,11 @@ export function WordTab({ strong, lex, onGo }: { strong: string; lex: Record<str
     };
   }, [strong]);
 
+  // Busca uma vez por palavra, quando a aba Ocorrências abre. `occ` fica FORA das
+  // dependências: o "carregando" re-rodaria o efeito e o cleanup descartaria a resposta.
+  const needOcc = seg === "occ" && occ == null;
   useEffect(() => {
-    if (seg !== "occ" || occ) return;
+    if (!needOcc) return;
     let alive = true;
     setOcc({ status: "loading" });
     void createClient()
@@ -48,7 +51,7 @@ export function WordTab({ strong, lex, onGo }: { strong: string; lex: Record<str
     return () => {
       alive = false;
     };
-  }, [seg, strong, occ]);
+  }, [needOcc, strong]);
 
   const total = occ?.status === "ok" ? occ.data.reduce((s, b) => s + b.total, 0) : null;
   const citation = `STEPBible, léxico ${heb ? "hebraico" : "grego"} (CC BY 4.0), verbete ${strong}${def.status === "ok" && def.data.pt ? ", tradução Tally" : ""}.`;
