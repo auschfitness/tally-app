@@ -1,14 +1,17 @@
 "use client";
 
 // Tela de leitura (spec 07): barra, texto, chave Interlinear, balão, modo Original.
-// A área de trabalho entra na Task 6.
+// Área de trabalho em abas à direita (gaveta no celular).
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import type { Sermon, Series } from "../../types";
 import {
+  EMPTY_WS,
   LAST_READ_KEY,
   adjacentChapter,
+  closeTab,
+  openTab,
   chapterLabel,
   glossOf,
   groupOriginal,
@@ -17,8 +20,12 @@ import {
   type OrigWord,
   type ReaderVerse,
   type Span,
+  type Workspace,
+  type WsTab,
 } from "../../reader";
 import { ChapterPicker } from "./ChapterPicker";
+import { WordTab } from "./WordTab";
+import { WorkspacePane } from "./WorkspacePane";
 import { WordPopover, popoverAt, type PopoverState } from "./WordPopover";
 import styles from "./reader.module.css";
 
@@ -57,6 +64,26 @@ export function ReaderView({
   const [interlinear, setInterlinear] = useState(false);
   const [pop, setPop] = useState<PopoverState | null>(null);
   const closePop = useCallback((): void => setPop(null), []);
+  const [ws, setWs] = useState<Workspace>(EMPTY_WS);
+  const [closing, setClosing] = useState(false);
+  const open = useCallback((t: WsTab): void => {
+    setPop(null);
+    setClosing(false);
+    setWs((w) => openTab(w, t));
+  }, []);
+  // Fechar tudo anima a saída (mesmo caminho da entrada) e só então desmonta.
+  const closeAll = useCallback((): void => {
+    setClosing(true);
+    window.setTimeout(() => {
+      setWs(EMPTY_WS);
+      setClosing(false);
+    }, 200);
+  }, []);
+  function closeOne(key: string): void {
+    const nextWs = closeTab(ws, key);
+    if (nextWs.tabs.length === 0) closeAll();
+    else setWs(nextWs);
+  }
 
   useEffect(() => {
     try {
@@ -122,8 +149,13 @@ export function ReaderView({
 
   const byVerse = mode === "original" ? groupOriginal(original) : [];
 
+  function renderTab(t: WsTab): ReactNode {
+    if (t.kind === "word") return <WordTab strong={t.strong} lex={lex} onGo={go} />;
+    return null;
+  }
+
   return (
-    <div className={styles.reader}>
+    <div className={`${styles.reader} ${ws.tabs.length ? styles.withPane : ""}`}>
       <div className={styles.main}>
         <div className={styles.bar}>
           <ChapterPicker current={refNow} onPick={go} />
@@ -193,7 +225,22 @@ export function ReaderView({
       </div>
 
       {pop ? (
-        <WordPopover state={pop} lex={lex} canSendToSermon={false} onDetails={closePop} onNote={closePop} onSermon={closePop} onClose={closePop} />
+        <WordPopover state={pop} lex={lex} canSendToSermon={false} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={closePop} onSermon={closePop} onClose={closePop} />
+      ) : null}
+
+      {ws.tabs.length ? (
+        <WorkspacePane
+          ws={ws}
+          lex={lex}
+          closing={closing}
+          onActivate={(key) => setWs((w) => ({ ...w, active: key }))}
+          onCloseTab={closeOne}
+          onCloseAll={closeAll}
+          renderTab={renderTab}
+          addable={[]}
+          onAdd={() => undefined}
+          verseLabel={(v) => `${chapterLabel(refNow)}:${v}`}
+        />
       ) : null}
     </div>
   );
