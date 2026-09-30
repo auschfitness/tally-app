@@ -123,3 +123,49 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   passagem) no painel do editor fica para depois; hoje o Mapa de Escrituras já mostra o
   cruzamento livro→sermões.
 - `esc()` removido (React escapa); sticks arquivadas excluídas onde listar pessoas.
+
+## Leitura da Bíblia (spec 07)
+Tela de leitura de capítulo com o texto em português ligado ao original. Atrás da flag
+`study.reader` (m54, nasce `off`): desligada, `/study/bible` responde 404 e a sub-nav do
+Estudo não mostra "Bíblia". Ligada, "Bíblia" entra na frente da sub-nav (`StudyTabs`).
+
+- **Rotas:** `/study/bible` (client; abre o último capítulo lido no aparelho, senão João 1,
+  e redireciona) e `/study/bible/[book]/[chapter]` (Server; o gate da flag fica aqui).
+  O `[book]` da rota é **USFM** (`JHN`).
+- **Arquitetura:** `page` (Server, busca tudo em paralelo) → `ReaderView` (por capítulo,
+  remonta a cada navegação) + `ReaderWorkspace` (no `layout.tsx`, sobrevive à troca de
+  capítulo). A área de trabalho tem abas **Palavra / Versículo / Notas / Sermão** (até
+  `MAX_TABS`=5; abrir o que já está aberto só ativa) e todas ficam montadas, para o
+  editor de sermão não perder estado no meio do autosave. No celular vira **gaveta**
+  (meio/cheia, arrasto com peteleco e resistência; `WorkspacePane`). Regras puras em
+  `reader.ts` (+ `reader.test.ts`); leituras em `reader-queries.ts`. Componentes em
+  `components/reader/`.
+- **Dados (globais, leitura livre, escrita só service_role — m53):**
+  - `bible_tagged_words`: texto português quebrado em trechos, cada um com `strong` ou
+    nulo; concatenar `text` por `position` devolve o versículo exato. Tradução `por_blj`.
+  - `strongs_lexicon.gloss_pt` / `definition_pt`: glosa e definição em português; nulo
+    cai no inglês.
+  - RPC `strong_occurrences(p_strong)`: ocorrências agrupadas por livro/capítulo (aba
+    Palavra). Agrega no banco (G3588 tem ~20 mil).
+  - Sem ligação no capítulo, o texto cai no puro da Bíblia Livre via helloao.
+  - **Livro:** as tabelas guardam **OSIS** (`John`), a rota fala **USFM** (`JHN`); a
+    conversão é `usfmToOsis`/`osisToUsfm` (`lib/bible/osis.ts`). PostgREST corta em 1000
+    linhas, então o capítulo pagina com `range()`.
+- **Fontes na tela:** "Bíblia Livre (BLIVRE), CC BY 4.0" no texto; "STEPBible (CC BY 4.0)"
+  no léxico e no original, com ", tradução Tally" quando a glosa/definição vem de
+  `*_pt`. Não remover: é a condição da licença.
+- **Regerar os dados de João** (`scripts/align/`, tudo em `work/`):
+  1. `fetch-john.mjs` monta a entrada por capítulo (texto do helloao + tokens gregos);
+     `fetch-lexicon.mjs` lista os Strong de João e monta lotes de 80.
+  2. Subagentes geram a saída seguindo `ALIGN-PROMPT.md` (ligação) e `LEX-PROMPT.md`
+     (glosas/definições PT-BR).
+  3. `validate-alignment.mjs NN|all` e `validate-lexicon.mjs NN|all` recusam o que
+     quebra regra (texto tem de fechar EXATO, Strong tem de existir no versículo) e
+     geram os TSVs. **Cobertura mínima de 85%** das palavras gregas de conteúdo
+     (Strong diferente de G3588).
+  4. Carga com a service_role do dono (nunca no repo):
+     `node scripts/seed-original-text.mjs tagged ./scripts/align/work/tagged-john.tsv` e
+     `... lexpt ./scripts/align/work/lexpt-john.tsv`.
+- **Limites conhecidos:** o sublinhado de palavras ligadas existe **só em João** (piloto);
+  os outros livros mostram o texto puro. As notas da aba Notas e as da lente Notas do
+  "Estudo do Texto" (mesma `study_text_notes`) não se atualizam entre si sem remontar.
