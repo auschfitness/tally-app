@@ -5,6 +5,7 @@
 //
 // Endpoints: /api/available_translations.json · /api/{tr}/{book}/{chapter}.json
 "use client";
+import { versesFrom, verseText } from "./helloao";
 
 const BASE = "https://bible.helloao.org/api";
 
@@ -23,29 +24,8 @@ export type PassageResult =
   | { ok: true; translationId: string; translationName: string; verses: PassageVerse[]; text: string }
   | { ok: false; error: string; translationId?: string; translationName?: string };
 
-interface RawVerse {
-  type?: string;
-  number: number;
-  content?: (string | { text?: string })[];
-}
-
 let _translations: Promise<Translation[]> | null = null;
 const _chapterCache: Record<string, Promise<unknown>> = {};
-
-function versesFrom(data: unknown): RawVerse[] {
-  const d = data as { chapter?: { content?: unknown }; content?: unknown } | null;
-  const arr = (d && d.chapter && d.chapter.content) || (d && d.content) || [];
-  if (!Array.isArray(arr)) return [];
-  return (arr as RawVerse[]).filter((x) => x && x.type === "verse");
-}
-function verseText(v: RawVerse): string {
-  const parts = (v.content || []).map((seg) => {
-    if (typeof seg === "string") return seg;
-    if (seg && typeof seg.text === "string") return seg.text;
-    return "";
-  });
-  return parts.join(" ").replace(/\s+/g, " ").trim();
-}
 
 export function listTranslations(): Promise<Translation[]> {
   if (_translations) return _translations;
