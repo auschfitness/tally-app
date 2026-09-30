@@ -13,9 +13,9 @@ import {
 import { flagOn } from "./gate";
 
 describe("integridade do catálogo", () => {
-  it("tem exatamente as 9 chaves, sem duplicata", () => {
-    expect(ALL_FLAGS).toHaveLength(9);
-    expect(new Set(ALL_FLAGS).size).toBe(9);
+  it("tem exatamente as 10 chaves, sem duplicata", () => {
+    expect(ALL_FLAGS).toHaveLength(10);
+    expect(new Set(ALL_FLAGS).size).toBe(10);
   });
 
   it("as chaves batem com as que as migrations semearam", () => {

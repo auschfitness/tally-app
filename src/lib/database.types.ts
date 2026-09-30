@@ -226,6 +226,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bible_tagged_words: {
+        Row: {
+          book: string
+          chapter: number
+          position: number
+          strong: string | null
+          text: string
+          translation: string
+          verse: number
+        }
+        Insert: {
+          book: string
+          chapter: number
+          position: number
+          strong?: string | null
+          text: string
+          translation: string
+          verse: number
+        }
+        Update: {
+          book?: string
+          chapter?: number
+          position?: number
+          strong?: string | null
+          text?: string
+          translation?: string
+          verse?: number
+        }
+        Relationships: []
+      }
       campus_fiscal_profiles: {
         Row: {
           bank_info: Json
@@ -3509,7 +3539,9 @@ export type Database = {
       strongs_lexicon: {
         Row: {
           definition: string | null
+          definition_pt: string | null
           gloss: string | null
+          gloss_pt: string | null
           lang: string
           lemma: string | null
           pronunciation: string | null
@@ -3518,7 +3550,9 @@ export type Database = {
         }
         Insert: {
           definition?: string | null
+          definition_pt?: string | null
           gloss?: string | null
+          gloss_pt?: string | null
           lang: string
           lemma?: string | null
           pronunciation?: string | null
@@ -3527,7 +3561,9 @@ export type Database = {
         }
         Update: {
           definition?: string | null
+          definition_pt?: string | null
           gloss?: string | null
+          gloss_pt?: string | null
           lang?: string
           lemma?: string | null
           pronunciation?: string | null
@@ -4081,6 +4117,10 @@ export type Database = {
       }
       seed_default_system_roles: { Args: { p_org: string }; Returns: undefined }
       shares_org: { Args: { p_other: string }; Returns: boolean }
+      strong_occurrences: {
+        Args: { p_strong: string }
+        Returns: { book: string; chapter: number; n: number }[]
+      }
       trial_balance: {
         Args: { p_as_of?: string; p_org: string }
         Returns: {

@@ -13,6 +13,7 @@ export type FlagKey =
   | "study.bible_v2"
   | "study.interlinear"
   | "study.library_v2"
+  | "study.reader"
   | "teams.v2"
   | "groups.v2"
   | "billing.checkout"
@@ -25,6 +26,7 @@ export const ALL_FLAGS: FlagKey[] = [
   "study.bible_v2",
   "study.interlinear",
   "study.library_v2",
+  "study.reader",
   "teams.v2",
   "groups.v2",
   "billing.checkout",
