@@ -205,15 +205,26 @@ export function SermonEditor({
     }, 900);
   }
 
-  // Desmontar com save pendente (troca de sermão, fechar a aba, sair da página) grava
-  // na hora em vez de perder os últimos 900ms. doSave só lê refs; setState depois de
-  // desmontado é ignorado pelo React.
+  // Save pendente grava na hora em vez de perder os últimos 900ms: ao desmontar (troca
+  // de sermão, fechar a aba, navegar no app) e ao sair do documento (recarregar, fechar
+  // o navegador), que não desmonta nada; aí o navegador também pede confirmação enquanto
+  // a gravação não volta. doSave só lê refs; setState depois de desmontado é ignorado.
   useEffect(() => {
-    return () => {
+    function flush(): void {
       if (!timerRef.current) return;
       clearTimeout(timerRef.current);
       timerRef.current = null;
       void doSave();
+    }
+    function onLeave(e: BeforeUnloadEvent): void {
+      if (!timerRef.current && !savingRef.current) return;
+      flush();
+      e.preventDefault();
+    }
+    window.addEventListener("beforeunload", onLeave);
+    return () => {
+      window.removeEventListener("beforeunload", onLeave);
+      flush();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
