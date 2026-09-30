@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import { bookName } from "@/lib/bible/books";
 import type { Sermon, Series } from "../../types";
+import { DEFAULT_SECTION, buildKeywordBlock, type SectionKey } from "../../domain";
 import {
   EMPTY_WS,
   LAST_READ_KEY,
@@ -28,6 +29,7 @@ import {
 import { BibleCompare } from "../BibleCompare";
 import { ChapterPicker } from "./ChapterPicker";
 import { NotesTab } from "./NotesTab";
+import { SermonTab } from "./SermonTab";
 import { WordTab } from "./WordTab";
 import { WorkspacePane } from "./WorkspacePane";
 import { WordPopover, popoverAt, type PopoverState } from "./WordPopover";
@@ -72,6 +74,8 @@ export function ReaderView({
   const [ws, setWs] = useState<Workspace>(EMPTY_WS);
   const [closing, setClosing] = useState(false);
   const [noteVerse, setNoteVerse] = useState<number | null>(null);
+  const [incoming, setIncoming] = useState<{ block: string; section: SectionKey; seq: number } | null>(null);
+  const sermonOpen = ws.tabs.some((t) => t.kind === "sermon");
   const open = useCallback((t: WsTab): void => {
     setPop(null);
     setClosing(false);
@@ -155,14 +159,30 @@ export function ReaderView({
 
   const byVerse = mode === "original" ? groupOriginal(original) : [];
 
+  function sendBlock(block: string, section: SectionKey): void {
+    setIncoming((p) => ({ block, section, seq: (p?.seq ?? 0) + 1 }));
+  }
+  function sendToSermon(strong: string, verse: number): void {
+    const l = lex[strong];
+    sendBlock(`${chapterLabel(refNow)}:${verse} · ` + buildKeywordBlock({ lemma: l?.lemma || strong, strong, meaning: glossOf(l), occurrences: null }), DEFAULT_SECTION);
+    open({ kind: "sermon" });
+  }
+  function openAdd(k: "notes" | "sermon"): void {
+    if (k === "notes") setNoteVerse(null);
+    open({ kind: k });
+  }
+  const addable: { kind: "notes" | "sermon"; label: string }[] = [];
+  if (!ws.tabs.some((t) => t.kind === "notes")) addable.push({ kind: "notes", label: "Notas" });
+  if (!sermonOpen) addable.push({ kind: "sermon", label: "Sermão" });
+
   function renderTab(t: WsTab): ReactNode {
     if (t.kind === "word") return <WordTab strong={t.strong} lex={lex} onGo={go} />;
     if (t.kind === "verse") {
       const r = { book: refNow.book, chapter: refNow.chapter, verse_start: t.verse, verse_end: null, reference: `${bookName(refNow.book)} ${refNow.chapter}:${t.verse}` };
-      return <BibleCompare embedded initialRef={r} locale={editor.locale} onClose={() => closeOne(tabKey(t))} />;
+      return <BibleCompare embedded initialRef={r} locale={editor.locale} onAddToSermon={sermonOpen ? sendBlock : undefined} onClose={() => closeOne(tabKey(t))} />;
     }
     if (t.kind === "notes") return <NotesTab refNow={refNow} verse={noteVerse} />;
-    return null;
+    return <SermonTab editor={editor} incoming={incoming} />;
   }
 
   return (
@@ -236,7 +256,7 @@ export function ReaderView({
       </div>
 
       {pop ? (
-        <WordPopover state={pop} lex={lex} canSendToSermon={false} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={() => { setNoteVerse(pop.verse); open({ kind: "notes" }); }} onSermon={closePop} onClose={closePop} />
+        <WordPopover state={pop} lex={lex} canSendToSermon={sermonOpen} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={() => { setNoteVerse(pop.verse); open({ kind: "notes" }); }} onSermon={() => sendToSermon(pop.strong, pop.verse)} onClose={closePop} />
       ) : null}
 
       {ws.tabs.length ? (
@@ -248,8 +268,8 @@ export function ReaderView({
           onCloseTab={closeOne}
           onCloseAll={closeAll}
           renderTab={renderTab}
-          addable={ws.tabs.some((t) => t.kind === "notes") ? [] : [{ kind: "notes", label: "Notas" }]}
-          onAdd={(k) => { if (k === "notes") { setNoteVerse(null); open({ kind: "notes" }); } }}
+          addable={addable}
+          onAdd={openAdd}
           verseLabel={(v) => `${chapterLabel(refNow)}:${v}`}
         />
       ) : null}

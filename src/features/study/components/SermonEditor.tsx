@@ -59,6 +59,8 @@ export function SermonEditor({
   campuses,
   activeCampus,
   locale = "pt-BR",
+  embedded = false,
+  incoming = null,
 }: {
   sermon: Sermon | null;
   series: Series[];
@@ -66,6 +68,8 @@ export function SermonEditor({
   campuses: string[];
   activeCampus: string;
   locale?: string;
+  embedded?: boolean; // dentro da tela de leitura: não troca a URL nem volta à biblioteca
+  incoming?: { block: string; section: SectionKey; seq: number } | null;
 }) {
   const router = useRouter();
   const initialContent = useRef<SermonContent>(sermon?.content ?? {});
@@ -161,7 +165,7 @@ export function SermonEditor({
         idRef.current = res.data.id;
         initialContent.current = content;
         // Adota a URL do sermão salvo sem remontar o editor (shallow).
-        window.history.replaceState(null, "", `/study/sermon/${res.data.id}`);
+        if (!embedded) window.history.replaceState(null, "", `/study/sermon/${res.data.id}`);
       }
       // Sincroniza as passagens do sermão (upsert/remoção), com o id já garantido.
       void syncSermonScripturesAction(idRef.current, refsFor(m.main_passage, v, snapRef.current.recognizeOn));
@@ -234,6 +238,15 @@ export function SermonEditor({
     scheduleSave();
   }
 
+  // Blocos vindos de fora (leitura, spec 07): cada `seq` novo entra uma vez.
+  const lastSeq = useRef(0);
+  useEffect(() => {
+    if (!incoming || incoming.seq === lastSeq.current) return;
+    lastSeq.current = incoming.seq;
+    addBlockToSection(incoming.block, incoming.section);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incoming]);
+
   const addable = OPTIONAL_SECTIONS.filter((s) => !present.has(s.key));
   const detected = refsFor(meta.main_passage, values, recognizeOn);
 
@@ -261,7 +274,7 @@ export function SermonEditor({
   return (
     <div>
       <div className={styles.bar}>
-        <button className="link" onClick={backToLibrary}>← Biblioteca</button>
+        {embedded ? null : <button className="link" onClick={backToLibrary}>← Biblioteca</button>}
         <span className={styles.status}>{status}</span>
         <span style={{ flex: 1 }} />
         <button className="btn ghost sm" onClick={() => setAssistantOpen((o) => !o)}>Escrituras</button>
