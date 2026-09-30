@@ -15,7 +15,7 @@ export default async function StudySeriesPage() {
   const series = await listSeries(ctx.supabase, ctx.orgId);
   return (
     <>
-      <StudyTabs v2 />
+      <StudyTabs v2 reader={flagOn(ctx, "study.reader")} />
       <SeriesBoard series={series} />
     </>
   );

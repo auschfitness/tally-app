@@ -29,17 +29,36 @@ const TABS_V2: [string, string][] = [
 // Exploração: alcançável sempre, visível só quando procurada.
 const OVERFLOW: [string, string][] = [["/study/map", "Mapa de Escrituras"]];
 
-export function StudyTabs({ v2 = false }: { v2?: boolean }) {
+// Com `study.reader` ligada, "Bíblia" entra na frente e a sub-nav continua com 3 itens;
+// o que sobra vai para o "···".
+const TABS_READER: [string, string][] = [
+  ["/study/bible", "Bíblia"],
+  ["/study", "Biblioteca"],
+  ["/study/notes", "Notas"],
+];
+const TABS_V2_READER: [string, string][] = [
+  ["/study/bible", "Bíblia"],
+  ["/study", "Sermões"],
+  ["/study/series", "Séries"],
+];
+const OVERFLOW_READER: [string, string][] = [
+  ["/study/notes", "Notas"],
+  ["/study/map", "Mapa de Escrituras"],
+];
+
+export function StudyTabs({ v2 = false, reader = false }: { v2?: boolean; reader?: boolean }) {
   const path = usePathname();
-  const tabs = v2 ? TABS_V2 : TABS;
+  const tabs = reader ? (v2 ? TABS_V2_READER : TABS_READER) : v2 ? TABS_V2 : TABS;
+  const overflow = v2 ? (reader ? OVERFLOW_READER : OVERFLOW) : [];
+  const isOn = (href: string): boolean => (href === "/study/bible" ? path.startsWith(href) : path === href);
   return (
     <div className={styles.subnav}>
       <div className={styles.chips}>
         {tabs.map(([href, label]) => (
-          <Link key={href} href={href} className={`${styles.fchip}${path === href ? " " + styles.on : ""}`}>{label}</Link>
+          <Link key={href} href={href} className={`${styles.fchip}${isOn(href) ? " " + styles.on : ""}`}>{label}</Link>
         ))}
       </div>
-      {v2 ? (
+      {overflow.length ? (
         <details
           className={styles.more}
           onBlur={(e) => {
@@ -50,13 +69,13 @@ export function StudyTabs({ v2 = false }: { v2?: boolean }) {
           }}
         >
           <summary
-            className={`${styles.moreBtn}${OVERFLOW.some(([h]) => h === path) ? " " + styles.on : ""}`}
+            className={`${styles.moreBtn}${overflow.some(([h]) => h === path) ? " " + styles.on : ""}`}
             aria-label="Mais do Estudo"
           >
             ···
           </summary>
           <div className={styles.moreMenu}>
-            {OVERFLOW.map(([href, label]) => (
+            {overflow.map(([href, label]) => (
               <Link key={href} href={href} className={styles.moreItem}>{label}</Link>
             ))}
           </div>

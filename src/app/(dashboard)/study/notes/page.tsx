@@ -18,7 +18,7 @@ export default async function StudyNotesPage() {
   const sermonOpts = sermons.map((s) => ({ id: s.id, title: s.title }));
   return (
     <>
-      <StudyTabs v2={flagOn(ctx, "study.library_v2")} />
+      <StudyTabs v2={flagOn(ctx, "study.library_v2")} reader={flagOn(ctx, "study.reader")} />
       <NotesBoard notes={notes} sermons={sermonOpts} series={series} />
     </>
   );

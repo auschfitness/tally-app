@@ -23,7 +23,7 @@ export default async function StudyPage() {
   const campuses = (campusRes.data ?? []).map((c) => c.name);
   return (
     <>
-      <StudyTabs v2={v2} />
+      <StudyTabs v2={v2} reader={flagOn(ctx, "study.reader")} />
       {v2 ? (
         <SermonLibraryV2 sermons={sermons} series={series} campuses={campuses} />
       ) : (

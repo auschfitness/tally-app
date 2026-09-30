@@ -1,0 +1,96 @@
+/* Tela de leitura (spec 07). Tokens do app; nada de cor solta além da marca via --blue. */
+.reader { display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - 140px); }
+.withPane { grid-template-columns: minmax(0, 1fr) minmax(340px, 44%); }
+.main { min-width: 0; }
+.muted { color: var(--text-2); font-family: var(--font-ui); font-size: var(--t-13); }
+
+.bar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--font-ui); }
+.sep { width: 1px; height: 16px; background: var(--border); }
+.toggle { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-13); font-weight: 600; color: var(--text); cursor: pointer; }
+
+.pickWrap { position: relative; }
+.pickBtn { font: 600 var(--t-15)/1 var(--font-ui); color: var(--text); background: none; border: 0; padding: 8px 10px; border-radius: var(--r-6); cursor: pointer; }
+.pickBtn:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .pickBtn:hover { background: var(--surface-2); } }
+.picker { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(560px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); padding: var(--s-3); transform-origin: top left; animation: popIn 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.pickSearch { width: 100%; margin-bottom: var(--s-2); }
+.pickCols { display: grid; grid-template-columns: 180px 1fr; gap: var(--s-3); max-height: 320px; }
+.pickBooks { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
+.pickBooks button { width: 100%; text-align: left; background: none; border: 0; padding: 6px 8px; border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1.3 var(--font-ui); cursor: pointer; }
+.pickOn { background: var(--surface-2) !important; font-weight: 600 !important; }
+.pickGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; align-content: start; overflow-y: auto; }
+.pickGrid button { height: 36px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1 var(--font-ui); cursor: pointer; }
+.pickRecent { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; margin-top: var(--s-3); font: var(--t-11)/1.4 var(--font-ui); color: var(--text-2); }
+
+.text { max-width: 38rem; margin: 0 auto; padding: var(--s-6) var(--s-4) var(--s-6); font-family: Georgia, "Times New Roman", serif; font-size: 1.125rem; line-height: 1.85; color: var(--text); }
+.eyebrow { font: 600 var(--t-11)/1.4 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: var(--s-4); }
+.para { margin: 0; }
+.dropcap { float: left; font-size: 3.4em; line-height: 0.85; margin: 0.06em 0.14em 0 0; }
+.vnumPlain, .vnum { font: 600 0.62em/1 var(--font-ui); color: var(--blue); vertical-align: super; padding: 0 3px 0 6px; }
+.vnum { background: none; border: 0; cursor: pointer; }
+.word { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; border-radius: 3px; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; text-decoration-color: color-mix(in srgb, var(--blue) 35%, transparent); }
+.hit { background: color-mix(in srgb, var(--blue) 12%, transparent); text-decoration-color: var(--blue); }
+@media (hover: hover) and (pointer: fine) { .word:hover { background: color-mix(in srgb, var(--blue) 8%, transparent); } }
+.attrib { font: var(--t-11)/1.4 var(--font-ui); color: var(--text-2); margin-top: var(--s-6); }
+.chapNav { display: flex; justify-content: space-between; max-width: 38rem; margin: 0 auto var(--s-8); padding: 0 var(--s-4); font-family: var(--font-ui); }
+
+/* Modo Original */
+.il { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 0 var(--s-4); }
+.ilVerse { font: 600 var(--t-11)/1 var(--font-ui); color: var(--blue); align-self: center; margin-right: 4px; }
+.ilw { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px; border-radius: var(--r-6); border: 1px solid transparent; background: none; cursor: pointer; color: var(--text); }
+.ilw.hit { border-color: color-mix(in srgb, var(--blue) 30%, transparent); }
+@media (hover: hover) and (pointer: fine) { .ilw:hover { background: var(--surface-2); } }
+.ilSurface { font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; }
+.ilTr { font: var(--t-11)/1.2 var(--font-ui); color: var(--text-2); }
+.ilGloss { font: var(--t-13)/1.2 var(--font-ui); color: var(--blue); }
+
+/* Balão */
+.pop { position: fixed; z-index: 60; width: 264px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); padding: var(--s-3) var(--s-4); font-family: var(--font-ui); transform-origin: top left; animation: popIn 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.popHead { display: flex; align-items: baseline; gap: 8px; }
+.popLemma { font-family: Georgia, "Times New Roman", serif; font-size: 1.35rem; color: var(--text); }
+.popMeta { font-size: var(--t-11); color: var(--text-2); }
+.popClose { margin-left: auto; background: none; border: 0; color: var(--text-2); font-size: 18px; cursor: pointer; }
+.popGloss { margin: 6px 0 10px; font-size: var(--t-13); color: var(--text); line-height: 1.45; }
+.popActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+/* Área de trabalho */
+.pane { position: sticky; top: 0; height: calc(100dvh - 140px); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); animation: paneIn var(--dur-panel) var(--ease); }
+.paneOut { animation: paneOut var(--dur-micro) var(--ease) forwards; }
+.grab { display: none; }
+.tabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--border); overflow-x: auto; font-family: var(--font-ui); }
+.tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--r-6) var(--r-6) 0 0; background: none; color: var(--text-2); font-size: var(--t-13); white-space: nowrap; cursor: pointer; }
+.tabOn { background: var(--bg); color: var(--text); font-weight: 600; border-color: var(--border); margin-bottom: -1px; }
+.tabX { color: var(--text-2); font-size: 14px; line-height: 1; }
+.tabAdd { margin-left: 4px; }
+.addMenu { position: absolute; z-index: 10; margin-top: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-10); box-shadow: var(--e-2); padding: 4px; display: flex; flex-direction: column; }
+.addMenu button { text-align: left; background: none; border: 0; padding: 8px 12px; border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1.2 var(--font-ui); cursor: pointer; }
+.body { flex: 1; overflow-y: auto; padding: var(--s-4); font-family: var(--font-ui); color: var(--text); }
+.seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-2); border-radius: var(--r-6); margin: var(--s-2) 0 var(--s-3); }
+.seg button { border: 0; background: none; padding: 5px 12px; border-radius: 5px; color: var(--text-2); font: var(--t-13)/1 var(--font-ui); cursor: pointer; }
+.seg .segOn { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--e-1); }
+.occBook { display: flex; justify-content: space-between; width: 100%; padding: 8px 4px; background: none; border: 0; border-bottom: 1px solid var(--border); color: var(--text); font: var(--t-13)/1.2 var(--font-ui); cursor: pointer; }
+.occChaps { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; padding: 8px 0; }
+.occChaps button { text-align: left; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--r-6); background: var(--surface); color: var(--text); font: var(--t-13)/1.3 var(--font-ui); cursor: pointer; }
+
+@keyframes popIn { from { opacity: 0; transform: scale(0.96); } }
+@keyframes paneIn { from { opacity: 0; transform: translateX(24px); } }
+@keyframes paneOut { to { opacity: 0; transform: translateX(24px); } }
+@keyframes sheetIn { from { transform: translateY(100%); } }
+@keyframes sheetOut { to { transform: translateY(100%); } }
+@keyframes fadeIn { from { opacity: 0; } }
+
+@media (max-width: 767px) {
+  .withPane { grid-template-columns: minmax(0, 1fr); }
+  .pane { position: fixed; left: 0; right: 0; bottom: 0; top: auto; height: 55dvh; z-index: 55; border-left: 0; border-top: 1px solid var(--border); border-radius: var(--r-20) var(--r-20) 0 0; box-shadow: var(--e-2); animation-name: sheetIn; transition: height var(--dur-panel) var(--ease); }
+  .paneOut { animation-name: sheetOut; }
+  .full { height: 92dvh; }
+  .grab { display: block; width: 100%; padding: 10px 0 6px; background: none; border: 0; touch-action: none; cursor: grab; }
+  .grab::before { content: ""; display: block; width: 36px; height: 4px; margin: 0 auto; border-radius: 9px; background: var(--border); }
+  .pickCols { grid-template-columns: 1fr; max-height: 60dvh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop, .picker, .pane { animation: fadeIn var(--dur-micro) ease; }
+  .paneOut { animation: none; opacity: 0; }
+  .pane { transition: none; }
+}
