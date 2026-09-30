@@ -42,3 +42,6 @@ docs/testing-fixture.md
 /playwright-report/
 /playwright/.cache/
 /blob-report/
+
+# dados gerados da ligação/léxico (spec 07) — não versionar
+scripts/align/work/

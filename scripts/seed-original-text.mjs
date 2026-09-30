@@ -4,6 +4,8 @@
 // Uso genérico (insere de um TSV com CABEÇALHO cujos nomes batem com as colunas da tabela):
 //   node scripts/seed-original-text.mjs tokens   ./tokens.tsv
 //   node scripts/seed-original-text.mjs lexicon  ./strongs.tsv
+//   node scripts/seed-original-text.mjs tagged   ./scripts/align/work/tagged-john.tsv
+//   node scripts/seed-original-text.mjs lexpt    ./scripts/align/work/lexpt-john.tsv
 //
 // tokens.tsv  → colunas: lang, book, chapter, verse, position, surface, lemma, strong, morph, gloss, translit
 // strongs.tsv → colunas: strong, lang, lemma, translit, pronunciation, gloss, definition
@@ -18,6 +20,8 @@ import fs from "node:fs";
 const TABLES = {
   tokens: "bible_original_tokens",
   lexicon: "strongs_lexicon",
+  tagged: "bible_tagged_words", // ligação português↔original (spec 07)
+  lexpt: "strongs_lexicon",     // só gloss_pt/definition_pt (spec 07)
 };
 const NUMERIC = new Set(["chapter", "verse", "position"]);
 
@@ -27,7 +31,7 @@ const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!TABLES[mode] || !file) {
-  console.error("Uso: node scripts/seed-original-text.mjs <tokens|lexicon> <arquivo.tsv>");
+  console.error("Uso: node scripts/seed-original-text.mjs <tokens|lexicon|tagged|lexpt> <arquivo.tsv>");
   process.exit(1);
 }
 if (!url || !key) {
@@ -57,9 +61,11 @@ async function flush() {
   if (batch.length === 0) return;
   const rows = batch;
   batch = [];
-  const q = mode === "lexicon"
+  const q = mode === "lexicon" || mode === "lexpt"
     ? supabase.from(table).upsert(rows, { onConflict: "strong" })
-    : supabase.from(table).insert(rows);
+    : mode === "tagged"
+      ? supabase.from(table).upsert(rows, { onConflict: "translation,book,chapter,verse,position" })
+      : supabase.from(table).insert(rows);
   const { error } = await q;
   if (error) {
     console.error("\nErro no lote:", error.message);
