@@ -53,8 +53,9 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 
 ## Próximo chat
 
-- [ ] **Parte 2 do plano: destaques e notas no texto** (marcar versículos com cores, ver
-      as notas no próprio texto). Próxima peça grande, combinada com o dono em 2026-10-01.
+- [x] **Parte 2 do plano: destaques e notas no texto.** Feito em 2026-10-01 (spec 08):
+      número do versículo abre balão com 5 cores + Anotar + Estudar versículo; lápis no
+      versículo com nota. Tabela `study_highlights` (m55), privada por autor.
 
 ## Bugs anotados
 

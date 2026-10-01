@@ -3642,6 +3642,47 @@ export type Database = {
           },
         ]
       }
+      study_highlights: {
+        Row: {
+          author_id: string
+          book: string
+          chapter: number
+          color: string
+          id: string
+          org_id: string
+          updated_at: string
+          verse: number
+        }
+        Insert: {
+          author_id?: string
+          book: string
+          chapter: number
+          color: string
+          id?: string
+          org_id: string
+          updated_at?: string
+          verse: number
+        }
+        Update: {
+          author_id?: string
+          book?: string
+          chapter?: number
+          color?: string
+          id?: string
+          org_id?: string
+          updated_at?: string
+          verse?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_highlights_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_text_notes: {
         Row: {
           author_id: string

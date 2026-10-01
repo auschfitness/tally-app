@@ -9,6 +9,9 @@ import {
   curlyQuotes,
   filterOccurrences,
   glossOf,
+  isHlColor,
+  nextColor,
+  notesFirst,
   groupOccurrences,
   groupOriginal,
   openTab,
@@ -236,5 +239,23 @@ describe("gaveta (celular)", () => {
     const b = rubberband(200, 800);
     expect(a).toBeLessThan(50);
     expect(b - a).toBeLessThan(150);
+  });
+});
+
+describe("destaques e notas (spec 08)", () => {
+  it("tocar na mesma cor tira; outra cor troca", () => {
+    expect(nextColor(undefined, "yellow")).toBe("yellow");
+    expect(nextColor("yellow", "yellow")).toBeNull();
+    expect(nextColor("yellow", "blue")).toBe("blue");
+  });
+  it("valida cor vinda de fora", () => {
+    expect(isHlColor("pink")).toBe(true);
+    expect(isHlColor("red")).toBe(false);
+    expect(isHlColor(3)).toBe(false);
+  });
+  it("põe as notas do versículo primeiro sem perder as outras", () => {
+    const ns = [{ id: "a", verse_start: 2 }, { id: "b", verse_start: 5 }, { id: "c", verse_start: null }, { id: "d", verse_start: 5 }];
+    expect(notesFirst(ns, 5).map((n) => n.id)).toEqual(["b", "d", "a", "c"]);
+    expect(notesFirst(ns, null)).toBe(ns);
   });
 });

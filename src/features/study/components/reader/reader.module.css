@@ -182,10 +182,32 @@
   .wSurface { font-size: 2rem; }
 }
 
+/* Destaques e notas no texto (spec 08). Tons por cor com alfa por tema: o texto nunca
+   perde contraste. A amostra do balão usa o mesmo tom, mais forte. */
+.text { --hl-a: 30%; }
+:global([data-theme="dark"]) .text { --hl-a: 24%; }
+.hl { border-radius: 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0.06em 0; transition: background-color var(--dur-micro) var(--ease); }
+.hl_yellow { background-color: color-mix(in srgb, #F2C230 var(--hl-a), transparent); }
+.hl_green { background-color: color-mix(in srgb, #34B27B var(--hl-a), transparent); }
+.hl_blue { background-color: color-mix(in srgb, #4C8DF6 var(--hl-a), transparent); }
+.hl_pink { background-color: color-mix(in srgb, #EC6FA8 var(--hl-a), transparent); }
+.hl_orange { background-color: color-mix(in srgb, #F28C38 var(--hl-a), transparent); }
+.vwrap { position: relative; }
+.vmenu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; display: flex; flex-direction: column; gap: 2px; width: max-content; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); font: var(--t-13)/1.2 var(--font-ui); transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
+.vmColors { display: flex; gap: 6px; padding: 2px 2px 8px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+.swatch { --hl-a: 75%; width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer; transition: transform var(--dur-micro) var(--ease); }
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text-2); }
+.swatch:active { transform: scale(0.94); }
+.vmAction { text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: var(--r-6); color: var(--text); font: inherit; cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { .vmAction:hover { background: var(--surface-2); } }
+.noteMark { display: inline-flex; vertical-align: -0.1em; background: none; border: 0; padding: 0 3px; color: var(--text-2); cursor: pointer; }
+.noteMark svg { width: 0.8em; height: 0.8em; }
+@media (hover: hover) and (pointer: fine) { .noteMark:hover { color: var(--blue); } }
+
 @media (prefers-reduced-motion: reduce) {
-  .picker, .pane, .addMenu, .wHead { animation: fadeIn var(--dur-micro) ease; }
+  .picker, .pane, .addMenu, .wHead, .vmenu { animation: fadeIn var(--dur-micro) ease; }
   .paneOut { animation: none; opacity: 0; }
-  .pane, .occChev { transition: none; }
+  .pane, .occChev, .swatch { transition: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .bar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }

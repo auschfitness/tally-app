@@ -312,3 +312,22 @@ export function strongNum(strong: string): string {
 export function cleanSurface(s: string): string {
   return s.replace(/[\s.,;:··;׃־]+$/u, "");
 }
+
+// Destaques (spec 08): uma cor por versículo; tocar na cor já aplicada tira o destaque.
+export const HL_COLORS = ["yellow", "green", "blue", "pink", "orange"] as const;
+export type HlColor = (typeof HL_COLORS)[number];
+export const HL_LABEL: Record<HlColor, string> = { yellow: "Amarelo", green: "Verde", blue: "Azul", pink: "Rosa", orange: "Laranja" };
+
+export function isHlColor(v: unknown): v is HlColor {
+  return typeof v === "string" && (HL_COLORS as readonly string[]).includes(v);
+}
+
+export function nextColor(current: HlColor | undefined, picked: HlColor): HlColor | null {
+  return current === picked ? null : picked;
+}
+
+// Notas do versículo pedido primeiro; o resto mantém a ordem (mais recentes antes).
+export function notesFirst<T extends { verse_start: number | null }>(notes: T[], verse: number | null): T[] {
+  if (verse == null) return notes;
+  return [...notes.filter((n) => n.verse_start === verse), ...notes.filter((n) => n.verse_start !== verse)];
+}

@@ -4,14 +4,16 @@
 // "Anotar" no balão chega aqui com o versículo já escolhido. A tabela guarda o livro em
 // OSIS (como a lente Notas do BibleCompare); a rota fala USFM.
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { usfmToOsis } from "@/lib/bible/osis";
 import { deleteTextNoteAction, listTextNotesAction, saveTextNoteAction } from "../../actions";
 import type { TextNote } from "../../types";
-import { chapterLabel, type ChapterRef } from "../../reader";
+import { chapterLabel, notesFirst, type ChapterRef } from "../../reader";
 import styles from "./reader.module.css";
 
 export function NotesTab({ refNow, verse }: { refNow: ChapterRef; verse: number | null }) {
   const osis = usfmToOsis(refNow.book) ?? "";
+  const router = useRouter(); // refresh: o lápis no texto acompanha nota criada/excluída
   const [items, setItems] = useState<TextNote[] | null>(null);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,11 +39,15 @@ export function NotesTab({ refNow, verse }: { refNow: ChapterRef; verse: number 
     if (!r.success) { setErr(r.message || "Não consegui guardar a nota."); return; }
     setItems((l) => [r.data, ...(l ?? [])]);
     setDraft("");
+    router.refresh();
   }
 
   async function remove(id: string): Promise<void> {
     const r = await deleteTextNoteAction(id);
-    if (r.success) setItems((l) => (l ?? []).filter((n) => n.id !== id));
+    if (r.success) {
+      setItems((l) => (l ?? []).filter((n) => n.id !== id));
+      router.refresh();
+    }
     else setErr(r.message || "Não consegui excluir a nota.");
   }
 
@@ -56,7 +62,7 @@ export function NotesTab({ refNow, verse }: { refNow: ChapterRef; verse: number 
       </div>
       {items == null ? <p className={styles.muted}>Carregando…</p> : items.length === 0 ? <p className={styles.muted}>Nenhuma nota neste capítulo ainda.</p> : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {items.map((n) => (
+          {notesFirst(items, verse).map((n) => (
             <li key={n.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
               <div className={styles.muted}>{n.verse_start ? `${chapterLabel(refNow)}:${n.verse_start}` : chapterLabel(refNow)}</div>
               <div style={{ whiteSpace: "pre-wrap" }}>{n.body}</div>

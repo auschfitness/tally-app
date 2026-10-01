@@ -8,6 +8,7 @@ import { requireOrg, type DB } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { coerceSermon, parseNoteInput, parseSeriesInput, type SermonSaveInput } from "./schema";
 import type { TextNote } from "./types";
+import { isHlColor } from "./reader";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function uuidOrNull(v: string | null): string | null {
@@ -322,6 +323,26 @@ export async function deleteTextNoteAction(id: string): Promise<ActionResult<nul
     const { supabase } = await requireOrg();
     const { error } = await supabase.from("study_text_notes").delete().eq("id", id);
     if (error) return fail(toMessage(error, "Não consegui excluir a nota."));
+    return ok(null);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Destaque do versículo (spec 08). color null tira. Privado por autor (RLS, m55).
+export async function setHighlightAction(input: { book: string; chapter: number; verse: number; color: string | null }): Promise<ActionResult<null>> {
+  try {
+    const { book, chapter, verse, color } = input;
+    if (!book || !Number.isInteger(chapter) || !Number.isInteger(verse) || chapter < 1 || verse < 1) return fail("Versículo inválido.");
+    if (color !== null && !isHlColor(color)) return fail("Cor inválida.");
+    const { supabase, orgId, user } = await requireOrg();
+    const where = { org_id: orgId, author_id: user.id, book, chapter, verse };
+    const { error } = color === null
+      ? await supabase.from("study_highlights").delete().match(where)
+      : await supabase
+          .from("study_highlights")
+          .upsert({ ...where, color, updated_at: new Date().toISOString() }, { onConflict: "author_id,org_id,book,chapter,verse" });
+    if (error) return fail(toMessage(error, "Não consegui guardar o destaque."));
     return ok(null);
   } catch (e) {
     return fail(toMessage(e));

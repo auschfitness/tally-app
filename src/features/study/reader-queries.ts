@@ -2,7 +2,7 @@
 // livre por RLS). `book` aqui é OSIS ('John'). PostgREST corta em 1000 linhas por
 // chamada, então capítulo pagina com range().
 import type { DB } from "@/lib/auth/session";
-import type { LexShort, OrigWord, TaggedWordRow } from "./reader";
+import { isHlColor, type HlColor, type LexShort, type OrigWord, type TaggedWordRow } from "./reader";
 
 export const READER_TRANSLATION = "por_blj"; // Bíblia Livre (CC BY 4.0)
 const PAGE = 1000;
@@ -57,4 +57,17 @@ export async function getLexShort(supabase: DB, strongs: string[]): Promise<Reco
     for (const l of data ?? []) out[l.strong] = l;
   }
   return out;
+}
+
+// Marcas da pessoa no capítulo (spec 08): cor por versículo e versículos com nota.
+// RLS já devolve só as do autor.
+export async function getChapterMarks(supabase: DB, orgId: string, osis: string, chapter: number): Promise<{ highlights: Record<number, HlColor>; noted: number[] }> {
+  const [hl, notes] = await Promise.all([
+    supabase.from("study_highlights").select("verse, color").eq("org_id", orgId).eq("book", osis).eq("chapter", chapter),
+    supabase.from("study_text_notes").select("verse_start").eq("org_id", orgId).eq("book", osis).eq("chapter", chapter).not("verse_start", "is", null),
+  ]);
+  const highlights: Record<number, HlColor> = {};
+  for (const r of hl.data ?? []) if (isHlColor(r.color)) highlights[r.verse] = r.color;
+  const noted = [...new Set((notes.data ?? []).map((n) => n.verse_start).filter((v): v is number => v != null))];
+  return { highlights, noted };
 }

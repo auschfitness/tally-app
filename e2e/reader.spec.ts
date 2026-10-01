@@ -50,4 +50,46 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     await expect(page.getByTestId("workspace")).toBeVisible();
     await expect(page.getByTestId("word-tab")).toBeVisible();
   });
+
+  // Spec 08. Exige a tabela study_highlights (m55). Deixa o versículo limpo no fim.
+  test("número do versículo: pinta, troca, tira e anota (lápis no texto)", async ({ page }) => {
+    await login(page);
+    await page.goto("/study/bible/JHN/3");
+    const verse = page.locator('[data-verse="16"]');
+    const num = verse.getByRole("button", { name: /^Versículo João 3:16$/ });
+    const hl = verse.getByTestId("verse-text");
+    const menu = page.getByTestId("verse-menu");
+    // A cor aparece na hora; a gravação (server action, POST) vai por trás.
+    async function pick(name: string | RegExp): Promise<void> {
+      await num.click();
+      const saved = page.waitForResponse((r) => r.request().method() === "POST" && r.url().includes("/study/bible/"));
+      await menu.getByRole("button", { name }).click();
+      await saved;
+    }
+
+    const left = await hl.getAttribute("data-hl"); // sobra de rodada anterior
+    if (left) await pick(/tirar destaque/);
+    await expect(hl).not.toHaveAttribute("data-hl", /.+/);
+
+    await pick("Amarelo");
+    await expect(hl).toHaveAttribute("data-hl", "yellow");
+    await expect(menu).toHaveCount(0);
+    await pick("Verde");
+    await expect(hl).toHaveAttribute("data-hl", "green");
+    await page.reload();
+    await expect(hl).toHaveAttribute("data-hl", "green"); // gravou no banco
+    await pick(/Verde \(tirar/);
+    await expect(hl).not.toHaveAttribute("data-hl", /.+/);
+
+    await num.click();
+    await menu.getByRole("button", { name: "Anotar" }).click();
+    await expect(page.getByTestId("notes-tab")).toContainText("João 3:16");
+    await page.locator("#reader-note").fill("teste e2e spec 08");
+    await page.getByRole("button", { name: "Guardar" }).click();
+    await expect(verse.getByTestId("note-mark")).toBeVisible();
+
+    const mine = page.getByTestId("notes-tab").locator("li", { hasText: "teste e2e spec 08" });
+    await mine.getByRole("button", { name: "Excluir" }).click();
+    await expect(verse.getByTestId("note-mark")).toHaveCount(0);
+  });
 });

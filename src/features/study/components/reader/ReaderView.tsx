@@ -16,15 +16,20 @@ import {
   cleanSurface,
   glossOf,
   groupOriginal,
+  nextColor,
   toParagraphs,
   originalFor,
   type ChapterRef,
+  type HlColor,
   type LexShort,
   type OrigWord,
   type ReaderVerse,
   type Span,
 } from "../../reader";
+import { usfmToOsis } from "@/lib/bible/osis";
+import { setHighlightAction } from "../../actions";
 import { ChapterPicker } from "./ChapterPicker";
+import { VerseMenu } from "./VerseMenu";
 import { selectHit, useWorkspace, type EditorData } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
@@ -39,6 +44,8 @@ export function ReaderView({
   original,
   lex,
   textError,
+  highlights,
+  noted,
   editor,
 }: {
   refNow: ChapterRef;
@@ -48,6 +55,8 @@ export function ReaderView({
   original: OrigWord[];
   lex: Record<string, LexShort>;
   textError: string;
+  highlights: Record<number, HlColor>;
+  noted: number[];
   editor: EditorData;
 }) {
   const router = useRouter();
@@ -55,7 +64,31 @@ export function ReaderView({
   const next = useMemo(() => adjacentChapter(refNow, 1), [refNow]);
   const [mode, setMode] = useState<Mode>("bible");
   const [interlinear, setInterlinear] = useState(false);
-  const { publish, open, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
+  const { publish, open, openNotes, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
+  // Destaques: estado otimista; a página só manda o retrato inicial do capítulo.
+  const [hl, setHl] = useState(highlights);
+  const [menuAt, setMenuAt] = useState<number | null>(null);
+  const [hlError, setHlError] = useState("");
+  const notedSet = useMemo(() => new Set(noted), [noted]);
+  const closeMenu = useCallback((): void => setMenuAt(null), []);
+
+  async function paint(verse: number, picked: HlColor): Promise<void> {
+    const before = hl[verse];
+    const after = nextColor(before, picked);
+    const apply = (c: HlColor | null | undefined): void =>
+      setHl((m) => {
+        const { [verse]: _drop, ...rest } = m;
+        return c ? { ...rest, [verse]: c } : rest;
+      });
+    apply(after);
+    setMenuAt(null);
+    setHlError("");
+    const r = await setHighlightAction({ book: usfmToOsis(refNow.book) ?? "", chapter: refNow.chapter, verse, color: after });
+    if (!r.success) {
+      apply(before);
+      setHlError(r.message || "Não consegui guardar o destaque.");
+    }
+  }
   // Chave do trecho inclui o capítulo: a aba Palavra sobrevive à troca e não pode
   // acender a palavra de mesma posição no capítulo seguinte.
   const base = `${refNow.book}.${refNow.chapter}.`;
@@ -204,13 +237,42 @@ export function ReaderView({
         <article className={styles.text} lang="pt-BR" data-testid="reader-text" tabIndex={-1}>
           <div className={styles.eyebrow}>{chapterLabel(refNow)} · Bíblia Livre</div>
           {textError ? <p className={styles.muted}>{textError}</p> : null}
+          {hlError ? <p className={styles.muted} role="status">{hlError}</p> : null}
           {paragraphs.map((para, pi) => (
             <p key={para[0]?.n ?? pi} className={styles.para}>
               {pi === 0 ? <span className={styles.dropcap} aria-hidden>{refNow.chapter}</span> : null}
               {para.map((v) => (
-                <span key={v.n}>
-                  <button type="button" className={styles.vnum} aria-label={`Estudar ${chapterLabel(refNow)}:${v.n}`} onClick={() => open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: v.n })}>{v.n}</button>
-                  {v.spans.map((s, i) => renderSpan(s, v, i))}{" "}
+                <span key={v.n} data-verse={v.n}>
+                  <span className={styles.vwrap}>
+                    <button
+                      type="button"
+                      className={styles.vnum}
+                      aria-label={`Versículo ${chapterLabel(refNow)}:${v.n}`}
+                      aria-expanded={menuAt === v.n}
+                      aria-haspopup="dialog"
+                      onClick={() => setMenuAt((m) => (m === v.n ? null : v.n))}
+                    >
+                      {v.n}
+                    </button>
+                    {menuAt === v.n ? (
+                      <VerseMenu
+                        label={`${chapterLabel(refNow)}:${v.n}`}
+                        color={hl[v.n]}
+                        onColor={(c) => void paint(v.n, c)}
+                        onNote={() => { setMenuAt(null); openNotes({ book: refNow.book, chapter: refNow.chapter, verse: v.n }); }}
+                        onStudy={() => { setMenuAt(null); open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: v.n }); }}
+                        onClose={closeMenu}
+                      />
+                    ) : null}
+                  </span>
+                  <span className={hl[v.n] ? `${styles.hl} ${styles[`hl_${hl[v.n]}`]}` : styles.hl} data-hl={hl[v.n]} data-testid="verse-text">
+                    {v.spans.map((s, i) => renderSpan(s, v, i))}
+                  </span>
+                  {notedSet.has(v.n) ? (
+                    <button type="button" className={styles.noteMark} aria-label={`Ver notas de ${chapterLabel(refNow)}:${v.n}`} data-testid="note-mark" onClick={() => openNotes({ book: refNow.book, chapter: refNow.chapter, verse: v.n })}>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 13l.7-3L10.5 3.2a1.4 1.4 0 0 1 2 0l.3.3a1.4 1.4 0 0 1 0 2L6 12.3zM9.5 4.2l2.3 2.3" /></svg>
+                    </button>
+                  ) : null}{" "}
                 </span>
               ))}
             </p>

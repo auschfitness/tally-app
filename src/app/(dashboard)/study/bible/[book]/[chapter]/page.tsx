@@ -8,7 +8,7 @@ import { listSermons, listSeries } from "@/features/study/queries";
 import { listServices } from "@/features/services/queries";
 import { parseRouteRef, versesFromPlain, versesFromTagged, type ReaderVerse } from "@/features/study/reader";
 import { paragraphStartsOf } from "@/lib/bible/paragraphs";
-import { READER_TRANSLATION, getLexShort, getOriginalChapter, getTaggedChapter } from "@/features/study/reader-queries";
+import { READER_TRANSLATION, getChapterMarks, getLexShort, getOriginalChapter, getTaggedChapter } from "@/features/study/reader-queries";
 import { ReaderView } from "@/features/study/components/reader/ReaderView";
 import { StudyTabs } from "@/features/study/components/StudyTabs";
 
@@ -25,9 +25,10 @@ export default async function BibleChapterPage({ params }: { params: Promise<{ b
   if (!osis) notFound();
   const { supabase, orgId, user } = ctx;
 
-  const [tagged, original, sermons, series, services, campusRes, profRes] = await Promise.all([
+  const [tagged, original, marks, sermons, series, services, campusRes, profRes] = await Promise.all([
     getTaggedChapter(supabase, osis, ref.chapter),
     getOriginalChapter(supabase, osis, ref.chapter),
+    getChapterMarks(supabase, orgId, osis, ref.chapter),
     listSermons(supabase, orgId),
     listSeries(supabase, orgId),
     listServices(supabase, orgId),
@@ -64,6 +65,8 @@ export default async function BibleChapterPage({ params }: { params: Promise<{ b
         original={original}
         lex={lex}
         textError={textError}
+        highlights={marks.highlights}
+        noted={marks.noted}
         editor={{
           sermons,
           series,
