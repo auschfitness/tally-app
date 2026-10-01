@@ -81,4 +81,28 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       travada por teste). Se ainda acontecer com flag ligada a tela: checar override da
       igreja ("Ligada só aqui" vence o global; não há botão para remover, só no banco).
 
+## Próxima sessão (pedidos do dono, 2026-10-01 noite)
+
+- [ ] **Excluir sermão/rascunho com lixeira de 30 dias** (restaurar dentro do prazo; depois
+      some de vez). Vale também para notas.
+- [ ] **Símbolo perdido no texto:** João 2:6 termina em "metretas. )" com um ")" sem o "("
+      correspondente. Descobrir a causa (texto da Bíblia Livre no helloao? aspas curvas?
+      parágrafos? divisão em trechos do Interlinear?) e varrer a Bíblia inteira atrás de
+      parênteses, aspas e colchetes desemparelhados.
+- [ ] **Refazer a página Sermões** (a biblioteca atual é inútil do jeito que está).
+- [ ] **Refazer "Escrituras" e "Propriedades"** do editor de sermão (botões no canto que
+      ninguém entende).
+- [ ] **Refazer Notas** (página atual: um cartão solto, sem utilidade clara).
+- [ ] Frente B (sublinhado completo) em andamento: ver "Frente B" abaixo.
+
+## Frente B: sublinhado completo (estado em 2026-10-01)
+
+- Regra sem IA (`scripts/align/fill-gaps.mjs`): leva a 100% das palavras sublinhadas, mas
+  só ~42% das preenchidas batem com o gabarito de João (que agrupa palavra pequena com a
+  de conteúdo). Abaixo da meta da spec 09.
+- Plano B, IA grátis (`scripts/align/gemini-align.mjs`, Gemini flash-lite, toda palavra
+  num trecho): piloto em João 14-16 passou no formato em só 44 de 91 versículos. Falta
+  medir a qualidade contra o gabarito e entender as falhas (texto alterado? Strong fora do
+  versículo?) antes de rodar o NT.
+
 Fonte das telas: conversa de 2026-10-01 (Mateus 1, 19 e 20 no Raízes).
