@@ -410,7 +410,9 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 
 /* --- Casca do app (frame + navegação) --- */
 .app { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
-.side { background: var(--sidebar); color: #AEB8CC; padding: 20px 14px; display: flex; flex-direction: column; gap: 3px; }
+/* Menu parado na tela, com rolagem própria: menu mais alto que a janela não pode
+   esticar a página (empurrava telas de altura fixa, como a leitura da Bíblia). */
+.side { background: var(--sidebar); color: #AEB8CC; padding: 20px 14px; display: flex; flex-direction: column; gap: 3px; position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 18px; }
 .brand .wm { font-size: 20px; color: #fff; font-weight: 600; }
 .navitem { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; color: #9AA6BE; font-weight: 500; border: none; background: transparent; width: 100%; text-align: left; position: relative; text-decoration: none; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease); }

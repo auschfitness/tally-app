@@ -14,13 +14,16 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
 import { bookName } from "@/lib/bible/books";
-import type { SectionKey } from "../../domain";
+import { DEFAULT_SECTION, buildKeywordBlock, type SectionKey } from "../../domain";
 import type { Sermon, Series } from "../../types";
-import { EMPTY_WS, closeTab, openTab, tabKey, type ChapterRef, type LexShort, type Workspace, type WsTab } from "../../reader";
+import { EMPTY_WS, chapterLabel, closeTab, glossOf, openTab, tabKey, type ChapterRef, type LexShort, type Workspace, type WsTab } from "../../reader";
 import { BibleCompare } from "../BibleCompare";
 import { NotesTab } from "./NotesTab";
 import { SermonTab } from "./SermonTab";
@@ -41,7 +44,10 @@ type VerseAt = { book: string; chapter: number; verse: number };
 
 interface WorkspaceApi {
   sermonOpen: boolean;
+  wordKey: string | null; // trecho do texto cuja palavra está aberta (realce)
+  wordStrong: string | null;
   open: (t: WsTab) => void;
+  closeAll: () => void;
   openNotes: (at: VerseAt | null) => void;
   sendBlock: (block: string, section: SectionKey) => void;
   publish: (refNow: ChapterRef, lex: Record<string, LexShort>, editor: EditorData) => void;
@@ -56,6 +62,9 @@ export function useWorkspace(): WorkspaceApi {
 }
 
 const CLOSE_MS = 200;
+const PANE_KEY = "tally.reader.paneWidth";
+const PANE_MIN = 320;
+const TEXT_MIN = 360;
 const TEXT_SELECTOR = '[data-testid="reader-text"], [data-testid="reader-original"]';
 
 function focusLater(get: () => HTMLElement | null): void {
@@ -131,7 +140,66 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const go = useCallback((r: ChapterRef): void => router.push(`/study/bible/${r.book}/${r.chapter}`), [router]);
 
   const sermonOpen = ws.tabs.some((t) => t.kind === "sermon");
-  const api = useMemo<WorkspaceApi>(() => ({ sermonOpen, open, openNotes, sendBlock, publish }), [sermonOpen, open, openNotes, sendBlock, publish]);
+  const activeTab = ws.tabs.find((t) => tabKey(t) === ws.active);
+  const word = !closing && activeTab?.kind === "word" ? activeTab : null;
+  const wordKey = word?.key ?? null;
+  const wordStrong = word?.strong ?? null;
+  const api = useMemo<WorkspaceApi>(
+    () => ({ sermonOpen, wordKey, wordStrong, open, closeAll, openNotes, sendBlock, publish }),
+    [sermonOpen, wordKey, wordStrong, open, closeAll, openNotes, sendBlock, publish],
+  );
+
+  // Divisor entre texto e área de trabalho: arrasta 1:1, duplo clique volta ao padrão,
+  // setas ajustam pelo teclado. A largura fica no aparelho. Durante o arrasto escreve
+  // direto no estilo (sem render a cada pixel); o estado só grava ao soltar.
+  const [paneW, setPaneW] = useState<number | null>(null);
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem(PANE_KEY));
+      if (v >= PANE_MIN) setPaneW(v);
+    } catch {
+      /* sem armazenamento: largura padrão */
+    }
+  }, []);
+  function clampPane(w: number): number {
+    const total = gridRef.current?.getBoundingClientRect().width ?? 0;
+    return Math.round(Math.min(Math.max(w, PANE_MIN), Math.max(PANE_MIN, total - TEXT_MIN)));
+  }
+  function savePane(w: number | null): void {
+    setPaneW(w);
+    try {
+      if (w == null) localStorage.removeItem(PANE_KEY);
+      else localStorage.setItem(PANE_KEY, String(w));
+    } catch {
+      /* preferência só nesta visita */
+    }
+  }
+  const dragW = useRef<number | null>(null);
+  function onSplitDown(e: ReactPointerEvent<HTMLDivElement>): void {
+    if (dragW.current != null) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragW.current = paneW ?? 0;
+    document.body.style.cursor = "col-resize";
+  }
+  function onSplitMove(e: ReactPointerEvent<HTMLDivElement>): void {
+    const el = gridRef.current;
+    if (dragW.current == null || !el) return;
+    dragW.current = clampPane(el.getBoundingClientRect().right - e.clientX);
+    el.style.setProperty("--pane-w", `${dragW.current}px`);
+  }
+  function onSplitUp(): void {
+    if (dragW.current == null) return;
+    const w = dragW.current;
+    dragW.current = null;
+    document.body.style.cursor = "";
+    if (w > 0) savePane(w);
+  }
+  function onSplitKey(e: ReactKeyboardEvent<HTMLDivElement>): void {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const now = paneW ?? document.querySelector<HTMLElement>('[data-testid="workspace"]')?.getBoundingClientRect().width ?? PANE_MIN;
+    savePane(clampPane(now + (e.key === "ArrowLeft" ? 32 : -32)));
+  }
 
   // Altura da tela = janela − o que fica acima (topo do app) − o padding de baixo do
   // `.content`. Medido, porque o topo muda de altura (quebra de linha, celular).
@@ -162,7 +230,15 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
 
   function renderTab(t: WsTab): ReactNode {
     if (!refNow || !editor) return null;
-    if (t.kind === "word") return <WordTab strong={t.strong} lex={lex} onGo={go} />;
+    if (t.kind === "word") {
+      const l = lex[t.strong];
+      const at = { book: t.book, chapter: t.chapter, verse: t.verse };
+      const toSermon = (): void => {
+        sendBlock(`${chapterLabel(t)}:${t.verse} · ` + buildKeywordBlock({ lemma: l?.lemma || t.strong, strong: t.strong, meaning: glossOf(l), occurrences: null }), DEFAULT_SECTION);
+        open({ kind: "sermon" });
+      };
+      return <WordTab pick={t} lex={lex} onGo={go} onNote={() => openNotes(at)} onSermon={sermonOpen ? toSermon : undefined} />;
+    }
     if (t.kind === "verse") {
       const r = { book: t.book, chapter: t.chapter, verse_start: t.verse, verse_end: null, reference: `${bookName(t.book)} ${t.chapter}:${t.verse}` };
       return <BibleCompare embedded initialRef={r} locale={editor.locale} onAddToSermon={sermonOpen ? sendBlock : undefined} onClose={() => closeOne(tabKey(t))} />;
@@ -177,8 +253,28 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const paneOn = ws.tabs.length > 0 && refNow != null && editor != null;
   return (
     <Ctx.Provider value={api}>
-      <div ref={gridRef} className={`${styles.reader} ${paneOn ? styles.withPane : ""}`}>
+      <div
+        ref={gridRef}
+        className={`${styles.reader} ${paneOn ? styles.withPane : ""}`}
+        style={paneW ? ({ "--pane-w": `${paneW}px` } as CSSProperties) : undefined}
+      >
         <div className={styles.col}>{children}</div>
+        {paneOn ? (
+          <div
+            className={styles.split}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Largura da área de trabalho"
+            aria-valuenow={paneW ?? undefined}
+            tabIndex={0}
+            onPointerDown={onSplitDown}
+            onPointerMove={onSplitMove}
+            onPointerUp={onSplitUp}
+            onPointerCancel={onSplitUp}
+            onDoubleClick={() => { gridRef.current?.style.removeProperty("--pane-w"); savePane(null); }}
+            onKeyDown={onSplitKey}
+          />
+        ) : null}
         {paneOn ? (
           <WorkspacePane
             ws={ws}

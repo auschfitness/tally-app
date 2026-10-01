@@ -120,6 +120,13 @@ Onde `gloss_pt` for nulo, a tela mostra a glosa inglesa. Nunca uma caixa vazia.
 
 ### Balão da palavra
 
+> **Revisto em 2026-10-01 (polimento "acima do Raízes"):** o balão saiu. Tocar no trecho
+> abre direto a aba **Palavra** (uma só; outra palavra troca o conteúdo). A palavra tocada
+> ganha contorno e as demais ocorrências do mesmo Strong no capítulo, fundo leve; ←/→
+> andam de palavra em palavra e Esc fecha. **Anotar** e **Levar pro sermão** foram para o
+> cabeçalho da aba, que mostra também a forma flexionada deste versículo e a gramática em
+> português (`morph.ts`). O texto abaixo é o desenho original.
+
 Ao tocar num trecho sublinhado: balão ancorado na palavra com a palavra original, a
 transliteração, o Strong, os sentidos curtos (`gloss_pt`) e dois botões: **Ver detalhes**
 e **Anotar**. Se houver um sermão aberto na área de trabalho, aparece também **Levar pro

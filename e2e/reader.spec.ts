@@ -20,9 +20,7 @@ async function openWordTab(page: Page): Promise<void> {
   await page.getByTestId("interlinear-toggle").check();
   const words = page.getByTestId("reader-text").locator("[data-strong]");
   expect(await words.count()).toBeGreaterThan(10);
-  await words.first().click();
-  await expect(page.getByTestId("word-popover")).toBeVisible();
-  await page.getByRole("button", { name: "Ver detalhes" }).click();
+  await words.first().click(); // abre direto, sem balão
   await expect(page.getByTestId("workspace")).toBeVisible();
   await expect(page.getByTestId("word-tab")).toBeVisible();
 }
@@ -30,7 +28,7 @@ async function openWordTab(page: Page): Promise<void> {
 test.describe("Estudo → Bíblia (leitura)", () => {
   test.skip(!EMAIL || !PASSWORD, "fixture ausente (.env.test)");
 
-  test("João 1 abre, a chave acende as palavras e o balão mostra o grego", async ({ page }) => {
+  test("João 1 abre, a chave acende as palavras e o toque abre a palavra no painel", async ({ page }) => {
     await login(page);
     await openWordTab(page);
   });

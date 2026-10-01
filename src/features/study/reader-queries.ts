@@ -36,7 +36,7 @@ export async function getOriginalChapter(supabase: DB, osis: string, chapter: nu
   return pageAll((from, to) =>
     supabase
       .from("bible_original_tokens")
-      .select("verse, position, surface, strong, translit, lang")
+      .select("verse, position, surface, strong, translit, lang, morph, lemma")
       .eq("book", osis)
       .eq("chapter", chapter)
       .order("verse")

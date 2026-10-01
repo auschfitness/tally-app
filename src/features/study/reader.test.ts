@@ -110,12 +110,14 @@ describe("léxico e ocorrências", () => {
 });
 
 describe("área de trabalho", () => {
-  it("abrir a mesma aba só ativa; abrir outra acrescenta e ativa", () => {
-    let ws: Workspace = openTab(EMPTY_WS, { kind: "word", strong: "G3056" });
+  it("a aba Palavra é uma só: outra palavra troca o conteúdo e ativa", () => {
+    const pick = { book: "JHN", chapter: 1, verse: 1, text: "Verbo", surface: "λόγος", translit: "logos", morph: "N-NSM" };
+    let ws: Workspace = openTab(EMPTY_WS, { kind: "word", strong: "G3056", key: "1:3", ...pick });
     ws = openTab(ws, { kind: "notes" });
-    ws = openTab(ws, { kind: "word", strong: "G3056" });
+    ws = openTab(ws, { kind: "word", strong: "G2316", key: "1:9", ...pick });
     expect(ws.tabs.length).toBe(2);
-    expect(ws.active).toBe("word:G3056");
+    expect(ws.active).toBe("word");
+    expect(ws.tabs.find((t) => t.kind === "word")).toMatchObject({ strong: "G2316", key: "1:9" });
   });
 
   it("a 6ª aba derruba a mais antiga", () => {

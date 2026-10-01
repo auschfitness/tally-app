@@ -25,6 +25,8 @@ export interface OrigWord {
   strong: string | null;
   translit: string | null;
   lang: string;
+  morph?: string | null;
+  lemma?: string | null;
 }
 export interface LexShort {
   strong: string;
@@ -162,8 +164,21 @@ export function groupOccurrences(rows: OccRow[]): OccBook[] {
 
 // Área de trabalho: abas com chave estável. Abrir o que já está aberto só ativa. A área
 // sobrevive à troca de capítulo, então a aba Versículo guarda o próprio capítulo.
+// A aba Palavra é UMA só (como no Raízes): tocar outra palavra troca o conteúdo.
+// `key` identifica o trecho tocado no texto (realce); o resto descreve ESTA ocorrência.
+export interface WordPick {
+  strong: string;
+  key: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string; // o trecho em português tocado ("gerou"); no modo Original, a glosa
+  surface: string | null; // forma flexionada no original deste versículo
+  translit: string | null;
+  morph: string | null;
+}
 export type WsTab =
-  | { kind: "word"; strong: string }
+  | ({ kind: "word" } & WordPick)
   | { kind: "verse"; book: string; chapter: number; verse: number }
   | { kind: "notes" }
   | { kind: "sermon" };
@@ -175,14 +190,14 @@ export const MAX_TABS = 5;
 export const EMPTY_WS: Workspace = { tabs: [], active: null };
 
 export function tabKey(t: WsTab): string {
-  if (t.kind === "word") return "word:" + t.strong;
+  if (t.kind === "word") return "word";
   if (t.kind === "verse") return `verse:${t.book}.${t.chapter}.${t.verse}`;
   return t.kind;
 }
 
 export function openTab(ws: Workspace, t: WsTab): Workspace {
   const key = tabKey(t);
-  if (ws.tabs.some((x) => tabKey(x) === key)) return { tabs: ws.tabs, active: key };
+  if (ws.tabs.some((x) => tabKey(x) === key)) return { tabs: ws.tabs.map((x) => (tabKey(x) === key ? t : x)), active: key };
   const tabs = [...ws.tabs, t];
   // Passou do limite: sai a mais antiga que não seja o Sermão (o editor não pode sumir).
   if (tabs.length > MAX_TABS) tabs.splice(tabs.findIndex((x) => x.kind !== "sermon"), 1);
@@ -224,4 +239,19 @@ export function releaseVelocity(samples: { y: number; t: number }[], windowMs = 
   if (!last) return 0;
   const first = samples.find((p) => last.t - p.t <= windowMs) ?? last;
   return last.t === first.t ? 0 : (last.y - first.y) / (last.t - first.t);
+}
+
+// Palavra original correspondente ao n-ésimo trecho com este Strong no versículo
+// (o mesmo Strong pode aparecer duas vezes: "gerou ... gerou").
+export function originalFor(original: OrigWord[], verse: number, strong: string, nth: number): OrigWord | null {
+  const same = original.filter((w) => w.verse === verse && w.strong === strong).sort((a, b) => a.position - b.position);
+  return same[nth] ?? same[0] ?? null;
+}
+
+// 'G0976' → '976'; pontuação colada na forma do texto original sai.
+export function strongNum(strong: string): string {
+  return strong.replace(/^[GH]0*/, "");
+}
+export function cleanSurface(s: string): string {
+  return s.replace(/[\s.,;:··;׃־]+$/u, "");
 }

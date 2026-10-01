@@ -1,28 +1,30 @@
 "use client";
 
-// Tela de leitura (spec 07): barra, texto, chave Interlinear, balão, modo Original.
+// Tela de leitura (spec 07): barra, texto, chave Interlinear, modo Original. Tocar uma
+// palavra abre direto a aba Palavra (sem balão, como no Raízes); a palavra tocada ganha
+// contorno e as outras ocorrências do mesmo original no capítulo, um fundo leve.
+// Com uma palavra aberta, ←/→ andam de palavra em palavra e Esc fecha.
 // Remonta a cada capítulo; a área de trabalho mora no ReaderWorkspace (layout) e
 // sobrevive à troca. Este componente só publica o capítulo e pede abas.
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
-import { DEFAULT_SECTION, buildKeywordBlock } from "../../domain";
 import {
   LAST_READ_KEY,
   adjacentChapter,
   chapterLabel,
+  cleanSurface,
   glossOf,
   groupOriginal,
+  originalFor,
   type ChapterRef,
   type LexShort,
   type OrigWord,
   type ReaderVerse,
   type Span,
-  type WsTab,
 } from "../../reader";
 import { ChapterPicker } from "./ChapterPicker";
 import { useWorkspace, type EditorData } from "./ReaderWorkspace";
-import { WordPopover, popoverAt, type PopoverState } from "./WordPopover";
 import styles from "./reader.module.css";
 
 type Mode = "bible" | "original";
@@ -50,23 +52,10 @@ export function ReaderView({
   const next = useMemo(() => adjacentChapter(refNow, 1), [refNow]);
   const [mode, setMode] = useState<Mode>("bible");
   const [interlinear, setInterlinear] = useState(false);
-  const [pop, setPop] = useState<PopoverState | null>(null);
-  // Foco: o balão foca "Ver detalhes" ao abrir; ao fechar, o foco volta a quem o abriu.
-  const opener = useRef<HTMLElement | null>(null);
-  const closePop = useCallback((): void => {
-    setPop(null);
-    opener.current?.focus({ preventScroll: true });
-  }, []);
-  function openPop(el: HTMLElement, strong: string, verse: number, key: string): void {
-    opener.current = el;
-    setPop(popoverAt(el.getBoundingClientRect(), strong, verse, key));
-  }
-  const wsApi = useWorkspace();
-  const { publish, sermonOpen, sendBlock } = wsApi;
-  function open(t: WsTab): void {
-    setPop(null);
-    wsApi.open(t);
-  }
+  const { publish, open, closeAll, wordKey, wordStrong } = useWorkspace();
+  // Chave do trecho inclui o capítulo: a aba Palavra sobrevive à troca e não pode
+  // acender a palavra de mesma posição no capítulo seguinte.
+  const base = `${refNow.book}.${refNow.chapter}.`;
 
   useEffect(() => {
     publish(refNow, lex, editor);
@@ -89,7 +78,6 @@ export function ReaderView({
   }, [refNow]);
 
   function toggleInterlinear(): void {
-    setPop(null);
     setInterlinear((v) => {
       try {
         localStorage.setItem(TOGGLE_KEY, v ? "0" : "1");
@@ -109,28 +97,56 @@ export function ReaderView({
       const t = e.target as HTMLElement | null;
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return; // Alt+← é do navegador
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-      if (t?.closest('[data-testid="workspace"]')) return; // setas dentro da área de trabalho são dela
-      if (e.key === "ArrowLeft") go(prev);
-      if (e.key === "ArrowRight") go(next);
+      if (t?.closest('[data-testid="workspace"]')) return; // teclas dentro da área de trabalho são dela
+      if (e.key === "Escape" && wordKey) return closeAll();
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const dir = e.key === "ArrowLeft" ? -1 : 1;
+      // Palavra aberta neste capítulo: a seta anda de palavra; senão, de capítulo.
+      const words = [...document.querySelectorAll<HTMLButtonElement>("[data-wkey]")];
+      const i = wordKey ? words.findIndex((b) => b.dataset.wkey === wordKey) : -1;
+      if (i >= 0) {
+        e.preventDefault();
+        const to = words[i + dir];
+        to?.click();
+        to?.focus({ preventScroll: true });
+        to?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+      go(dir === -1 ? prev : next);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go, prev, next]);
+  }, [go, prev, next, wordKey, closeAll]);
 
   const showWords = tagged && interlinear && mode === "bible";
   const lexCredit = `léxico STEPBible (CC BY 4.0)${Object.values(lex).some((l) => l.gloss_pt) ? ", tradução Tally" : ""}`;
 
-  function renderSpan(s: Span, verse: number, i: number): ReactNode {
+  function wordClass(key: string, strong: string, cls: string | undefined): string {
+    if (key === wordKey) return `${cls} ${styles.hit}`;
+    return strong === wordStrong ? `${cls} ${styles.same}` : (cls ?? "");
+  }
+
+  function renderSpan(s: Span, v: ReaderVerse, i: number): ReactNode {
     const strong = s.strong;
     if (!showWords || !strong) return <span key={i}>{s.text}</span>;
-    const key = `${verse}:${i}`;
+    const key = `${base}${v.n}:${i}`;
+    // n-ésima vez que este Strong aparece no versículo → a mesma posição no original.
+    const nth = v.spans.slice(0, i).filter((x) => x.strong === strong).length;
     return (
       <button
         key={i}
         type="button"
         data-strong={strong}
-        className={`${styles.word} ${pop?.key === key ? styles.hit : ""}`}
-        onClick={(e) => openPop(e.currentTarget, strong, verse, key)}
+        data-wkey={key}
+        aria-pressed={key === wordKey}
+        className={wordClass(key, strong, styles.word)}
+        onClick={() => {
+          const o = originalFor(original, v.n, strong, nth);
+          open({
+            kind: "word", strong, key, ...refNow, verse: v.n, text: s.text.trim(),
+            surface: o ? cleanSurface(o.surface) : null, translit: o?.translit ?? null, morph: o?.morph ?? null,
+          });
+        }}
       >
         {s.text}
       </button>
@@ -139,18 +155,12 @@ export function ReaderView({
 
   const byVerse = mode === "original" ? groupOriginal(original) : [];
 
-  function sendToSermon(strong: string, verse: number): void {
-    const l = lex[strong];
-    sendBlock(`${chapterLabel(refNow)}:${verse} · ` + buildKeywordBlock({ lemma: l?.lemma || strong, strong, meaning: glossOf(l), occurrences: null }), DEFAULT_SECTION);
-    open({ kind: "sermon" });
-  }
-
   return (
     <div className={styles.main}>
       <div className={styles.bar}>
         <ChapterPicker current={refNow} onPick={go} />
         <span className={styles.sep} aria-hidden />
-        <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => { setPop(null); setMode(e.target.value === "original" ? "original" : "bible"); }}>
+        <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => setMode(e.target.value === "original" ? "original" : "bible")}>
           <option value="bible">Bíblia</option>
           <option value="original">Original</option>
         </Select>
@@ -171,7 +181,7 @@ export function ReaderView({
             {verses.map((v) => (
               <span key={v.n}>
                 <button type="button" className={styles.vnum} aria-label={`Estudar ${chapterLabel(refNow)}:${v.n}`} onClick={() => open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: v.n })}>{v.n}</button>
-                {v.spans.map((s, i) => renderSpan(s, v.n, i))}{" "}
+                {v.spans.map((s, i) => renderSpan(s, v, i))}{" "}
               </span>
             ))}
           </p>
@@ -186,15 +196,23 @@ export function ReaderView({
               <span className={styles.ilVerse}>{v.n}</span>
               {v.words.map((w) => {
                 const strong = w.strong;
-                const key = `o${v.n}:${w.position}`;
+                const key = `${base}o${v.n}:${w.position}`;
                 return (
                   <button
                     key={w.position}
                     type="button"
                     data-strong={strong ?? undefined}
+                    data-wkey={strong ? key : undefined}
+                    aria-pressed={strong ? key === wordKey : undefined}
                     disabled={!strong}
-                    className={`${styles.ilw} ${pop?.key === key ? styles.hit : ""}`}
-                    onClick={(e) => { if (strong) openPop(e.currentTarget, strong, v.n, key); }}
+                    className={strong ? wordClass(key, strong, styles.ilw) : styles.ilw}
+                    onClick={() => {
+                      if (!strong) return;
+                      open({
+                        kind: "word", strong, key, ...refNow, verse: v.n, text: glossOf(lex[strong]),
+                        surface: cleanSurface(w.surface), translit: w.translit, morph: w.morph ?? null,
+                      });
+                    }}
                   >
                     <span className={styles.ilSurface} lang={w.lang === "hbo" ? "he" : "grc"}>{w.surface}</span>
                     <span className={styles.ilTr}>{w.translit}</span>
@@ -212,10 +230,6 @@ export function ReaderView({
         {prev ? <button type="button" className="link" onClick={() => go(prev)}>‹ {chapterLabel(prev)}</button> : <span />}
         {next ? <button type="button" className="link" onClick={() => go(next)}>{chapterLabel(next)} ›</button> : <span />}
       </nav>
-
-      {pop ? (
-        <WordPopover state={pop} lex={lex} canSendToSermon={sermonOpen} onDetails={() => open({ kind: "word", strong: pop.strong })} onNote={() => { setPop(null); wsApi.openNotes({ book: refNow.book, chapter: refNow.chapter, verse: pop.verse }); }} onSermon={() => sendToSermon(pop.strong, pop.verse)} onClose={closePop} />
-      ) : null}
     </div>
   );
 }
