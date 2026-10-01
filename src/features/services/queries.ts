@@ -100,7 +100,8 @@ export async function listServiceSermons(supabase: DB, orgId: string, serviceId:
     .from("sermons")
     .select("id, title, main_passage")
     .eq("org_id", orgId)
-    .eq("service_id", serviceId);
+    .eq("service_id", serviceId)
+    .is("deleted_at", null);
   if (res.error) return [];
   return (res.data ?? []).map((r) => ({ id: r.id, title: r.title ?? "", mainPassage: r.main_passage ?? "" }));
 }

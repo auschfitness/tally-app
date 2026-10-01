@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { hasTestFixture, signInTestUser } from "@/test-support/supabase";
-import { listSermons, listSeries, listNotes, listScriptures } from "./queries";
+import { listSermons, listSeries, listNotes, listScriptures, listTrash } from "./queries";
 
 // Integração: Sermões/Séries da org de teste (org-scoping/RLS/shape + content jsonb
 // como objeto, nunca null).
@@ -39,6 +39,22 @@ describe.skipIf(!hasTestFixture)("Study queries (integração, org de teste)", (
       expect(typeof x.book).toBe("string");
       expect(typeof x.reference).toBe("string");
       expect(typeof x.chapter).toBe("number");
+    }
+  });
+
+  it("lixeira: sermão excluído some da lista, aparece na lixeira e volta ao restaurar", async () => {
+    const { supabase, orgId } = await signInTestUser();
+    const ins = await supabase.from("sermons").insert({ org_id: orgId, title: "Teste lixeira", content: {} }).select("id").single();
+    if (ins.error) throw new Error(ins.error.message);
+    const id = ins.data.id;
+    try {
+      await supabase.from("sermons").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+      expect((await listSermons(supabase, orgId)).some((s) => s.id === id)).toBe(false);
+      expect((await listTrash(supabase, orgId)).some((t) => t.kind === "sermon" && t.id === id)).toBe(true);
+      await supabase.from("sermons").update({ deleted_at: null }).eq("id", id);
+      expect((await listSermons(supabase, orgId)).some((s) => s.id === id)).toBe(true);
+    } finally {
+      await supabase.from("sermons").delete().eq("id", id);
     }
   });
 });

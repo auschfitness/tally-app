@@ -83,8 +83,11 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 
 ## Próxima sessão (pedidos do dono, 2026-10-01 noite)
 
-- [ ] **Excluir sermão/rascunho com lixeira de 30 dias** (restaurar dentro do prazo; depois
-      some de vez). Vale também para notas.
+- [x] **Excluir sermão/rascunho com lixeira de 30 dias** (m57 `deleted_at` em sermons,
+      study_notes, study_text_notes; /study/trash com Restaurar; vencidos são apagados ao
+      abrir a lixeira). "Excluir sermão" fica no fim de Propriedades. FALTA: atalho para a
+      Lixeira no celular (a barra de baixo não tem) e excluir pelo editor embutido da leitura;
+      resolver junto com o redesign de Sermões.
 - [x] **Símbolo perdido no texto (Jo 2:6):** na Bíblia Livre do helloao, o ")" que fecha o
       "(" de 8 notas de rodapé ficou fora da nota, logo depois dela (Jr 17:5, 17:23, Lm 1:19,
       3:36, Ez 22:10, Mt 23:5, Jo 2:6, Hb 10:29). Corrigido no parse (helloao.ts e scripts

@@ -132,4 +132,20 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     await page.getByRole("button", { name: "Notas", exact: true }).first().click();
     await expect(page.getByRole("tab", { name: /Notas/ })).toHaveAttribute("aria-selected", "true");
   });
+
+  test("João 2:6 termina sem o ')' perdido da nota de rodapé", async ({ page }) => {
+    await login(page);
+    await page.goto("/study/bible/JHN/2");
+    const v6 = page.getByTestId("reader-text").locator('[data-verse="6"]');
+    await expect(v6).toContainText("metretas");
+    expect((await v6.innerText()).trim()).not.toMatch(/\)$/);
+  });
+
+  test("Lixeira abre pelo menu", async ({ page }) => {
+    await login(page);
+    await page.goto("/study/bible/JHN/1");
+    await page.getByRole("link", { name: "Lixeira" }).click();
+    await expect(page.getByRole("heading", { name: "Lixeira" })).toBeVisible();
+  });
 });
+

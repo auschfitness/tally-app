@@ -23,11 +23,12 @@ export interface NavCounts {
   tasks: number;
 }
 
-type IconName = "book" | "sermon" | "notes" | "settings" | "admin" | "dot" | "panel" | "search" | "logout";
+type IconName = "book" | "sermon" | "notes" | "trash" | "settings" | "admin" | "dot" | "panel" | "search" | "logout";
 const PATHS: Record<IconName, string> = {
   book: "M12 6.5C10 5 7 4.6 3.5 5.2v13c3.5-.6 6.5-.2 8.5 1.3 2-1.5 5-1.9 8.5-1.3v-13C17 4.6 14 5 12 6.5zM12 6.5v13",
   sermon: "M9 3.5h6a1 1 0 0 1 1 1V11a4 4 0 0 1-8 0V4.5a1 1 0 0 1 1-1zM5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v3.5M8.5 20.5h7",
   notes: "M5 3.5h10l4 4v13H5zM15 3.5v4h4M8.5 12h7M8.5 15.5h7",
+  trash: "M4.5 6.5h15M9.5 6.5V4h5v2.5M6.5 6.5l1 14h9l1-14M10 10.5v6.5M14 10.5v6.5",
   settings: "M12 8.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4zM19.4 13.5l1.6 1.2-1.8 3.1-1.9-.7a7.3 7.3 0 0 1-2.3 1.3l-.3 2.1h-3.6l-.3-2.1a7.3 7.3 0 0 1-2.3-1.3l-1.9.7-1.8-3.1 1.6-1.2a7.4 7.4 0 0 1 0-2.9L3 9.3l1.8-3.1 1.9.7A7.3 7.3 0 0 1 9 5.6l.3-2.1h3.6l.3 2.1a7.3 7.3 0 0 1 2.3 1.3l1.9-.7 1.8 3.1-1.6 1.2a7.4 7.4 0 0 1 0 2.9z",
   admin: "M12 3l7.5 3v5.5c0 4.5-3.2 8.2-7.5 9.5-4.3-1.3-7.5-5-7.5-9.5V6z",
   dot: "M12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z",
@@ -177,6 +178,7 @@ export function Sidebar({
         items: g.items.map<Dest>((i) => ({ key: i.key, label: i.label, href: i.href, icon: "dot", match: plain(i.href), count: countOf(i.count), feature: i.feature })),
       }));
   const footer: Dest[] = [
+    ...(STUDY_ONLY ? [{ key: "trash", label: "Lixeira", href: "/study/trash", icon: "trash" as const, match: plain("/study/trash") }] : []),
     ...(STUDY_ONLY ? [] : [{ key: PLANS_ITEM.key, label: PLANS_ITEM.label, href: PLANS_ITEM.href, icon: "dot" as const, match: plain(PLANS_ITEM.href) }]),
     { key: SETTINGS_ITEM.key, label: "Ajustes", href: SETTINGS_ITEM.href, icon: "settings", match: plain(SETTINGS_ITEM.href) },
     ...(isPlatformAdmin ? [{ key: ADMIN_ITEM.key, label: ADMIN_ITEM.label, href: ADMIN_ITEM.href, icon: "admin" as const, match: plain(ADMIN_ITEM.href) }] : []),

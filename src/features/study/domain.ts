@@ -219,3 +219,27 @@ export function searchSermons(sermons: Sermon[], q: string, seriesTitleById: Map
     return hay.some((h) => fold(h).includes(needle));
   });
 }
+
+// --- Lixeira (m57): excluir = deleted_at; some de vez depois de TRASH_DAYS. ---
+export const TRASH_DAYS = 30;
+export type TrashKind = "sermon" | "note" | "text_note";
+export const TRASH_TABLE = { sermon: "sermons", note: "study_notes", text_note: "study_text_notes" } as const;
+export const TRASH_KIND_LBL: Record<TrashKind, string> = { sermon: "Sermão", note: "Nota", text_note: "Nota no texto" };
+export interface TrashItem {
+  kind: TrashKind;
+  id: string;
+  title: string;
+  deleted_at: string;
+}
+
+// Dias que faltam para o item sumir (0 = some hoje). Arredonda para cima: excluído
+// há 1 hora ainda tem 30 dias.
+export function trashDaysLeft(deletedAt: string, now: Date = new Date()): number {
+  const ms = new Date(deletedAt).getTime() + TRASH_DAYS * 86400000 - now.getTime();
+  return Math.max(0, Math.ceil(ms / 86400000));
+}
+
+// Limite para apagar de vez: o que foi excluído antes disto já passou dos 30 dias.
+export function trashCutoff(now: Date = new Date()): string {
+  return new Date(now.getTime() - TRASH_DAYS * 86400000).toISOString();
+}

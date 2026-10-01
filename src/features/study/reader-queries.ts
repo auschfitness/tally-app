@@ -64,7 +64,7 @@ export async function getLexShort(supabase: DB, strongs: string[]): Promise<Reco
 export async function getChapterMarks(supabase: DB, orgId: string, osis: string, chapter: number): Promise<{ highlights: Record<number, HlColor>; noted: number[] }> {
   const [hl, notes] = await Promise.all([
     supabase.from("study_highlights").select("verse, color").eq("org_id", orgId).eq("book", osis).eq("chapter", chapter),
-    supabase.from("study_text_notes").select("verse_start").eq("org_id", orgId).eq("book", osis).eq("chapter", chapter).not("verse_start", "is", null),
+    supabase.from("study_text_notes").select("verse_start").eq("org_id", orgId).eq("book", osis).eq("chapter", chapter).not("verse_start", "is", null).is("deleted_at", null),
   ]);
   const highlights: Record<number, HlColor> = {};
   for (const r of hl.data ?? []) if (isHlColor(r.color)) highlights[r.verse] = r.color;

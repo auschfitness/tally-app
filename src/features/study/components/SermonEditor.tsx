@@ -8,7 +8,7 @@ import { Select } from "@/components/shared/Select";
 import { DateField } from "@/components/shared/DateField";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { listTextNotesAction, saveSermonAction, syncSermonScripturesAction } from "../actions";
+import { deleteSermonAction, listTextNotesAction, saveSermonAction, syncSermonScripturesAction } from "../actions";
 import { OPTIONAL_SECTIONS, SECTIONS, STATUS_LBL, VIS_LBL, appendBlock, type SectionKey } from "../domain";
 import type { Sermon, SermonContent, TextNote } from "../types";
 import type { Series } from "../types";
@@ -258,6 +258,16 @@ export function SermonEditor({
     router.push("/study");
   }
 
+  // Vai para a lixeira (30 dias para restaurar), então não pede confirmação.
+  async function moveToTrash() {
+    if (!idRef.current) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    const res = await deleteSermonAction(idRef.current);
+    if (res.success) router.push("/study");
+    else setStatus(res.message || "Não consegui excluir o sermão.");
+  }
+
   async function openPassage(ref: ScriptureRef, whole = false) {
     setSelRef(ref);
     setPanelWhole(whole);
@@ -487,6 +497,12 @@ export function SermonEditor({
                 {services.map((sv) => <option key={sv.id} value={sv.id}>{sv.name || "(sem nome)"}</option>)}
               </Select>
             </div>
+            {idRef.current && !embedded ? (
+              <div style={{ marginTop: 24 }}>
+                <button type="button" className="btn danger sm" data-testid="sermon-trash" onClick={moveToTrash}>Excluir sermão</button>
+                <p className="muted" style={{ marginTop: 6 }}>Vai para a Lixeira. Dá para restaurar por 30 dias.</p>
+              </div>
+            ) : null}
           </aside>
         </>
       ) : null}

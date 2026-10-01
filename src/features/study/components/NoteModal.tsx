@@ -42,7 +42,6 @@ export function NoteModal({
 
   async function handleDelete() {
     if (!note) return;
-    if (!window.confirm("Excluir esta nota?")) return;
     const f = new FormData();
     f.set("id", note.id);
     await deleteNoteAction(f);

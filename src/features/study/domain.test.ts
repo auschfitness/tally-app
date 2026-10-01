@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   filterSermons,
+  trashDaysLeft,
+  trashCutoff,
   sortSermonsByDate,
   SECTIONS,
   OPTIONAL_SECTIONS,
@@ -240,5 +242,19 @@ describe("biblioteca v2 — busca", () => {
 
   it("consulta vazia devolve a lista inteira", () => {
     expect(searchSermons([a, b], "   ", titles)).toHaveLength(2);
+  });
+});
+
+describe("lixeira", () => {
+  const now = new Date("2026-10-01T12:00:00Z");
+  it("excluído agora tem 30 dias", () => {
+    expect(trashDaysLeft("2026-10-01T11:00:00Z", now)).toBe(30);
+  });
+  it("excluído há 29,5 dias ainda tem 1 dia; há 31 dias, 0", () => {
+    expect(trashDaysLeft("2026-09-02T00:00:00Z", now)).toBe(1);
+    expect(trashDaysLeft("2026-08-31T00:00:00Z", now)).toBe(0);
+  });
+  it("corte é 30 dias antes de agora", () => {
+    expect(trashCutoff(now)).toBe("2026-09-01T12:00:00.000Z");
   });
 });

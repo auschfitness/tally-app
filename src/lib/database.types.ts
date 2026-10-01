@@ -2608,6 +2608,7 @@ export type Database = {
       }
       sermons: {
         Row: {
+          deleted_at: string | null
           big_idea: string | null
           campus_id: string | null
           content: Json
@@ -2627,6 +2628,7 @@ export type Database = {
           visibility: Database["public"]["Enums"]["sermon_visibility"]
         }
         Insert: {
+          deleted_at?: string | null
           big_idea?: string | null
           campus_id?: string | null
           content?: Json
@@ -2646,6 +2648,7 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["sermon_visibility"]
         }
         Update: {
+          deleted_at?: string | null
           big_idea?: string | null
           campus_id?: string | null
           content?: Json
@@ -3616,6 +3619,7 @@ export type Database = {
       }
       study_notes: {
         Row: {
+          deleted_at: string | null
           author_id: string | null
           content: string | null
           created_at: string
@@ -3631,6 +3635,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          deleted_at?: string | null
           author_id?: string | null
           content?: string | null
           created_at?: string
@@ -3646,6 +3651,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          deleted_at?: string | null
           author_id?: string | null
           content?: string | null
           created_at?: string
@@ -3727,6 +3733,7 @@ export type Database = {
       }
       study_text_notes: {
         Row: {
+          deleted_at: string | null
           author_id: string
           body: string
           book: string
@@ -3739,6 +3746,7 @@ export type Database = {
           verse_start: number | null
         }
         Insert: {
+          deleted_at?: string | null
           author_id?: string
           body: string
           book: string
@@ -3751,6 +3759,7 @@ export type Database = {
           verse_start?: number | null
         }
         Update: {
+          deleted_at?: string | null
           author_id?: string
           body?: string
           book?: string

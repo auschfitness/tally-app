@@ -1123,3 +1123,9 @@
 @keyframes toastUp { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: reduce) { .addedToast { animation: toastFade 200ms ease; } }
 @keyframes toastFade { from { opacity: 0; } }
+
+/* Lixeira: lista simples, uma linha por item, separador fino. */
+.trashList { list-style: none; margin: 8px 0 0; padding: 0; max-width: 760px; }
+.trashRow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.trashText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.trashTitle { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -9,6 +9,7 @@ import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { coerceSermon, parseNoteInput, parseSeriesInput, type SermonSaveInput } from "./schema";
 import type { TextNote } from "./types";
 import { isHlColor } from "./reader";
+import { TRASH_TABLE, type TrashKind } from "./domain";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function uuidOrNull(v: string | null): string | null {
@@ -62,14 +63,29 @@ export async function saveSermonAction(input: SermonSaveInput): Promise<ActionRe
   }
 }
 
-// DESTRUTIVO: sermon_scriptures → CASCADE (as passagens somem); study_notes.sermon_id
-// → SET NULL (a nota sobrevive, desassociada). Ver handoff.
-export async function deleteSermonAction(formData: FormData): Promise<void> {
-  const id = String(formData.get("id") ?? "");
-  if (!UUID.test(id)) return;
+// Manda o sermão para a lixeira (m57): as passagens e notas ligadas ficam intactas e
+// voltam junto se ele for restaurado. Apagar de vez só depois de 30 dias (listTrash).
+export async function deleteSermonAction(id: string): Promise<ActionResult<null>> {
+  try {
+    if (!UUID.test(id)) return fail("Sermão inválido.");
+    const { supabase } = await requireOrg();
+    const { error } = await supabase.from("sermons").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    if (error) return fail(toMessage(error, "Não consegui excluir o sermão."));
+    revalidatePath("/study");
+    return ok(null);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+// Tira da lixeira (form da página /study/trash).
+export async function restoreFromTrashAction(fd: FormData): Promise<void> {
+  const id = String(fd.get("id") ?? "");
+  const kind = String(fd.get("kind") ?? "") as TrashKind;
+  if (!UUID.test(id) || !(kind in TRASH_TABLE)) return;
   const { supabase } = await requireOrg();
-  await supabase.from("sermons").delete().eq("id", id);
-  revalidatePath("/study");
+  await supabase.from(TRASH_TABLE[kind]).update({ deleted_at: null }).eq("id", id);
+  revalidatePath("/study", "layout");
 }
 
 // Sincroniza as passagens de UM sermão (slice 2): upsert das atuais + remove as que
@@ -247,7 +263,7 @@ export async function deleteNoteAction(fd: FormData): Promise<void> {
   const id = String(fd.get("id") ?? "");
   if (!UUID.test(id)) return;
   const { supabase } = await requireOrg();
-  await supabase.from("study_notes").delete().eq("id", id);
+  await supabase.from("study_notes").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   revalidatePath("/study/notes");
 }
 
@@ -267,6 +283,7 @@ export async function listTextNotesAction(book: string, chapter: number): Promis
       .eq("org_id", orgId)
       .eq("book", book)
       .eq("chapter", chapter)
+      .is("deleted_at", null)
       .order("updated_at", { ascending: false });
     if (error) return fail(toMessage(error, "Não consegui carregar as notas."));
     return ok((data ?? []) as TextNote[]);
@@ -321,7 +338,7 @@ export async function deleteTextNoteAction(id: string): Promise<ActionResult<nul
   try {
     if (!UUID.test(id)) return fail("Nota inválida.");
     const { supabase } = await requireOrg();
-    const { error } = await supabase.from("study_text_notes").delete().eq("id", id);
+    const { error } = await supabase.from("study_text_notes").update({ deleted_at: new Date().toISOString() }).eq("id", id);
     if (error) return fail(toMessage(error, "Não consegui excluir a nota."));
     return ok(null);
   } catch (e) {
