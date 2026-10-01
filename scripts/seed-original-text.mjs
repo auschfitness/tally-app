@@ -29,18 +29,18 @@ const mode = process.argv[2];
 const file = process.argv[3];
 const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-// Sem service_role (só modo tagged): porta temporária tmp_tagged_load (SECURITY DEFINER com senha),
+// Sem service_role (modos tagged/lexpt): porta temporária tmp_<modo>_load (SECURITY DEFINER com senha),
 // chamada com a anon key. LOAD_TOKEN = a senha; a função é apagada depois da carga.
 const token = process.env.LOAD_TOKEN;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const viaRpc = !key && mode === "tagged" && token && anon;
+const viaRpc = !key && (mode === "tagged" || mode === "lexpt") && token && anon;
 
 if (!TABLES[mode] || !file) {
   console.error("Uso: node scripts/seed-original-text.mjs <tokens|lexicon|tagged|lexpt> <arquivo.tsv>");
   process.exit(1);
 }
 if (!url || !(key || viaRpc)) {
-  console.error("Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no ambiente (tagged: ou LOAD_TOKEN + anon key).");
+  console.error("Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no ambiente (tagged/lexpt: ou LOAD_TOKEN + anon key).");
   process.exit(1);
 }
 
@@ -67,7 +67,7 @@ async function flush() {
   const rows = batch;
   batch = [];
   const q = viaRpc
-    ? supabase.rpc("tmp_tagged_load", { p_token: token, p_rows: rows })
+    ? supabase.rpc(`tmp_${mode}_load`, { p_token: token, p_rows: rows })
     : mode === "lexicon" || mode === "lexpt"
     ? supabase.from(table).upsert(rows, { onConflict: "strong" })
     : mode === "tagged"

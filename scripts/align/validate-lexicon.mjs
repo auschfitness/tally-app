@@ -22,7 +22,7 @@ const files = fs.existsSync("scripts/align/work")
   ? fs.readdirSync("scripts/align/work").filter((f) => /^lex-\d+\.input\.json$/.test(f)).sort()
   : [];
 const arg = process.argv[2];
-const batches = arg === "all" ? files.map((f) => Number(f.slice(4, 6))) : [Number(arg)];
+const batches = arg === "all" ? files.map((f) => Number(f.match(/\d+/)[0])) : [Number(arg)];
 if (!batches.length || !batches.every((b) => Number.isInteger(b) && b >= 1)) {
   console.error("Uso: node scripts/align/validate-lexicon.mjs <NN|all> (rode antes fetch-lexicon.mjs)");
   process.exit(1);
