@@ -329,19 +329,21 @@ export async function deleteTextNoteAction(id: string): Promise<ActionResult<nul
   }
 }
 
-// Destaque do versículo (spec 08). color null tira. Privado por autor (RLS, m55).
-export async function setHighlightAction(input: { book: string; chapter: number; verse: number; color: string | null }): Promise<ActionResult<null>> {
+// Destaque de um ou mais versículos (spec 08). color null tira. Privado por autor (RLS, m55).
+export async function setHighlightAction(input: { book: string; chapter: number; verses: number[]; color: string | null }): Promise<ActionResult<null>> {
   try {
-    const { book, chapter, verse, color } = input;
-    if (!book || !Number.isInteger(chapter) || !Number.isInteger(verse) || chapter < 1 || verse < 1) return fail("Versículo inválido.");
+    const { book, chapter, color } = input;
+    const verses = [...new Set(input.verses)];
+    if (!book || !Number.isInteger(chapter) || chapter < 1) return fail("Versículo inválido.");
+    if (verses.length < 1 || verses.length > 200 || !verses.every((v) => Number.isInteger(v) && v > 0)) return fail("Versículo inválido.");
     if (color !== null && !isHlColor(color)) return fail("Cor inválida.");
     const { supabase, orgId, user } = await requireOrg();
-    const where = { org_id: orgId, author_id: user.id, book, chapter, verse };
+    const where = { org_id: orgId, author_id: user.id, book, chapter };
     const { error } = color === null
-      ? await supabase.from("study_highlights").delete().match(where)
+      ? await supabase.from("study_highlights").delete().match(where).in("verse", verses)
       : await supabase
           .from("study_highlights")
-          .upsert({ ...where, color, updated_at: new Date().toISOString() }, { onConflict: "author_id,org_id,book,chapter,verse" });
+          .upsert(verses.map((verse) => ({ ...where, verse, color, updated_at: new Date().toISOString() })), { onConflict: "author_id,org_id,book,chapter,verse" });
     if (error) return fail(toMessage(error, "Não consegui guardar o destaque."));
     return ok(null);
   } catch (e) {

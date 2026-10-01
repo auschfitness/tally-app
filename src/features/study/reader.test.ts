@@ -10,7 +10,9 @@ import {
   filterOccurrences,
   glossOf,
   isHlColor,
-  nextColor,
+  colorFor,
+  copyText,
+  selectionLabel,
   notesFirst,
   groupOccurrences,
   groupOriginal,
@@ -243,10 +245,28 @@ describe("gaveta (celular)", () => {
 });
 
 describe("destaques e notas (spec 08)", () => {
-  it("tocar na mesma cor tira; outra cor troca", () => {
-    expect(nextColor(undefined, "yellow")).toBe("yellow");
-    expect(nextColor("yellow", "yellow")).toBeNull();
-    expect(nextColor("yellow", "blue")).toBe("blue");
+  it("cor na seleção: todos já na cor tira; senão aplica em todos", () => {
+    expect(colorFor([undefined], "yellow")).toBe("yellow");
+    expect(colorFor(["yellow"], "yellow")).toBeNull();
+    expect(colorFor(["yellow"], "blue")).toBe("blue");
+    expect(colorFor(["yellow", "yellow"], "yellow")).toBeNull();
+    expect(colorFor(["yellow", undefined], "yellow")).toBe("yellow");
+  });
+  it("rótulo da seleção comprime corridas em intervalo", () => {
+    const j = { book: "JHN", chapter: 3 };
+    expect(selectionLabel(j, [16])).toBe("João 3:16");
+    expect(selectionLabel(j, [18, 16, 17])).toBe("João 3:16-18");
+    expect(selectionLabel(j, [16, 18])).toBe("João 3:16, 18");
+    expect(selectionLabel(j, [1, 2, 3, 7, 9, 10])).toBe("João 3:1-3, 7, 9-10");
+  });
+  it("copia os versículos na ordem com a referência", () => {
+    const j = { book: "JHN", chapter: 3 };
+    const vs = [
+      { n: 16, spans: [{ text: "Porque Deus ", strong: null }, { text: "amou. ", strong: "G25" }] },
+      { n: 17, spans: [{ text: "Pois não.", strong: null }] },
+      { n: 18, spans: [{ text: "Quem crê.", strong: null }] },
+    ];
+    expect(copyText(j, vs, [17, 16])).toBe("Porque Deus amou. Pois não.\n— João 3:16-17 (Bíblia Livre)");
   });
   it("valida cor vinda de fora", () => {
     expect(isHlColor("pink")).toBe(true);

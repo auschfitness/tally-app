@@ -12,29 +12,29 @@ pivô descrito na spec 07; mexe só na tela de leitura `/study/bible/[book]/[cha
 
 ## Comportamento
 
-1. **Tocar no número do versículo** abre um balão ancorado no número (hoje o toque abre a
-   aba Versículo direto). O balão tem:
-   - 5 cores: amarelo, verde, azul, rosa, laranja. Um toque pinta na hora (otimista, sem
-     "salvar"). Tocar na cor já aplicada tira o destaque. A cor aplicada aparece marcada.
-   - **Anotar**: abre a aba Notas com o versículo escolhido (`openNotes`, já existe).
-   - **Estudar versículo**: o que o toque fazia antes (aba Versículo).
-   - Fecha com Esc, toque fora ou depois de escolher uma ação. Funciona por teclado (Tab
-     entre as opções, foco volta ao número ao fechar).
-2. **Destaque** = fundo suave atrás do texto do versículo (`box-decoration-break: clone`
+1. **Selecionar versículos**: toque no texto do versículo (só com o Interlinear
+   desligado, senão o toque é da palavra), toque no número, botão direito ou toque longo
+   (450 ms) no celular. Tudo soma na mesma seleção (sublinhado azul). Arrastar para copiar
+   texto não seleciona. No celular o menu nativo de seleção some; "Copiar" o substitui.
+2. **Barra de ação** (`SelectionBar`, só com seleção): referência (João 3:16-18), as 5 cores,
+   "Tirar destaque", Anotar e Estudar (no primeiro versículo), Copiar (texto + referência) e
+   fechar. Cor aplicada em todos de uma vez; tocar na cor que todos já têm tira. No
+   desktop flutua junto ao ponto tocado; no celular vira gaveta embaixo. Esc fecha.
+3. **Destaque** = fundo suave atrás do texto do versículo (`box-decoration-break: clone`
    para quebrar linha bonito). Tons por token, versão clara e escura; o texto nunca perde
    contraste. Coexiste com o sublinhado/realce das palavras do Interlinear.
-3. **Lápis** pequeno, cor apagada, no fim do versículo que tem ao menos uma nota. Tocar
+4. **Lápis** pequeno, cor apagada, no fim do versículo que tem ao menos uma nota. Tocar
    abre a aba Notas naquele versículo; a aba mostra primeiro as notas desse versículo.
-4. Salvar ou excluir uma nota atualiza o lápis no texto sem recarregar a página.
-5. Falha ao gravar destaque: a cor volta ao estado anterior e aparece aviso curto.
-6. Só no modo Bíblia. No modo Original nada muda.
+5. Salvar ou excluir uma nota atualiza o lápis no texto sem recarregar a página.
+6. Falha ao gravar destaque: a cor volta ao estado anterior e aparece aviso curto.
+7. Só no modo Bíblia. No modo Original nada muda.
 
 ## Movimento
 
-- Balão: entra com o `popIn` existente (`--dur-micro`, escala 0.96 + opacidade), origem no
-  número. Sai sem animação.
+- Barra: no desktop entra com o `popIn` existente (`--dur-micro`); no celular sobe como gaveta
+  (`sheetIn`). Sai sem animação. A seleção em si não anima.
 - Cor do destaque: `transition: background-color` curta. Nada mais anima.
-- `prefers-reduced-motion`: balão só com fade (padrão já usado no arquivo).
+- `prefers-reduced-motion`: barra só com fade (padrão já usado no arquivo).
 
 ## Dados
 

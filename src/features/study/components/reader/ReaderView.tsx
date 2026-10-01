@@ -4,9 +4,11 @@
 // palavra abre direto a aba Palavra (sem balão, como no Raízes); a palavra tocada ganha
 // contorno e as outras ocorrências do mesmo original no capítulo, um fundo leve.
 // Com uma palavra aberta, ←/→ andam de palavra em palavra e Esc fecha.
+// Versículos se selecionam (toque no texto sem Interlinear, número, botão direito, toque
+// longo) e a SelectionBar age sobre a seleção: cor, nota, estudo, cópia (spec 08).
 // Remonta a cada capítulo; a área de trabalho mora no ReaderWorkspace (layout) e
 // sobrevive à troca. Este componente só publica o capítulo e pede abas.
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import {
@@ -16,7 +18,9 @@ import {
   cleanSurface,
   glossOf,
   groupOriginal,
-  nextColor,
+  colorFor,
+  copyText,
+  selectionLabel,
   toParagraphs,
   originalFor,
   type ChapterRef,
@@ -29,7 +33,7 @@ import {
 import { usfmToOsis } from "@/lib/bible/osis";
 import { setHighlightAction } from "../../actions";
 import { ChapterPicker } from "./ChapterPicker";
-import { VerseMenu } from "./VerseMenu";
+import { SelectionBar } from "./SelectionBar";
 import { selectHit, useWorkspace, type EditorData } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
@@ -67,25 +71,95 @@ export function ReaderView({
   const { publish, open, openNotes, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
   // Destaques: estado otimista; a página só manda o retrato inicial do capítulo.
   const [hl, setHl] = useState(highlights);
-  const [menuAt, setMenuAt] = useState<number | null>(null);
   const [hlError, setHlError] = useState("");
   const notedSet = useMemo(() => new Set(noted), [noted]);
-  const closeMenu = useCallback((): void => setMenuAt(null), []);
+  // Seleção: versículos em ordem; anchor = ponto (relativo ao texto) onde a barra flutua.
+  const [sel, setSel] = useState<number[]>([]);
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
+  const press = useRef<{ timer: number; x: number; y: number } | null>(null);
+  const swallow = useRef(false); // o clique que sucede um toque longo não vale
 
-  async function paint(verse: number, picked: HlColor): Promise<void> {
-    const before = hl[verse];
-    const after = nextColor(before, picked);
-    const apply = (c: HlColor | null | undefined): void =>
+  function select(n: number, at: { x: number; y: number }, how: "toggle" | "add"): void {
+    setSel((cur) => {
+      if (cur.includes(n)) return how === "add" ? cur : cur.filter((v) => v !== n);
+      return [...cur, n].sort((a, b) => a - b);
+    });
+    setAnchor(at);
+  }
+  // Ponto do ponteiro relativo ao texto (a barra é absoluta dentro dele), um pouco abaixo.
+  function pointAt(e: { clientX: number; clientY: number; currentTarget: HTMLElement }): { x: number; y: number } {
+    const r = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top + 14 };
+  }
+  function verseOf(e: { target: EventTarget }): number | null {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-verse]");
+    return el ? Number(el.dataset.verse) : null;
+  }
+  function onTextClick(e: MouseEvent<HTMLElement>): void {
+    if (showWords) return; // com palavras, o toque no texto é da palavra
+    if ((e.target as HTMLElement).closest("button")) return;
+    if (window.getSelection()?.isCollapsed === false) return; // arrastou para copiar texto
+    const n = verseOf(e);
+    if (n !== null) select(n, pointAt(e), "toggle");
+  }
+  function onTextContextMenu(e: MouseEvent<HTMLElement>): void {
+    const n = verseOf(e);
+    if (n === null) return;
+    e.preventDefault();
+    select(n, pointAt(e), "add");
+  }
+  function cancelPress(): void {
+    if (press.current) window.clearTimeout(press.current.timer);
+    press.current = null;
+  }
+  function onTextPointerDown(e: PointerEvent<HTMLElement>): void {
+    swallow.current = false;
+    cancelPress();
+    const n = verseOf(e);
+    if (e.pointerType !== "touch" || n === null) return;
+    const at = pointAt(e);
+    const timer = window.setTimeout(() => {
+      press.current = null;
+      swallow.current = true;
+      navigator.vibrate?.(10);
+      select(n, at, "add");
+    }, 450);
+    press.current = { timer, x: e.clientX, y: e.clientY };
+  }
+  function onTextPointerMove(e: PointerEvent<HTMLElement>): void {
+    const p = press.current;
+    if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) cancelPress();
+  }
+  function onTextClickCapture(e: MouseEvent<HTMLElement>): void {
+    if (!swallow.current) return;
+    swallow.current = false;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  const first = sel[0]; // a nota e o estudo abrem no primeiro versículo da seleção
+  const clearSel = useCallback((): void => setSel([]), []);
+
+  // Aplica (ou tira, com null) a cor em toda a seleção; otimista e desfaz se falhar.
+  async function paint(picked: HlColor | null): Promise<void> {
+    const verses = sel;
+    const before = verses.map((v) => hl[v]);
+    const after = picked === null ? null : colorFor(before, picked);
+    const put = (colors: (HlColor | null | undefined)[]): void =>
       setHl((m) => {
-        const { [verse]: _drop, ...rest } = m;
-        return c ? { ...rest, [verse]: c } : rest;
+        const next = { ...m };
+        verses.forEach((v, i) => {
+          const c = colors[i];
+          if (c) next[v] = c;
+          else delete next[v];
+        });
+        return next;
       });
-    apply(after);
-    setMenuAt(null);
+    put(verses.map(() => after));
+    setSel([]);
     setHlError("");
-    const r = await setHighlightAction({ book: usfmToOsis(refNow.book) ?? "", chapter: refNow.chapter, verse, color: after });
+    const r = await setHighlightAction({ book: usfmToOsis(refNow.book) ?? "", chapter: refNow.chapter, verses, color: after });
     if (!r.success) {
-      apply(before);
+      put(before);
       setHlError(r.message || "Não consegui guardar o destaque.");
     }
   }
@@ -134,6 +208,7 @@ export function ReaderView({
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return; // Alt+← é do navegador
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       if (t?.closest('[data-testid="workspace"]')) return; // teclas dentro da área de trabalho são dela
+      if (e.key === "Escape" && sel.length) return setSel([]);
       if (e.key === "Escape" && wordKey) return closeAll();
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       const dir = e.key === "ArrowLeft" ? -1 : 1;
@@ -150,7 +225,7 @@ export function ReaderView({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go, prev, next, wordKey, closeAll]);
+  }, [go, prev, next, wordKey, closeAll, sel.length]);
 
   const showWords = tagged && interlinear && mode === "bible";
 
@@ -221,7 +296,7 @@ export function ReaderView({
         <ChapterPicker current={refNow} onPick={go} />
         <button type="button" className={styles.arrow} aria-label="Próximo capítulo" disabled={!next} onClick={() => go(next)}>›</button>
         <span className={styles.sep} aria-hidden />
-        <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => setMode(e.target.value === "original" ? "original" : "bible")}>
+        <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => { setMode(e.target.value === "original" ? "original" : "bible"); setSel([]); }}>
           <option value="bible">Bíblia</option>
           <option value="original">Original</option>
         </Select>
@@ -234,7 +309,19 @@ export function ReaderView({
       </div>
 
       {mode === "bible" ? (
-        <article className={styles.text} lang="pt-BR" data-testid="reader-text" tabIndex={-1}>
+        <article
+          className={`${styles.text} ${styles.verses}`}
+          lang="pt-BR"
+          data-testid="reader-text"
+          tabIndex={-1}
+          onClick={onTextClick}
+          onClickCapture={onTextClickCapture}
+          onContextMenu={onTextContextMenu}
+          onPointerDown={onTextPointerDown}
+          onPointerMove={onTextPointerMove}
+          onPointerUp={cancelPress}
+          onPointerCancel={cancelPress}
+        >
           <div className={styles.eyebrow}>{chapterLabel(refNow)} · Bíblia Livre</div>
           {textError ? <p className={styles.muted}>{textError}</p> : null}
           {hlError ? <p className={styles.muted} role="status">{hlError}</p> : null}
@@ -243,29 +330,20 @@ export function ReaderView({
               {pi === 0 ? <span className={styles.dropcap} aria-hidden>{refNow.chapter}</span> : null}
               {para.map((v) => (
                 <span key={v.n} data-verse={v.n}>
-                  <span className={styles.vwrap}>
-                    <button
-                      type="button"
-                      className={styles.vnum}
-                      aria-label={`Versículo ${chapterLabel(refNow)}:${v.n}`}
-                      aria-expanded={menuAt === v.n}
-                      aria-haspopup="dialog"
-                      onClick={() => setMenuAt((m) => (m === v.n ? null : v.n))}
-                    >
-                      {v.n}
-                    </button>
-                    {menuAt === v.n ? (
-                      <VerseMenu
-                        label={`${chapterLabel(refNow)}:${v.n}`}
-                        color={hl[v.n]}
-                        onColor={(c) => void paint(v.n, c)}
-                        onNote={() => { setMenuAt(null); openNotes({ book: refNow.book, chapter: refNow.chapter, verse: v.n }); }}
-                        onStudy={() => { setMenuAt(null); open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: v.n }); }}
-                        onClose={closeMenu}
-                      />
-                    ) : null}
-                  </span>
-                  <span className={hl[v.n] ? `${styles.hl} ${styles[`hl_${hl[v.n]}`]}` : styles.hl} data-hl={hl[v.n]} data-testid="verse-text">
+                  <button
+                    type="button"
+                    className={styles.vnum}
+                    aria-label={`Versículo ${chapterLabel(refNow)}:${v.n}`}
+                    aria-pressed={sel.includes(v.n)}
+                    onClick={(e) => {
+                      const art = e.currentTarget.closest("article")?.getBoundingClientRect();
+                      const r = e.currentTarget.getBoundingClientRect();
+                      select(v.n, { x: r.left - (art?.left ?? 0), y: r.bottom - (art?.top ?? 0) + 4 }, "toggle");
+                    }}
+                  >
+                    {v.n}
+                  </button>
+                  <span className={[styles.hl, hl[v.n] ? styles[`hl_${hl[v.n]}`] : "", sel.includes(v.n) ? styles.selected : ""].filter(Boolean).join(" ")} data-hl={hl[v.n]} data-testid="verse-text">
                     {v.spans.map((s, i) => renderSpan(s, v, i))}
                   </span>
                   {notedSet.has(v.n) ? (
@@ -277,6 +355,18 @@ export function ReaderView({
               ))}
             </p>
           ))}
+          {sel.length > 0 && anchor ? (
+            <SelectionBar
+              label={selectionLabel(refNow, sel)}
+              anchor={anchor}
+              colors={sel.map((v) => hl[v])}
+              copyText={copyText(refNow, verses, sel)}
+              onColor={(c) => void paint(c)}
+              onNote={() => { setSel([]); if (first !== undefined) openNotes({ book: refNow.book, chapter: refNow.chapter, verse: first }); }}
+              onStudy={() => { setSel([]); if (first !== undefined) open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: first }); }}
+              onClose={clearSel}
+            />
+          ) : null}
           <p className={styles.attrib}>Bíblia Livre (BLIVRE), CC BY 4.0{showWords ? ` · ${lexCredit}` : ""}</p>
         </article>
       ) : (

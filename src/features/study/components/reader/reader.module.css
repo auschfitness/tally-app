@@ -192,20 +192,38 @@
 .hl_blue { background-color: color-mix(in srgb, #4C8DF6 var(--hl-a), transparent); }
 .hl_pink { background-color: color-mix(in srgb, #EC6FA8 var(--hl-a), transparent); }
 .hl_orange { background-color: color-mix(in srgb, #F28C38 var(--hl-a), transparent); }
-.vwrap { position: relative; }
-.vmenu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; display: flex; flex-direction: column; gap: 2px; width: max-content; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); font: var(--t-13)/1.2 var(--font-ui); transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
-.vmColors { display: flex; gap: 6px; padding: 2px 2px 8px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+.verses { position: relative; }
+.selected { box-shadow: inset 0 -2px 0 var(--blue); }
+/* Barra da seleção: flutua no texto (desktop) e vira gaveta embaixo no celular. */
+.selBar { position: absolute; left: var(--x); top: var(--y); z-index: 30; display: flex; align-items: center; gap: var(--s-3); width: max-content; max-width: calc(100% - 16px); padding: 8px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); font: var(--t-13)/1.2 var(--font-ui); transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
+.selLabel { font-weight: 600; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.selColors, .selActions { display: inline-flex; align-items: center; gap: 6px; }
+.selActions { gap: 2px; }
+.selAction, .selClose { background: none; border: 0; padding: 8px 10px; border-radius: var(--r-6); color: var(--text); font: inherit; cursor: pointer; white-space: nowrap; }
+.selAction:disabled { color: var(--text-2); cursor: default; }
+.selClose { padding: 4px 9px; font-size: 18px; line-height: 1; color: var(--text-2); }
+@media (hover: hover) and (pointer: fine) { .selAction:hover:not(:disabled), .selClose:hover { background: var(--surface-2); } }
+.swatchOff { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--text-2); background: none; color: var(--text-2); font: 500 16px/1 var(--font-ui); cursor: pointer; }
+@media (hover: none) { .verses { -webkit-touch-callout: none; user-select: none; } }
+@media (max-width: 767px) {
+  .selBar { position: fixed; left: 0; right: 0; bottom: 0; top: auto; max-width: none; width: auto; z-index: 60; flex-wrap: wrap; gap: var(--s-3); padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom)); border-width: 1px 0 0; border-radius: var(--r-20) var(--r-20) 0 0; transform-origin: bottom center; animation: sheetIn var(--dur-panel) cubic-bezier(0.32, 0.72, 0, 1); }
+  .selLabel { flex: 1; }
+  .selClose { order: 1; }
+  .selColors { order: 2; width: 100%; justify-content: space-between; }
+  .selActions { order: 3; width: 100%; justify-content: space-around; }
+  .selAction { min-height: 44px; padding: 0 14px; }
+  .selClose { min-width: 44px; min-height: 44px; }
+  .swatch, .swatchOff { width: 44px; height: 44px; }
+}
 .swatch { --hl-a: 75%; width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer; transition: transform var(--dur-micro) var(--ease); }
 .swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text-2); }
 .swatch:active { transform: scale(0.94); }
-.vmAction { text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: var(--r-6); color: var(--text); font: inherit; cursor: pointer; }
-@media (hover: hover) and (pointer: fine) { .vmAction:hover { background: var(--surface-2); } }
 .noteMark { display: inline-flex; vertical-align: -0.1em; background: none; border: 0; padding: 0 3px; color: var(--text-2); cursor: pointer; }
 .noteMark svg { width: 0.8em; height: 0.8em; }
 @media (hover: hover) and (pointer: fine) { .noteMark:hover { color: var(--blue); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .picker, .pane, .addMenu, .wHead, .vmenu { animation: fadeIn var(--dur-micro) ease; }
+  .picker, .pane, .addMenu, .wHead, .selBar { animation: fadeIn var(--dur-micro) ease; }
   .paneOut { animation: none; opacity: 0; }
   .pane, .occChev, .swatch { transition: none; }
 }

@@ -322,8 +322,32 @@ export function isHlColor(v: unknown): v is HlColor {
   return typeof v === "string" && (HL_COLORS as readonly string[]).includes(v);
 }
 
-export function nextColor(current: HlColor | undefined, picked: HlColor): HlColor | null {
-  return current === picked ? null : picked;
+// Várias seleções: se todos já têm a cor tocada, tira; senão, aplica em todos.
+export function colorFor(currents: (HlColor | undefined)[], picked: HlColor): HlColor | null {
+  return currents.every((c) => c === picked) ? null : picked;
+}
+
+// Referência da seleção: corridas consecutivas viram intervalo (João 3:16-18, 20).
+export function selectionLabel(ref: ChapterRef, verses: number[]): string {
+  const sorted = [...new Set(verses)].sort((a, b) => a - b);
+  const runs: string[] = [];
+  for (let i = 0; i < sorted.length; ) {
+    let j = i;
+    while (sorted[j + 1] === (sorted[j] ?? 0) + 1) j++;
+    runs.push(j > i ? `${sorted[i]}-${sorted[j]}` : `${sorted[i]}`);
+    i = j + 1;
+  }
+  return `${chapterLabel(ref)}:${runs.join(", ")}`;
+}
+
+// Texto para a área de transferência: versículos na ordem, depois a referência e a versão.
+export function copyText(ref: ChapterRef, verses: ReaderVerse[], selected: number[]): string {
+  const pick = new Set(selected);
+  const body = verses
+    .filter((v) => pick.has(v.n))
+    .map((v) => v.spans.map((s) => s.text).join("").trim())
+    .join(" ");
+  return `${body}\n— ${selectionLabel(ref, selected)} (Bíblia Livre)`;
 }
 
 // Notas do versículo pedido primeiro; o resto mantém a ordem (mais recentes antes).

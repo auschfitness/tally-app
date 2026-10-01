@@ -52,37 +52,43 @@ test.describe("Estudo → Bíblia (leitura)", () => {
   });
 
   // Spec 08. Exige a tabela study_highlights (m55). Deixa o versículo limpo no fim.
-  test("número do versículo: pinta, troca, tira e anota (lápis no texto)", async ({ page }) => {
+  test("seleção pelo número: pinta, troca, tira e anota (lápis no texto)", async ({ page }) => {
     await login(page);
     await page.goto("/study/bible/JHN/3");
     const verse = page.locator('[data-verse="16"]');
     const num = verse.getByRole("button", { name: /^Versículo João 3:16$/ });
     const hl = verse.getByTestId("verse-text");
-    const menu = page.getByTestId("verse-menu");
+    const bar = page.getByTestId("selection-bar");
     // A cor aparece na hora; a gravação (server action, POST) vai por trás.
     async function pick(name: string | RegExp): Promise<void> {
       await num.click();
       const saved = page.waitForResponse((r) => r.request().method() === "POST" && r.url().includes("/study/bible/"));
-      await menu.getByRole("button", { name }).click();
+      await bar.getByRole("button", { name }).click();
       await saved;
     }
 
     const left = await hl.getAttribute("data-hl"); // sobra de rodada anterior
-    if (left) await pick(/tirar destaque/);
+    if (left) await pick("Tirar destaque");
     await expect(hl).not.toHaveAttribute("data-hl", /.+/);
+
+    await num.click();
+    await expect(bar).toContainText("João 3:16");
+    await expect(num).toHaveAttribute("aria-pressed", "true");
+    await num.click(); // tocar de novo desfaz a seleção
+    await expect(bar).toHaveCount(0);
 
     await pick("Amarelo");
     await expect(hl).toHaveAttribute("data-hl", "yellow");
-    await expect(menu).toHaveCount(0);
+    await expect(bar).toHaveCount(0);
     await pick("Verde");
     await expect(hl).toHaveAttribute("data-hl", "green");
     await page.reload();
     await expect(hl).toHaveAttribute("data-hl", "green"); // gravou no banco
-    await pick(/Verde \(tirar/);
+    await pick("Tirar destaque");
     await expect(hl).not.toHaveAttribute("data-hl", /.+/);
 
     await num.click();
-    await menu.getByRole("button", { name: "Anotar" }).click();
+    await bar.getByRole("button", { name: "Anotar" }).click();
     await expect(page.getByTestId("notes-tab")).toContainText("João 3:16");
     await page.locator("#reader-note").fill("teste e2e spec 08");
     await page.getByRole("button", { name: "Guardar" }).click();
@@ -91,5 +97,16 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     const mine = page.getByTestId("notes-tab").locator("li", { hasText: "teste e2e spec 08" });
     await mine.getByRole("button", { name: "Excluir" }).click();
     await expect(verse.getByTestId("note-mark")).toHaveCount(0);
+  });
+
+  test("toque no texto seleciona o versículo sem Interlinear; Esc limpa", async ({ page }) => {
+    await login(page);
+    await page.goto("/study/bible/GEN/1");
+    const bar = page.getByTestId("selection-bar");
+    await page.locator('[data-verse="3"] [data-testid="verse-text"]').click();
+    await expect(bar).toBeVisible();
+    await expect(bar).toContainText("Gênesis 1:3");
+    await page.keyboard.press("Escape");
+    await expect(bar).toHaveCount(0);
   });
 });
