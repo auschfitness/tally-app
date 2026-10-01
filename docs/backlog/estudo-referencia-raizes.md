@@ -6,12 +6,12 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 
 ## Ocorrências (aba Palavra)
 
-- [ ] **Tocar numa ocorrência leva ao versículo exato** e deixa a palavra marcada, com o
-      texto rolado até ela. Hoje vamos só ao capítulo. (A marcação já funciona: a aba
-      Palavra continua aberta e acende as repetições no capítulo novo. Falta rolar até a
-      primeira e o contador abaixo.)
-- [ ] **Contador "1 de 3 neste capítulo" com ‹ ›** para pular entre as ocorrências do
-      capítulo aberto.
+- [x] **Tocar numa ocorrência leva ao versículo exato**, com a palavra marcada e o texto
+      rolado até ela (liga o Interlinear sozinho se estiver desligado). Feito em 2026-10-01.
+- [x] **Contador "1 de 3 neste capítulo" com ‹ ›**. Feito em 2026-10-01.
+- [ ] Cartão do capítulo pode divergir do contador por 1 (Mt 1: cartão 41, contador 40):
+      o cartão conta palavras do grego, o contador conta trechos ligados no português
+      (a ligação às vezes junta duas palavras num trecho). Decidir qual número mostrar.
 - [ ] **Filtro "Filtrar por livro ou capítulo…"** no topo da lista.
 - [ ] Livros como sanfona com seta; capítulos em cartões ("Capítulo 1 · 41 ocorrências").
       Temos o gráfico de barras por livro, que eles não têm; manter os dois.
@@ -45,5 +45,16 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       versículo citado com a palavra marcada.
 - [ ] Domínios semânticos em etiquetas ("Nascimento e procriação").
 - [ ] "Citar (ABNT)".
+
+## Próximo chat
+
+- [ ] **Parte 2 do plano: destaques e notas no texto** (marcar versículos com cores, ver
+      as notas no próprio texto). Próxima peça grande, combinada com o dono em 2026-10-01.
+
+## Bugs anotados
+
+- [ ] **Desligar uma feature flag no /admin não esconde a função**: ela continua no menu e
+      na tela. Investigar onde o menu/sub-nav lê a flag (cache da sessão? rollout "orgs"
+      com override da org ganhando do desligado global?). Relatado em 2026-10-01.
 
 Fonte das telas: conversa de 2026-10-01 (Mateus 1, 19 e 20 no Raízes).

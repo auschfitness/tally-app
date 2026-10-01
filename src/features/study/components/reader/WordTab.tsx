@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { morphPt } from "../../morph";
 import { chapterLabel, glossOf, groupOccurrences, isHebrew, strongNum, type ChapterRef, type LexShort, type OccBook, type WordPick } from "../../reader";
+import { selectHit } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
 type Load<T> = { status: "loading" } | { status: "error" } | { status: "ok"; data: T };
@@ -16,12 +17,16 @@ const EN_MAX = 700;
 export function WordTab({
   pick,
   lex,
+  hits,
+  activeKey,
   onGo,
   onNote,
   onSermon,
 }: {
   pick: WordPick;
   lex: Record<string, LexShort>;
+  hits: string[];
+  activeKey: string | null;
   onGo: (r: ChapterRef) => void;
   onNote: () => void;
   onSermon?: () => void;
@@ -77,6 +82,7 @@ export function WordTab({
 
   const total = occ?.status === "ok" ? occ.data.reduce((s, b) => s + b.total, 0) : freq;
   const maxBook = occ?.status === "ok" ? Math.max(1, ...occ.data.map((b) => b.total)) : 1;
+  const at = activeKey ? hits.indexOf(activeKey) : -1;
   const gloss = glossOf(l);
   const grammar = morphPt(pick.morph);
   const here = `${chapterLabel(pick)}:${pick.verse}`;
@@ -153,6 +159,15 @@ export function WordTab({
       : occ.status === "error" ? <p className={styles.muted}>Não consegui carregar as ocorrências agora.</p>
       : (
         <div className={styles.wBody}>
+          {hits.length ? (
+            <div className={styles.here}>
+              <span>{at >= 0 ? <><b>{at + 1}</b> de {hits.length}</> : hits.length} neste capítulo</span>
+              <span className={styles.stepper}>
+                <button type="button" aria-label="Ocorrência anterior" disabled={at <= 0} onClick={() => selectHit(hits[at - 1] ?? "", "center")}>‹</button>
+                <button type="button" aria-label="Próxima ocorrência" disabled={at >= hits.length - 1} onClick={() => selectHit(hits[at + 1] ?? "", "center")}>›</button>
+              </span>
+            </div>
+          ) : null}
           {occ.data.map((b) => (
             <div key={b.book}>
               <button type="button" className={styles.occBook} aria-expanded={openBook === b.book} onClick={() => setOpenBook((o) => (o === b.book ? "" : b.book))}>

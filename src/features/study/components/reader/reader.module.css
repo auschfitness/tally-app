@@ -106,6 +106,13 @@
 .factGreek { font-family: var(--font-read), Georgia, serif; font-size: 1.3rem; }
 .source { margin-top: var(--s-6); font-size: 12px; color: var(--text-2); }
 
+.here { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); font-size: var(--t-13); color: var(--text-2); }
+.here b { color: var(--text); font-variant-numeric: tabular-nums; }
+.stepper { display: inline-flex; gap: 6px; }
+.stepper button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: var(--r-6); background: var(--surface); color: var(--text); font: 600 16px/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease), background-color 120ms ease; }
+.stepper button:active:not(:disabled) { transform: scale(0.97); }
+.stepper button:disabled { opacity: 0.4; cursor: default; }
+@media (hover: hover) and (pointer: fine) { .stepper button:hover:not(:disabled) { background: var(--surface-2); } }
 .occBook { display: grid; grid-template-columns: minmax(7rem, 9rem) 1fr 3rem; align-items: center; gap: var(--s-3); width: 100%; padding: 9px 4px; background: none; border: 0; border-bottom: 1px solid var(--border); color: var(--text); font: var(--t-13)/1.2 var(--font-ui); text-align: left; cursor: pointer; }
 @media (hover: hover) and (pointer: fine) { .occBook:hover { background: var(--surface-2); } }
 .occName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -24,7 +24,7 @@ import {
   type Span,
 } from "../../reader";
 import { ChapterPicker } from "./ChapterPicker";
-import { useWorkspace, type EditorData } from "./ReaderWorkspace";
+import { selectHit, useWorkspace, type EditorData } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
 type Mode = "bible" | "original";
@@ -52,7 +52,7 @@ export function ReaderView({
   const next = useMemo(() => adjacentChapter(refNow, 1), [refNow]);
   const [mode, setMode] = useState<Mode>("bible");
   const [interlinear, setInterlinear] = useState(false);
-  const { publish, open, closeAll, wordKey, wordStrong } = useWorkspace();
+  const { publish, open, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
   // Chave do trecho inclui o capítulo: a aba Palavra sobrevive à troca e não pode
   // acender a palavra de mesma posição no capítulo seguinte.
   const base = `${refNow.book}.${refNow.chapter}.`;
@@ -106,10 +106,8 @@ export function ReaderView({
       const i = wordKey ? words.findIndex((b) => b.dataset.wkey === wordKey) : -1;
       if (i >= 0) {
         e.preventDefault();
-        const to = words[i + dir];
-        to?.click();
-        to?.focus({ preventScroll: true });
-        to?.scrollIntoView({ block: "nearest" });
+        const to = words[i + dir]?.dataset.wkey;
+        if (to) selectHit(to);
         return;
       }
       go(dir === -1 ? prev : next);
@@ -119,6 +117,30 @@ export function ReaderView({
   }, [go, prev, next, wordKey, closeAll]);
 
   const showWords = tagged && interlinear && mode === "bible";
+
+  // Ocorrências da palavra aberta neste capítulo, na ordem do texto (mesmas chaves dos
+  // botões). Publicadas para o contador "1 de N" da aba Ocorrências.
+  const hits = useMemo((): string[] => {
+    if (!wordStrong) return [];
+    if (mode === "original") {
+      return original
+        .filter((w) => w.strong === wordStrong)
+        .sort((a, b) => a.verse - b.verse || a.position - b.position)
+        .map((w) => `${base}o${w.verse}:${w.position}`);
+    }
+    if (!showWords) return [];
+    return verses.flatMap((v) => v.spans.flatMap((s, i) => (s.strong === wordStrong ? [`${base}${v.n}:${i}`] : [])));
+  }, [wordStrong, mode, original, showWords, verses, base]);
+  useEffect(() => setHits(hits), [hits, setHits]);
+
+  // Chegou pela aba Ocorrências: liga as palavras se preciso e seleciona a 1ª ocorrência.
+  useEffect(() => {
+    if (!jump || jump.book !== refNow.book || jump.chapter !== refNow.chapter) return;
+    if (mode === "bible" && tagged && !interlinear) return setInterlinear(true);
+    clearJump();
+    const first = hits[0];
+    if (first) selectHit(first, "center");
+  }, [jump, refNow, mode, tagged, interlinear, hits, clearJump]);
   const lexCredit = `léxico STEPBible (CC BY 4.0)${Object.values(lex).some((l) => l.gloss_pt) ? ", tradução Tally" : ""}`;
 
   function wordClass(key: string, strong: string, cls: string | undefined): string {

@@ -46,12 +46,19 @@ interface WorkspaceApi {
   sermonOpen: boolean;
   wordKey: string | null; // trecho do texto cuja palavra está aberta (realce)
   wordStrong: string | null;
+  jump: Jump | null; // pedido da aba Ocorrências: o capítulo-alvo seleciona a 1ª ocorrência
   open: (t: WsTab) => void;
   closeAll: () => void;
+  clearJump: () => void;
+  setHits: (keys: string[]) => void;
   openNotes: (at: VerseAt | null) => void;
   sendBlock: (block: string, section: SectionKey) => void;
   publish: (refNow: ChapterRef, lex: Record<string, LexShort>, editor: EditorData) => void;
 }
+
+// O capítulo de origem continua montado até a rota trocar: o pedido diz o alvo para só
+// o capítulo certo atendê-lo.
+export type Jump = ChapterRef & { strong: string };
 
 const Ctx = createContext<WorkspaceApi | null>(null);
 
@@ -67,6 +74,17 @@ const PANE_MIN = 320;
 const TEXT_MIN = 360;
 const TEXT_SELECTOR = '[data-testid="reader-text"], [data-testid="reader-original"]';
 
+// Seleciona um trecho do texto pela chave (o clique do próprio botão abre a palavra) e
+// rola até ele. Usado pelas setas, pelo contador da aba Ocorrências e pelo salto.
+export function selectHit(key: string, block: ScrollLogicalPosition = "nearest"): void {
+  const b = document.querySelector<HTMLButtonElement>(`[data-wkey="${CSS.escape(key)}"]`);
+  if (!b) return;
+  b.click();
+  b.focus({ preventScroll: true });
+  const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  b.scrollIntoView({ block, behavior: smooth && block === "center" ? "smooth" : "auto" });
+}
+
 function focusLater(get: () => HTMLElement | null): void {
   window.requestAnimationFrame(() => get()?.focus({ preventScroll: true }));
 }
@@ -81,6 +99,9 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const [refNow, setRefNow] = useState<ChapterRef | null>(null);
   const [editor, setEditor] = useState<EditorData | null>(null);
   const [lex, setLex] = useState<Record<string, LexShort>>({});
+  const [hits, setHits] = useState<string[]>([]); // ocorrências da palavra aberta neste capítulo, em ordem
+  const [jump, setJump] = useState<Jump | null>(null);
+  const clearJump = useCallback((): void => setJump(null), []);
   const closeTimer = useRef<number | null>(null);
   const seq = useRef(0);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -138,6 +159,11 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const onSaved = useCallback((s: Sermon): void => setSaved((m) => ({ ...m, [s.id]: s })), []);
 
   const go = useCallback((r: ChapterRef): void => router.push(`/study/bible/${r.book}/${r.chapter}`), [router]);
+  // Da aba Ocorrências: vai ao capítulo e pede para selecionar a 1ª ocorrência lá.
+  const goTo = useCallback((r: ChapterRef, strong: string): void => {
+    setJump({ ...r, strong });
+    go(r);
+  }, [go]);
 
   const sermonOpen = ws.tabs.some((t) => t.kind === "sermon");
   const activeTab = ws.tabs.find((t) => tabKey(t) === ws.active);
@@ -145,8 +171,8 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const wordKey = word?.key ?? null;
   const wordStrong = word?.strong ?? null;
   const api = useMemo<WorkspaceApi>(
-    () => ({ sermonOpen, wordKey, wordStrong, open, closeAll, openNotes, sendBlock, publish }),
-    [sermonOpen, wordKey, wordStrong, open, closeAll, openNotes, sendBlock, publish],
+    () => ({ sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, setHits, openNotes, sendBlock, publish }),
+    [sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, openNotes, sendBlock, publish],
   );
 
   // Divisor entre texto e área de trabalho: arrasta 1:1, duplo clique volta ao padrão,
@@ -237,7 +263,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
         sendBlock(`${chapterLabel(t)}:${t.verse} · ` + buildKeywordBlock({ lemma: l?.lemma || t.strong, strong: t.strong, meaning: glossOf(l), occurrences: null }), DEFAULT_SECTION);
         open({ kind: "sermon" });
       };
-      return <WordTab pick={t} lex={lex} onGo={go} onNote={() => openNotes(at)} onSermon={sermonOpen ? toSermon : undefined} />;
+      return <WordTab pick={t} lex={lex} hits={hits} activeKey={wordKey} onGo={(r) => goTo(r, t.strong)} onNote={() => openNotes(at)} onSermon={sermonOpen ? toSermon : undefined} />;
     }
     if (t.kind === "verse") {
       const r = { book: t.book, chapter: t.chapter, verse_start: t.verse, verse_end: null, reference: `${bookName(t.book)} ${t.chapter}:${t.verse}` };
