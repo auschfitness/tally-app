@@ -41,6 +41,21 @@ export interface ChapterRef {
   chapter: number;
 }
 
+// Aspas retas do texto viram curvas (“ ” ‘ ’). Abre depois de início, espaço ou abertura;
+// o resto fecha (inclui apóstrofo). O contexto atravessa os trechos do versículo.
+export function curlyQuotes(spans: Span[]): Span[] {
+  let prev = " ";
+  return spans.map((s) => {
+    const text = s.text.replace(/["']/g, (q, i: number, all: string) => {
+      const before = i > 0 ? (all[i - 1] ?? " ") : prev;
+      const opens = /[\s([{—“‘]/.test(before);
+      return q === '"' ? (opens ? "“" : "”") : opens ? "‘" : "’";
+    });
+    prev = text.slice(-1) || prev;
+    return { ...s, text };
+  });
+}
+
 export function versesFromTagged(rows: TaggedWordRow[]): ReaderVerse[] {
   const byVerse = new Map<number, TaggedWordRow[]>();
   for (const r of rows) {
@@ -52,12 +67,12 @@ export function versesFromTagged(rows: TaggedWordRow[]): ReaderVerse[] {
     .sort((a, b) => a[0] - b[0])
     .map(([n, list]) => ({
       n,
-      spans: [...list].sort((a, b) => a.position - b.position).map((w) => ({ text: w.text, strong: w.strong || null })),
+      spans: curlyQuotes([...list].sort((a, b) => a.position - b.position).map((w) => ({ text: w.text, strong: w.strong || null }))),
     }));
 }
 
 export function versesFromPlain(vs: { n: number; text: string }[]): ReaderVerse[] {
-  return vs.map((v) => ({ n: v.n, spans: [{ text: v.text, strong: null }] }));
+  return vs.map((v) => ({ n: v.n, spans: curlyQuotes([{ text: v.text, strong: null }]) }));
 }
 
 export function groupOriginal(words: OrigWord[]): { n: number; words: OrigWord[] }[] {

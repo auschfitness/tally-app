@@ -5,6 +5,7 @@ import {
   adjacentChapter,
   chapterCount,
   closeTab,
+  curlyQuotes,
   filterOccurrences,
   glossOf,
   groupOccurrences,
@@ -120,6 +121,23 @@ describe("léxico e ocorrências", () => {
     expect(mt?.total).toBe(45);
     expect(withChapterCount(g, { book: "MAT", chapter: 1 }, 0)).toBe(g);
     expect(withChapterCount(g, { book: "MAT", chapter: 9 }, 3)).toEqual(g);
+  });
+});
+
+describe("aspas curvas", () => {
+  const t = (...texts: string[]): string => curlyQuotes(texts.map((text) => ({ text, strong: null }))).map((s) => s.text).join("");
+  it("abre depois de espaço ou início e fecha depois de letra ou pontuação", () => {
+    expect(t('Disse: "Haja luz!" E houve.')).toBe("Disse: “Haja luz!” E houve.");
+    expect(t('"Amém"')).toBe("“Amém”");
+    expect(t("d'água, 'sim'")).toBe("d’água, ‘sim’");
+  });
+  it("o contexto atravessa os trechos ligados", () => {
+    expect(t("disse ", '"', "Amém", '"', " e foi")).toBe("disse “Amém” e foi");
+    expect(t('"Eu', ' sou"')).toBe("“Eu sou”");
+  });
+  it("versesFromPlain e versesFromTagged aplicam", () => {
+    expect(versesFromPlain([{ n: 1, text: 'Ele disse: "Vem".' }])[0]?.spans[0]?.text).toBe("Ele disse: “Vem”.");
+    expect(versesFromTagged([{ verse: 1, position: 1, text: '"Vem"', strong: null }])[0]?.spans[0]?.text).toBe("“Vem”");
   });
 });
 
