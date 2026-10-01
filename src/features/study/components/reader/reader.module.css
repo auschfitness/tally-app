@@ -51,14 +51,19 @@
 .pickBtn:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) { .pickBtn:hover { background: var(--surface-2); } }
 .picker { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(560px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-14); box-shadow: var(--e-2); padding: var(--s-3); transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
-.pickSearch { width: 100%; margin-bottom: var(--s-2); }
-.pickCols { display: grid; grid-template-columns: 180px 1fr; gap: var(--s-3); max-height: 320px; }
+.pickSearch { width: 100%; height: 36px; margin-bottom: var(--s-3); padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); font: 14px/1 var(--font-ui); outline: none; transition: border-color 120ms ease, box-shadow 120ms ease; }
+.pickSearch:focus { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 20%, transparent); }
+/* Cada coluna rola sozinha: sem a altura nelas, a lista de livros vazava para fora da caixa. */
+.pickCols { display: grid; grid-template-columns: 180px 1fr; gap: var(--s-3); }
+.pickBooks, .pickGrid { max-height: 320px; overscroll-behavior: contain; }
 .pickBooks { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
-.pickBooks button { width: 100%; text-align: left; background: none; border: 0; padding: 6px 8px; border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1.3 var(--font-ui); cursor: pointer; }
-.pickOn { background: var(--surface-2) !important; font-weight: 600 !important; }
+.pickBooks button { width: 100%; text-align: left; background: none; border: 0; padding: 7px 10px; border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1.3 var(--font-ui); cursor: pointer; transition: background-color 120ms ease; }
+@media (hover: hover) and (pointer: fine) { .pickBooks button:hover, .pickGrid button:hover { background: var(--surface-2); } }
+.pickOn { background: color-mix(in srgb, var(--blue) 12%, transparent) !important; color: var(--blue) !important; font-weight: 600 !important; }
 .pickGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 4px; align-content: start; overflow-y: auto; }
-.pickGrid button { height: 36px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1 var(--font-ui); cursor: pointer; }
-.pickRecent { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; margin-top: var(--s-3); font: var(--t-11)/1.4 var(--font-ui); color: var(--text-2); }
+.pickGrid button { height: 36px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1 var(--font-ui); font-variant-numeric: tabular-nums; cursor: pointer; transition: transform 120ms ease-out, background-color 120ms ease; }
+.pickGrid button:active { transform: scale(0.96); }
+.pickRecent { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--border); font: var(--t-11)/1.4 var(--font-ui); color: var(--text-2); }
 
 /* Texto: serifa de leitura (Literata, eixo óptico), medida ~65 caracteres. */
 .text { max-width: 36rem; margin: 0 auto; padding: var(--s-8) var(--s-5) var(--s-6); font-family: var(--font-read), Georgia, "Times New Roman", serif; font-optical-sizing: auto; font-size: 1.1875rem; line-height: 1.8; color: var(--text); }
@@ -120,10 +125,13 @@
 @media (hover: hover) and (pointer: fine) { .tabX:hover { background: color-mix(in srgb, var(--text) 9%, transparent); color: var(--text); } }
 .tabActions { display: inline-flex; align-items: center; gap: 4px; flex: none; padding-bottom: 6px; }
 .addWrap { position: relative; }
-.tabAdd { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px 0 9px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: 600 12px/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease), background-color 120ms ease; }
+/* "Nova aba" e as ferramentas: mesmo peso (fantasma, 28px, mesmo realce), para nenhum
+   gritar mais que o outro ao lado das abas. */
+.tabAdd { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 8px; border: 0; border-radius: var(--r-6); background: none; color: var(--text-2); font: 600 12px/1 var(--font-ui); cursor: pointer; transition: transform 120ms ease-out, background-color 120ms ease, color 120ms ease; }
 .tabAdd:active { transform: scale(0.97); }
-@media (hover: hover) and (pointer: fine) { .tabAdd:hover { background: var(--surface-2); } }
-.paneTools { display: inline-flex; gap: 2px; }
+.tabAdd[aria-expanded="true"] { background: var(--surface); color: var(--text); }
+@media (hover: hover) and (pointer: fine) { .tabAdd:hover { background: var(--surface); color: var(--text); } }
+.paneTools { display: inline-flex; gap: 2px; padding-left: 4px; margin-left: 2px; border-left: 1px solid var(--border); }
 .tool { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: var(--r-6); background: none; color: var(--text-2); cursor: pointer; transition: transform 120ms var(--ease), background-color 120ms ease; }
 .tool:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) { .tool:hover { background: var(--surface); color: var(--text); } }
@@ -245,7 +253,9 @@
   .full { height: 92dvh; }
   .grab { display: block; width: 100%; padding: 10px 0 6px; background: none; border: 0; touch-action: none; cursor: grab; }
   .grab::before { content: ""; display: block; width: 36px; height: 4px; margin: 0 auto; border-radius: 9px; background: var(--border); }
-  .pickCols { grid-template-columns: 1fr; max-height: 60dvh; }
+  .pickCols { grid-template-columns: 1fr; }
+  .pickBooks { max-height: 28dvh; }
+  .pickGrid { max-height: 24dvh; }
   .body { padding: var(--s-3) var(--s-4) var(--s-6); }
   .wSurface { font-size: 2rem; }
 }

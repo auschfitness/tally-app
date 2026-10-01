@@ -51,6 +51,13 @@ export function ChapterPicker({ current, onPick }: { current: ChapterRef; onPick
     };
   }, [open]);
 
+  // Ao abrir, a lista já mostra o livro aberto (não começa sempre em Gênesis).
+  useEffect(() => {
+    const list = open ? boxRef.current?.querySelector<HTMLElement>(`.${styles.pickBooks}`) : null;
+    const on = list?.querySelector<HTMLElement>("[aria-current]");
+    if (list && on) list.scrollTop += on.getBoundingClientRect().top - list.getBoundingClientRect().top - list.clientHeight / 2; // só a lista rola, não a página
+  }, [open]);
+
   const books = useMemo(() => {
     const t = normToken(q);
     return t ? BOOKS.filter((b) => normToken(b.pt).includes(t) || b.abbr.some((a) => normToken(a) === t)) : BOOKS;
@@ -74,13 +81,13 @@ export function ChapterPicker({ current, onPick }: { current: ChapterRef; onPick
             <ul className={styles.pickBooks}>
               {books.map((b) => (
                 <li key={b.code}>
-                  <button type="button" className={b.code === book ? styles.pickOn : undefined} onClick={() => setBook(b.code)}>{b.pt}</button>
+                  <button type="button" className={b.code === book ? styles.pickOn : undefined} aria-current={b.code === book ? "true" : undefined} onClick={() => setBook(b.code)}>{b.pt}</button>
                 </li>
               ))}
             </ul>
             <div className={styles.pickGrid}>
               {Array.from({ length: chapterCount(book) }, (_, i) => i + 1).map((n) => (
-                <button key={n} type="button" onClick={() => pick({ book, chapter: n })}>{n}</button>
+                <button key={n} type="button" className={book === current.book && n === current.chapter ? styles.pickOn : undefined} aria-current={book === current.book && n === current.chapter ? "true" : undefined} onClick={() => pick({ book, chapter: n })}>{n}</button>
               ))}
             </div>
           </div>

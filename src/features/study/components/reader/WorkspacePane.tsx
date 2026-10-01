@@ -21,10 +21,10 @@ const ICON: Record<string, string> = {
   verse: "M8 3.5C6.5 2.5 4.5 2.5 2 3v9c2.5-.5 4.5-.5 6 .5 1.5-1 3.5-1 6-.5V3c-2.5-.5-4.5-.5-6 .5zM8 3.5v9",
   notes: "M3 13l.7-3L10.5 3.2a1.4 1.4 0 0 1 2 0l.3.3a1.4 1.4 0 0 1 0 2L6 12.3zM9.5 4.2l2.3 2.3",
   sermon: "M4 2.5h6l2.5 2.5v8.5H4zM10 2.5V5h2.5M6 8h4.5M6 10.5h4.5",
-  expand: "M6 2.5H2.5V6M10 2.5h3.5V6M6 13.5H2.5V10M10 13.5h3.5V10",
-  shrink: "M2.5 6H6V2.5M13.5 6H10V2.5M2.5 10H6v3.5M13.5 10H10v3.5",
-  fold: "M3.5 3.5L8 8l-4.5 4.5M8.5 3.5L13 8l-4.5 4.5",
-  unfold: "M12.5 3.5L8 8l4.5 4.5M7.5 3.5L3 8l4.5 4.5",
+  expand: "M9.5 2.5h4v4M13.5 2.5L9 7M6.5 13.5h-4v-4M2.5 13.5L7 9",
+  shrink: "M13.5 2.5L9.5 6.5M9.5 3v3.5H13M2.5 13.5l4-4M6.5 13V9.5H3",
+  fold: "M2.5 3.5h11v9h-11zM10 3.5v9", // painel lateral (como o do menu esquerdo, espelhado)
+  unfold: "M2.5 3.5h11v9h-11zM10 3.5v9",
   plus: "M8 3.5v9M3.5 8h9",
 };
 export function Icon({ name }: { name: keyof typeof ICON }) {
