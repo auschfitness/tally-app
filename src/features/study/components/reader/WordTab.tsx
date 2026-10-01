@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { morphPt } from "../../morph";
-import { chapterLabel, glossOf, groupOccurrences, isHebrew, strongNum, type ChapterRef, type LexShort, type OccBook, type WordPick, withChapterCount } from "../../reader";
+import { chapterLabel, glossOf, filterOccurrences, groupOccurrences, isHebrew, strongNum, type ChapterRef, type LexShort, type OccBook, type WordPick, withChapterCount } from "../../reader";
 import { selectHit } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
@@ -43,6 +43,7 @@ export function WordTab({
   const [freq, setFreq] = useState<number | null>(null);
   const [occ, setOcc] = useState<Load<OccBook[]> | null>(null);
   const [openBook, setOpenBook] = useState("");
+  const [query, setQuery] = useState("");
   const [copied, setCopied] = useState(false);
 
   // Outra palavra: zera o que é desta (a aba é a mesma, o componente não remonta).
@@ -51,6 +52,7 @@ export function WordTab({
     setFreq(null);
     setOcc(null);
     setOpenBook("");
+    setQuery("");
     setCopied(false);
     let alive = true;
     const db = createClient();
@@ -85,6 +87,8 @@ export function WordTab({
   const total = occ?.status === "ok" ? occ.data.reduce((s, b) => s + b.total, 0) : freq;
   const books = occ?.status === "ok" ? withChapterCount(occ.data, refNow, hits.length) : [];
   const maxBook = Math.max(1, ...books.map((b) => b.total));
+  const shown = filterOccurrences(books, query);
+  const byChapter = /\d/.test(query); // com número, os capítulos que casam já aparecem abertos
   const at = activeKey ? hits.indexOf(activeKey) : -1;
   const gloss = glossOf(l);
   const grammar = morphPt(pick.morph);
@@ -171,14 +175,23 @@ export function WordTab({
               </span>
             </div>
           ) : null}
-          {books.map((b) => (
+          <input
+            type="search"
+            className={styles.occFilter}
+            aria-label="Filtrar por livro ou capítulo"
+            placeholder="Filtrar por livro ou capítulo…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {query.trim() && shown.length === 0 ? <p className={styles.muted}>Nenhuma ocorrência em “{query.trim()}”.</p> : null}
+          {shown.map((b) => (
             <div key={b.book}>
-              <button type="button" className={styles.occBook} aria-expanded={openBook === b.book} onClick={() => setOpenBook((o) => (o === b.book ? "" : b.book))}>
+              <button type="button" className={styles.occBook} aria-expanded={byChapter || openBook === b.book} onClick={() => setOpenBook((o) => (o === b.book ? "" : b.book))}>
                 <span className={styles.occName}>{b.name}</span>
                 <span className={styles.occBar} aria-hidden><i style={{ transform: `scaleX(${b.total / maxBook})` }} /></span>
                 <span className={styles.occN}>{b.total}</span>
               </button>
-              {openBook === b.book ? (
+              {byChapter || openBook === b.book ? (
                 <div className={styles.occChaps}>
                   {b.chapters.map((c) => (
                     <button key={c.chapter} type="button" onClick={() => onGo({ book: b.book, chapter: c.chapter })}>

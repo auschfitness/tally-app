@@ -12,7 +12,8 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 - [x] Cartão do capítulo divergia do contador por 1 (Mt 1: cartão 41, contador 40).
       Decidido em 2026-10-01: o capítulo aberto mostra o número do contador (o que dá
       para percorrer com ‹ ›); os outros capítulos seguem com a contagem do grego.
-- [ ] **Filtro "Filtrar por livro ou capítulo…"** no topo da lista.
+- [x] **Filtro "Filtrar por livro ou capítulo…"** no topo da lista. Feito em 2026-10-01
+      ("mateus", "mateus 20" e "20" funcionam; sem acento e sem caixa).
 - [ ] Livros como sanfona com seta; capítulos em cartões ("Capítulo 1 · 41 ocorrências").
       Temos o gráfico de barras por livro, que eles não têm; manter os dois.
 

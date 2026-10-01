@@ -5,6 +5,7 @@ import {
   adjacentChapter,
   chapterCount,
   closeTab,
+  filterOccurrences,
   glossOf,
   groupOccurrences,
   groupOriginal,
@@ -119,6 +120,24 @@ describe("léxico e ocorrências", () => {
     expect(mt?.total).toBe(45);
     expect(withChapterCount(g, { book: "MAT", chapter: 1 }, 0)).toBe(g);
     expect(withChapterCount(g, { book: "MAT", chapter: 9 }, 3)).toEqual(g);
+  });
+});
+
+describe("filtro de ocorrências", () => {
+  const books = groupOccurrences([
+    { book: "Matt", chapter: 1, n: 3 },
+    { book: "Matt", chapter: 20, n: 2 },
+    { book: "Gen", chapter: 1, n: 1 },
+    { book: "Gen", chapter: 20, n: 1 },
+  ]);
+  it("sem consulta devolve tudo; texto casa o livro sem acento nem caixa", () => {
+    expect(filterOccurrences(books, " ")).toHaveLength(2);
+    expect(filterOccurrences(books, "GENESIS").map((b) => b.book)).toEqual(["GEN"]);
+  });
+  it("número restringe aos capítulos; sem texto vale para todos os livros", () => {
+    expect(filterOccurrences(books, "mateus 20")[0]?.chapters).toEqual([{ chapter: 20, n: 2 }]);
+    expect(filterOccurrences(books, "1").flatMap((b) => b.chapters.map((c) => c.chapter))).toEqual([1, 1]);
+    expect(filterOccurrences(books, "mateus 5")).toEqual([]);
   });
 });
 

@@ -176,6 +176,21 @@ export function withChapterCount(books: OccBook[], at: ChapterRef, n: number): O
   });
 }
 
+// Filtro da lista de ocorrências: texto casa com o nome do livro (sem acento, sem caixa);
+// um número no fim ("mateus 20", "20") restringe aos capítulos com esse número.
+export function filterOccurrences(books: OccBook[], query: string): OccBook[] {
+  const plain = (t: string): string => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+  const m = /^(.*?)\s*(\d+)?$/.exec(plain(query));
+  const name = m?.[1] ?? "";
+  const chap = m?.[2] ? Number(m[2]) : null;
+  return books.flatMap((b) => {
+    if (!plain(b.name).includes(name)) return [];
+    if (chap == null) return [b];
+    const chapters = b.chapters.filter((c) => c.chapter === chap);
+    return chapters.length ? [{ ...b, chapters }] : [];
+  });
+}
+
 // Área de trabalho: abas com chave estável. Abrir o que já está aberto só ativa. A área
 // sobrevive à troca de capítulo, então a aba Versículo guarda o próprio capítulo.
 // A aba Palavra é UMA só (como no Raízes): tocar outra palavra troca o conteúdo.
