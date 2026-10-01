@@ -137,6 +137,20 @@ export const LAST_READ_KEY = "tally.reader.last";
 export const RECENT_KEY = "tally.reader.recent";
 const FALLBACK: ChapterRef = { book: "JHN", chapter: 1 };
 
+// Capítulos recentes (seletor e menu lateral; grava o ChapterPicker). Lixo é ignorado.
+export function parseRecent(raw: string | null): ChapterRef[] {
+  try {
+    const v: unknown = JSON.parse(raw ?? "[]");
+    if (!Array.isArray(v)) return [];
+    return v.flatMap((x: { book?: unknown; chapter?: unknown }) => {
+      const r = typeof x?.book === "string" && typeof x?.chapter === "number" ? parseRouteRef(x.book, String(x.chapter)) : null;
+      return r ? [r] : [];
+    }).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
 export function parseLastRead(raw: string | null): ChapterRef {
   if (!raw) return FALLBACK;
   try {
@@ -150,7 +164,7 @@ export function parseLastRead(raw: string | null): ChapterRef {
 
 export function pushRecent(list: ChapterRef[], ref: ChapterRef): ChapterRef[] {
   const same = (a: ChapterRef): boolean => a.book === ref.book && a.chapter === ref.chapter;
-  return [ref, ...list.filter((a) => !same(a))].slice(0, 3);
+  return [ref, ...list.filter((a) => !same(a))].slice(0, 4);
 }
 
 export function glossOf(l: LexShort | undefined): string {

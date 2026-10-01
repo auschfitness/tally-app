@@ -29,6 +29,7 @@ export function ChapterPicker({ current, onPick }: { current: ChapterRef; onPick
     setRecent(next);
     try {
       localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("tally:recent")); // o menu lateral atualiza a lista
     } catch {
       /* armazenamento bloqueado: recentes só nesta visita */
     }

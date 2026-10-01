@@ -110,6 +110,21 @@ export const ADMIN_ITEM: NavItem = { key: "admin", label: "Admin", href: "/admin
 // O código das outras funções fica intacto; para religar tudo, troque para false.
 export const STUDY_ONLY = true;
 const STUDY_HREF = "/study";
+const STUDY_HOME = "/study/bible"; // o Estudo abre na Bíblia, no último capítulo lido
+
+// Menu do modo só Estudo. `match` = prefixos que acendem o item.
+export interface StudyNavItem {
+  key: string;
+  label: string;
+  href: string;
+  icon: "book" | "sermon" | "notes";
+  match: string[];
+}
+export const STUDY_ITEMS: StudyNavItem[] = [
+  { key: "bible", label: "Bíblia", href: "/study/bible", icon: "book", match: ["/study/bible"] },
+  { key: "sermons", label: "Sermões", href: "/study", icon: "sermon", match: ["/study", "/study/sermon", "/study/series", "/study/map"] },
+  { key: "notes", label: "Notas", href: "/study/notes", icon: "notes", match: ["/study/notes"] },
+];
 
 // Rotas desligadas no modo só Estudo: tudo que o menu lista, menos o próprio Estudo.
 // O fluxo antigo de e-mail (/communication) não está no menu, entra à mão.
@@ -121,5 +136,5 @@ const OFF_HREFS = [...TOP_ITEMS, ...NAV_GROUPS.flatMap((g) => g.items), PLANS_IT
 export function studyOnlyRedirect(pathname: string): string | null {
   if (!STUDY_ONLY) return null;
   const off = OFF_HREFS.some((h) => (h === "/" ? pathname === "/" : pathname === h || pathname.startsWith(h + "/")));
-  return off ? STUDY_HREF : null;
+  return off ? STUDY_HOME : null;
 }

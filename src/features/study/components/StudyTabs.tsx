@@ -12,6 +12,7 @@
 // spec classifica como exploração e manda para o menu do módulo).
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { STUDY_ONLY } from "@/config/nav";
 import styles from "../study.module.css";
 
 const TABS: [string, string][] = [
@@ -48,6 +49,8 @@ const OVERFLOW_READER: [string, string][] = [
 
 export function StudyTabs({ v2 = false, reader = false }: { v2?: boolean; reader?: boolean }) {
   const path = usePathname();
+  // Modo só Estudo: o menu lateral já é a navegação do módulo.
+  if (STUDY_ONLY) return null;
   const tabs = reader ? (v2 ? TABS_V2_READER : TABS_READER) : v2 ? TABS_V2 : TABS;
   const overflow = v2 ? (reader ? OVERFLOW_READER : OVERFLOW) : [];
   const isOn = (href: string): boolean => (href === "/study/bible" ? path.startsWith(href) : path === href);

@@ -409,31 +409,59 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 .view-in { animation: viewIn var(--dur-panel) var(--ease); }
 
 /* --- Casca do app (frame + navegação) --- */
-.app { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
-/* Menu parado na tela, com rolagem própria: menu mais alto que a janela não pode
-   esticar a página (empurrava telas de altura fixa, como a leitura da Bíblia). */
-.side { background: var(--sidebar); color: #AEB8CC; padding: 20px 14px; display: flex; flex-direction: column; gap: 3px; position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; }
-.brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 18px; }
-.brand .wm { font-size: 20px; color: #fff; font-weight: 600; }
-.navitem { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; color: #9AA6BE; font-weight: 500; border: none; background: transparent; width: 100%; text-align: left; position: relative; text-decoration: none; transition: background var(--dur-micro) var(--ease), color var(--dur-micro) var(--ease); }
-.navitem:hover { background: rgba(255, 255, 255, .06); color: #fff; }
-.navitem.active { background: rgba(76, 123, 255, .18); color: #fff; }
-.navitem.active::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--blue); }
-.navitem .cnt { margin-left: auto; font-size: 11px; background: rgba(255, 255, 255, .12); color: #cfd8e6; padding: 1px 8px; border-radius: 20px; }
-.navsep { height: 1px; background: rgba(255, 255, 255, .08); margin: 8px 6px; }
-/* Navegação agrupada (Onda 2 / Fatia B): cabeçalhos quietos por domínio, colapsáveis. */
-.navgroup { display: flex; flex-direction: column; gap: 3px; }
-.navgroup-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-top: 7px; padding: 7px 12px 5px; border: none; background: transparent; color: #6C7A94; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; cursor: pointer; transition: color var(--dur-micro) var(--ease); }
-.navgroup-hd:hover { color: #AEB8CC; }
-.navgroup-hd.has-active { color: #C6D0E2; }
-.navgroup-hd .chev { color: #6C7A94; transition: transform var(--dur-micro) var(--ease); }
-.navgroup-hd .chev.open { transform: rotate(90deg); }
-.navgroup-items { display: flex; flex-direction: column; gap: 3px; animation: viewIn var(--dur-micro) var(--ease); }
-.navgroup-items .navitem { padding-left: 22px; }
-.side .foot { margin-top: auto; font-size: 11px; color: #6C7A94; padding: 10px 8px; line-height: 1.6; }
-.side .foot button { background: none; border: none; color: #8A98B4; font-size: 11px; text-decoration: underline; padding: 0; }
+.app { display: grid; grid-template-columns: auto minmax(0, 1fr); min-height: 100vh; }
+/* Menu lateral (redesign 2026-10-01): "source list" do macOS sobre o azul-marinho da marca.
+   Parado na tela, com rolagem própria (menu mais alto que a janela não estica a página).
+   Recolhido (.mini) fica só com ícones; a troca é instantânea (acontece toda hora). */
+.side { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; }
+.sb { width: 248px; display: flex; flex-direction: column; gap: 2px; padding: 12px 10px; background: var(--sidebar); color: #C3CCDD; font-family: var(--font-ui); }
+.sb.mini { width: 64px; }
+.sb-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 2px 14px 8px; }
+.sb.mini .sb-head { flex-direction: column; gap: 10px; padding: 6px 0 12px; }
+.sb-brand { display: flex; align-items: center; gap: 10px; color: #fff; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+.sb-iconbtn { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: #8C98B2; cursor: pointer; transition: background-color 120ms ease, color 120ms ease, transform 120ms ease-out; }
+.sb-iconbtn:active { transform: scale(0.97); }
+.sb-search { display: flex; align-items: center; gap: 8px; height: 34px; margin: 0 0 12px; padding: 0 8px 0 10px; border-radius: 9px; background: rgba(255, 255, 255, .07); color: #8C98B2; transition: background-color 120ms ease, box-shadow 120ms ease; }
+.sb-search:focus-within { background: rgba(255, 255, 255, .11); box-shadow: 0 0 0 2px rgba(76, 123, 255, .55); }
+.sb-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: #fff; font: 13px/1 var(--font-ui); }
+.sb-search input::placeholder { color: #7F8BA5; }
+.sb-search kbd { font: 600 10.5px/1 var(--font-ui); color: #7F8BA5; border: 1px solid rgba(255, 255, 255, .12); border-radius: 5px; padding: 3px 5px; }
+.sb-hint { margin: -6px 10px 10px; font-size: 12px; color: #F2A7A7; }
+.sb-nav { display: flex; flex-direction: column; gap: 2px; }
+.sb-item { display: flex; align-items: center; gap: 11px; width: 100%; height: 36px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: #C3CCDD; font: 500 14px/1 var(--font-ui); text-align: left; text-decoration: none; cursor: pointer; transition: background-color 120ms ease, color 120ms ease, transform 120ms ease-out; }
+.sb-item:active { transform: scale(0.98); }
+.sb-item.on { background: rgba(76, 123, 255, .22); color: #fff; }
+.sb-item.on .sb-ico { color: #8FB0FF; }
+.sb-ico { flex: none; color: #8C98B2; }
+.sb-count { margin-left: auto; padding: 2px 7px; border-radius: 20px; background: rgba(255, 255, 255, .1); color: #CFD8E6; font-size: 11px; }
+.sb-section { display: flex; flex-direction: column; gap: 2px; margin-top: 18px; }
+.sb-sectionhd { margin: 0 0 4px; padding: 0 10px; color: #6F7C97; font: 600 11px/1.3 var(--font-ui); letter-spacing: .02em; }
+.sb-recent { height: 32px; padding-left: 39px; color: #A9B4C9; font-size: 13px; }
+.sb-recent.on { background: rgba(255, 255, 255, .06); color: #fff; } /* aceso de leve: o destino "Bíblia" já é o principal */
+.sb-foot { display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, .07); }
+.sb-profile { position: relative; }
+.sb-me { height: 48px; gap: 10px; }
+.sb-avatar { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: #fff; font: 600 13px/1 var(--font-ui); }
+.sb-who { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.sb-who b, .sb-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-who b { color: #fff; font-size: 13px; font-weight: 600; }
+.sb-who span { color: #8C98B2; font-size: 11.5px; font-weight: 400; }
+/* Menu do perfil: sobe a partir do próprio botão e some na hora. */
+.sb-menu { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 30; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--e-2); transform-origin: bottom left; animation: sbMenuIn 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+.sb.mini .sb-menu { right: auto; width: 200px; }
+.sb-menuitem { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--text); font: 500 13px/1.2 var(--font-ui); text-align: left; cursor: pointer; }
+.sb-menuitem svg { flex: none; width: 18px; height: 18px; color: var(--text-2); }
+@keyframes sbMenuIn { from { opacity: 0; transform: translateY(4px) scale(0.97); } }
+@media (hover: hover) and (pointer: fine) {
+  .sb-iconbtn:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+  .sb-item:not(.on):hover { background: rgba(255, 255, 255, .06); color: #fff; }
+  .sb-menuitem:hover { background: var(--surface-2); }
+}
+.sb.mini .sb-label, .sb.mini .sb-sectionhd, .sb.mini .sb-count { display: none; }
+.sb.mini .sb-item { justify-content: center; padding: 0; }
+/* Celular: o menu lateral some (regra mais abaixo) e vira barra de abas embaixo. */
+.sb-tabbar { display: none; }
 .main { background: var(--main); display: flex; flex-direction: column; min-width: 0; }
-.top { display: flex; align-items: center; gap: 12px; padding: 13px 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--main); z-index: 5; }
 .church { display: flex; align-items: center; gap: 9px; }
 .church .logo { width: 30px; height: 30px; border-radius: 8px; background: var(--navylogo); display: flex; align-items: center; justify-content: center; }
 .church b { font-size: 14px; color: var(--text); }
@@ -525,6 +553,11 @@ h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var
 @media (max-width: 880px) {
   .app { grid-template-columns: 1fr; }
   .side { display: none; }
+  .sb-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; justify-content: space-around; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--surface) 82%, transparent); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+  .sb-tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; color: var(--text-2); font: 500 10.5px/1.2 var(--font-ui); text-decoration: none; -webkit-tap-highlight-color: transparent; }
+  .sb-tabbar a.on { color: var(--blue); }
+  .sb-tabbar .sb-ico { width: 22px; height: 22px; color: inherit; }
+  .content { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
   .cards { grid-template-columns: 1fr 1fr; }
   .row2 { grid-template-columns: 1fr; }
 }
@@ -535,6 +568,6 @@ h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var
 
 /* Impressão: some o chrome do app (nav/topo) para documentos como o recibo de doação. */
 @media print {
-  .side, .top { display: none !important; }
+  .side, .sb-tabbar { display: none !important; }
   .content { padding: 0 !important; }
 }

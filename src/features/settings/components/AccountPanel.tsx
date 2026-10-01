@@ -2,7 +2,7 @@
 
 // Aba Conta (Client — Server Action). Seu nome (profiles.full_name) + fuso (blob).
 // Idioma = profiles.locale via <LocaleSelect> (persiste na hora, separado do form).
-// Tema fica no Topbar (ThemeToggle). Cargo é só leitura. Strings do dicionário i18n.
+// Tema fica no menu do perfil, no menu lateral (ThemeToggle). Cargo é só leitura. Strings do dicionário i18n.
 import { Select } from "@/components/shared/Select";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";

@@ -36,7 +36,7 @@ export function NotesBoard({
     <>
       <div className={styles.headerRow}>
         <div>
-          <h1 className="page">Estudo</h1>
+          <h1 className="page">Notas</h1>
           <p className="sub" style={{ margin: 0 }}>Guarde uma ideia, um estudo ou uma observação — com vínculos leves ao ensino.</p>
         </div>
         <button className="btn" style={{ marginLeft: "auto" }} onClick={() => setCreating(true)}>+ Nova nota</button>

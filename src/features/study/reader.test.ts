@@ -10,6 +10,7 @@ import {
   filterOccurrences,
   glossOf,
   orderSenses,
+  parseRecent,
   ubsCitation,
   isHlColor,
   colorFor,
@@ -90,12 +91,13 @@ describe("capítulos", () => {
     expect(parseLastRead(JSON.stringify({ book: "ROM", chapter: 99 }))).toEqual({ book: "JHN", chapter: 1 });
   });
 
-  it("pushRecent põe na frente, sem repetir, no máximo 3", () => {
+  it("pushRecent põe na frente, sem repetir, no máximo 4", () => {
     const a = { book: "JHN", chapter: 1 };
     const b = { book: "ROM", chapter: 8 };
     const c = { book: "PSA", chapter: 23 };
     const d = { book: "GEN", chapter: 1 };
-    expect(pushRecent([a, b, c], d)).toEqual([d, a, b]);
+    expect(pushRecent([a, b, c], d)).toEqual([d, a, b, c]);
+    expect(pushRecent([a, b, c, d], { book: "MAT", chapter: 5 })).toHaveLength(4);
     expect(pushRecent([a, b, c], b)).toEqual([b, a, c]);
   });
 });
@@ -294,5 +296,13 @@ describe("dicionário UBS", () => {
   it("citação ABNT com mês abreviado", () => {
     expect(ubsCitation("βάπτισμα", "53.41", new Date(2026, 9, 1))).toContain("Verbete βάπτισμα (53.41).");
     expect(ubsCitation("βάπτισμα", null, new Date(2026, 4, 9))).toContain("Acesso em: 9 maio 2026.");
+  });
+});
+
+describe("capítulos recentes", () => {
+  const j3 = { book: "JHN", chapter: 3 };
+  it("ignora lixo no armazenamento", () => {
+    expect(parseRecent("x")).toEqual([]);
+    expect(parseRecent(JSON.stringify([j3, { book: 1 }, { book: "ZZZ", chapter: 1 }]))).toEqual([j3]);
   });
 });

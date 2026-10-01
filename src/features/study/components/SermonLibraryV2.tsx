@@ -4,7 +4,7 @@
 // versão de hoje (SermonLibrary.tsx) fica intocada ao lado.
 //
 // Cada elemento responde a uma pergunta que o pastor faz de verdade:
-//   h1 "Estudo"            → onde eu estou?
+//   h1 "Sermões"           → onde eu estou?
 //   "+ Novo sermão"        → como começo o de domingo? (ÚNICA ação primária)
 //   bloco "Continuando"    → onde eu parei?
 //     ↳ passagem/série/data → sobre o quê, de que série, para quando?
@@ -71,7 +71,7 @@ export function SermonLibraryV2({
     <div className={styles.lib}>
       <div className={styles.libHeader}>
         <div className={styles.libHeaderText}>
-          <h1 className="page">Estudo</h1>
+          <h1 className="page">Sermões</h1>
           <p className="sub" style={{ margin: 0 }}>Onde a igreja prepara e preserva o ensino.</p>
         </div>
         <Link href="/study/sermon/new" className={`btn ${styles.libAction}`}>+ Novo sermão</Link>

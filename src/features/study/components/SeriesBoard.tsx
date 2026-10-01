@@ -34,7 +34,7 @@ export function SeriesBoard({ series }: { series: Series[] }) {
     <div className={styles.lib}>
       <div className={styles.libHeader}>
         <div className={styles.libHeaderText}>
-          <h1 className="page">Estudo</h1>
+          <h1 className="page">Séries</h1>
           <p className="sub" style={{ margin: 0 }}>Séries agrupam sermões numa jornada de ensino.</p>
         </div>
         <button className={`btn ${styles.libAction}`} onClick={() => setCreating(true)}>+ Nova série</button>

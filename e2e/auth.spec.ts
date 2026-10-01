@@ -22,15 +22,16 @@ test.describe("auth SSR + render autenticado", () => {
     await page.getByRole("button", { name: "Entrar" }).click();
 
     // Chega no app (Home protegida)
-    await expect(page).toHaveURL(/\/$|\/study$|\/onboarding$/);
+    await expect(page).toHaveURL(/\/$|\/study(\/bible.*)?$|\/onboarding$/);
 
-    // Modo só Estudo (src/config/nav.ts): Sticks desligado redireciona para /study.
+    // Modo só Estudo (src/config/nav.ts): Sticks desligado redireciona para a Bíblia.
     await page.goto("/sticks");
-    await expect(page).toHaveURL(/\/study$/);
+    await expect(page).toHaveURL(/\/study\/bible\/[A-Z0-9]+\/\d+$/); // /study/bible pula para o capítulo
 
-    // Logout → volta pro login (sessão invalidada no servidor).
-    // dispatchEvent: o indicador de dev do Next fica por cima do "Sair" no canto.
-    await page.getByRole("button", { name: "Sair" }).dispatchEvent("click");
+    // Logout pelo menu do perfil → volta pro login (sessão invalidada no servidor).
+    // dispatchEvent: o indicador de dev do Next fica por cima do canto do menu.
+    await page.getByTestId("profile-menu").dispatchEvent("click");
+    await page.getByRole("menuitem", { name: "Sair" }).click();
     await expect(page).toHaveURL(/\/login$/);
   });
 });

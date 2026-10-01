@@ -3,7 +3,6 @@ import { flagOn } from "@/features/flags/gate";
 import { isPlatformAdmin } from "@/features/admin/queries";
 import { resolveActiveCampus } from "@/lib/campus";
 import { Sidebar, type NavCounts } from "@/components/shared/Sidebar";
-import { Topbar } from "@/components/shared/Topbar";
 import { signals } from "@/features/signals/domain";
 import { buildSignalsInput, loadOverrides } from "@/features/inbox/queries";
 import { visibleSignals } from "@/features/inbox/domain";
@@ -53,9 +52,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="app" data-design={design}>
-      <Sidebar userLabel={userLabel} counts={counts} isPlatformAdmin={isAdmin} plan={plan} />
+      <Sidebar userLabel={userLabel} orgName={orgName} counts={counts} isPlatformAdmin={isAdmin} plan={plan} />
       <div className="main">
-        <Topbar orgName={orgName} />
         <div className="content view-in">{children}</div>
       </div>
     </div>
