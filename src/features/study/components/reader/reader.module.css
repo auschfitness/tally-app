@@ -218,9 +218,11 @@
 .swatch { --hl-a: 75%; width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer; transition: transform var(--dur-micro) var(--ease); }
 .swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text-2); }
 .swatch:active { transform: scale(0.94); }
-.noteMark { display: inline-flex; vertical-align: -0.1em; background: none; border: 0; padding: 0 3px; color: var(--text-2); cursor: pointer; }
-.noteMark svg { width: 0.8em; height: 0.8em; }
-@media (hover: hover) and (pointer: fine) { .noteMark:hover { color: var(--blue); } }
+/* Nota no versículo: quadrado com lápis do tamanho do texto, na cor do texto (o dono
+   achou o lápis apagado fácil de perder; referência: YouVersion). */
+.noteMark { font: inherit; line-height: 1; display: inline-flex; vertical-align: -0.2em; background: none; border: 0; padding: 2px 4px; margin-left: 2px; color: var(--text); opacity: 0.8; cursor: pointer; border-radius: var(--r-6); }
+.noteMark svg { width: 1.05em; height: 1.05em; }
+@media (hover: hover) and (pointer: fine) { .noteMark:hover { color: var(--blue); opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   .picker, .pane, .addMenu, .wHead, .selBar { animation: fadeIn var(--dur-micro) ease; }
