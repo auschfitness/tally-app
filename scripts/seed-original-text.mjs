@@ -5,7 +5,7 @@
 //   node scripts/seed-original-text.mjs tokens   ./tokens.tsv
 //   node scripts/seed-original-text.mjs lexicon  ./strongs.tsv
 //   node scripts/seed-original-text.mjs tagged   ./scripts/align/work/tagged-john.tsv
-//   node scripts/seed-original-text.mjs lexpt    ./scripts/align/work/lexpt-john.tsv
+//   node scripts/seed-original-text.mjs lexpt    ./scripts/align/work/lexpt-nt.tsv
 //
 // tokens.tsv  → colunas: lang, book, chapter, verse, position, surface, lemma, strong, morph, gloss, translit
 // strongs.tsv → colunas: strong, lang, lemma, translit, pronunciation, gloss, definition

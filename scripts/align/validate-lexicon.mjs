@@ -51,6 +51,6 @@ for (const b of batches) {
 }
 if (failed) process.exit(1);
 if (arg === "all") {
-  fs.writeFileSync("scripts/align/work/lexpt-john.tsv", ["strong\tlang\tgloss_pt\tdefinition_pt", ...rows].join("\n") + "\n");
-  console.log(`TSV: scripts/align/work/lexpt-john.tsv (${rows.length} linhas)`);
+  fs.writeFileSync("scripts/align/work/lexpt-nt.tsv", ["strong\tlang\tgloss_pt\tdefinition_pt", ...rows].join("\n") + "\n");
+  console.log(`TSV: scripts/align/work/lexpt-nt.tsv (${rows.length} linhas)`);
 }
