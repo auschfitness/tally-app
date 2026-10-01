@@ -44,6 +44,15 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       tabela, imagem; placeholder em serifa "Comece a escrever…".
 - [x] Alça visível no meio do divisor (nós já temos o divisor arrastável). Feito em 2026-10-01.
 
+## Destaques e notas (parte 2, melhorias)
+
+- [ ] **Destacar palavras específicas**, não só o versículo inteiro (pedido do dono em
+      2026-10-01). Hoje o destaque pinta o versículo todo (spec 08). Pontos a decidir:
+      seleção por toque/arraste (no celular a seleção nativa é ruim), como conviver com o
+      toque na palavra que abre a aba Palavra no Interlinear, e guardar o trecho por
+      posição de palavra (o texto pode vir do helloao sem posição; precisa de âncora
+      estável).
+
 ## Dicionário (parte 3 do plano)
 
 - [ ] Sentidos numerados do verbete com o **sentido deste versículo destacado** e o
