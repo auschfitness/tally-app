@@ -35,6 +35,7 @@ import { setHighlightAction } from "../../actions";
 import { ChapterPicker } from "./ChapterPicker";
 import { SelectionBar } from "./SelectionBar";
 import { selectHit, useWorkspace, type EditorData } from "./ReaderWorkspace";
+import { Icon } from "./WorkspacePane";
 import styles from "./reader.module.css";
 
 type Mode = "bible" | "original";
@@ -307,11 +308,15 @@ export function ReaderView({
         </Select>
         {tagged && mode === "bible" ? (
           <label className={styles.toggle}>
-            Interlinear
+            <span className={styles.toggleText}>Interlinear</span>
             <input type="checkbox" role="switch" checked={interlinear} onChange={toggleInterlinear} data-testid="interlinear-toggle" />
             <span className={styles.sw} aria-hidden />
           </label>
-        ) : null}
+        ) : <span className={styles.barGrow} aria-hidden />}
+        <span className={styles.sep} aria-hidden />
+        {/* Atalhos da área de trabalho na barra (antes só no + escondido da área). */}
+        <button type="button" className={styles.barBtn} aria-label="Sermão" onClick={() => open({ kind: "sermon" })}><Icon name="sermon" /><span>Sermão</span></button>
+        <button type="button" className={styles.barBtn} aria-label="Notas" onClick={() => openNotes(null)}><Icon name="notes" /><span>Notas</span></button>
       </div>
 
       {mode === "bible" ? (

@@ -9,7 +9,7 @@ import { DateField } from "@/components/shared/DateField";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { listTextNotesAction, saveSermonAction, syncSermonScripturesAction } from "../actions";
-import { OPTIONAL_SECTIONS, STATUS_LBL, VIS_LBL, appendBlock, type SectionKey } from "../domain";
+import { OPTIONAL_SECTIONS, SECTIONS, STATUS_LBL, VIS_LBL, appendBlock, type SectionKey } from "../domain";
 import type { Sermon, SermonContent, TextNote } from "../types";
 import type { Series } from "../types";
 import { parseRefs, type ScriptureRef } from "@/lib/bible/parse";
@@ -277,15 +277,32 @@ export function SermonEditor({
     scheduleSave();
   }
 
-  // Blocos vindos de fora (leitura, spec 07): cada `seq` novo entra uma vez.
+  // Blocos vindos de fora (leitura, spec 07): cada `seq` novo entra uma vez. O aviso
+  // "Adicionado em … · Desfazer" guarda a seção como estava, para desfazer sem perguntar.
   const lastSeq = useRef(0);
+  const [added, setAdded] = useState<{ section: SectionKey; prev: string; had: boolean } | null>(null);
   useEffect(() => {
     if (!incoming || incoming.seq === lastSeq.current) return;
     lastSeq.current = incoming.seq;
+    setAdded({ section: incoming.section, prev: values[incoming.section] ?? "", had: present.has(incoming.section) });
     addBlockToSection(incoming.block, incoming.section);
     onIncomingDone?.(incoming.seq);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incoming]);
+
+  useEffect(() => {
+    if (!added) return;
+    const t = window.setTimeout(() => setAdded(null), 6000);
+    return () => window.clearTimeout(t);
+  }, [added]);
+  function undoAdded(): void {
+    if (!added) return;
+    const { section, prev, had } = added;
+    setValues((v) => ({ ...v, [section]: prev }));
+    if (!had && section !== "notes") setPresent((p) => { const n = new Set(p); n.delete(section); return n; });
+    scheduleSave();
+    setAdded(null);
+  }
 
   const addable = OPTIONAL_SECTIONS.filter((s) => !present.has(s.key));
   const detected = refsFor(meta.main_passage, values, recognizeOn);
@@ -472,6 +489,12 @@ export function SermonEditor({
             </div>
           </aside>
         </>
+      ) : null}
+      {added ? (
+        <div className={styles.addedToast} role="status">
+          Adicionado em {SECTIONS.find((x) => x.key === added.section)?.label ?? "sermão"}
+          <button type="button" onClick={undoAdded}>Desfazer</button>
+        </div>
       ) : null}
     </div>
   );

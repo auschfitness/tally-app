@@ -17,6 +17,9 @@ const BOOKS = [
   ["3John", "3Jo"], ["Jude", "Jd"], ["Rev", "Ap"],
 ];
 const book = (bbb) => BOOKS[Number(bbb) - 40];
+// Os comentários também citam o AT (001 = Gênesis): só a abreviação, para o texto.
+const OT = "Gn Êx Lv Nm Dt Js Jz Rt 1Sm 2Sm 1Rs 2Rs 1Cr 2Cr Ed Ne Et Jó Sl Pv Ec Ct Is Jr Lm Ez Dn Os Jl Am Ob Jn Mq Na Hc Sf Ag Zc Ml".split(" ");
+const abbr = (bbb) => (Number(bbb) < 40 ? OT[Number(bbb) - 1] : book(bbb)?.[1]);
 export const osisRef = (r) => `${book(r.slice(0, 3))[0]}.${Number(r.slice(3, 6))}.${Number(r.slice(6, 9))}`;
 
 // Marcações da UBS → texto de leitura: {S:ref} vira "Mt 3.7", {L:lema<…>} vira o lema,
@@ -24,7 +27,7 @@ export const osisRef = (r) => `${book(r.slice(0, 3))[0]}.${Number(r.slice(3, 6))
 export function cleanUbs(s) {
   return String(s ?? "")
     .replace(/(\p{L})\{S:/gu, "$1 {S:") // a UBS às vezes cola a referência na palavra ("En{S:…}")
-    .replace(/\{S:(\d{3})(\d{3})(\d{3})\d*\}/g, (_, b, c, v) => (book(b) ? `${book(b)[1]} ${Number(c)}.${Number(v)}` : ""))
+    .replace(/\{S:(\d{3})(\d{3})(\d{3})\d*\}/g, (_, b, c, v) => (abbr(b) ? `${abbr(b)} ${Number(c)}${Number(v) ? `.${Number(v)}` : ""}` : ""))
     .replace(/\{L:([^<}]+)(<[^}]*)?\}/g, "$1")
     .replace(/\{D:([\d.]+)\}/g, "$1")
     .replace(/\{N:\d+\}/g, "")
@@ -40,6 +43,8 @@ if (process.argv.includes("--check")) {
   assert.equal(cleanUbs("entre {L:ἀγαπάω<SDBG:ἀγαπάω:000000>}[a] e ({D:25.33}){N:001}."), "entre ἀγαπάω e (25.33).");
   assert.equal(cleanUbs("um | dois<br>três"), "um\n\ndois\n\ntrês");
   assert.equal(osisRef("049004005"), "Eph.4.5");
+  assert.equal(cleanUbs("a sarça de {S:00200300200000}."), "a sarça de Êx 3.2.");
+  assert.equal(cleanUbs("em {S:04202003700000}"), "em Lc 20.37");
   console.log("ok");
   process.exit(0);
 }

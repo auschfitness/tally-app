@@ -120,4 +120,16 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     await expect(tab.locator("blockquote mark")).toHaveText(/batismo/);
     await page.screenshot({ path: "test-results/ubs-ef4.png" });
   });
+  test("barra abre Sermão e Notas; + Nova aba mostra o menu (antes ficava cortado)", async ({ page }) => {
+    await login(page);
+    await openWordTab(page);
+    await page.getByRole("button", { name: "Nova aba" }).click();
+    const menu = page.getByRole("menu");
+    await expect(menu.getByRole("menuitem", { name: "Notas" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Sermão", exact: true }).first().click();
+    await expect(page.getByTestId("sermon-picker").or(page.getByTestId("sermon-tab"))).toBeVisible();
+    await page.getByRole("button", { name: "Notas", exact: true }).first().click();
+    await expect(page.getByRole("tab", { name: /Notas/ })).toHaveAttribute("aria-selected", "true");
+  });
 });

@@ -25,8 +25,9 @@ const ICON: Record<string, string> = {
   shrink: "M2.5 6H6V2.5M13.5 6H10V2.5M2.5 10H6v3.5M13.5 10H10v3.5",
   fold: "M3.5 3.5L8 8l-4.5 4.5M8.5 3.5L13 8l-4.5 4.5",
   unfold: "M12.5 3.5L8 8l4.5 4.5M7.5 3.5L3 8l4.5 4.5",
+  plus: "M8 3.5v9M3.5 8h9",
 };
-function Icon({ name }: { name: keyof typeof ICON }) {
+export function Icon({ name }: { name: keyof typeof ICON }) {
   return (
     <svg className={styles.ico} viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d={ICON[name]} />
@@ -159,6 +160,9 @@ export function WorkspacePane({
         onPointerCancel={onUp}
         onClick={(e) => { if (e.detail === 0) setSheet((s) => (s === "full" ? "half" : "full")); }} // Enter/Espaço
       />
+      {/* Só as abas rolam para o lado; "Nova aba" e as ferramentas ficam fixas. O menu
+          mora fora da área que rola: dentro dela era cortado e o + parecia não fazer nada. */}
+      <div className={styles.tabBar}>
       <div className={styles.tabs} role="tablist">
         {ws.tabs.map((t) => {
           const key = tabKey(t);
@@ -170,13 +174,15 @@ export function WorkspacePane({
             </span>
           );
         })}
+      </div>
+      <span className={styles.tabActions}>
         {addable.length ? (
-          <span ref={addRef} style={{ position: "relative" }}>
-            <button type="button" className={`link ${styles.tabAdd}`} aria-label="Abrir aba" aria-haspopup="menu" aria-expanded={addOpen} onClick={() => setAddOpen((o) => !o)}>＋</button>
+          <span ref={addRef} className={styles.addWrap}>
+            <button type="button" className={styles.tabAdd} aria-label="Nova aba" aria-haspopup="menu" aria-expanded={addOpen} onClick={() => setAddOpen((o) => !o)}><Icon name="plus" /><span className={styles.tabAddLabel}>Nova aba</span></button>
             {addOpen ? (
               <div className={styles.addMenu} role="menu">
                 {addable.map((a) => (
-                  <button key={a.kind} type="button" role="menuitem" onClick={() => { setAddOpen(false); onAdd(a.kind); }}>{a.label}</button>
+                  <button key={a.kind} type="button" role="menuitem" onClick={() => { setAddOpen(false); onAdd(a.kind); }}><Icon name={a.kind} />{a.label}</button>
                 ))}
               </div>
             ) : null}
@@ -186,6 +192,7 @@ export function WorkspacePane({
           <button type="button" className={styles.tool} aria-label={view === "full" ? "Sair da tela cheia" : "Tela cheia"} onClick={() => onView(view === "full" ? "split" : "full")}><Icon name={view === "full" ? "shrink" : "expand"} /></button>
           <button type="button" className={styles.tool} aria-label="Recolher área de trabalho" onClick={() => onView("rail")}><Icon name="fold" /></button>
         </span>
+      </span>
       </div>
       {ws.tabs.map((t) => {
         const key = tabKey(t);

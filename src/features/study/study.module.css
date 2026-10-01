@@ -1115,3 +1115,11 @@
 
 /* BibleCompare dentro da área de trabalho da leitura (spec 07): sem cartão de modal. */
 .cmpEmbedded { display: block; width: 100%; }
+
+/* Aviso "Adicionado em Esboço · Desfazer" (bloco vindo da leitura). Sobe de leve. */
+.addedToast { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; gap: 14px; width: fit-content; margin: 16px auto 0; padding: 9px 10px 9px 16px; border-radius: 999px; background: var(--text); color: var(--bg); font: 500 13px/1 var(--font-ui); box-shadow: var(--e-2); animation: toastUp 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+.addedToast button { border: 0; border-radius: 999px; padding: 6px 10px; background: color-mix(in srgb, var(--bg) 16%, transparent); color: inherit; font: 600 13px/1 var(--font-ui); cursor: pointer; transition: transform 120ms ease-out; }
+.addedToast button:active { transform: scale(0.97); }
+@keyframes toastUp { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .addedToast { animation: toastFade 200ms ease; } }
+@keyframes toastFade { from { opacity: 0; } }
