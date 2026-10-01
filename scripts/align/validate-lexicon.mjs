@@ -42,6 +42,13 @@ for (const b of batches) {
       if (!o || o.strong !== e.strong) { errors.push(`#${i}: esperado ${e.strong}`); return; }
       if (!clean(o.gloss_pt)) errors.push(`${e.strong}: gloss_pt vazio`);
       if (clean(o.gloss_pt).split(/\s+/).length > 8) errors.push(`${e.strong}: gloss_pt longo demais`);
+      // Pega "tradução" que só recortou o verbete inglês: sobra inglês, hebraico, colchete do LXX ou quase nada.
+      const g = clean(o.gloss_pt), d = clean(o.definition_pt);
+      if (/[Ͱ-Ͽἀ-῿֐-׿]/.test(g)) errors.push(`${e.strong}: gloss_pt com grego/hebraico`);
+      if (/^[a-z]/.test(g) && g.toLowerCase() === clean(e.gloss).toLowerCase()) console.log(`  aviso ${e.strong}: gloss_pt igual ao inglês ("${g}"), confira`);
+      if ((d.match(/\p{L}/gu) ?? []).length < 6) errors.push(`${e.strong}: definition_pt vazia ou sem texto`);
+      // \b do JS não entende acento ("Ofício" casaria "of"); por isso o lookaround com \p{L}. Minúsculo: "Is 49.6" é Isaías.
+      if (/[֐-׿[\]]|LXX|(?<!\p{L})(the|of|and|which|with|from|to|is)(?!\p{L})/u.test(d)) errors.push(`${e.strong}: definition_pt com inglês/hebraico/LXX`);
       rows.push([e.strong, e.strong.startsWith("H") ? "hbo" : "grc", clean(o.gloss_pt), clean(o.definition_pt)].join("\t"));
     });
   }
