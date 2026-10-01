@@ -5,7 +5,7 @@ const BASE = "https://bible.helloao.org/api";
 export interface RawVerse {
   type?: string;
   number: number;
-  content?: (string | { text?: string })[];
+  content?: (string | { text?: string; noteId?: number })[];
 }
 
 export function versesFrom(data: unknown): RawVerse[] {
@@ -16,8 +16,14 @@ export function versesFrom(data: unknown): RawVerse[] {
 }
 
 export function verseText(v: RawVerse): string {
-  const parts = (v.content || []).map((seg) => {
-    if (typeof seg === "string") return seg;
+  const segs = v.content || [];
+  const parts = segs.map((seg, i) => {
+    if (typeof seg === "string") {
+      // Defeito da Bíblia Livre (8 versículos, ex. Jo 2:6): o ")" que fecha o "(" da nota
+      // de rodapé ficou fora da nota, logo depois dela. A nota não é exibida, então sai.
+      const prev = segs[i - 1];
+      return prev && typeof prev === "object" && prev.noteId !== undefined ? seg.replace(/^\s*\)/, "") : seg;
+    }
     if (seg && typeof seg.text === "string") return seg.text;
     return "";
   });

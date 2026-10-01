@@ -85,10 +85,12 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 
 - [ ] **Excluir sermão/rascunho com lixeira de 30 dias** (restaurar dentro do prazo; depois
       some de vez). Vale também para notas.
-- [ ] **Símbolo perdido no texto:** João 2:6 termina em "metretas. )" com um ")" sem o "("
-      correspondente. Descobrir a causa (texto da Bíblia Livre no helloao? aspas curvas?
-      parágrafos? divisão em trechos do Interlinear?) e varrer a Bíblia inteira atrás de
-      parênteses, aspas e colchetes desemparelhados.
+- [x] **Símbolo perdido no texto (Jo 2:6):** na Bíblia Livre do helloao, o ")" que fecha o
+      "(" de 8 notas de rodapé ficou fora da nota, logo depois dela (Jr 17:5, 17:23, Lm 1:19,
+      3:36, Ez 22:10, Mt 23:5, Jo 2:6, Hb 10:29). Corrigido no parse (helloao.ts e scripts
+      fetch-*.mjs) e nas 3 linhas do NT já no banco. Ap 17:14 tem ")" sem "(" no próprio texto
+      da fonte: corrigido só no banco (refazer se o NT for importado de novo). O resto dos
+      desemparelhados são parênteses/aspas que atravessam versículos (normal).
 - [ ] **Refazer a página Sermões** (a biblioteca atual é inútil do jeito que está).
 - [ ] **Refazer "Escrituras" e "Propriedades"** do editor de sermão (botões no canto que
       ninguém entende).

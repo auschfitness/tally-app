@@ -12,8 +12,10 @@ function versesFrom(data) {
   return arr.filter((x) => x && x.type === "verse");
 }
 function verseText(v) {
-  const parts = (v.content || []).map((seg) => {
-    if (typeof seg === "string") return seg;
+  const segs = v.content || [];
+  const parts = segs.map((seg, i) => {
+    // ")" da nota de rodapé que a Bíblia Livre deixou fora dela (ver src/lib/bible/helloao.ts)
+    if (typeof seg === "string") return segs[i - 1] && segs[i - 1].noteId !== undefined ? seg.replace(/^\s*\)/, "") : seg;
     if (seg && typeof seg.text === "string") return seg.text;
     return "";
   });
