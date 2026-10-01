@@ -3536,6 +3536,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ubs_senses: {
+        Row: {
+          strong: string
+          sense_id: string
+          lemma: string
+          entry_code: string | null
+          ord: number
+          glosses: string[]
+          definition: string | null
+          comments: string | null
+          domains: string[]
+          subdomains: string[]
+          refs: string[]
+        }
+        Insert: {
+          strong?: string
+          sense_id?: string
+          lemma?: string
+          entry_code?: string | null
+          ord?: number
+          glosses?: string[]
+          definition?: string | null
+          comments?: string | null
+          domains?: string[]
+          subdomains?: string[]
+          refs?: string[]
+        }
+        Update: {
+          strong?: string
+          sense_id?: string
+          lemma?: string
+          entry_code?: string | null
+          ord?: number
+          glosses?: string[]
+          definition?: string | null
+          comments?: string | null
+          domains?: string[]
+          subdomains?: string[]
+          refs?: string[]
+        }
+        Relationships: []
+      }
       strongs_lexicon: {
         Row: {
           definition: string | null

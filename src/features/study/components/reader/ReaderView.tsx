@@ -278,6 +278,11 @@ export function ReaderView({
           open({
             kind: "word", strong, key, ...refNow, verse: v.n, text: s.text.trim(),
             surface: o ? cleanSurface(o.surface) : null, translit: o?.translit ?? null, morph: o?.morph ?? null,
+            quote: {
+              before: v.spans.slice(0, i).map((x) => x.text).join("").trimStart(),
+              word: s.text,
+              after: v.spans.slice(i + 1).map((x) => x.text).join("").trimEnd(),
+            },
           });
         }}
       >

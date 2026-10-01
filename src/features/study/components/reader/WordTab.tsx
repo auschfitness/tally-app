@@ -4,10 +4,14 @@
 // DESTE versículo no original, a palavra em português tocada e o Strong; Definição
 // (glosa grande, definição, forma de dicionário, gramática desta ocorrência em
 // português) e Ocorrências (distribuição por livro → capítulos → toque navega).
+// Com verbete no dicionário UBS (spec 09), a Definição mostra o sentido deste versículo
+// (glosas, definição, comentário, domínios, versículo citado) e os outros sentidos; sem
+// verbete, cai no léxico STEPBible.
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { morphPt } from "../../morph";
-import { chapterLabel, glossOf, filterOccurrences, groupOccurrences, isHebrew, strongNum, type ChapterRef, type LexShort, type OccBook, type WordPick, withChapterCount } from "../../reader";
+import { usfmToOsis } from "@/lib/bible/osis";
+import { chapterLabel, glossOf, filterOccurrences, groupOccurrences, isHebrew, orderSenses, strongNum, ubsCitation, type ChapterRef, type LexShort, type OccBook, type UbsSense, type WordPick, withChapterCount } from "../../reader";
 import { selectHit } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
@@ -45,6 +49,9 @@ export function WordTab({
   const [openBook, setOpenBook] = useState("");
   const [query, setQuery] = useState("");
   const [copied, setCopied] = useState(false);
+  const [ubs, setUbs] = useState<Load<(UbsSense & { here: boolean })[]>>({ status: "loading" });
+  const osis = usfmToOsis(pick.book);
+  const verseRef = osis ? `${osis}.${pick.chapter}.${pick.verse}` : "";
 
   // Outra palavra: zera o que é desta (a aba é a mesma, o componente não remonta).
   useEffect(() => {
@@ -66,6 +73,25 @@ export function WordTab({
       alive = false;
     };
   }, [strong]);
+
+  // Sentidos UBS do verbete + quais a UBS marca para ESTE versículo (refs fica no banco:
+  // palavras comuns têm milhares de versículos).
+  useEffect(() => {
+    let alive = true;
+    setUbs({ status: "loading" });
+    const db = createClient();
+    void Promise.all([
+      db.from("ubs_senses").select("sense_id, lemma, entry_code, ord, glosses, definition, comments, domains, subdomains").eq("strong", strong),
+      verseRef ? db.from("ubs_senses").select("sense_id").eq("strong", strong).contains("refs", [verseRef]) : Promise.resolve({ data: [], error: null }),
+    ]).then(([all, hereRows]) => {
+      if (!alive) return;
+      if (all.error) setUbs({ status: "error" });
+      else setUbs({ status: "ok", data: orderSenses(all.data ?? [], (hereRows.data ?? []).map((h) => h.sense_id)) });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [strong, verseRef]);
 
   // Busca uma vez por palavra, quando a aba Ocorrências abre. Sem cleanup que descarte a
   // resposta: o próprio "carregando" muda as dependências e mataria a requisição. Quem
@@ -95,9 +121,12 @@ export function WordTab({
   const here = `${chapterLabel(pick)}:${pick.verse}`;
   const citation = `STEPBible, léxico ${heb ? "hebraico" : "grego"} (CC BY 4.0), verbete ${strong}${def.status === "ok" && def.data.pt ? ", tradução Tally" : ""}.`;
 
+  const senses = ubs.status === "ok" ? ubs.data : [];
+  const main = senses[0];
+
   async function copyCitation(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(citation);
+      await navigator.clipboard.writeText(main ? ubsCitation(main.lemma, main.entry_code, new Date()) : citation);
       setCopied(true);
     } catch {
       setCopied(false);
@@ -128,8 +157,33 @@ export function WordTab({
 
       {seg === "def" ? (
         <div className={styles.wBody}>
-          {gloss ? <h3 className={styles.wGloss}>{gloss}</h3> : null}
-          {def.status === "loading" ? <p className={styles.muted}>Carregando…</p>
+          {ubs.status === "loading" ? <p className={styles.muted}>Carregando…</p>
+          : main ? (
+            <>
+              {senses.length > 1 ? <p className={styles.senseTag}>{main.here ? "Sentido neste versículo" : "Sentido principal"}</p> : null}
+              <SenseBody s={main} gloss={gloss} />
+              {pick.quote ? (
+                <blockquote className={styles.wQuote}>
+                  {pick.quote.before}<mark>{pick.quote.word}</mark>{pick.quote.after}
+                  <cite> · {here}</cite>
+                </blockquote>
+              ) : null}
+              {senses.length > 1 ? (
+                <div className={styles.senses}>
+                  <p className={styles.senseTag}>Outros sentidos</p>
+                  {senses.slice(1).map((s, n) => (
+                    <details key={s.sense_id} className={styles.sense}>
+                      <summary><span className={styles.senseN}>{n + 2}</span>{s.glosses.join(", ") || s.definition}</summary>
+                      <SenseBody s={s} />
+                    </details>
+                  ))}
+                </div>
+              ) : null}
+            </>
+          ) : null}
+          {ubs.status !== "loading" && !main && gloss ? <h3 className={styles.wGloss}>{gloss}</h3> : null}
+          {ubs.status === "loading" || main ? null
+          : def.status === "loading" ? <p className={styles.muted}>Carregando…</p>
           : def.status === "error" ? <p className={styles.muted}>Não consegui carregar a definição agora.</p>
           : def.data.pt ? <p className={styles.wDef}>{def.data.pt}</p>
           : def.data.en ? (
@@ -158,8 +212,8 @@ export function WordTab({
           </dl>
 
           <p className={styles.source}>
-            Fonte: léxico STEPBible (CC BY 4.0){def.status === "ok" && def.data.pt ? ", tradução Tally" : ""} ·{" "}
-            <button type="button" className="link" onClick={copyCitation}>{copied ? "Citação copiada" : "Citar"}</button>
+            {main ? "Fonte: Dicionário Grego do Novo Testamento da UBS (CC BY-SA 4.0), tradução Tally" : `Fonte: léxico STEPBible (CC BY 4.0)${def.status === "ok" && def.data.pt ? ", tradução Tally" : ""}`} ·{" "}
+            <button type="button" className="link" onClick={copyCitation}>{copied ? "Citação copiada" : main ? "Citar (ABNT)" : "Citar"}</button>
           </p>
         </div>
       ) : occ == null || occ.status === "loading" ? <p className={styles.muted}>Carregando…</p>
@@ -207,5 +261,24 @@ export function WordTab({
         </div>
       )}
     </div>
+  );
+}
+
+// Um sentido UBS: glosas como título (só no principal), definição, comentário em
+// parágrafos e domínios.
+function SenseBody({ s, gloss }: { s: UbsSense; gloss?: string }): React.ReactElement {
+  const title = s.glosses.join(", ") || gloss;
+  const tags = [...s.domains, ...s.subdomains];
+  return (
+    <>
+      {gloss !== undefined && title ? <h3 className={styles.wGloss}>{title}</h3> : null}
+      {s.definition ? <p className={styles.wDef}>{s.definition}</p> : null}
+      {s.comments?.split(/\n\n+/).map((p, i) => <p key={i} className={styles.wCmt}>{p}</p>)}
+      {tags.length ? (
+        <div className={styles.tags}>
+          {tags.map((t, i) => <span key={i} className={styles.tag}>{t}</span>)}
+        </div>
+      ) : null}
+    </>
   );
 }

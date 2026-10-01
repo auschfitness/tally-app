@@ -233,6 +233,9 @@ export interface WordPick {
   surface: string | null; // forma flexionada no original deste versículo
   translit: string | null;
   morph: string | null;
+  // O versículo partido em volta da palavra tocada, para citar com ela marcada. Só no
+  // modo Bíblia (no Original não há trecho em português).
+  quote?: { before: string; word: string; after: string } | null;
 }
 export type WsTab =
   | ({ kind: "word" } & WordPick)
@@ -354,4 +357,33 @@ export function copyText(ref: ChapterRef, verses: ReaderVerse[], selected: numbe
 export function notesFirst<T extends { verse_start: number | null }>(notes: T[], verse: number | null): T[] {
   if (verse == null) return notes;
   return [...notes.filter((n) => n.verse_start === verse), ...notes.filter((n) => n.verse_start !== verse)];
+}
+
+// Dicionário UBS (spec 09). Um sentido do verbete, já traduzido; `here` = a UBS diz que é
+// o sentido usado no versículo aberto.
+export interface UbsSense {
+  sense_id: string;
+  lemma: string;
+  entry_code: string | null;
+  ord: number;
+  glosses: string[];
+  definition: string | null;
+  comments: string | null;
+  domains: string[];
+  subdomains: string[];
+}
+
+// O sentido deste versículo primeiro (marcado), depois os demais na ordem do verbete.
+// Sem marca da UBS para o versículo, fica a ordem do verbete e nenhum é "deste versículo".
+export function orderSenses(senses: UbsSense[], hereIds: string[]): (UbsSense & { here: boolean })[] {
+  const here = new Set(hereIds);
+  return senses
+    .map((s) => ({ ...s, here: here.has(s.sense_id) }))
+    .sort((a, b) => Number(b.here) - Number(a.here) || a.ord - b.ord || a.sense_id.localeCompare(b.sense_id));
+}
+
+const ABNT_MONTHS = ["jan.", "fev.", "mar.", "abr.", "maio", "jun.", "jul.", "ago.", "set.", "out.", "nov.", "dez."];
+export function ubsCitation(lemma: string, entryCode: string | null, today: Date): string {
+  const at = `${today.getDate()} ${ABNT_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
+  return `SOCIEDADES BÍBLICAS UNIDAS. Dicionário Grego do Novo Testamento. Verbete ${lemma}${entryCode ? ` (${entryCode})` : ""}. Tradução Tally do original em espanhol. Licença CC BY-SA 4.0. Disponível em: https://github.com/ubsicap/ubs-open-license. Acesso em: ${at}.`;
 }

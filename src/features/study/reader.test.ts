@@ -9,6 +9,8 @@ import {
   curlyQuotes,
   filterOccurrences,
   glossOf,
+  orderSenses,
+  ubsCitation,
   isHlColor,
   colorFor,
   copyText,
@@ -277,5 +279,20 @@ describe("destaques e notas (spec 08)", () => {
     const ns = [{ id: "a", verse_start: 2 }, { id: "b", verse_start: 5 }, { id: "c", verse_start: null }, { id: "d", verse_start: 5 }];
     expect(notesFirst(ns, 5).map((n) => n.id)).toEqual(["b", "d", "a", "c"]);
     expect(notesFirst(ns, null)).toBe(ns);
+  });
+});
+
+describe("dicionário UBS", () => {
+  const sense = (sense_id: string, ord: number) => ({ sense_id, lemma: "λόγος", entry_code: null, ord, glosses: [], definition: null, comments: null, domains: [], subdomains: [] });
+  it("põe o sentido do versículo primeiro e marca só ele", () => {
+    const out = orderSenses([sense("a", 0), sense("b", 1), sense("c", 2)], ["c"]);
+    expect(out.map((s) => [s.sense_id, s.here])).toEqual([["c", true], ["a", false], ["b", false]]);
+  });
+  it("sem marca da UBS mantém a ordem do verbete", () => {
+    expect(orderSenses([sense("b", 1), sense("a", 0)], []).map((s) => s.sense_id)).toEqual(["a", "b"]);
+  });
+  it("citação ABNT com mês abreviado", () => {
+    expect(ubsCitation("βάπτισμα", "53.41", new Date(2026, 9, 1))).toContain("Verbete βάπτισμα (53.41).");
+    expect(ubsCitation("βάπτισμα", null, new Date(2026, 4, 9))).toContain("Acesso em: 9 maio 2026.");
   });
 });
