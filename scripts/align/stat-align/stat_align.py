@@ -11,6 +11,7 @@ Melhorias da rodada 2, cada uma ligável por flag:
   --tune A-B    tabela de variante x limiar medida nos capítulos A-B (disjuntos da semente)
   --eval A-B    mede os capítulos A-B com --sym/--tau
   --write       grava work/jhn-NN.align.stat.json (formato do validate-alignment.mjs)
+  --write-nt    grava work/nt/<LIVRO>-NN.align.stat.json do NT inteiro, menos João (só a variante --sym)
 
 Uso (da raiz do repo): python scripts/align/stat-align/stat_align.py --stem --sym gdfa --seed 10 --tau 0.4 --eval 11-21 --write
 Eflomal não instala no Windows (precisa de make + compilador C); por isso este Model 2 próprio.
@@ -220,6 +221,7 @@ def main():
     ap.add_argument("--tune")
     ap.add_argument("--eval")
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--write-nt", action="store_true")
     a = ap.parse_args()
     for r in (a.tune, a.eval):
         if r and rng(r)[0] <= a.seed:
@@ -269,20 +271,22 @@ def main():
 
     john = [i for i, x in enumerate(verses) if x["book"] == "JHN"]
     variants = ["fwd", "inter", "gd", "gdfa"]
-    best = {sym: {} for sym in variants}  # sym -> (cap, verso) -> [(Strong, nota) por palavra]
-    for i in john:
+
+    def align_verse(i, sym):
+        """[(Strong, nota)] por palavra do versículo i; a nota é a posterior (fwd) ou a média geométrica dos dois sentidos."""
         x = verses[i]
         n, m = n_s[i], n_w[i]
         fw = fbest[pt_base[i]:pt_base[i] + m]
         rv = rbest[gr_base[i]:gr_base[i] + n]
-        for sym in variants:
-            per = [(None, 0.0)] * m
-            for gi, j in links_for(sym, fw, rv, n, m):
-                p = off[i] + j * n + gi - 1
-                score = pf[p] if sym == "fwd" else float(np.sqrt(pf[p] * pb[p]))
-                if score > per[j][1]:
-                    per[j] = (inv[int(x["s_ids"][gi - 1])], score)
-            best[sym][(x["ch"], x["v"])] = per
+        per = [(None, 0.0)] * m
+        for gi, j in links_for(sym, fw, rv, n, m):
+            p = off[i] + j * n + gi - 1
+            score = pf[p] if sym == "fwd" else float(np.sqrt(pf[p] * pb[p]))
+            if score > per[j][1]:
+                per[j] = (inv[int(x["s_ids"][gi - 1])], score)
+        return per
+
+    best = {sym: {(verses[i]["ch"], verses[i]["v"]): align_verse(i, sym) for i in john} for sym in variants}
 
     gold_words = {}
     for i in john:
@@ -302,6 +306,18 @@ def main():
                 print(f"  {sym:5s} tau {tau:.2f}: {fmt(metrics(preds(sym, tau), gold_words, ch))}")
     if a.eval:
         print(f"\ncapítulos {a.eval}, {a.sym}, tau {a.tau}: {fmt(metrics(preds(a.sym, a.tau), gold_words, rng(a.eval)))}")
+    if a.write_nt:
+        by_file, nverses = {}, 0
+        for i, x in enumerate(verses):
+            if x["book"] == "JHN":
+                continue
+            tags = [st if sc >= a.tau else None for st, sc in align_verse(i, a.sym)]
+            by_file.setdefault((x["book"], x["ch"]), []).append({"verse": x["v"], "spans": spans_for(x["pt"], x["ws"], tags)})
+            nverses += 1
+        for (book, ch), arr in by_file.items():
+            with open(f"{ROOT}/nt/{book}-{ch:02d}.align.stat.json", "w", encoding="utf8") as f:
+                json.dump(arr, f, ensure_ascii=False)
+        print(f"escrevi {len(by_file)} capítulos ({nverses} versículos) do NT, sem João, em {ROOT}/nt/ ({a.sym}, tau {a.tau})")
     if a.write:
         tags = preds(a.sym, a.tau)
         by_ch = {}
