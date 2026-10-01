@@ -13,9 +13,9 @@ async function login(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/$|\/study(\/bible.*)?$|\/onboarding$/);
 }
 
-// João 1 com a chave ligada e a aba Palavra aberta na área de trabalho.
-async function openWordTab(page: Page): Promise<void> {
-  await page.goto("/study/bible/JHN/1");
+// Capítulo (João 1 por padrão) com a chave ligada e a aba Palavra aberta na área de trabalho.
+async function openWordTab(page: Page, path = "/study/bible/JHN/1"): Promise<void> {
+  await page.goto(path);
   await expect(page.getByTestId("reader-text")).toContainText("No princípio");
   await page.getByTestId("interlinear-toggle").check();
   const words = page.getByTestId("reader-text").locator("[data-strong]");
@@ -33,11 +33,10 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     await openWordTab(page);
   });
 
-  test("Gênesis 1 lê normal e não mostra a chave", async ({ page }) => {
+  test("Gênesis 1 também liga a palavra ao hebraico", async ({ page }) => {
     await login(page);
-    await page.goto("/study/bible/GEN/1");
-    await expect(page.getByTestId("reader-text")).toBeVisible();
-    await expect(page.getByTestId("interlinear-toggle")).toHaveCount(0);
+    await openWordTab(page, "/study/bible/GEN/1");
+    await expect(page.getByTestId("word-tab")).toContainText(/[֐-׿]/); // letras hebraicas
   });
 
   test("trocar de capítulo mantém a área de trabalho e a aba abertas", async ({ page }) => {
