@@ -17,6 +17,7 @@ import styles from "./reader.module.css";
 
 type Load<T> = { status: "loading" } | { status: "error" } | { status: "ok"; data: T };
 const EN_MAX = 700;
+const CITE_ON = false;
 
 export function WordTab({
   pick,
@@ -211,9 +212,11 @@ export function WordTab({
             ) : null}
           </dl>
 
+          {/* "Citar" desligado até o app ter domínio próprio (pedido do dono, 2026-10-01): a
+              citação precisa apontar para o endereço do versículo. Ver backlog do Estudo. */}
           <p className={styles.source}>
-            {main ? "Fonte: Dicionário Grego do Novo Testamento da UBS (CC BY-SA 4.0), tradução Tally" : `Fonte: léxico STEPBible (CC BY 4.0)${def.status === "ok" && def.data.pt ? ", tradução Tally" : ""}`} ·{" "}
-            <button type="button" className="link" onClick={copyCitation}>{copied ? "Citação copiada" : main ? "Citar (ABNT)" : "Citar"}</button>
+            {main ? "Fonte: Dicionário Grego do Novo Testamento da UBS (CC BY-SA 4.0), tradução Tally" : `Fonte: léxico STEPBible (CC BY 4.0)${def.status === "ok" && def.data.pt ? ", tradução Tally" : ""}`}
+            {CITE_ON ? <>{" · "}<button type="button" className="link" onClick={copyCitation}>{copied ? "Citação copiada" : main ? "Citar (ABNT)" : "Citar"}</button></> : null}
           </p>
         </div>
       ) : occ == null || occ.status === "loading" ? <p className={styles.muted}>Carregando…</p>

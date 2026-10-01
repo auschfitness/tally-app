@@ -55,10 +55,16 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 
 ## Dicionário (parte 3 do plano)
 
-- [ ] Sentidos numerados do verbete com o **sentido deste versículo destacado** e o
-      versículo citado com a palavra marcada.
-- [ ] Domínios semânticos em etiquetas ("Nascimento e procriação").
-- [ ] "Citar (ABNT)".
+- [x] Sentidos numerados do verbete com o **sentido deste versículo destacado** e o
+      versículo citado com a palavra marcada. Feito em 2026-10-01 (spec 09).
+- [x] Domínios semânticos em etiquetas ("Nascimento e procriação"). Feito em 2026-10-01.
+- [ ] **"Citar (ABNT)" volta quando o app tiver domínio próprio** (hoje tallyos.vercel.app).
+      Botão escondido em 2026-10-01 (`CITE_ON` em WordTab.tsx). Seguir o formato do Raízes,
+      que cita a tradução e aponta para o versículo: "UNITED BIBLE SOCIETIES. Dicionário Grego
+      do Novo Testamento da UBS. Tradução: Bíblia Raízes. [S. l.]: Bíblia Raízes, 2026.
+      Traduzido de: UBS Dictionary of the Greek New Testament. Versão 1.1. [S. l.]: United
+      Bible Societies, 2023. Disponível em: <url do versículo>. Acesso em: 1 out. 2026."
+      Nosso equivalente: Tradução: Tally; Disponível em: <domínio>/study/bible/EPH/4#v11.
 
 ## Próximo chat
 

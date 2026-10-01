@@ -118,7 +118,6 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     await expect(tab.getByRole("heading", { name: "batizar, batismo" })).toBeVisible();
     await expect(tab).toContainText("Atividades religiosas");
     await expect(tab.locator("blockquote mark")).toHaveText(/batismo/);
-    await expect(tab).toContainText("Citar (ABNT)");
     await page.screenshot({ path: "test-results/ubs-ef4.png" });
   });
 });

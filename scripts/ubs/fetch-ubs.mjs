@@ -8,6 +8,8 @@ import fs from "node:fs";
 const SRC = "https://raw.githubusercontent.com/ubsicap/ubs-open-license/main/dictionaries/greek/JSON/UBSGreekNTDic-v1.0-es.JSON";
 const DIR = "scripts/ubs/work";
 const BATCH_CHARS = 30000;
+// Fora do piloto os sentidos são curtos e muitos: acima de ~110 itens o Haiku para no meio.
+const MAX_ITEMS = 80;
 
 const raw = `${DIR}/ubs-es.json`;
 if (!fs.existsSync(raw)) fs.writeFileSync(raw, await (await fetch(SRC)).text());
@@ -49,7 +51,7 @@ const size = (s) => s.es.glosses.join(", ").length + s.es.short.length + s.es.co
 const batches = [];
 let cur = [], chars = 0, pilotBatches = 0;
 for (const s of order) {
-  if (cur.length && (chars + size(s) > BATCH_CHARS || pilot(cur[0].refs) !== pilot(s.refs))) {
+  if (cur.length && (chars + size(s) > BATCH_CHARS || pilot(cur[0].refs) !== pilot(s.refs) || (!pilot(s.refs) && cur.length >= MAX_ITEMS))) {
     batches.push(cur);
     cur = [];
     chars = 0;
@@ -62,5 +64,12 @@ for (const f of fs.readdirSync(DIR).filter((f) => /^ubs-\d+\.input\.json$/.test(
 batches.forEach((b, i) => {
   if (pilot(b[0].refs)) pilotBatches++;
   fs.writeFileSync(`${DIR}/ubs-${String(i + 1).padStart(2, "0")}.input.json`, JSON.stringify(b.map((s) => ({ id: s.id, ...s.es })), null, 1));
+});
+// Traduções já aprovadas guardadas por id (salvage.json) viram a saída do lote novo que
+// elas cobrem inteiro; assim renumerar os lotes não joga trabalho fora.
+const salvage = fs.existsSync(`${DIR}/salvage.json`) ? JSON.parse(fs.readFileSync(`${DIR}/salvage.json`, "utf8")) : {};
+batches.forEach((b, i) => {
+  const out = `${DIR}/ubs-${String(i + 1).padStart(2, "0")}.pt.json`;
+  if (!fs.existsSync(out) && b.every((s) => salvage[s.id])) fs.writeFileSync(out, JSON.stringify(b.map((s) => salvage[s.id]), null, 1));
 });
 console.log(`${senses.length} sentidos, ${domains.size} domínios, ${batches.length} lotes (piloto: 1-${pilotBatches})`);
