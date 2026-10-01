@@ -77,8 +77,24 @@ async function doBatch(n) {
         last = r.error;
         continue;
       }
+      // Às vezes o modelo devolve as glosas como texto corrido, ou com o nome de campo da
+      // entrada (`glosses`, já traduzido). O conferidor ainda pega se vier espanhol.
+      if (Array.isArray(r.out)) {
+        for (const x of r.out) {
+          if (x && x.glosses_pt == null && Array.isArray(x.glosses)) x.glosses_pt = x.glosses;
+          if (x && x.short_pt == null && typeof x.short === "string") x.short_pt = x.short;
+          if (x && x.comments_pt == null && typeof x.comments === "string") x.comments_pt = x.comments;
+          if (x) {
+            delete x.short;
+            delete x.comments;
+          }
+          if (typeof x?.glosses_pt === "string") x.glosses_pt = x.glosses_pt.split(/\s*[,;]\s*/).filter(Boolean);
+          if (x) delete x.glosses;
+        }
+      }
       const errors = checkBatch(part, r.out);
       if (errors.length) last = `${errors.length} erros: ${errors[0]}`;
+      if (errors.length && process.env.UBS_DEBUG) console.log(JSON.stringify(r.out).slice(0, 600));
       else done = r.out;
     }
     if (!done) return `lote ${n}: FALHOU nos itens ${i}-${i + part.length - 1} (${last})`;

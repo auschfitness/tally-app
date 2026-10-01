@@ -33,7 +33,7 @@ export function checkBatch(input, out) {
       if (!pt) continue;
       const ratio = pt.length / clean(src).length;
       if (clean(src).length > 80 && (ratio < 0.7 || ratio > 1.4)) errors.push(`${e.id}: ${k} com tamanho estranho (${ratio.toFixed(2)}× o original)`);
-      const es = pt.match(ES) ?? [];
+      const es = pt.replace(/Sus scrofa/g, "").match(ES) ?? []; // nome científico do porco, em latim
       if (es.length) errors.push(`${e.id}: ${k} com espanhol (${[...new Set(es)].slice(0, 4).join(", ")})`);
       if (overlap(pt, src) > 0.75) errors.push(`${e.id}: ${k} quase igual ao espanhol`);
     }
