@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark } from "@/components/shared/LogoMark";
-import { NAV_GROUPS, TOP_ITEMS, PLANS_ITEM, SETTINGS_ITEM, ADMIN_ITEM, type NavGroup, type NavItem } from "@/config/nav";
+import { NAV_GROUPS as ALL_GROUPS, TOP_ITEMS as ALL_TOP, PLANS_ITEM, SETTINGS_ITEM, ADMIN_ITEM, STUDY_ONLY, type NavGroup, type NavItem } from "@/config/nav";
 import { planAllows, type PlanCode } from "@/features/plans/catalog";
 import { logoutAction } from "@/app/(dashboard)/actions";
 
@@ -15,6 +15,10 @@ export interface NavCounts {
 }
 
 const OPEN_KEY = "tally.nav.open";
+
+// Modo só Estudo: some tudo do menu menos o grupo Ensino (e Planos, que fica desligado).
+const TOP_ITEMS = STUDY_ONLY ? [] : ALL_TOP;
+const NAV_GROUPS = STUDY_ONLY ? ALL_GROUPS.filter((g) => g.key === "ensino") : ALL_GROUPS;
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -57,7 +61,7 @@ export function Sidebar({
   plan?: PlanCode;
 }) {
   const pathname = usePathname();
-  const isLocked = (item: NavItem) => Boolean(item.feature) && !planAllows(plan, item.feature!);
+  const isLocked = (item: NavItem) => !STUDY_ONLY && Boolean(item.feature) && !planAllows(plan, item.feature!);
 
   // Estado inicial determinístico (server + 1º render client): abre só o grupo do
   // item ativo — revelação progressiva (design-principles #2). A preferência salva
@@ -153,7 +157,7 @@ export function Sidebar({
       })}
 
       <div className="navsep" />
-      <Item item={PLANS_ITEM} counts={counts} active={isActive(pathname, PLANS_ITEM.href)} />
+      {STUDY_ONLY ? null : <Item item={PLANS_ITEM} counts={counts} active={isActive(pathname, PLANS_ITEM.href)} />}
       <Item item={SETTINGS_ITEM} counts={counts} active={isActive(pathname, SETTINGS_ITEM.href)} />
       {isPlatformAdmin ? (
         <Item item={ADMIN_ITEM} counts={counts} active={isActive(pathname, ADMIN_ITEM.href)} />

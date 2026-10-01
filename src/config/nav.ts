@@ -104,3 +104,22 @@ export const SETTINGS_ITEM: NavItem = { key: "settings", label: "Configurações
 // Painel super-admin da plataforma. Só aparece para quem é platform-admin (a visibilidade
 // é decidida no servidor e passada ao Sidebar) — e o /admin gateia de novo no servidor.
 export const ADMIN_ITEM: NavItem = { key: "admin", label: "Admin", href: "/admin" };
+
+// Modo "só Estudo" (pedido do dono em 2026-10-01): o menu mostra só o Estudo (mais
+// Configurações e Admin) e as outras telas redirecionam para /study no middleware.
+// O código das outras funções fica intacto; para religar tudo, troque para false.
+export const STUDY_ONLY = true;
+const STUDY_HREF = "/study";
+
+// Rotas desligadas no modo só Estudo: tudo que o menu lista, menos o próprio Estudo.
+// O fluxo antigo de e-mail (/communication) não está no menu, entra à mão.
+const OFF_HREFS = [...TOP_ITEMS, ...NAV_GROUPS.flatMap((g) => g.items), PLANS_ITEM]
+  .map((i) => i.href)
+  .filter((h) => h !== STUDY_HREF)
+  .concat("/communication");
+
+export function studyOnlyRedirect(pathname: string): string | null {
+  if (!STUDY_ONLY) return null;
+  const off = OFF_HREFS.some((h) => (h === "/" ? pathname === "/" : pathname === h || pathname.startsWith(h + "/")));
+  return off ? STUDY_HREF : null;
+}

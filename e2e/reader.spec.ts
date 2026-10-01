@@ -10,7 +10,7 @@ async function login(page: Page): Promise<void> {
   await page.getByPlaceholder("E-mail").fill(EMAIL);
   await page.getByPlaceholder("Senha").fill(PASSWORD);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/$|\/onboarding$/);
+  await expect(page).toHaveURL(/\/$|\/study$|\/onboarding$/);
 }
 
 // João 1 com a chave ligada e a aba Palavra aberta na área de trabalho.

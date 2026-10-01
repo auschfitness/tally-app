@@ -16,13 +16,13 @@ async function login(page: Page): Promise<void> {
   await page.getByPlaceholder("E-mail").fill(EMAIL);
   await page.getByPlaceholder("Senha").fill(PASSWORD);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/$|\/onboarding$/);
+  await expect(page).toHaveURL(/\/$|\/study$|\/onboarding$/);
 }
 
 // Devolve a lista de cargos já aberta na aba (escopo: há duas listas na tela).
 async function openTeamTab(page: Page): Promise<Locator> {
   await page.goto("/settings");
-  await page.getByRole("button", { name: "Equipe e cargos" }).click();
+  await page.getByRole("button", { name: "Cargos e permissões" }).click();
   const roles = page.getByRole("list", { name: "Cargos da igreja" });
   await expect(roles).toBeVisible();
   return roles;

@@ -6,6 +6,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { env } from "@/lib/env";
+import { studyOnlyRedirect } from "@/config/nav";
 
 // Rotas públicas (sem sessão): login e callbacks de auth.
 const PUBLIC_PREFIXES = ["/login", "/auth"];
@@ -50,6 +51,14 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
+  const studyOnly = user ? studyOnlyRedirect(pathname) : null;
+  if (studyOnly) {
+    const url = request.nextUrl.clone();
+    url.pathname = studyOnly;
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

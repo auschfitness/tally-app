@@ -22,15 +22,15 @@ test.describe("auth SSR + render autenticado", () => {
     await page.getByRole("button", { name: "Entrar" }).click();
 
     // Chega no app (Home protegida)
-    await expect(page).toHaveURL(/\/$|\/onboarding$/);
+    await expect(page).toHaveURL(/\/$|\/study$|\/onboarding$/);
 
-    // Sticks renderiza dados reais da org de teste (Stick semeada "Ana").
+    // Modo só Estudo (src/config/nav.ts): Sticks desligado redireciona para /study.
     await page.goto("/sticks");
-    await expect(page.getByRole("heading", { name: "Sticks", exact: true })).toBeVisible();
-    await expect(page.getByText("Ana", { exact: false }).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/study$/);
 
     // Logout → volta pro login (sessão invalidada no servidor).
-    await page.getByRole("button", { name: "Sair" }).click();
+    // dispatchEvent: o indicador de dev do Next fica por cima do "Sair" no canto.
+    await page.getByRole("button", { name: "Sair" }).dispatchEvent("click");
     await expect(page).toHaveURL(/\/login$/);
   });
 });
