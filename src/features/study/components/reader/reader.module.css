@@ -119,14 +119,19 @@
 @media (hover: hover) and (pointer: fine) { .stepper button:hover:not(:disabled) { background: var(--surface-2); } }
 .occFilter { width: 100%; margin-bottom: var(--s-3); padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--r-10); background: var(--surface-2); color: var(--text); font: var(--t-13)/1.3 var(--font-ui); }
 .occFilter:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(43, 92, 230, .28); }
-.occBook { display: grid; grid-template-columns: minmax(7rem, 9rem) 1fr 3rem; align-items: center; gap: var(--s-3); width: 100%; padding: 9px 4px; background: none; border: 0; border-bottom: 1px solid var(--border); color: var(--text); font: var(--t-13)/1.2 var(--font-ui); text-align: left; cursor: pointer; }
+.occBook { display: grid; grid-template-columns: 0.75rem minmax(6rem, 9rem) 1fr 3rem; align-items: center; gap: var(--s-3); width: 100%; padding: 9px 4px; background: none; border: 0; border-bottom: 1px solid var(--border); color: var(--text); font: var(--t-13)/1.2 var(--font-ui); text-align: left; cursor: pointer; }
 @media (hover: hover) and (pointer: fine) { .occBook:hover { background: var(--surface-2); } }
+.occChev { color: var(--text-2); font-size: 16px; line-height: 1; transition: transform var(--dur-micro) var(--ease); }
+.occBook[aria-expanded="true"] .occChev { transform: rotate(90deg); }
 .occName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .occBar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
 .occBar i { display: block; height: 100%; border-radius: 3px; background: var(--blue); transform-origin: left; }
 .occN { text-align: right; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.occChaps { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; padding: 8px 0 12px; }
-.occChaps button { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--r-6); background: var(--surface); color: var(--text); font: var(--t-13)/1.3 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease); }
+.occChaps { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 10px 0 14px; }
+.occChaps button { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-10); background: var(--surface); color: var(--text); font: var(--t-13)/1.3 var(--font-ui); text-align: left; cursor: pointer; transition: transform 120ms var(--ease), background-color 120ms ease; }
+.occChaps button b { font-weight: 600; }
+.occChaps button span { color: var(--text-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+@media (hover: hover) and (pointer: fine) { .occChaps button:hover { background: var(--surface-2); } }
 .occChaps button:active { transform: scale(0.97); }
 
 @keyframes popIn { from { opacity: 0; transform: scale(0.96); } }
@@ -154,7 +159,7 @@
 @media (prefers-reduced-motion: reduce) {
   .picker, .pane, .addMenu, .wHead { animation: fadeIn var(--dur-micro) ease; }
   .paneOut { animation: none; opacity: 0; }
-  .pane { transition: none; }
+  .pane, .occChev { transition: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .bar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }

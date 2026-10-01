@@ -14,8 +14,8 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       para percorrer com ‹ ›); os outros capítulos seguem com a contagem do grego.
 - [x] **Filtro "Filtrar por livro ou capítulo…"** no topo da lista. Feito em 2026-10-01
       ("mateus", "mateus 20" e "20" funcionam; sem acento e sem caixa).
-- [ ] Livros como sanfona com seta; capítulos em cartões ("Capítulo 1 · 41 ocorrências").
-      Temos o gráfico de barras por livro, que eles não têm; manter os dois.
+- [x] Livros como sanfona com seta; capítulos em cartões ("Capítulo 1 · 41 ocorrências").
+      Temos o gráfico de barras por livro, que eles não têm; manter os dois. Feito em 2026-10-01.
 
 ## Layout geral
 

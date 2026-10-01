@@ -187,6 +187,7 @@ export function WordTab({
           {shown.map((b) => (
             <div key={b.book}>
               <button type="button" className={styles.occBook} aria-expanded={byChapter || openBook === b.book} onClick={() => setOpenBook((o) => (o === b.book ? "" : b.book))}>
+                <span className={styles.occChev} aria-hidden>›</span>
                 <span className={styles.occName}>{b.name}</span>
                 <span className={styles.occBar} aria-hidden><i style={{ transform: `scaleX(${b.total / maxBook})` }} /></span>
                 <span className={styles.occN}>{b.total}</span>
@@ -195,7 +196,8 @@ export function WordTab({
                 <div className={styles.occChaps}>
                   {b.chapters.map((c) => (
                     <button key={c.chapter} type="button" onClick={() => onGo({ book: b.book, chapter: c.chapter })}>
-                      {b.name} {c.chapter}<span className={styles.muted}>{c.n}×</span>
+                      <b>Capítulo {c.chapter}</b>
+                      <span>{c.n} {c.n === 1 ? "ocorrência" : "ocorrências"}</span>
                     </button>
                   ))}
                 </div>
