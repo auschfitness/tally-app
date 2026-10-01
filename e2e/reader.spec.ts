@@ -129,6 +129,17 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Sermão", exact: true }).first().click();
     await expect(page.getByTestId("sermon-picker").or(page.getByTestId("sermon-tab"))).toBeVisible();
+    // Editor novo (sem título não grava nada): pílulas, menu "···" e painel Passagens.
+    if (await page.getByTestId("sermon-picker").isVisible()) await page.getByRole("button", { name: "Novo sermão" }).click();
+    await expect(page.getByTestId("sermon-tab")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Propriedades" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Mais opções" }).click();
+    await expect(page.getByRole("menuitem", { name: "Arquivar" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Mais opções" })).toBeFocused();
+    await page.getByRole("button", { name: /^Passagens/ }).click();
+    await expect(page.getByRole("complementary", { name: "Passagens" })).toBeVisible();
+    await expect(page.getByText("Escreva uma passagem (ex.: João 3:16)")).toBeVisible();
     await page.getByRole("button", { name: "Notas", exact: true }).first().click();
     await expect(page.getByRole("tab", { name: /Notas/ })).toHaveAttribute("aria-selected", "true");
   });

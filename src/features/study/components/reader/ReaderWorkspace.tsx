@@ -34,8 +34,6 @@ import styles from "./reader.module.css";
 export interface EditorData {
   sermons: Sermon[];
   series: Series[];
-  services: { id: string; name: string }[];
-  campuses: string[];
   activeCampus: string;
   locale: string;
 }

@@ -1,22 +1,20 @@
 "use client";
 
-// Editor de sermão como CANVAS (Client): título H1, passagem + ideia central como
-// subcabeçalho, corpo aberto (content.notes) e seções opcionais no fluxo. Metadados
-// num drawer de Propriedades. Autosave discreto (debounce 900ms) via Server Action,
-// preservando o shape do `content` (nunca null) e os sub-campos extras do blob.
-import { Select } from "@/components/shared/Select";
+// Editor de sermão como CANVAS (Client): título H1, três pílulas (status, data, série),
+// passagem + ideia central sem rótulo, corpo aberto (content.notes) e seções opcionais no
+// fluxo. Barra: Passagens (painel) e "···" (arquivar/excluir). Autosave discreto (debounce
+// 900ms) via Server Action, preservando o shape do `content` (nunca null), os sub-campos
+// extras do blob e os campos que saíram da tela (subtítulo, campus, visibilidade, culto).
 import { DateField } from "@/components/shared/DateField";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { deleteSermonAction, listTextNotesAction, saveSermonAction, syncSermonScripturesAction } from "../actions";
-import { CHOOSABLE_STATUSES, OPTIONAL_SECTIONS, SECTIONS, STATUS_LBL, VIS_LBL, appendBlock, type SectionKey } from "../domain";
-import type { Sermon, SermonContent, TextNote } from "../types";
+import { deleteSermonAction, saveSermonAction, syncSermonScripturesAction } from "../actions";
+import { CHOOSABLE_STATUSES, OPTIONAL_SECTIONS, SECTIONS, STATUS_COLOR, STATUS_LBL, appendBlock, longDate, type SectionKey } from "../domain";
+import type { Sermon, SermonContent } from "../types";
 import type { Series } from "../types";
-import { parseRefs, type ScriptureRef } from "@/lib/bible/parse";
-import { fetchPassage, type PassageResult } from "@/lib/bible/source";
-import { usfmToOsis } from "@/lib/bible/osis";
-import { BibleCompare } from "./BibleCompare";
-import { AddToSermon } from "./AddToSermon";
+import { parseRefs, refKey, type ScriptureRef } from "@/lib/bible/parse";
+import { PassagesPanel } from "./PassagesPanel";
+import { Popover } from "./Popover";
 import styles from "../study.module.css";
 
 interface SectionValues {
@@ -27,17 +25,10 @@ interface SectionValues {
   prayer_response: string;
 }
 
-interface ServiceOpt {
-  id: string;
-  name: string;
-}
-
-// Referências do sermão: a passagem principal SEMPRE conta; o texto das seções só
-// é varrido quando "Reconhecer escrituras" está ligado. Portado de refsForCurrent().
-function refsFor(mainPassage: string, v: SectionValues, recognizeOn: boolean): ScriptureRef[] {
-  let txt = mainPassage;
-  if (recognizeOn) txt += "\n" + [v.outline, v.notes, v.illustrations, v.application, v.prayer_response].join("\n");
-  return parseRefs(txt);
+// Referências do sermão: a passagem principal e o texto das seções (reconhecimento sempre
+// ligado). Portado de refsForCurrent().
+function refsFor(mainPassage: string, v: SectionValues): ScriptureRef[] {
+  return parseRefs(mainPassage + "\n" + [v.outline, v.notes, v.illustrations, v.application, v.prayer_response].join("\n"));
 }
 
 function AutoTextarea({ value, onChange, placeholder, className }: { value: string; onChange: (v: string) => void; placeholder: string; className?: string }) {
@@ -55,26 +46,22 @@ function AutoTextarea({ value, onChange, placeholder, className }: { value: stri
 export function SermonEditor({
   sermon,
   series,
-  services,
-  campuses,
   activeCampus,
-  locale = "pt-BR",
   embedded = false,
   incoming = null,
   onSaved,
+  onDeleted,
   onIncomingDone,
 }: {
   sermon: Sermon | null;
   series: Series[];
-  services: ServiceOpt[];
-  campuses: string[];
   activeCampus: string;
-  locale?: string;
   embedded?: boolean; // dentro da tela de leitura: não troca a URL nem volta à biblioteca
   incoming?: { block: string; section: SectionKey; seq: number } | null;
   // Recebe o sermão como está sendo gravado, para quem reabre o editor não partir do
   // retrato velho do servidor (a aba Sermão da leitura).
   onSaved?: (s: Sermon) => void;
+  onDeleted?: (id: string) => void; // sermão foi para a Lixeira (embutido: quem hospeda volta à escolha)
   onIncomingDone?: (seq: number) => void; // bloco de `incoming` já entrou no texto
 }) {
   const router = useRouter();
@@ -108,18 +95,8 @@ export function SermonEditor({
   );
 
   const [status, setStatus] = useState(sermon ? "Salvo" : "Novo sermão");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // Assistente de escrituras (slice 2): reconhecimento + painel de texto (helloao).
-  const [assistantOpen, setAssistantOpen] = useState(false);
-  const [recognizeOn, setRecognizeOn] = useState(true);
-  const [selRef, setSelRef] = useState<ScriptureRef | null>(null);
-  const [passage, setPassage] = useState<PassageResult | null>(null);
-  const [loadingPassage, setLoadingPassage] = useState(false);
-  const [panelWhole, setPanelWhole] = useState(false);
-  // Comparar Bíblia (versões lado a lado) — restaurado da migração.
-  const [compareOpen, setCompareOpen] = useState(false);
-  const [compareRef, setCompareRef] = useState<ScriptureRef | null>(null);
+  const [hasId, setHasId] = useState(!!sermon?.id);
+  const [passagesOpen, setPassagesOpen] = useState(false);
 
   const savingRef = useRef(false);
   const rerunRef = useRef(false);
@@ -127,8 +104,8 @@ export function SermonEditor({
   const dirtyRef = useRef(false);
 
   // Snapshot atual (via ref) para o save assíncrono sempre ver o estado mais novo.
-  const snapRef = useRef({ meta, values, recognizeOn });
-  snapRef.current = { meta, values, recognizeOn };
+  const snapRef = useRef({ meta, values });
+  snapRef.current = { meta, values };
 
   async function doSave() {
     if (savingRef.current) {
@@ -180,12 +157,13 @@ export function SermonEditor({
       onSaved?.(snapshot(res.data.id));
       if (!idRef.current) {
         idRef.current = res.data.id;
+        setHasId(true);
         initialContent.current = content;
         // Adota a URL do sermão salvo sem remontar o editor (shallow).
         if (!embedded) window.history.replaceState(null, "", `/study/sermon/${res.data.id}`);
       }
       // Sincroniza as passagens do sermão (upsert/remoção), com o id já garantido.
-      void syncSermonScripturesAction(idRef.current, refsFor(m.main_passage, v, snapRef.current.recognizeOn));
+      void syncSermonScripturesAction(idRef.current, refsFor(m.main_passage, v));
     } else {
       setStatus(res.message || "Não foi possível salvar");
     }
@@ -260,24 +238,23 @@ export function SermonEditor({
 
   // Vai para a lixeira (30 dias para restaurar), então não pede confirmação.
   async function moveToTrash() {
-    if (!idRef.current) return;
+    const id = idRef.current;
+    if (!id) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
-    const res = await deleteSermonAction(idRef.current);
-    if (res.success) router.push("/study");
-    else setStatus(res.message || "Não consegui excluir o sermão.");
+    const res = await deleteSermonAction(id);
+    if (!res.success) {
+      setStatus(res.message || "Não consegui excluir o sermão.");
+      return;
+    }
+    if (embedded) {
+      onDeleted?.(id);
+      router.refresh();
+    } else router.push("/study");
   }
 
-  async function openPassage(ref: ScriptureRef, whole = false) {
-    setSelRef(ref);
-    setPanelWhole(whole);
-    setPassage(null);
-    setLoadingPassage(true);
-    const q = whole ? { book: ref.book, chapter: ref.chapter, verse_start: null, verse_end: null } : ref;
-    const res = await fetchPassage(q);
-    setLoadingPassage(false);
-    setPassage(res);
-  }
+  const archived = meta.status === "archived";
+  const shownStatus = meta.status === "preparing" ? "draft" : meta.status;
 
   // Anexa um bloco (de uma lente do estudo) ao fim da SEÇÃO escolhida do canvas. Se a
   // seção era opcional e estava oculta, passa a aparecer (agora tem conteúdo).
@@ -287,15 +264,18 @@ export function SermonEditor({
     scheduleSave();
   }
 
-  // Blocos vindos de fora (leitura, spec 07): cada `seq` novo entra uma vez. O aviso
-  // "Adicionado em … · Desfazer" guarda a seção como estava, para desfazer sem perguntar.
+  // Blocos vindos de fora (leitura, spec 07) ou do painel Passagens: cada um entra uma vez.
+  // O aviso "Adicionado em … · Desfazer" guarda a seção como estava, para desfazer sem perguntar.
   const lastSeq = useRef(0);
   const [added, setAdded] = useState<{ section: SectionKey; prev: string; had: boolean } | null>(null);
+  function addWithUndo(block: string, section: SectionKey): void {
+    setAdded({ section, prev: values[section] ?? "", had: present.has(section) });
+    addBlockToSection(block, section);
+  }
   useEffect(() => {
     if (!incoming || incoming.seq === lastSeq.current) return;
     lastSeq.current = incoming.seq;
-    setAdded({ section: incoming.section, prev: values[incoming.section] ?? "", had: present.has(incoming.section) });
-    addBlockToSection(incoming.block, incoming.section);
+    addWithUndo(incoming.block, incoming.section);
     onIncomingDone?.(incoming.seq);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incoming]);
@@ -315,45 +295,87 @@ export function SermonEditor({
   }
 
   const addable = OPTIONAL_SECTIONS.filter((s) => !present.has(s.key));
-  const detected = refsFor(meta.main_passage, values, recognizeOn);
-
-  // Notas de estudo da passagem principal (item 3): livro/capítulo derivados do
-  // main_passage pelo mesmo parser do editor. Carregadas quando o Assistente abre
-  // (revelação progressiva); a RLS já filtra por autor. Sem notas, o painel some.
+  const detected = refsFor(meta.main_passage, values);
   const mainRef = parseRefs(meta.main_passage)[0] ?? null;
-  const mainOsis = mainRef ? usfmToOsis(mainRef.book) : null;
-  const mainChapter = mainRef?.chapter ?? null;
-  const [studyNotes, setStudyNotes] = useState<TextNote[]>([]);
-  useEffect(() => {
-    if (!assistantOpen || !mainOsis || !mainChapter) {
-      setStudyNotes([]);
-      return;
-    }
-    let alive = true;
-    void listTextNotesAction(mainOsis, mainChapter).then((res) => {
-      if (alive) setStudyNotes(res.success ? res.data : []);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [assistantOpen, mainOsis, mainChapter]);
+  const seriesTitle = series.find((x) => x.id === meta.series_id)?.title || "";
 
   return (
     <div>
       <div className={styles.bar}>
-        {embedded ? null : <button className="link" onClick={backToLibrary}>← Biblioteca</button>}
+        {embedded ? null : <button className="link" onClick={backToLibrary}>‹ Sermões</button>}
         <span className={styles.status}>{status}</span>
         <span style={{ flex: 1 }} />
-        <button className="btn ghost sm" onClick={() => setAssistantOpen((o) => !o)}>Escrituras</button>
-        <button className="btn ghost sm" onClick={() => setDrawerOpen(true)}>Propriedades</button>
+        <button type="button" className={styles.secondary} aria-expanded={passagesOpen} aria-controls="passages-panel" onClick={() => setPassagesOpen((o) => !o)}>
+          Passagens <span className={styles.cnt}>{detected.length}</span>
+        </button>
+        <Popover trigger="···" triggerClass={styles.edIcon} label="Mais opções" align="right">
+          {(close) => (
+            <>
+              <button type="button" role="menuitem" className={styles.mi} onClick={() => { close(); setField("status", archived ? "draft" : "archived"); }}>
+                {archived ? "Desarquivar" : "Arquivar"}
+              </button>
+              <hr className={styles.miSep} />
+              <button type="button" role="menuitem" className={`${styles.mi} ${styles.miDanger}`} data-testid="sermon-trash" disabled={!hasId} onClick={() => { close(); void moveToTrash(); }}>
+                Excluir sermão
+              </button>
+              <p className={styles.miNote}>Vai para a Lixeira por 30 dias</p>
+            </>
+          )}
+        </Popover>
       </div>
 
       <main className={styles.canvas}>
         <input className={styles.title} value={meta.title} placeholder="Sem título" autoFocus={!sermon} onChange={(e) => setField("title", e.target.value)} />
-        <div className={styles.subhead}>
-          <input className={styles.metaInput} value={meta.main_passage} placeholder="Passagem principal — ex.: João 10:1-18" onChange={(e) => setField("main_passage", e.target.value)} />
-          <input className={styles.metaInput} value={meta.big_idea} placeholder="Ideia central — a mensagem em uma frase" onChange={(e) => setField("big_idea", e.target.value)} />
+        <div className={styles.pills}>
+          <Popover
+            label="Status"
+            triggerClass={styles.pill}
+            trigger={<><i className={styles.dot} style={{ background: STATUS_COLOR[shownStatus] }} />{STATUS_LBL[shownStatus]}</>}
+          >
+            {(close) => CHOOSABLE_STATUSES.map((k) => (
+              <button key={k} type="button" role="menuitemradio" aria-checked={shownStatus === k} className={styles.mi} onClick={() => { close(); setField("status", k); }}>
+                <i className={styles.dot} style={{ background: STATUS_COLOR[k] }} />
+                <span>{STATUS_LBL[k]}</span>
+                <span className={styles.miCk} aria-hidden>✓</span>
+              </button>
+            ))}
+          </Popover>
+          <Popover
+            label="Data"
+            haspopup="dialog"
+            triggerClass={`${styles.pill}${meta.sermon_date ? "" : " " + styles.pillMuted}`}
+            trigger={meta.sermon_date ? longDate(meta.sermon_date) || meta.sermon_date : "Marcar data"}
+          >
+            {(close) => (
+              <div className={styles.popDate}>
+                <DateField aria-label="Data" value={meta.sermon_date} onChange={(iso) => setField("sermon_date", iso)} />
+                {meta.sermon_date ? (
+                  <button type="button" className={`${styles.mi} ${styles.miMuted}`} onClick={() => { close(); setField("sermon_date", ""); }}>Tirar data</button>
+                ) : null}
+              </div>
+            )}
+          </Popover>
+          <Popover
+            label="Série"
+            triggerClass={`${styles.pill}${meta.series_id ? "" : " " + styles.pillMuted}`}
+            trigger={meta.series_id ? `Série: ${seriesTitle || "(sem título)"}` : "Sem série"}
+          >
+            {(close) => (
+              <div className={styles.popList}>
+                <button type="button" role="menuitemradio" aria-checked={!meta.series_id} className={styles.mi} onClick={() => { close(); setField("series_id", ""); }}>
+                  <span>Sem série</span><span className={styles.miCk} aria-hidden>✓</span>
+                </button>
+                {series.map((se) => (
+                  <button key={se.id} type="button" role="menuitemradio" aria-checked={meta.series_id === se.id} className={styles.mi} onClick={() => { close(); setField("series_id", se.id); }}>
+                    <span>{se.title || "(sem título)"}</span><span className={styles.miCk} aria-hidden>✓</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Popover>
         </div>
+        <input className={styles.passageInput} aria-label="Passagem principal" value={meta.main_passage} placeholder="Passagem principal, ex.: João 3:16" onChange={(e) => setField("main_passage", e.target.value)} />
+        <input className={styles.ideaInput} aria-label="Ideia central" value={meta.big_idea} placeholder="Ideia central, a mensagem em uma frase" onChange={(e) => setField("big_idea", e.target.value)} />
 
         <AutoTextarea className={styles.doc} value={values.notes} placeholder="Comece a escrever…" onChange={(v) => setSection("notes", v)} />
 
@@ -378,134 +400,8 @@ export function SermonEditor({
         ) : null}
       </main>
 
-      {assistantOpen ? (
-        <>
-          <div className={styles.drawerOv} onClick={() => setAssistantOpen(false)} />
-          <aside className={styles.drawer}>
-            <div className={styles.cmpHead}>
-              <h3 style={{ fontSize: 14 }}>Assistente de estudo</h3>
-              <button className="btn ghost sm" type="button" style={{ marginLeft: "auto" }} onClick={() => { setCompareRef(selRef ?? detected[0] ?? null); setCompareOpen(true); }}>Estudo do Texto</button>
-              <button className="iconbtn" type="button" aria-label="Fechar" onClick={() => setAssistantOpen(false)}>×</button>
-            </div>
-            <label className="field check" style={{ marginTop: 8 }}>
-              <input type="checkbox" checked={recognizeOn} onChange={(e) => setRecognizeOn(e.target.checked)} />
-              <span>Reconhecer escrituras</span>
-            </label>
-            <div className={styles.seclabel} style={{ marginTop: 16 }}>Referências</div>
-            {detected.length === 0 ? (
-              <div className="muted" style={{ marginTop: 6 }}>
-                {recognizeOn ? "Nenhuma referência reconhecida ainda. Escreva “João 10:1-18”, “Rm 8:28”…" : "Reconhecimento desligado. A passagem principal ainda é registrada."}
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
-                {detected.map((r) => (
-                  <button key={r.reference} className="chip" style={{ background: "rgba(43,92,230,.10)", color: "var(--blue)", border: "none", cursor: "pointer" }} onClick={() => openPassage(r)}>{r.reference}</button>
-                ))}
-              </div>
-            )}
-            {selRef ? (
-              <div style={{ marginTop: 16 }}>
-                <div className="ph" style={{ marginBottom: 6, gap: 8 }}>
-                  <span className={styles.seclabel}>{selRef.reference}</span>
-                  <button className="link" style={{ marginLeft: "auto" }} onClick={() => openPassage(selRef, !panelWhole)}>
-                    {panelWhole ? "Só o versículo" : "Capítulo inteiro"}
-                  </button>
-                  <button className="link" onClick={() => { setCompareRef(selRef); setCompareOpen(true); }}>Estudar texto</button>
-                </div>
-                {loadingPassage ? (
-                  <div className="muted" style={{ marginTop: 6 }}>Carregando o texto…</div>
-                ) : passage && passage.ok ? (
-                  <div style={{ marginTop: 6, lineHeight: 1.7, fontSize: 14, maxHeight: panelWhole ? 320 : undefined, overflow: panelWhole ? "auto" : undefined }}>
-                    {passage.verses.map((v) => {
-                      const vs = selRef.verse_start, ve = selRef.verse_end || selRef.verse_start;
-                      const hot = panelWhole && vs != null && v.n >= vs && v.n <= (ve as number);
-                      return (
-                        <span key={v.n} style={hot ? { background: "rgba(43,92,230,.16)" } : undefined}>
-                          <sup style={{ color: "var(--text-2)", marginRight: 3 }}>{v.n}</sup>{v.text}{" "}
-                        </span>
-                      );
-                    })}
-                    <div className="muted" style={{ marginTop: 8 }}>Versão: {passage.translationName || passage.translationId || ""}</div>
-                  </div>
-                ) : (
-                  <div className="muted" style={{ marginTop: 6 }}>{(passage && !passage.ok && passage.error) || "Não foi possível carregar a versão agora."}</div>
-                )}
-              </div>
-            ) : null}
+      <PassagesPanel open={passagesOpen} refs={detected} mainKey={mainRef ? refKey(mainRef) : null} onClose={() => setPassagesOpen(false)} onAdd={addWithUndo} />
 
-            {studyNotes.length ? (
-              <div className={styles.asstNotes}>
-                <div className={styles.seclabel}>Notas de estudo {mainRef ? `· ${mainRef.reference}` : ""}</div>
-                {studyNotes.map((n) => (
-                  <div key={n.id} className={styles.asstNoteItem}>
-                    <div className={styles.asstNoteBody}>{n.body}</div>
-                    <div className={styles.asstNoteFoot}>
-                      <AddToSermon getBlock={() => n.body} onAdd={addBlockToSection} label="→ usar no sermão" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </aside>
-        </>
-      ) : null}
-
-      {compareOpen ? (
-        <BibleCompare
-          initialRef={compareRef}
-          locale={locale}
-          onAddToSermon={addBlockToSection}
-          onClose={() => setCompareOpen(false)}
-        />
-      ) : null}
-
-      {drawerOpen ? (
-        <>
-          <div className={styles.drawerOv} onClick={() => setDrawerOpen(false)} />
-          <aside className={styles.drawer}>
-            <div className="ph"><h3>Propriedades</h3><button className="link" style={{ marginLeft: "auto" }} onClick={() => setDrawerOpen(false)}>Fechar</button></div>
-            <div className="field"><label>Subtítulo</label><input value={meta.subtitle} placeholder="Opcional" onChange={(e) => setField("subtitle", e.target.value)} /></div>
-            <div className="mrow">
-              <div className="field"><label>Status</label>
-                <Select value={meta.status} onChange={(e) => setField("status", e.target.value as typeof meta.status)}>
-                  {[...CHOOSABLE_STATUSES, ...(CHOOSABLE_STATUSES.includes(meta.status) ? [] : [meta.status])].map((k) => <option key={k} value={k}>{STATUS_LBL[k]}</option>)}
-                </Select>
-              </div>
-              <div className="field"><label>Quem vê</label>
-                <Select value={meta.visibility} onChange={(e) => setField("visibility", e.target.value as typeof meta.visibility)}>
-                  {Object.entries(VIS_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </Select>
-              </div>
-            </div>
-            <div className="mrow">
-              <div className="field"><label>Campus</label>
-                <Select value={meta.campus} onChange={(e) => setField("campus", e.target.value)}>
-                  {campuses.map((cp) => <option key={cp} value={cp}>{cp}</option>)}
-                </Select>
-              </div>
-              <div className="field"><label>Data</label><DateField value={meta.sermon_date} onChange={(iso) => setField("sermon_date", iso)} /></div>
-            </div>
-            <div className="field"><label>Série</label>
-              <Select value={meta.series_id} onChange={(e) => setField("series_id", e.target.value)}>
-                <option value="">Sem série</option>
-                {series.map((se) => <option key={se.id} value={se.id}>{se.title || "(sem título)"}</option>)}
-              </Select>
-            </div>
-            <div className="field"><label>Culto (pregado em)</label>
-              <Select value={meta.service_id} onChange={(e) => setField("service_id", e.target.value)}>
-                <option value="">Nenhum</option>
-                {services.map((sv) => <option key={sv.id} value={sv.id}>{sv.name || "(sem nome)"}</option>)}
-              </Select>
-            </div>
-            {idRef.current && !embedded ? (
-              <div style={{ marginTop: 24 }}>
-                <button type="button" className="btn danger sm" data-testid="sermon-trash" onClick={moveToTrash}>Excluir sermão</button>
-                <p className="muted" style={{ marginTop: 6 }}>Vai para a Lixeira. Dá para restaurar por 30 dias.</p>
-              </div>
-            ) : null}
-          </aside>
-        </>
-      ) : null}
       {added ? (
         <div className={styles.addedToast} role="status">
           Adicionado em {SECTIONS.find((x) => x.key === added.section)?.label ?? "sermão"}

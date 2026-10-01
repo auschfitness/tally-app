@@ -5,7 +5,6 @@ import { resolveActiveCampus } from "@/lib/campus";
 import { usfmToOsis } from "@/lib/bible/osis";
 import { fetchChapterText } from "@/lib/bible/helloao";
 import { listSermons, listSeries } from "@/features/study/queries";
-import { listServices } from "@/features/services/queries";
 import { parseRouteRef, versesFromPlain, versesFromTagged, type ReaderVerse } from "@/features/study/reader";
 import { paragraphStartsOf } from "@/lib/bible/paragraphs";
 import { READER_TRANSLATION, getChapterMarks, getLexShort, getOriginalChapter, getTaggedChapter } from "@/features/study/reader-queries";
@@ -25,13 +24,12 @@ export default async function BibleChapterPage({ params }: { params: Promise<{ b
   if (!osis) notFound();
   const { supabase, orgId, user } = ctx;
 
-  const [tagged, original, marks, sermons, series, services, campusRes, profRes] = await Promise.all([
+  const [tagged, original, marks, sermons, series, campusRes, profRes] = await Promise.all([
     getTaggedChapter(supabase, osis, ref.chapter),
     getOriginalChapter(supabase, osis, ref.chapter),
     getChapterMarks(supabase, orgId, osis, ref.chapter),
     listSermons(supabase, orgId),
     listSeries(supabase, orgId),
-    listServices(supabase, orgId),
     supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
     supabase.from("profiles").select("locale").eq("id", user.id).maybeSingle(),
   ]);
@@ -70,8 +68,6 @@ export default async function BibleChapterPage({ params }: { params: Promise<{ b
         editor={{
           sermons,
           series,
-          services: services.map((s) => ({ id: s.id, name: s.name })),
-          campuses,
           activeCampus,
           locale: profRes.data?.locale ?? "pt-BR",
         }}

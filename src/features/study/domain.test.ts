@@ -10,6 +10,8 @@ import {
   STATUS_LBL,
   CHOOSABLE_STATUSES,
   shortDate,
+  longDate,
+  noteOverlapsPassage,
   seriesPeriod,
   editedAgo,
   libraryGroups,
@@ -381,5 +383,22 @@ describe("Notas (spec 10)", () => {
   it("noteDate: com ano só se não for o atual", () => {
     expect(noteDate(new Date(2026, 8, 14, 10).toISOString(), now)).toBe("14 set");
     expect(noteDate(new Date(2025, 8, 14, 10).toISOString(), now)).toBe("14 set 2025");
+  });
+});
+
+describe("editor: data longa e notas da passagem (spec 10)", () => {
+  it("longDate", () => {
+    expect(longDate("2026-10-12")).toBe("12 out 2026");
+    expect(longDate("")).toBe("");
+  });
+  it("noteOverlapsPassage", () => {
+    const p = { verse_start: 6, verse_end: 8 };
+    expect(noteOverlapsPassage({ verse_start: 7, verse_end: null }, p)).toBe(true);
+    expect(noteOverlapsPassage({ verse_start: 8, verse_end: 10 }, p)).toBe(true);
+    expect(noteOverlapsPassage({ verse_start: 1, verse_end: 6 }, p)).toBe(true);
+    expect(noteOverlapsPassage({ verse_start: 9, verse_end: 9 }, p)).toBe(false);
+    expect(noteOverlapsPassage({ verse_start: 2, verse_end: 5 }, { verse_start: 6, verse_end: null })).toBe(false);
+    expect(noteOverlapsPassage({ verse_start: null, verse_end: null }, p)).toBe(true);
+    expect(noteOverlapsPassage({ verse_start: 3, verse_end: 3 }, { verse_start: null, verse_end: null })).toBe(true);
   });
 });

@@ -32,7 +32,9 @@ export function SermonTab({
 }) {
   const latest = (s: Sermon): Sermon => saved[s.id] ?? s;
   const known = new Set(editor.sermons.map((s) => s.id));
-  const all = [...Object.values(saved).filter((s) => !known.has(s.id)), ...editor.sermons.map(latest)];
+  // Excluídos aqui (vão para a Lixeira): somem da lista mesmo que `saved`/servidor ainda tragam.
+  const [deleted, setDeleted] = useState<Set<string>>(() => new Set());
+  const all = [...Object.values(saved).filter((s) => !known.has(s.id)), ...editor.sermons.map(latest)].filter((s) => !deleted.has(s.id));
   const inProgress = all.filter((s) => OPEN.has(s.status)).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   const [pick, setPick] = useState<{ id: string | null; slot: number } | null>(() => (inProgress[0] ? { id: inProgress[0].id, slot: Date.now() } : null));
   const [choosing, setChoosing] = useState(false);
@@ -80,11 +82,12 @@ export function SermonTab({
           setPick((p) => (p && !p.id ? { ...p, id: s.id } : p));
         }}
         sermon={sermon}
+        onDeleted={(id) => {
+          setDeleted((d) => new Set(d).add(id));
+          setPick(null);
+        }}
         series={editor.series}
-        services={editor.services}
-        campuses={editor.campuses}
         activeCampus={editor.activeCampus}
-        locale={editor.locale}
       />
     </div>
   );

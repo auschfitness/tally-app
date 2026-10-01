@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { requireOrg } from "@/lib/auth/session";
 import { resolveActiveCampus } from "@/lib/campus";
 import { listSermons, listSeries } from "@/features/study/queries";
-import { listServices } from "@/features/services/queries";
 import { SermonEditor } from "@/features/study/components/SermonEditor";
 
 // Editor de sermão. `[id]` = "new" (novo) ou o uuid de um sermão existente.
@@ -14,15 +13,13 @@ export default async function SermonEditorPage({
   searchParams: Promise<{ campus?: string }>;
 }) {
   const { id } = await params;
-  const { supabase, orgId, user } = await requireOrg();
+  const { supabase, orgId } = await requireOrg();
   const sp = await searchParams;
 
-  const [sermons, series, services, campusRes, profRes] = await Promise.all([
+  const [sermons, series, campusRes] = await Promise.all([
     listSermons(supabase, orgId),
     listSeries(supabase, orgId),
-    listServices(supabase, orgId),
     supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
-    supabase.from("profiles").select("locale").eq("id", user.id).maybeSingle(),
   ]);
 
   const isNew = id === "new";
@@ -31,9 +28,6 @@ export default async function SermonEditorPage({
 
   const campuses = (campusRes.data ?? []).map((c) => c.name);
   const activeCampus = await resolveActiveCampus(campuses, sp.campus);
-  const serviceOpts = services.map((s) => ({ id: s.id, name: s.name }));
 
-  const locale = profRes.data?.locale ?? "pt-BR";
-
-  return <SermonEditor sermon={sermon} series={series} services={serviceOpts} campuses={campuses} activeCampus={activeCampus} locale={locale} />;
+  return <SermonEditor sermon={sermon} series={series} activeCampus={activeCampus} />;
 }

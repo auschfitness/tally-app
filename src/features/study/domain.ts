@@ -241,6 +241,25 @@ export function shortDate(iso: string | null | undefined): string {
   return mes && d ? `${Number(d)} ${mes}` : "";
 }
 
+// "2026-10-12" → "12 out 2026"; vazio/inválido → "".
+export function longDate(iso: string | null | undefined): string {
+  const [y, m, d] = (iso || "").split("-");
+  const mes = MES[Number(m) - 1];
+  return y && mes && d ? `${Number(d)} ${mes} ${y}` : "";
+}
+
+// A nota do texto cai na passagem? Intervalos de versículos que se cruzam. Nota sem
+// versículo (capítulo inteiro) ou passagem sem versículo (capítulo inteiro) sempre contam.
+export function noteOverlapsPassage(
+  note: { verse_start: number | null; verse_end: number | null },
+  passage: { verse_start: number | null; verse_end: number | null },
+): boolean {
+  if (note.verse_start == null || passage.verse_start == null) return true;
+  const ne = note.verse_end ?? note.verse_start;
+  const pe = passage.verse_end ?? passage.verse_start;
+  return note.verse_start <= pe && passage.verse_start <= ne;
+}
+
 // Período de uma série: "ago a out 2026", "nov 2025 a jun 2026", "ago 2026" (mesmo mês),
 // "desde ago 2026" (sem fim). Sem início → "".
 export function seriesPeriod(start: string | null | undefined, end: string | null | undefined): string {
