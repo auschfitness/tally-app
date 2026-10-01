@@ -109,4 +109,16 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     await page.keyboard.press("Escape");
     await expect(bar).toHaveCount(0);
   });
+  test("dicionário UBS: batismo em Efésios 4:5 mostra glosas, domínio e o versículo citado", async ({ page }) => {
+    await login(page);
+    await page.goto("/study/bible/EPH/4");
+    await page.getByTestId("interlinear-toggle").check();
+    await page.getByTestId("reader-text").locator('[data-strong="G0908"]').first().click();
+    const tab = page.getByTestId("word-tab");
+    await expect(tab.getByRole("heading", { name: "batizar, batismo" })).toBeVisible();
+    await expect(tab).toContainText("Atividades religiosas");
+    await expect(tab.locator("blockquote mark")).toHaveText(/batismo/);
+    await expect(tab).toContainText("Citar (ABNT)");
+    await page.screenshot({ path: "test-results/ubs-ef4.png" });
+  });
 });

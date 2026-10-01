@@ -5,6 +5,7 @@
 //      node scripts/ubs/seed-ubs.mjs --check    (só confere a limpeza do texto)
 import fs from "node:fs";
 import assert from "node:assert/strict";
+import { checkBatch } from "./validate-ubs.mjs";
 
 const DIR = "scripts/ubs/work";
 // BBB da UBS (040 = Mateus) → OSIS do banco e abreviação brasileira.
@@ -22,6 +23,7 @@ export const osisRef = (r) => `${book(r.slice(0, 3))[0]}.${Number(r.slice(3, 6))
 // {D:25.33} vira "25.33", notas {N:001} e letras de homógrafo [a] somem, " | " e <br> viram parágrafo.
 export function cleanUbs(s) {
   return String(s ?? "")
+    .replace(/(\p{L})\{S:/gu, "$1 {S:") // a UBS às vezes cola a referência na palavra ("En{S:…}")
     .replace(/\{S:(\d{3})(\d{3})(\d{3})\d*\}/g, (_, b, c, v) => (book(b) ? `${book(b)[1]} ${Number(c)}.${Number(v)}` : ""))
     .replace(/\{L:([^<}]+)(<[^}]*)?\}/g, "$1")
     .replace(/\{D:([\d.]+)\}/g, "$1")
@@ -45,8 +47,21 @@ if (process.argv.includes("--check")) {
 const senses = JSON.parse(fs.readFileSync(`${DIR}/senses.json`, "utf8"));
 const domains = Object.fromEntries(JSON.parse(fs.readFileSync(`${DIR}/domains.pt.json`, "utf8")).map((d) => [d.code, d.pt]));
 const pt = new Map();
+// Só lote aprovado pelo conferidor entra (um lote ainda sendo escrito fica de fora).
 for (const f of fs.readdirSync(DIR).filter((f) => /^ubs-\d+\.pt\.json$/.test(f))) {
-  for (const o of JSON.parse(fs.readFileSync(`${DIR}/${f}`, "utf8"))) pt.set(o.id, o);
+  let out;
+  try {
+    out = JSON.parse(fs.readFileSync(`${DIR}/${f}`, "utf8"));
+  } catch {
+    console.log(`${f}: JSON inválido, pulado`);
+    continue;
+  }
+  const errors = checkBatch(JSON.parse(fs.readFileSync(`${DIR}/${f.replace(".pt.", ".input.")}`, "utf8")), out);
+  if (errors.length) {
+    console.log(`${f}: reprovado (${errors.length}), pulado`);
+    continue;
+  }
+  for (const o of out) pt.set(o.id, o);
 }
 const rows = [];
 for (const s of senses) {
@@ -72,17 +87,24 @@ console.log(`${pt.size} sentidos traduzidos → ${rows.length} linhas`);
 
 const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key) {
-  console.error("Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no ambiente.");
+// Sem service_role: porta temporária tmp_ubs_load (SECURITY DEFINER com senha), chamada
+// com a anon key. UBS_LOAD_TOKEN = a senha; a função é apagada depois da carga.
+const token = process.env.UBS_LOAD_TOKEN;
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+if (!url || !(key || (token && anon))) {
+  console.error("Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (ou UBS_LOAD_TOKEN + anon key).");
   process.exit(1);
 }
 const { createClient } = await import("@supabase/supabase-js");
-const db = createClient(url, key, { auth: { persistSession: false } });
-for (let i = 0; i < rows.length; i += 500) {
-  const { error } = await db.from("ubs_senses").upsert(rows.slice(i, i + 500));
+const db = createClient(url, key || anon, { auth: { persistSession: false } });
+let done = 0;
+for (let i = 0; i < rows.length; i += 200) {
+  const chunk = rows.slice(i, i + 200);
+  const { error } = key ? await db.from("ubs_senses").upsert(chunk) : await db.rpc("tmp_ubs_load", { p_token: token, p_rows: chunk });
   if (error) {
     console.error(error.message);
     process.exit(1);
   }
+  done += chunk.length;
 }
-console.log("carregado");
+console.log(`carregado: ${done} linhas`);

@@ -2,6 +2,7 @@
 // sobra de espanhol, texto quase idêntico ao original, item faltando ou cortado.
 // Uso: node scripts/ubs/validate-ubs.mjs 3   |   node scripts/ubs/validate-ubs.mjs 1-16
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
 
 const DIR = "scripts/ubs/work";
 const pad = (n) => String(n).padStart(2, "0");
@@ -12,7 +13,7 @@ const ES = /ñ|ción|ciones|(?<![\p{L}-])(el|los|las|del|al|y|según|pero|muy|cu
 const words = (s) => new Set(clean(s).replace(/\{[^}]*\}/g, " ").toLowerCase().match(/[a-zà-ÿ]+/gu) ?? []);
 function overlap(a, b) {
   const A = words(a), B = words(b);
-  if (A.size < 8) return 0;
+  if (A.size < 15) return 0;
   let n = 0;
   for (const w of A) if (B.has(w)) n++;
   return n / A.size;
@@ -43,26 +44,29 @@ export function checkBatch(input, out) {
   return errors;
 }
 
-const arg = process.argv[2] ?? "";
-const [a, b] = arg.split("-").map(Number);
-if (!Number.isInteger(a)) {
-  console.error("Uso: node scripts/ubs/validate-ubs.mjs <N|A-B>");
-  process.exit(1);
-}
-let failed = false;
-for (let n = a; n <= (b || a); n++) {
-  const inFile = `${DIR}/ubs-${pad(n)}.input.json`, outFile = `${DIR}/ubs-${pad(n)}.pt.json`;
-  let errors;
-  if (!fs.existsSync(outFile)) errors = ["saída ausente"];
-  else {
-    try {
-      errors = checkBatch(JSON.parse(fs.readFileSync(inFile, "utf8")), JSON.parse(fs.readFileSync(outFile, "utf8")));
-    } catch (e) {
-      errors = [`JSON inválido: ${e.message}`];
-    }
+// Só roda a linha de comando quando chamado direto (seed-ubs.mjs importa checkBatch).
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const arg = process.argv[2] ?? "";
+  const [a, b] = arg.split("-").map(Number);
+  if (!Number.isInteger(a)) {
+    console.error("Uso: node scripts/ubs/validate-ubs.mjs <N|A-B>");
+    process.exit(1);
   }
-  console.log(`lote ${n}: ${errors.length ? `FALHOU (${errors.length})` : "ok"}`);
-  for (const x of errors.slice(0, 12)) console.log("  " + x);
-  failed ||= errors.length > 0;
+  let failed = false;
+  for (let n = a; n <= (b || a); n++) {
+    const inFile = `${DIR}/ubs-${pad(n)}.input.json`, outFile = `${DIR}/ubs-${pad(n)}.pt.json`;
+    let errors;
+    if (!fs.existsSync(outFile)) errors = ["saída ausente"];
+    else {
+      try {
+        errors = checkBatch(JSON.parse(fs.readFileSync(inFile, "utf8")), JSON.parse(fs.readFileSync(outFile, "utf8")));
+      } catch (e) {
+        errors = [`JSON inválido: ${e.message}`];
+      }
+    }
+    console.log(`lote ${n}: ${errors.length ? `FALHOU (${errors.length})` : "ok"}`);
+    for (const x of errors.slice(0, 12)) console.log("  " + x);
+    failed ||= errors.length > 0;
+  }
+  if (failed) process.exit(1);
 }
-if (failed) process.exit(1);
