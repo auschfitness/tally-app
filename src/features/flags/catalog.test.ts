@@ -5,6 +5,7 @@ import {
   ALL_FLAGS,
   ROLLOUT_LABELS,
   ROLLOUT_ORDER,
+  UNWIRED_FLAGS,
   globalOn,
   isFlagKey,
   parseRollout,
@@ -13,6 +14,19 @@ import {
 import { flagOn } from "./gate";
 
 describe("integridade do catálogo", () => {
+  it("UNWIRED_FLAGS é exatamente o que nenhuma tela consulta", () => {
+    // O painel avisa "ainda não esconde nada" com base nesta lista; se ela mentir, o admin
+    // desliga uma flag achando que escondeu algo (bug de 2026-10-01).
+    const root = fileURLToPath(new URL("../../", import.meta.url));
+    const code = readdirSync(root, { recursive: true, encoding: "utf8" })
+      .filter((f) => /\.tsx?$/.test(f) && !f.includes("flags") && !f.includes("database.types") && !f.endsWith(".test.ts"))
+      .map((f) => readFileSync(root + f, "utf8"))
+      .join("\n");
+    const used = new Set([...code.matchAll(/(?:flagOn\([^,]+,\s*|flag=|makeGatedLayout\()["']([a-z0-9_.]+)["']/g)].map((m) => m[1]));
+    for (const k of ALL_FLAGS) expect(`${k}: ${UNWIRED_FLAGS.has(k)}`).toBe(`${k}: ${!used.has(k)}`);
+  });
+
+
   it("tem exatamente as 10 chaves, sem duplicata", () => {
     expect(ALL_FLAGS).toHaveLength(10);
     expect(new Set(ALL_FLAGS).size).toBe(10);

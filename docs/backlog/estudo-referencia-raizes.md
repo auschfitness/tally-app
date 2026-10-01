@@ -53,8 +53,11 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 
 ## Bugs anotados
 
-- [ ] **Desligar uma feature flag no /admin não esconde a função**: ela continua no menu e
-      na tela. Investigar onde o menu/sub-nav lê a flag (cache da sessão? rollout "orgs"
-      com override da org ganhando do desligado global?). Relatado em 2026-10-01.
+- [x] **Desligar uma feature flag no /admin não esconde a função.** Causa: 6 das 10 flags
+      não eram lidas por tela nenhuma (ex.: `study.bible_v2`), então mexer nelas não fazia
+      nada. Corrigido em 2026-10-01: `study.interlinear` agora esconde a chave Interlinear;
+      o painel marca as outras com "Ainda não esconde nada no app" (lista `UNWIRED_FLAGS`,
+      travada por teste). Se ainda acontecer com flag ligada a tela: checar override da
+      igreja ("Ligada só aqui" vence o global; não há botão para remover, só no banco).
 
 Fonte das telas: conversa de 2026-10-01 (Mateus 1, 19 e 20 no Raízes).

@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import type { ActionResult } from "@/lib/errors";
-import { ROLLOUT_LABELS, ROLLOUT_ORDER, globalOn } from "@/features/flags/catalog";
+import { ROLLOUT_LABELS, ROLLOUT_ORDER, UNWIRED_FLAGS, globalOn } from "@/features/flags/catalog";
 import { setFlagAction, setFlagOrgAction } from "../actions";
 import type { AdminFlag, AdminOrg } from "../types";
 import styles from "../admin.module.css";
@@ -97,7 +97,10 @@ export function FlagsPanel({ flags, orgs }: { flags: AdminFlag[]; orgs: AdminOrg
               return (
                 <tr key={f.key}>
                   <td className={styles.orgName}>{f.key}</td>
-                  <td className={styles.muted2}>{f.description}</td>
+                  <td className={styles.muted2}>
+                    {f.description}
+                    {UNWIRED_FLAGS.has(f.key) ? <div>Ainda não esconde nada no app.</div> : null}
+                  </td>
                   <td>
                     <Select
                       compact

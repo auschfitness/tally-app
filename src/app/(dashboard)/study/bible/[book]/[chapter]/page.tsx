@@ -58,7 +58,7 @@ export default async function BibleChapterPage({ params }: { params: Promise<{ b
         key={`${ref.book}-${ref.chapter}`}
         refNow={ref}
         verses={verses}
-        tagged={tagged.length > 0}
+        tagged={tagged.length > 0 && flagOn(ctx, "study.interlinear")}
         original={original}
         lex={lex}
         textError={textError}

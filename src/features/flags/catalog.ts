@@ -45,6 +45,17 @@ export const ROLLOUT_LABELS: Record<Rollout, string> = {
   all: "Todas as igrejas",
 };
 
+// Flags que ainda nenhuma tela consulta: mexer nelas no painel não muda nada no app.
+// Ao ligar uma flag a uma tela (flagOn/makeGatedLayout), tire-a daqui.
+export const UNWIRED_FLAGS: ReadonlySet<FlagKey> = new Set<FlagKey>([
+  "finance.ofx_import",
+  "finance.v2",
+  "study.bible_v2",
+  "teams.v2",
+  "groups.v2",
+  "billing.checkout",
+]);
+
 const KNOWN = new Set<string>(ALL_FLAGS);
 
 // Chave conhecida? Guarda de tipo: filtra o que vem do banco (uma flag só do SQL, sem
