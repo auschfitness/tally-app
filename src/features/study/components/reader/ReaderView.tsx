@@ -307,8 +307,9 @@ export function ReaderView({
         </Select>
         {tagged && mode === "bible" ? (
           <label className={styles.toggle}>
-            <input type="checkbox" role="switch" checked={interlinear} onChange={toggleInterlinear} data-testid="interlinear-toggle" />
             Interlinear
+            <input type="checkbox" role="switch" checked={interlinear} onChange={toggleInterlinear} data-testid="interlinear-toggle" />
+            <span className={styles.sw} aria-hidden />
           </label>
         ) : null}
       </div>

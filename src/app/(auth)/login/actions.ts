@@ -5,6 +5,7 @@
 // feito no servidor. Google OAuth é iniciado no navegador (ver LoginForm).
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { studyOnlyRedirect } from "@/config/nav";
 
 export type AuthState = { error: string | null };
 
@@ -19,8 +20,9 @@ function readCredentials(formData: FormData): { email: string; password: string 
 // redirect. Default: início do app. Usado no fluxo de convite (?next=/convite/token).
 function safeNext(formData: FormData): string {
   const raw = String(formData.get("next") ?? "").trim();
-  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
-  return "/";
+  const path = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  // Modo só Estudo: redirect de server action não passa pelo middleware.
+  return studyOnlyRedirect(path) ?? path;
 }
 
 export async function signInAction(_prev: AuthState, formData: FormData): Promise<AuthState> {

@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { requireOrg } from "@/lib/auth/session";
+import { STUDY_ONLY } from "@/config/nav";
 import { resolveActiveCampus } from "@/lib/campus";
 import { signals } from "@/features/signals/domain";
 import { loadHomeData } from "@/features/home/queries";
@@ -16,6 +18,9 @@ import { HomeView } from "@/features/home/components/HomeView";
 // assembler do Inbox + orações/estudo/jornada e projeta o topo. `now` injetado no
 // engine (determinístico). Ver docs/handoffs/home-supabase.md.
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ campus?: string }> }) {
+  // Modo só Estudo: o login e o onboarding redirecionam para "/" por dentro do servidor,
+  // sem passar pelo middleware; por isso a Home também manda para o Estudo.
+  if (STUDY_ONLY) redirect("/study");
   const { supabase, orgId, user } = await requireOrg();
   const sp = await searchParams;
 
