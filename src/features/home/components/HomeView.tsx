@@ -12,7 +12,7 @@ import type { StudySurface } from "../queries";
 import { FrequencyChart } from "./FrequencyChart";
 import styles from "../home.module.css";
 
-const SERMON_STATUS_LBL: Record<string, string> = { draft: "Rascunho", preparing: "Preparando", ready: "Pronto", preached: "Pregado", archived: "Arquivado" };
+const SERMON_STATUS_LBL: Record<string, string> = { draft: "Rascunho", preparing: "Rascunho", ready: "Pronto", preached: "Pregado", archived: "Arquivado" };
 
 export function HomeView({
   greetingName,

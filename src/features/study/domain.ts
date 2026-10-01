@@ -3,12 +3,23 @@
 // Ideia central, Notas, Ilustrações, Aplicação, Resposta de oração.
 import type { Scripture, Sermon, SermonStatus, SermonVisibility, SeriesStatus } from "./types";
 
+// Spec 10: na interface só existem 3 estados escolhíveis. O banco guarda 5 valores:
+// `preparing` aparece como Rascunho e `archived` não é um estado, é a ação "Arquivar".
 export const STATUS_LBL: Record<SermonStatus, string> = {
   draft: "Rascunho",
-  preparing: "Preparando",
+  preparing: "Rascunho",
   ready: "Pronto",
   preached: "Pregado",
   archived: "Arquivado",
+};
+export const CHOOSABLE_STATUSES: SermonStatus[] = ["draft", "ready", "preached"];
+// Cor do ponto de status: Rascunho cinza, Pronto azul, Pregado verde (Arquivado cinza claro).
+export const STATUS_COLOR: Record<SermonStatus, string> = {
+  draft: "var(--text-2)",
+  preparing: "var(--text-2)",
+  ready: "var(--blue)",
+  preached: "var(--green)",
+  archived: "var(--border)",
 };
 export const STATUS_BAND: Record<SermonStatus, string> = {
   draft: "attention",
@@ -35,8 +46,6 @@ export const SERIES_BAND: Record<SeriesStatus, string> = {
   completed: "healthy",
   archived: "risk",
 };
-
-export const SERMON_STATUSES: SermonStatus[] = ["draft", "preparing", "ready", "preached", "archived"];
 
 export const NOTE_SCOPE_LBL: Record<string, string> = { personal: "Pessoal", shared: "Compartilhada" };
 
@@ -166,7 +175,7 @@ export function buildContextBlock(title: string, theme: string | null, summary: 
   return summary ? `${head}\n${summary}` : head;
 }
 
-// --- Biblioteca v2 (spec 06, Erro nº 2) — atrás da flag `study.library_v2`. ---
+// --- Biblioteca de Sermões (specs 06 e 10). ---
 
 // Os status que ainda são TRABALHO. `preached`/`archived` são histórico: não entram
 // no padrão do filtro nem no bloco "Continuando".
@@ -218,6 +227,63 @@ export function searchSermons(sermons: Sermon[], q: string, seriesTitleById: Map
     const hay = [s.title, s.main_passage, s.big_idea, (s.series_id && seriesTitleById.get(s.series_id)) || ""];
     return hay.some((h) => fold(h).includes(needle));
   });
+}
+
+const MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+// "2026-09-14" → "14 set"; vazio/inválido → "".
+export function shortDate(iso: string | null | undefined): string {
+  const [, m, d] = (iso || "").split("-");
+  const mes = MES[Number(m) - 1];
+  return mes && d ? `${Number(d)} ${mes}` : "";
+}
+
+// Período de uma série: "ago a out 2026", "nov 2025 a jun 2026", "ago 2026" (mesmo mês),
+// "desde ago 2026" (sem fim). Sem início → "".
+export function seriesPeriod(start: string | null | undefined, end: string | null | undefined): string {
+  const [y1, m1] = (start || "").split("-");
+  const a = MES[Number(m1) - 1];
+  if (!y1 || !a) return "";
+  const [y2, m2] = (end || "").split("-");
+  const b = MES[Number(m2) - 1];
+  if (!y2 || !b) return `desde ${a} ${y1}`;
+  if (y1 === y2) return m1 === m2 ? `${a} ${y1}` : `${a} a ${b} ${y1}`;
+  return `${a} ${y1} a ${b} ${y2}`;
+}
+
+// "editado há 2 h", "editado ontem", "editado em 14 set". `now` por parâmetro p/ teste.
+export function editedAgo(iso: string, now: Date = new Date()): string {
+  const t = new Date(iso).getTime();
+  if (!iso || Number.isNaN(t)) return "";
+  const min = Math.floor((now.getTime() - t) / 60000);
+  if (min < 1) return "editado agora";
+  if (min < 60) return `editado há ${min} min`;
+  if (min < 1440) return `editado há ${Math.floor(min / 60)} h`;
+  const dias = Math.floor(min / 1440);
+  if (dias === 1) return "editado ontem";
+  if (dias < 30) return `editado há ${dias} dias`;
+  return `editado em ${shortDate(iso.slice(0, 10))}`;
+}
+
+// Biblioteca "Por data": em aberto (menos o destaque), pregados por ano (mais novo
+// primeiro; sem data no fim) e arquivados.
+export interface LibraryGroups {
+  open: Sermon[];
+  preached: { year: string; items: Sermon[] }[];
+  archived: Sermon[];
+}
+export function libraryGroups(sermons: Sermon[], exceptId: string | null): LibraryGroups {
+  const open = sermons
+    .filter((s) => OPEN.has(s.status) && s.id !== exceptId)
+    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const byYear = new Map<string, Sermon[]>();
+  for (const s of sortSermonsByDate(sermons.filter((x) => x.status === "preached"))) {
+    const y = s.sermon_date.slice(0, 4);
+    (byYear.get(y) ?? byYear.set(y, []).get(y)!).push(s);
+  }
+  const preached = [...byYear.entries()].map(([year, items]) => ({ year, items }));
+  preached.sort((a, b) => (a.year && b.year ? b.year.localeCompare(a.year) : a.year ? -1 : b.year ? 1 : 0));
+  return { open, preached, archived: sortSermonsByDate(sermons.filter((s) => s.status === "archived")) };
 }
 
 // --- Lixeira (m57): excluir = deleted_at; some de vez depois de TRASH_DAYS. ---

@@ -1,34 +1,28 @@
 import { requireOrg } from "@/lib/auth/session";
 import { flagOn } from "@/features/flags/gate";
-import { listSermons, listSeries } from "@/features/study/queries";
-import { SermonLibrary } from "@/features/study/components/SermonLibrary";
-import { SermonLibraryV2 } from "@/features/study/components/SermonLibraryV2";
+import { listScriptures, listSermons, listSeries } from "@/features/study/queries";
+import { SermonLibrary, type LibraryView } from "@/features/study/components/SermonLibrary";
 import { StudyTabs } from "@/features/study/components/StudyTabs";
 
-// Estudo — Sermões (Server Component): biblioteca de sermões + séries. Editor e
-// mutações via Server Actions. `visibility` é rótulo de app (não RLS) — ver README.
-// A biblioteca da spec 06 entra atrás de `study.library_v2`; com a flag desligada
-// esta tela é exatamente a de hoje (mesmo componente, mesma sub-nav).
-export default async function StudyPage() {
+// Estudo — Sermões (Server Component): biblioteca (por data, série ou livro). O
+// segmento vem de `?ver=` (data | serie | livro). Editor e mutações via Server Actions.
+// `visibility` é rótulo de app (não RLS) — ver README.
+export default async function StudyPage({ searchParams }: { searchParams: Promise<{ ver?: string }> }) {
   const ctx = await requireOrg();
   const { supabase, orgId } = ctx;
-  const v2 = flagOn(ctx, "study.library_v2");
+  const { ver } = await searchParams;
+  const view: LibraryView = ver === "serie" || ver === "livro" ? ver : "data";
 
-  const [sermons, series, campusRes] = await Promise.all([
+  const [sermons, series, scriptures] = await Promise.all([
     listSermons(supabase, orgId),
     listSeries(supabase, orgId),
-    supabase.from("campuses").select("name").eq("org_id", orgId).eq("active", true).order("name"),
+    listScriptures(supabase, orgId),
   ]);
 
-  const campuses = (campusRes.data ?? []).map((c) => c.name);
   return (
     <>
-      <StudyTabs v2={v2} reader={flagOn(ctx, "study.reader")} />
-      {v2 ? (
-        <SermonLibraryV2 sermons={sermons} series={series} campuses={campuses} />
-      ) : (
-        <SermonLibrary sermons={sermons} series={series} campuses={campuses} />
-      )}
+      <StudyTabs v2={flagOn(ctx, "study.library_v2")} reader={flagOn(ctx, "study.reader")} />
+      <SermonLibrary sermons={sermons} series={series} scriptures={scriptures} ver={view} />
     </>
   );
 }

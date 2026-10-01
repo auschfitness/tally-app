@@ -7,6 +7,12 @@ import {
   SECTIONS,
   OPTIONAL_SECTIONS,
   STATUS_BAND,
+  STATUS_LBL,
+  CHOOSABLE_STATUSES,
+  shortDate,
+  seriesPeriod,
+  editedAgo,
+  libraryGroups,
   coverage,
   sermonIdsUsing,
   DEFAULT_SECTION,
@@ -256,5 +262,52 @@ describe("lixeira", () => {
   });
   it("corte é 30 dias antes de agora", () => {
     expect(trashCutoff(now)).toBe("2026-09-01T12:00:00.000Z");
+  });
+});
+
+describe("status: 3 escolhas (spec 10)", () => {
+  it("só Rascunho/Pronto/Pregado são escolhíveis; preparing aparece como Rascunho", () => {
+    expect(CHOOSABLE_STATUSES.map((k) => STATUS_LBL[k])).toEqual(["Rascunho", "Pronto", "Pregado"]);
+    expect(STATUS_LBL.preparing).toBe("Rascunho");
+    expect(STATUS_LBL.archived).toBe("Arquivado");
+    expect(CHOOSABLE_STATUSES).not.toContain("archived");
+  });
+});
+
+describe("datas da biblioteca", () => {
+  it("shortDate: dia + mês abreviado, sem zero à esquerda", () => {
+    expect(shortDate("2026-09-04")).toBe("4 set");
+    expect(shortDate("")).toBe("");
+  });
+  it("seriesPeriod cobre os casos de ano e de fim ausente", () => {
+    expect(seriesPeriod("2026-08-02", "2026-10-20")).toBe("ago a out 2026");
+    expect(seriesPeriod("2025-11-02", "2026-06-20")).toBe("nov 2025 a jun 2026");
+    expect(seriesPeriod("2026-08-02", "2026-08-30")).toBe("ago 2026");
+    expect(seriesPeriod("2026-08-02", "")).toBe("desde ago 2026");
+    expect(seriesPeriod("", "2026-08-30")).toBe("");
+  });
+  it("editedAgo", () => {
+    const now = new Date("2026-10-01T12:00:00Z");
+    expect(editedAgo("2026-10-01T10:00:00Z", now)).toBe("editado há 2 h");
+    expect(editedAgo("2026-09-30T10:00:00Z", now)).toBe("editado ontem");
+    expect(editedAgo("2026-09-20T10:00:00Z", now)).toBe("editado há 11 dias");
+    expect(editedAgo("2026-07-14T10:00:00Z", now)).toBe("editado em 14 jul");
+  });
+});
+
+describe("libraryGroups (Por data)", () => {
+  const list = [
+    sermon({ id: "a", status: "draft", updated_at: "2026-09-01T00:00:00Z" }),
+    sermon({ id: "b", status: "ready", updated_at: "2026-09-10T00:00:00Z" }),
+    sermon({ id: "c", status: "preached", sermon_date: "2025-03-02" }),
+    sermon({ id: "d", status: "preached", sermon_date: "2026-05-02" }),
+    sermon({ id: "e", status: "preached", sermon_date: "" }),
+    sermon({ id: "f", status: "archived" }),
+  ];
+  it("separa em aberto (sem o destaque), pregados por ano e arquivados", () => {
+    const g = libraryGroups(list, "b");
+    expect(g.open.map((s) => s.id)).toEqual(["a"]);
+    expect(g.preached.map((y) => [y.year, y.items.map((s) => s.id)])).toEqual([["2026", ["d"]], ["2025", ["c"]], ["", ["e"]]]);
+    expect(g.archived.map((s) => s.id)).toEqual(["f"]);
   });
 });

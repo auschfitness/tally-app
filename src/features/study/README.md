@@ -26,7 +26,7 @@ com `npm run verify` verde. Ver `docs/handoffs/study-supabase.md`.
   preservado 1:1 (nunca null); `service_id`/`preacher_id` sem FK → defensivo.
 - `schema.ts` / `actions.ts` — `saveSermonAction` (create/update = autosave; seta
   `updated_at`), `deleteSermonAction`.
-- `components/` — `SermonLibrary` (filtros + cards agrupados por série), `SermonEditor`
+- `components/` — `SermonLibrary` (spec 10: Por data / série / livro), `SermonEditor`
   (canvas + autosave debounce 900ms + drawer). Client só nas folhas.
 
 ## Tabelas Supabase

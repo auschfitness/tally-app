@@ -1,6 +1,6 @@
 "use client";
 
-// Mapa de Escrituras (Client): cobertura dos 66 livros por uso real em sermões. Cor
+// Mapa de Escrituras (Client, embutido em Sermões > Por livro): cobertura dos 66 livros por uso real em sermões. Cor
 // ∝ nº de sermões distintos. Clicar num livro mostra os sermões que o usaram. Só dado
 // real (o mapa se preenche conforme sermões ganham passagens).
 import { useState, type ReactNode } from "react";
@@ -50,11 +50,7 @@ export function ScriptureMap({ scriptures, sermons }: { scriptures: Scripture[];
 
   return (
     <>
-      <Link href="/study" className="link">← Voltar à biblioteca</Link>
-      <div style={{ margin: "10px 0 16px" }}>
-        <h1 className="page">Mapa de Escrituras</h1>
-        <p className="sub" style={{ margin: 0 }}>A história de ensino da igreja: quais livros já foram pregados, e com que intensidade. Dados reais dos sermões.</p>
-      </div>
+      <p className="sub" style={{ margin: "0 0 16px" }}>Quais livros já foram pregados e com que intensidade. Dados reais dos sermões.</p>
 
       {total === 0 ? (
         <div className="empty">Nenhuma passagem registrada ainda. O mapa se preenche conforme você escreve sermões com referências.</div>

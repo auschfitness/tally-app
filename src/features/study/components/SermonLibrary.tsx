@@ -1,135 +1,226 @@
 "use client";
 
-// Biblioteca de Sermões (Client): filtros (status/campus/série) e cards agrupados
-// por série. "+ Novo sermão" abre o editor. Séries (cards + workspace) e demais abas
-// entram nas próximas fatias.
-import { Select } from "@/components/shared/Select";
-import { useMemo, useState, type ReactNode } from "react";
+// Biblioteca de Sermões (spec 10). Uma busca e um segmentado "Por data | Por série |
+// Por livro"; com texto na busca, vira uma lista única de resultados. O segmento vai
+// para a URL (?ver=) sem recarregar a página.
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { STATUS_BAND, STATUS_LBL, SERMON_STATUSES, SERIES_BAND, SERIES_LBL, filterSermons, type SermonFilter } from "../domain";
-import type { Sermon, Series } from "../types";
+import {
+  SERIES_LBL,
+  STATUS_COLOR,
+  STATUS_LBL,
+  editedAgo,
+  inProgressSermon,
+  libraryGroups,
+  missingParts,
+  searchSermons,
+  seriesPeriod,
+  shortDate,
+} from "../domain";
+import type { Scripture, Sermon, Series } from "../types";
 import { SeriesModal } from "./SeriesModal";
-import { brDate } from "@/lib/utils/date";
+import { ScriptureMap } from "./ScriptureMap";
 import styles from "../study.module.css";
+
+export type LibraryView = "data" | "serie" | "livro";
+const VIEWS: [LibraryView, string][] = [["data", "Por data"], ["serie", "Por série"], ["livro", "Por livro"]];
+const TRASH_PATH = "M4.5 6.5h15M9.5 6.5V4h5v2.5M6.5 6.5l1 14h9l1-14M10 10.5v6.5M14 10.5v6.5";
 
 export function SermonLibrary({
   sermons,
   series,
-  campuses,
+  scriptures,
+  ver,
 }: {
   sermons: Sermon[];
   series: Series[];
-  campuses: string[];
+  scriptures: Scripture[];
+  ver: LibraryView;
 }) {
-  const [filter, setFilter] = useState<SermonFilter>({ status: null, campus: null, series: null });
-  const [newSeriesOpen, setNewSeriesOpen] = useState(false);
-  const seriesById = useMemo(() => new Map(series.map((s) => [s.id, s])), [series]);
-  const list = filterSermons(sermons, filter);
-  const countBySeries = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const s of sermons) if (s.series_id) m.set(s.series_id, (m.get(s.series_id) ?? 0) + 1);
-    return m;
-  }, [sermons]);
+  const [view, setView] = useState<LibraryView>(ver);
+  const [q, setQ] = useState("");
+  const [newSeries, setNewSeries] = useState(false);
 
-  function Card({ s }: { s: Sermon }) {
-    const se = s.series_id ? seriesById.get(s.series_id) : null;
-    const meta =
-      (s.main_passage ? s.main_passage + " · " : "") +
-      (s.campus ? s.campus + " · " : "") +
-      (s.sermon_date ? brDate(s.sermon_date) : "sem data") +
-      (se ? " · " + se.title : "");
+  const seriesTitleById = useMemo(() => new Map(series.map((s) => [s.id, s.title || "(sem título)"])), [series]);
+  const cont = useMemo(() => inProgressSermon(sermons), [sermons]);
+  const groups = useMemo(() => libraryGroups(sermons, cont?.id ?? null), [sermons, cont]);
+  const searching = q.trim().length > 0;
+  const results = searching ? searchSermons(sermons, q, seriesTitleById) : [];
+
+  function pick(v: LibraryView) {
+    setView(v);
+    // replaceState: a URL acompanha o segmento sem nova ida ao servidor.
+    window.history.replaceState(null, "", v === "data" ? "/study" : `/study?ver=${v}`);
+  }
+
+  const header = (
+    <div className={styles.libHead}>
+      <h1 className="page">Sermões</h1>
+      <Link href="/study/sermon/new" className={styles.primary}>Novo sermão</Link>
+    </div>
+  );
+
+  if (sermons.length === 0 && series.length === 0) {
     return (
-      <Link href={`/study/sermon/${s.id}`} className={styles.card}>
-        <div className={styles.cardTop}>
-          <span className={styles.cardName}>{s.title || "(sem título)"}</span>
-          <span className={`hb ${STATUS_BAND[s.status] || "attention"}`} style={{ marginLeft: "auto" }}>{STATUS_LBL[s.status] || s.status}</span>
+      <div className={styles.lib}>
+        {header}
+        <div className={styles.libEmpty}>
+          <p>Seu primeiro sermão começa por uma passagem.</p>
+          <Link href="/study/sermon/new" className={styles.primary}>Novo sermão</Link>
         </div>
-        <div className={styles.cardSub}>{meta}</div>
-        {s.big_idea ? <div className={styles.cardFoot}>{s.big_idea}</div> : null}
-      </Link>
+        <TrashLink />
+      </div>
     );
   }
 
-  // Cards agrupados por série quando há séries; flat quando não há.
-  let body: ReactNode;
-  if (list.length === 0) {
-    body = <div className="empty">Nenhum sermão ainda. Comece o primeiro em “+ Novo sermão”.</div>;
-  } else if (series.length === 0) {
-    body = <div className={styles.cards}>{list.map((s) => <Card key={s.id} s={s} />)}</div>;
-  } else {
-    const groups: { label: string; items: Sermon[] }[] = [];
-    for (const se of series) {
-      const items = list.filter((x) => x.series_id === se.id);
-      if (items.length) groups.push({ label: se.title || "(sem título)", items });
-    }
-    const loose = list.filter((x) => !x.series_id);
-    if (loose.length) groups.push({ label: "Sem série", items: loose });
-    body = groups.map((g) => (
-      <div key={g.label}>
-        <div className="ph" style={{ margin: "4px 0 6px" }}>
-          <h3 className="muted" style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{g.label}</h3>
-        </div>
-        <div className={styles.cards} style={{ marginBottom: 16 }}>{g.items.map((s) => <Card key={s.id} s={s} />)}</div>
-      </div>
-    ));
-  }
+  const hint = cont ? missingParts(cont)[0] : "";
+  const countBySeries = new Map<string, number>();
+  for (const s of sermons) if (s.series_id) countBySeries.set(s.series_id, (countBySeries.get(s.series_id) ?? 0) + 1);
+  const loose = sermons.filter((s) => !s.series_id || !seriesTitleById.has(s.series_id));
 
   return (
-    <>
-      <div className={styles.headerRow}>
-        <div>
-          <h1 className="page">Sermões</h1>
-          <p className="sub" style={{ margin: 0 }}>Onde a igreja prepara e preserva o ensino. A Bíblia é a fundação; o Tally organiza.</p>
-        </div>
-        <Link href="/study/map" className="btn ghost" style={{ marginLeft: "auto" }}>Mapa de Escrituras</Link>
-        <Link href="/study/sermon/new" className="btn">+ Novo sermão</Link>
-      </div>
+    <div className={styles.lib}>
+      {header}
 
-      <div className="ph" style={{ marginBottom: 8 }}>
-        <h3 style={{ margin: 0 }}>Séries</h3>
-        <button className="btn ghost" style={{ marginLeft: "auto" }} onClick={() => setNewSeriesOpen(true)}>+ Nova série</button>
-      </div>
-      <div className={styles.cards} style={{ marginBottom: 22 }}>
-        {series.length === 0 ? (
-          <div className="empty">Nenhuma série ainda. Agrupe sermões numa jornada de ensino em “+ Nova série”.</div>
-        ) : (
-          series.map((se) => {
-            const n = countBySeries.get(se.id) ?? 0;
-            return (
-              <Link key={se.id} href={`/study/series/${se.id}`} className={styles.card}>
-                <div className={styles.cardTop}>
-                  <span className={styles.cardName}>{se.title || "(sem título)"}</span>
-                  <span className={`hb ${SERIES_BAND[se.status] || "attention"}`} style={{ marginLeft: "auto" }}>{SERIES_LBL[se.status] || se.status}</span>
-                </div>
-                <div className={styles.cardSub}>{se.theme ? se.theme + " · " : ""}{n} {n === 1 ? "sermão" : "sermões"}</div>
-                {se.description ? <div className={styles.cardFoot}>{se.description}</div> : null}
-              </Link>
-            );
-          })
+      <div className={styles.libBar}>
+        <input
+          className={styles.libSearch}
+          type="search"
+          placeholder="Buscar por título, passagem ou série"
+          aria-label="Buscar por título, passagem ou série"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        {searching ? null : (
+          <div className={styles.segmented} role="group" aria-label="Visão">
+            {VIEWS.map(([v, label]) => (
+              <button key={v} type="button" aria-pressed={view === v} onClick={() => pick(v)}>{label}</button>
+            ))}
+          </div>
         )}
       </div>
 
-      <div className={styles.filters}>
-        <div className={styles.chips}>
-          <button className={`${styles.fchip}${!filter.status ? " " + styles.on : ""}`} onClick={() => setFilter((f) => ({ ...f, status: null }))}>Todos</button>
-          {SERMON_STATUSES.map((st) => (
-            <button key={st} className={`${styles.fchip}${filter.status === st ? " " + styles.on : ""}`} onClick={() => setFilter((f) => ({ ...f, status: st }))}>{STATUS_LBL[st]}</button>
-          ))}
-        </div>
-        <Select compact style={{ marginLeft: "auto" }} value={filter.campus ?? ""} onChange={(e) => setFilter((f) => ({ ...f, campus: e.target.value || null }))}>
-          <option value="">Todos os campus</option>
-          {campuses.map((c) => <option key={c} value={c}>{c}</option>)}
-        </Select>
-        <Select compact value={filter.series ?? ""} onChange={(e) => setFilter((f) => ({ ...f, series: e.target.value || null }))}>
-          <option value="">Todas as séries</option>
-          <option value="__none__">Sem série</option>
-          {series.map((se) => <option key={se.id} value={se.id}>{se.title || "(sem título)"}</option>)}
-        </Select>
-      </div>
+      {searching ? (
+        <>
+          <div className={styles.libCount}>{results.length} {results.length === 1 ? "resultado" : "resultados"}</div>
+          {results.length === 0 ? <div className="empty">Nada encontrado para “{q.trim()}”.</div> : results.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
+        </>
+      ) : view === "data" ? (
+        <>
+          {cont ? (
+            <>
+              <h2 className={styles.libSec}>Continuar</h2>
+              <Link href={`/study/sermon/${cont.id}`} className={styles.cont}>
+                <span className={styles.contSt}>
+                  <i className={styles.dot} style={{ background: STATUS_COLOR[cont.status] }} />
+                  {STATUS_LBL[cont.status]}
+                </span>
+                <span className={styles.contTitle}>{cont.title || "(sem título)"}</span>
+                {cont.main_passage ? <span className={styles.contRef}>{cont.main_passage}</span> : null}
+                {cont.big_idea.trim() ? <span className={styles.contIdea}>{cont.big_idea}</span> : null}
+                <span className={styles.contMeta}>{[editedAgo(cont.updated_at), hint].filter(Boolean).join(" · ")}</span>
+                <span className={`${styles.primary} ${styles.contBtn}`}>Continuar escrevendo</span>
+              </Link>
+            </>
+          ) : null}
 
-      {body}
+          {groups.open.length ? (
+            <>
+              <h2 className={styles.libSec}>Em preparo</h2>
+              {groups.open.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
+            </>
+          ) : null}
 
-      {newSeriesOpen ? <SeriesModal onClose={() => setNewSeriesOpen(false)} /> : null}
-    </>
+          {groups.preached.length ? (
+            <>
+              <h2 className={styles.libSec}>Pregados</h2>
+              {groups.preached.map((g) => (
+                <div key={g.year}>
+                  <div className={styles.libYear}>{g.year || "Sem data"}</div>
+                  {g.items.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
+                </div>
+              ))}
+            </>
+          ) : null}
+
+          {groups.archived.length ? (
+            <details className={styles.libArch}>
+              <summary>
+                <Chevron />
+                Arquivados ({groups.archived.length})
+              </summary>
+              {groups.archived.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
+            </details>
+          ) : null}
+        </>
+      ) : view === "serie" ? (
+        <>
+          <div className={styles.libSerHead}>
+            <h2 className={styles.libSec}>Suas séries</h2>
+            <button type="button" className={styles.secondary} onClick={() => setNewSeries(true)}>Nova série</button>
+          </div>
+          {series.length === 0 ? <div className="empty">Nenhuma série ainda. Agrupe sermões numa jornada de ensino em “Nova série”.</div> : null}
+          {series.map((se) => {
+            const n = countBySeries.get(se.id) ?? 0;
+            const info = [`${n} ${n === 1 ? "sermão" : "sermões"}`, seriesPeriod(se.start_date, se.end_date)].filter(Boolean).join(" · ");
+            return (
+              <Link key={se.id} href={`/study/series/${se.id}`} className={styles.ser}>
+                <span className={styles.serText}>
+                  <span className={styles.serTitle}>{se.title || "(sem título)"}</span>
+                  <span className={styles.srmSub}>{info}</span>
+                </span>
+                <span className={styles.serSt}>{SERIES_LBL[se.status]}</span>
+              </Link>
+            );
+          })}
+          {loose.length ? (
+            <details className={styles.libArch}>
+              <summary>
+                <Chevron />
+                Sem série ({loose.length})
+              </summary>
+              {loose.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
+            </details>
+          ) : null}
+        </>
+      ) : (
+        <ScriptureMap scriptures={scriptures} sermons={sermons.map((s) => ({ id: s.id, title: s.title, sermon_date: s.sermon_date }))} />
+      )}
+
+      <TrashLink />
+      {newSeries ? <SeriesModal onClose={() => setNewSeries(false)} /> : null}
+    </div>
+  );
+}
+
+// Linha de sermão (igual em todas as listas): data, título, "passagem · série".
+function Row({ s, titles }: { s: Sermon; titles: Map<string, string> }) {
+  const sub = [s.main_passage, s.series_id ? titles.get(s.series_id) : ""].filter(Boolean).join(" · ");
+  return (
+    <Link href={`/study/sermon/${s.id}`} className={styles.srm}>
+      <span className={`${styles.srmDate}${s.sermon_date ? "" : " " + styles.srmNoDate}`}>{shortDate(s.sermon_date) || "sem data"}</span>
+      <span className={styles.srmTitle}>{s.title || "(sem título)"}</span>
+      {sub ? <span className={styles.srmSub}>{sub}</span> : null}
+    </Link>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg className={styles.chev} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+// Rodapé discreto: é o caminho da Lixeira no celular.
+function TrashLink() {
+  return (
+    <div className={styles.libFoot}>
+      <Link href="/study/trash">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={TRASH_PATH} /></svg>
+        Lixeira
+      </Link>
+    </div>
   );
 }

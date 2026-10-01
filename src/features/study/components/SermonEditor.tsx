@@ -9,7 +9,7 @@ import { DateField } from "@/components/shared/DateField";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteSermonAction, listTextNotesAction, saveSermonAction, syncSermonScripturesAction } from "../actions";
-import { OPTIONAL_SECTIONS, SECTIONS, STATUS_LBL, VIS_LBL, appendBlock, type SectionKey } from "../domain";
+import { CHOOSABLE_STATUSES, OPTIONAL_SECTIONS, SECTIONS, STATUS_LBL, VIS_LBL, appendBlock, type SectionKey } from "../domain";
 import type { Sermon, SermonContent, TextNote } from "../types";
 import type { Series } from "../types";
 import { parseRefs, type ScriptureRef } from "@/lib/bible/parse";
@@ -468,7 +468,7 @@ export function SermonEditor({
             <div className="mrow">
               <div className="field"><label>Status</label>
                 <Select value={meta.status} onChange={(e) => setField("status", e.target.value as typeof meta.status)}>
-                  {Object.entries(STATUS_LBL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  {[...CHOOSABLE_STATUSES, ...(CHOOSABLE_STATUSES.includes(meta.status) ? [] : [meta.status])].map((k) => <option key={k} value={k}>{STATUS_LBL[k]}</option>)}
                 </Select>
               </div>
               <div className="field"><label>Quem vê</label>
