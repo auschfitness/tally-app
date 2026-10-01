@@ -1,7 +1,8 @@
-// Baixa o Novo Testamento inteiro para o alinhador estatístico: por versículo, o texto da
-// Bíblia Livre (helloao, MESMO parse de fetch-john.mjs) e os tokens gregos com Strong.
-// Saída: scripts/align/work/nt/<USFM>-<cap>.json = { book, chapter, verses: [{ verse, pt, greek }] }
-// Uso: node --env-file=.env.local scripts/align/fetch-nt.mjs
+// Baixa um Testamento inteiro para o alinhador estatístico: por versículo, o texto da
+// Bíblia Livre (helloao, MESMO parse de fetch-john.mjs) e os tokens originais com Strong.
+// Saída: scripts/align/work/<nt|ot>/<USFM>-<cap>.json = { book, chapter, verses: [{ verse, pt, greek }] }
+// (no AT `greek` guarda o hebraico/aramaico; o nome ficou para o stat_align ler os dois iguais)
+// Uso: node --env-file=.env.local scripts/align/fetch-nt.mjs [ot]
 import fs from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
@@ -14,6 +15,18 @@ const NT = [
   ["1PE", "1Pet", 5], ["2PE", "2Pet", 3], ["1JN", "1John", 5], ["2JN", "2John", 1], ["3JN", "3John", 1],
   ["JUD", "Jude", 1], ["REV", "Rev", 22],
 ];
+const OT = [
+  ["GEN", "Gen", 50], ["EXO", "Exod", 40], ["LEV", "Lev", 27], ["NUM", "Num", 36], ["DEU", "Deut", 34],
+  ["JOS", "Josh", 24], ["JDG", "Judg", 21], ["RUT", "Ruth", 4], ["1SA", "1Sam", 31], ["2SA", "2Sam", 24],
+  ["1KI", "1Kgs", 22], ["2KI", "2Kgs", 25], ["1CH", "1Chr", 29], ["2CH", "2Chr", 36], ["EZR", "Ezra", 10],
+  ["NEH", "Neh", 13], ["EST", "Esth", 10], ["JOB", "Job", 42], ["PSA", "Ps", 150], ["PRO", "Prov", 31],
+  ["ECC", "Eccl", 12], ["SNG", "Song", 8], ["ISA", "Isa", 66], ["JER", "Jer", 52], ["LAM", "Lam", 5],
+  ["EZK", "Ezek", 48], ["DAN", "Dan", 12], ["HOS", "Hos", 14], ["JOL", "Joel", 3], ["AMO", "Amos", 9],
+  ["OBA", "Obad", 1], ["JON", "Jonah", 4], ["MIC", "Mic", 7], ["NAM", "Nah", 3], ["HAB", "Hab", 3],
+  ["ZEP", "Zeph", 3], ["HAG", "Hag", 2], ["ZEC", "Zech", 14], ["MAL", "Mal", 4],
+];
+const ot = process.argv[2] === "ot";
+const DIR = `scripts/align/work/${ot ? "ot" : "nt"}`;
 
 function versesFrom(data) {
   const d = data;
@@ -36,10 +49,10 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!url || !anon) throw new Error("Rode com --env-file=.env.local");
 const supabase = createClient(url, anon, { auth: { persistSession: false } });
-fs.mkdirSync("scripts/align/work/nt", { recursive: true });
+fs.mkdirSync(DIR, { recursive: true });
 
 let chapters = 0, verses = 0, tokens = 0;
-for (const [usfm, osis, n] of NT) {
+for (const [usfm, osis, n] of ot ? OT : NT) {
   const greekAll = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
@@ -61,9 +74,9 @@ for (const [usfm, osis, n] of NT) {
       ...v,
       greek: greek.filter((g) => g.verse === v.verse).map((g) => ({ p: g.position, w: g.surface, s: g.strong, g: g.gloss })),
     }));
-    fs.writeFileSync(`scripts/align/work/nt/${usfm}-${String(ch).padStart(2, "0")}.json`, JSON.stringify({ book: usfm, chapter: ch, verses: out }));
+    fs.writeFileSync(`${DIR}/${usfm}-${String(ch).padStart(2, "0")}.json`, JSON.stringify({ book: usfm, chapter: ch, verses: out }));
     chapters++; verses += out.length; tokens += greek.length;
   }
-  console.log(usfm, "ok", greekAll.length, "tokens gregos");
+  console.log(usfm, "ok", greekAll.length, "tokens originais");
 }
-console.log(`NT: ${chapters} capítulos, ${verses} versículos, ${tokens} tokens gregos`);
+console.log(`${ot ? "AT" : "NT"}: ${chapters} capítulos, ${verses} versículos, ${tokens} tokens originais`);

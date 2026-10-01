@@ -3,6 +3,9 @@
 //      node scripts/align/validate-alignment.mjs all      (todos + work/tagged-john.tsv)
 //      ALIGN_TAG=stat node scripts/align/validate-alignment.mjs nt
 //          (NT inteiro, menos João: work/nt/<LIVRO>-NN.align.stat.json -> work/tagged-nt-stat.tsv)
+//      ALIGN_TAG=stat node scripts/align/validate-alignment.mjs ot   (AT inteiro -> work/tagged-ot-stat.tsv)
+//      node scripts/align/validate-alignment.mjs gold GEN-01         (gabarito do AT: work/ot/GEN-01.gold.json)
+//      node scripts/align/validate-alignment.mjs gold all            (todos os .gold.json -> work/tagged-ot-gold.tsv)
 import fs from "node:fs";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -32,6 +35,15 @@ const NT = [["MAT", "Matt"], ["MRK", "Mark"], ["LUK", "Luke"], ["JHN", "John"], 
   ["1TH", "1Thess"], ["2TH", "2Thess"], ["1TI", "1Tim"], ["2TI", "2Tim"], ["TIT", "Titus"], ["PHM", "Phlm"],
   ["HEB", "Heb"], ["JAS", "Jas"], ["1PE", "1Pet"], ["2PE", "2Pet"], ["1JN", "1John"], ["2JN", "2John"],
   ["3JN", "3John"], ["JUD", "Jude"], ["REV", "Rev"]];
+
+const OT = [["GEN", "Gen"], ["EXO", "Exod"], ["LEV", "Lev"], ["NUM", "Num"], ["DEU", "Deut"], ["JOS", "Josh"],
+  ["JDG", "Judg"], ["RUT", "Ruth"], ["1SA", "1Sam"], ["2SA", "2Sam"], ["1KI", "1Kgs"], ["2KI", "2Kgs"], ["1CH", "1Chr"],
+  ["2CH", "2Chr"], ["EZR", "Ezra"], ["NEH", "Neh"], ["EST", "Esth"], ["JOB", "Job"], ["PSA", "Ps"], ["PRO", "Prov"],
+  ["ECC", "Eccl"], ["SNG", "Song"], ["ISA", "Isa"], ["JER", "Jer"], ["LAM", "Lam"], ["EZK", "Ezek"], ["DAN", "Dan"],
+  ["HOS", "Hos"], ["JOL", "Joel"], ["AMO", "Amos"], ["OBA", "Obad"], ["JON", "Jonah"], ["MIC", "Mic"], ["NAM", "Nah"],
+  ["HAB", "Hab"], ["ZEP", "Zeph"], ["HAG", "Hag"], ["ZEC", "Zech"], ["MAL", "Mal"]];
+// Fora da conta de cobertura: artigo grego e a marca de objeto hebraica (את), que o português não traduz.
+const NO_WORD = new Set(["G3588", "H0853"]);
 
 function check(ch, where = {
   input: `scripts/align/work/jhn-${pad(ch)}.input.json`,
@@ -63,7 +75,7 @@ function check(ch, where = {
       rows.push(["por_blj", where.osis, ch, v.verse, i + 1, String(s.t ?? "").replace(/\t/g, " "), s.s ?? ""].join("\t"));
     });
     for (const g of v.greek) {
-      if (!g.s || g.s === "G3588") continue;
+      if (!g.s || NO_WORD.has(g.s)) continue;
       content++;
       if (used.has(g.s)) linked++;
     }
@@ -74,17 +86,40 @@ function check(ch, where = {
 }
 
 const arg = process.argv[2];
-if (arg === "nt") {
-  if (!TAG) { console.error("O modo nt só roda com ALIGN_TAG=stat (a ligação do NT é estatística)."); process.exit(1); }
+if (arg === "gold") {
+  const W = "scripts/align/work/ot";
+  const osisOf = new Map(OT);
+  const which = process.argv[3];
+  const names = which === "all" ? fs.readdirSync(W).filter((f) => f.endsWith(".gold.json")).map((f) => f.slice(0, -10)).sort() : [which];
+  if (!names.length || !names.every((n) => /^[1-3A-Z]{3}-\d{2,3}$/.test(n))) { console.error("Uso: validate-alignment.mjs gold <GEN-01|all>"); process.exit(1); }
+  let failed = false;
+  const all = [];
+  for (const n of names) {
+    const [usfm, ch] = n.split("-");
+    const { errors, rows, coverage } = check(Number(ch), { input: `${W}/${n}.json`, align: `${W}/${n}.gold.json`, osis: osisOf.get(usfm) });
+    console.log(`${n}: ${errors.length ? "FALHOU" : "ok"} · cobertura ${(coverage * 100).toFixed(1)}%`);
+    errors.slice(0, 15).forEach((e) => console.log("  " + e));
+    failed ||= errors.length > 0;
+    all.push(...rows);
+  }
+  if (failed) process.exit(1);
+  if (which === "all") {
+    fs.writeFileSync("scripts/align/work/tagged-ot-gold.tsv", [HEADER, ...all].join("\n") + "\n");
+    console.log(`TSV: tagged-ot-gold.tsv (${all.length} linhas)`);
+  }
+  process.exit(0);
+}
+if (arg === "nt" || arg === "ot") {
+  if (!TAG) { console.error("Os modos nt/ot só rodam com ALIGN_TAG=stat (a ligação é estatística)."); process.exit(1); }
   const rows = [];
   let bad = 0;
-  for (const [usfm, osis] of NT) {
+  for (const [usfm, osis] of arg === "ot" ? OT : NT) {
     if (usfm === "JHN") continue; // João fica com o gabarito (tagged-john.tsv)
-    const files = fs.readdirSync("scripts/align/work/nt").filter((f) => f.startsWith(usfm + "-") && f.endsWith(".json") && !f.includes(".align")).sort();
+    const files = fs.readdirSync(`scripts/align/work/${arg}`).filter((f) => f.startsWith(usfm + "-") && f.endsWith(".json") && !f.includes(".align") && !f.includes(".gold")).sort();
     const covs = [];
     for (const f of files) {
       const ch = Number(f.slice(usfm.length + 1, -5));
-      const base = `scripts/align/work/nt/${usfm}-${pad(ch)}`;
+      const base = `scripts/align/work/${arg}/${usfm}-${pad(ch)}`;
       const r = check(ch, { input: base + ".json", align: `${base}.align.${TAG}.json`, osis });
       covs.push(r.coverage);
       rows.push(...r.rows);
@@ -92,10 +127,10 @@ if (arg === "nt") {
     }
     const avg = covs.reduce((a, b) => a + b, 0) / covs.length;
     const low = covs.filter((c) => c < 0.85).length;
-    console.log(`${usfm}: ${files.length} cap · cobertura grega média ${(avg * 100).toFixed(1)}% · ${low} cap < 85% (aviso)`);
+    console.log(`${usfm}: ${files.length} cap · cobertura do original média ${(avg * 100).toFixed(1)}% · ${low} cap < 85% (aviso)`);
   }
   if (bad) { console.log(`${bad} capítulo(s) com erro de formato`); process.exit(1); }
-  const out = `scripts/align/work/tagged-nt-${TAG}.tsv`;
+  const out = `scripts/align/work/tagged-${arg}-${TAG}.tsv`;
   fs.writeFileSync(out, [HEADER, ...rows].join(String.fromCharCode(10)) + String.fromCharCode(10));
   console.log(`TSV: ${out} (${rows.length} linhas)`);
   process.exit(0);

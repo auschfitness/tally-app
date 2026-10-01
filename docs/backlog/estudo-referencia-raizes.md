@@ -99,6 +99,22 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       ninguém entende).
 - [x] (spec 10, no ar) **Refazer Notas** (página atual: um cartão solto, sem utilidade clara).
 - [ ] Frente B (sublinhado completo) em andamento: ver "Frente B" abaixo.
+- [ ] **Refazer a tela de login de modo geral** (dono acha "bem ruim").
+- [x] **AT, passo 1: tocar na palavra abre o hebraico.** Ver "Antigo Testamento" abaixo.
+- [ ] AT, passo 2: traduzir os 8.723 verbetes hebraicos do Strong para PT.
+- [ ] AT, passo 3: dicionário UBS hebraico (SDBH), como a frente A fez no NT.
+
+## Antigo Testamento (2026-10-01)
+
+- Mesmo alinhador estatístico do NT (`stat_align.py --corpus ot --stem --glue --sym gdfa
+  --tau 0.4 --seed-ids GEN-01,EXO-20,PSA-23,ISA-53,DAN-03,JON-01 --write`), zero IA.
+- Gabarito: 12 capítulos ligados à mão por Sonnet (`work/ot/*.gold.json`,
+  `ALIGN-PROMPT-OT.md`); 6 viram semente, 6 medem (Gn 22, Rt 1, Sl 51, Pv 3, Jr 31, 2Rs 5).
+  Os 12 vão para o banco com o próprio gabarito.
+- Resultado nos 6 de medição: 95,9% das ligações certas, 73% das palavras ligadas (NT: 96,7% / 82%).
+  `--glue` cola "e/o/em/para/teu..." (prefixo/sufixo no hebraico) na palavra vizinha; sem ele
+  a cobertura era 55%. Aramaico (Esdras, Daniel) fica mais fraco (~72% do original ligado).
+- 844 mil linhas em bible_tagged_words (~110 MB; banco no plano grátis, limite 500 MB).
 
 ## Frente B: sublinhado completo (estado em 2026-10-01)
 

@@ -12,6 +12,10 @@ Melhorias da rodada 2, cada uma ligável por flag:
   --eval A-B    mede os capítulos A-B com --sym/--tau
   --write       grava work/jhn-NN.align.stat.json (formato do validate-alignment.mjs)
   --write-nt    grava work/nt/<LIVRO>-NN.align.stat.json do NT inteiro, menos João (só a variante --sym)
+  --corpus ot   Antigo Testamento (work/ot, de `fetch-nt.mjs ot`): gabarito = work/ot/*.gold.json,
+                semente = --seed-ids (ex. GEN-01,EXO-20), medição (--tune/--eval all) = os demais
+                capítulos do gabarito; --write grava work/ot/<LIVRO>-NN.align.stat.json
+                (capítulo do gabarito leva o próprio gabarito)
 
 Uso (da raiz do repo): python scripts/align/stat-align/stat_align.py --stem --sym gdfa --seed 10 --tau 0.4 --eval 11-21 --write
 Eflomal não instala no Windows (precisa de make + compilador C); por isso este Model 2 próprio.
@@ -22,17 +26,19 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rslp import stem as rslp_stem
 
-ROOT = "scripts/align/work"
+WORK = "scripts/align/work"
 WORD = re.compile(r"[^\W_]+(?:['’\-][^\W_]+)*")
 ARTICLE = "G3588"
 NEIGHBORS = [(-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
 
 
 # ---------- dados ----------
-def load(use_stem):
-    """Versículos do NT: dict com texto, palavras (início, fim, radical) e Strong."""
+def load(use_stem, corpus):
+    """Versículos do NT/AT: dict com texto, palavras (início, fim, radical) e Strong."""
     verses, cache = [], {}
-    for f in sorted(glob.glob(f"{ROOT}/nt/*.json")):
+    for f in sorted(glob.glob(f"{WORK}/{corpus}/*.json")):
+        if ".align" in f or ".gold" in f:
+            continue
         d = json.load(open(f, encoding="utf8"))
         for v in d["verses"]:
             ws = []
@@ -44,8 +50,38 @@ def load(use_stem):
     return verses
 
 
-def load_gold(path=f"{ROOT}/tagged-john.tsv"):
-    """(cap, verso) -> {início da palavra: Strong do trecho onde ela começa}."""
+def word_tags(text, marks):
+    """{início da palavra: Strong do trecho onde ela começa}; marks = [(início do trecho, Strong)]."""
+    out = {}
+    for m in WORD.finditer(text):
+        s = None
+        for frm, st in marks:
+            if frm <= m.start():
+                s = st
+            else:
+                break
+        out[m.start()] = s
+    return out
+
+
+def load_gold_ot():
+    """Gabarito do AT: ('GEN', cap, verso) -> (texto, {início da palavra: Strong}) e os trechos crus."""
+    gold, spans = {}, {}
+    for f in sorted(glob.glob(f"{WORK}/ot/*.gold.json")):
+        book, ch = os.path.basename(f)[:-10].split("-")
+        for v in json.load(open(f, encoding="utf8")):
+            text, marks = "", []
+            for sp in v["spans"]:
+                marks.append((len(text), sp["s"] or None))
+                text += sp["t"]
+            k = (book, int(ch), v["verse"])
+            gold[k] = (text, word_tags(text, marks))
+            spans[k] = v["spans"]
+    return gold, spans
+
+
+def load_gold(path=f"{WORK}/tagged-john.tsv"):
+    """('JHN', cap, verso) -> {início da palavra: Strong do trecho onde ela começa}."""
     raw = {}
     for line in open(path, encoding="utf8").read().split("\n")[1:]:
         if not line:
@@ -54,19 +90,7 @@ def load_gold(path=f"{ROOT}/tagged-john.tsv"):
         e = raw.setdefault((int(ch), int(v)), {"text": "", "marks": []})
         e["marks"].append((len(e["text"]), strong or None))
         e["text"] += text
-    gold = {}
-    for k, e in raw.items():
-        marks, out = e["marks"], {}
-        for m in WORD.finditer(e["text"]):
-            s = None
-            for frm, st in marks:
-                if frm <= m.start():
-                    s = st
-                else:
-                    break
-            out[m.start()] = s
-        gold[k] = (e["text"], out)
-    return gold
+    return {("JHN",) + k: (e["text"], word_tags(e["text"], e["marks"])) for k, e in raw.items()}
 
 
 # ---------- treino ----------
@@ -159,6 +183,31 @@ def links_for(sym, fwd, rev, n, m):
     return a
 
 
+# ---------- palavras de prefixo/sufixo (AT) ----------
+# No hebraico "e", artigo, preposição e possessivo são prefixo/sufixo da palavra (וְהָאָרֶץ = "e a terra",
+# לִבְּךָ = "teu coração") e têm o Strong dela; o estatístico liga só a palavra de conteúdo.
+# --glue cola essas palavrinhas soltas na palavra ligada vizinha (só espaço entre elas).
+# "de/do/da" fica de fora: na cadeia de construto ("casa de Deus") é tanto de uma palavra quanto da
+# outra, e colar na seguinte errou mais do que acertou no gabarito (medido: 94,6% -> 95,9% nas certas).
+GLUE_BEFORE = set("""e o a os as em no na nos nas num numa para pra ao aos à às com por pelo pela
+pelos pelas como um uma teu tua teus tuas seu sua seus suas meu minha meus minhas nosso nossa nossos nossas
+vosso vossa vossos vossas""".split())
+GLUE_AFTER = set("dele dela deles delas".split())
+
+
+def glue(pt, ws, tags):
+    tags = list(tags)
+    word = lambda j: pt[ws[j][0]:ws[j][1]].lower()
+    touching = lambda j, k: pt[ws[j][1]:ws[k][0]].strip() == ""  # j antes de k, só espaço entre
+    for j in range(len(ws) - 2, -1, -1):  # da direita: "e a terra" encadeia
+        if tags[j] is None and tags[j + 1] and word(j) in GLUE_BEFORE and touching(j, j + 1):
+            tags[j] = tags[j + 1]
+    for j in range(1, len(ws)):
+        if tags[j] is None and tags[j - 1] and word(j) in GLUE_AFTER and touching(j - 1, j):
+            tags[j] = tags[j - 1]
+    return tags
+
+
 # ---------- trechos e avaliação ----------
 def spans_for(pt, ws, tags):
     """Palavras com Strong -> trechos. Artigo grego cola na palavra de conteúdo seguinte
@@ -183,12 +232,12 @@ def spans_for(pt, ws, tags):
     return spans
 
 
-def metrics(pred, gold_words, chapters):
+def metrics(pred, gold_words, keep):
     n_stat = same = diff = gold_linked = 0
-    for (ch, v), g in gold_words.items():
-        if not chapters[0] <= ch <= chapters[1]:
+    for k, g in gold_words.items():
+        if not keep(k):
             continue
-        for p, s in zip(pred[(ch, v)], g):
+        for p, s in zip(pred[k], g):
             n_stat += p is not None
             if s:
                 gold_linked += 1
@@ -222,13 +271,24 @@ def main():
     ap.add_argument("--eval")
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--write-nt", action="store_true")
+    ap.add_argument("--corpus", default="nt", choices=["nt", "ot"])
+    ap.add_argument("--seed-ids", default="")
+    ap.add_argument("--glue", action="store_true")
     a = ap.parse_args()
+    ot = a.corpus == "ot"
     for r in (a.tune, a.eval):
-        if r and rng(r)[0] <= a.seed:
+        if r and not ot and rng(r)[0] <= a.seed:
             sys.exit(f"medir em {r} com semente 1-{a.seed} contamina a nota")
 
-    verses = load(a.stem)
-    gold = load_gold()
+    verses = load(a.stem, a.corpus)
+    gold_spans = {}
+    if ot:
+        gold, gold_spans = load_gold_ot()
+        seed_ids = {tuple(x.split("-")) for x in a.seed_ids.split(",") if x}
+        is_seed = lambda k: (k[0], f"{k[1]:02d}") in seed_ids
+    else:
+        gold = load_gold()
+        is_seed = lambda k: k[0] == "JHN" and k[1] <= a.seed
     sid, wid = {}, {}
     src_l, tgt_l, allow_l, seeded = [], [], [], []
     for x in verses:
@@ -236,8 +296,9 @@ def main():
         w_ids = np.array([wid.setdefault(w[2], len(wid) + 1) for w in x["ws"]], dtype=np.int64)
         x["s_ids"], x["w_ids"] = s_ids, w_ids
         allow = None
-        if x["book"] == "JHN" and x["ch"] <= a.seed and (x["ch"], x["v"]) in gold:
-            g = gold[(x["ch"], x["v"])][1]
+        key = (x["book"], x["ch"], x["v"])
+        if is_seed(key) and key in gold:
+            g = gold[key][1]
             gl = [g.get(w[0]) for w in x["ws"]]
             allow = np.array([[gs is not None and gs == s for gs in gl] for s in x["strongs"]], dtype=bool).reshape(len(s_ids), len(w_ids))
         x["allow"] = allow
@@ -269,7 +330,7 @@ def main():
     pb[off[V[nn]] + (C[nn].astype(np.int64) - 1) * n_s[V[nn]] + K[nn]] = rpost[nn]
     pt_base = np.r_[0, np.cumsum(n_w)]; gr_base = np.r_[0, np.cumsum(n_s)]
 
-    john = [i for i, x in enumerate(verses) if x["book"] == "JHN"]
+    john = [i for i, x in enumerate(verses) if (x["book"], x["ch"], x["v"]) in gold]  # versículos do gabarito
     variants = ["fwd", "inter", "gd", "gdfa"]
 
     def align_verse(i, sym):
@@ -286,26 +347,53 @@ def main():
                 per[j] = (inv[int(x["s_ids"][gi - 1])], score)
         return per
 
-    best = {sym: {(verses[i]["ch"], verses[i]["v"]): align_verse(i, sym) for i in john} for sym in variants}
+    best = {sym: {(verses[i]["book"], verses[i]["ch"], verses[i]["v"]): align_verse(i, sym) for i in john} for sym in variants}
 
     gold_words = {}
     for i in john:
         x = verses[i]
-        g = gold[(x["ch"], x["v"])]
-        assert g[0] == x["pt"], f"texto do gabarito difere em {x['ch']}:{x['v']}"
-        gold_words[(x["ch"], x["v"])] = [g[1].get(w[0]) for w in x["ws"]]
+        k = (x["book"], x["ch"], x["v"])
+        assert gold[k][0] == x["pt"], f"texto do gabarito difere em {k}"
+        gold_words[k] = [gold[k][1].get(w[0]) for w in x["ws"]]
+
+    def tagged(i, per, tau):
+        t = [s if sc >= tau else None for s, sc in per]
+        return glue(verses[i]["pt"], verses[i]["ws"], t) if a.glue else t
+
+    gold_i = {(verses[i]["book"], verses[i]["ch"], verses[i]["v"]): i for i in john}
 
     def preds(sym, tau):
-        return {k: [s if sc >= tau else None for s, sc in per] for k, per in best[sym].items()}
+        return {k: tagged(gold_i[k], per, tau) for k, per in best[sym].items()}
+
+    def chapters(r):
+        """Versículos medidos: no AT, o gabarito fora da semente; no NT, João A-B."""
+        if ot:
+            return lambda k: not is_seed(k)
+        lo, hi = rng(r)
+        return lambda k: lo <= k[1] <= hi
 
     if a.tune:
-        ch = rng(a.tune)
-        print(f"\ncapítulos {a.tune} (semente 1-{a.seed}, peso {a.weight}, radical {'sim' if a.stem else 'não'})")
+        print(f"\nmedição {a.tune} (semente {a.seed_ids or a.seed}, peso {a.weight}, radical {'sim' if a.stem else 'não'})")
         for sym in variants:
             for tau in [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
-                print(f"  {sym:5s} tau {tau:.2f}: {fmt(metrics(preds(sym, tau), gold_words, ch))}")
+                print(f"  {sym:5s} tau {tau:.2f}: {fmt(metrics(preds(sym, tau), gold_words, chapters(a.tune)))}")
     if a.eval:
-        print(f"\ncapítulos {a.eval}, {a.sym}, tau {a.tau}: {fmt(metrics(preds(a.sym, a.tau), gold_words, rng(a.eval)))}")
+        print(f"\nmedição {a.eval}, {a.sym}, tau {a.tau}: {fmt(metrics(preds(a.sym, a.tau), gold_words, chapters(a.eval)))}")
+    if ot and a.write:
+        by_file, nverses = {}, 0
+        for i, x in enumerate(verses):
+            k = (x["book"], x["ch"], x["v"])
+            if k in gold_spans and not os.environ.get("STAT_RAW"):  # capítulo do gabarito: vale o gabarito (STAT_RAW=1 grava o cru, p/ análise)
+                sp = gold_spans[k]
+            else:
+                sp = spans_for(x["pt"], x["ws"], tagged(i, align_verse(i, a.sym), a.tau))
+            by_file.setdefault((x["book"], x["ch"]), []).append({"verse": x["v"], "spans": sp})
+            nverses += 1
+        for (book, ch), arr in by_file.items():
+            with open(f"{WORK}/ot/{book}-{ch:02d}.align.stat.json", "w", encoding="utf8") as f:
+                json.dump(arr, f, ensure_ascii=False)
+        print(f"escrevi {len(by_file)} capítulos ({nverses} versículos) do AT em {WORK}/ot/ ({a.sym}, tau {a.tau})")
+        return
     if a.write_nt:
         by_file, nverses = {}, 0
         for i, x in enumerate(verses):
@@ -315,19 +403,19 @@ def main():
             by_file.setdefault((x["book"], x["ch"]), []).append({"verse": x["v"], "spans": spans_for(x["pt"], x["ws"], tags)})
             nverses += 1
         for (book, ch), arr in by_file.items():
-            with open(f"{ROOT}/nt/{book}-{ch:02d}.align.stat.json", "w", encoding="utf8") as f:
+            with open(f"{WORK}/nt/{book}-{ch:02d}.align.stat.json", "w", encoding="utf8") as f:
                 json.dump(arr, f, ensure_ascii=False)
-        print(f"escrevi {len(by_file)} capítulos ({nverses} versículos) do NT, sem João, em {ROOT}/nt/ ({a.sym}, tau {a.tau})")
+        print(f"escrevi {len(by_file)} capítulos ({nverses} versículos) do NT, sem João, em {WORK}/nt/ ({a.sym}, tau {a.tau})")
     if a.write:
         tags = preds(a.sym, a.tau)
         by_ch = {}
         for i in john:
             x = verses[i]
-            by_ch.setdefault(x["ch"], []).append({"verse": x["v"], "spans": spans_for(x["pt"], x["ws"], tags[(x["ch"], x["v"])])})
+            by_ch.setdefault(x["ch"], []).append({"verse": x["v"], "spans": spans_for(x["pt"], x["ws"], tags[("JHN", x["ch"], x["v"])])})
         for ch, arr in by_ch.items():
-            with open(f"{ROOT}/jhn-{ch:02d}.align.stat.json", "w", encoding="utf8") as f:
+            with open(f"{WORK}/jhn-{ch:02d}.align.stat.json", "w", encoding="utf8") as f:
                 json.dump(arr, f, ensure_ascii=False)
-        print(f"escrevi {len(by_ch)} capítulos de João em {ROOT}/jhn-NN.align.stat.json ({a.sym}, tau {a.tau})")
+        print(f"escrevi {len(by_ch)} capítulos de João em {WORK}/jhn-NN.align.stat.json ({a.sym}, tau {a.tau})")
 
 
 if __name__ == "__main__":
