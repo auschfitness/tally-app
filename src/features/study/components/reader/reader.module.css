@@ -79,8 +79,15 @@
 .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--border); overflow-x: auto; font-family: var(--font-ui); }
 .tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--r-6) var(--r-6) 0 0; background: none; color: var(--text-2); font-size: var(--t-13); white-space: nowrap; cursor: pointer; }
 .tabOn { background: var(--bg); color: var(--text); font-weight: 600; border-color: var(--border); margin-bottom: -1px; }
+.tabBtn { display: inline-flex; align-items: center; gap: 6px; }
+.ico { flex: none; }
 .tabX { color: var(--text-2); font-size: 14px; line-height: 1; }
 .tabAdd { margin-left: 4px; }
+.paneTools { position: sticky; right: 0; margin-left: auto; padding-left: 8px; align-self: center; display: inline-flex; gap: 2px; background: var(--surface); }
+.tool { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: var(--r-6); background: none; color: var(--text-2); cursor: pointer; transition: transform 120ms var(--ease), background-color 120ms ease; }
+.tool:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .tool:hover { background: var(--surface-2); color: var(--text); } }
+.railBtn { display: none; }
 .addMenu { position: absolute; z-index: 10; margin-top: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-10); box-shadow: var(--e-2); padding: 4px; display: flex; flex-direction: column; transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
 .addMenu button { text-align: left; background: none; border: 0; padding: 8px 12px; border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1.2 var(--font-ui); cursor: pointer; }
 .body { flex: 1; overflow-y: auto; padding: var(--s-5) var(--s-6) var(--s-8); font-family: var(--font-ui); color: var(--text); }
@@ -137,6 +144,20 @@
 .occChaps button span { color: var(--text-2); font-size: 12px; font-variant-numeric: tabular-nums; }
 @media (hover: hover) and (pointer: fine) { .occChaps button:hover { background: var(--surface-2); } }
 .occChaps button:active { transform: scale(0.97); }
+
+/* Tela cheia e trilho recolhido: só no desktop (no celular a gaveta já sobe e desce). O
+   texto continua montado, só some, para não perder o estado da leitura. */
+@media (min-width: 768px) {
+  .paneFull { grid-template-columns: minmax(0, 1fr); }
+  .paneFull .col, .paneFull .split { display: none; }
+  .paneRail { grid-template-columns: minmax(0, 1fr) 44px; }
+  .paneRail .split { display: none; }
+  .railed { align-items: center; padding-top: var(--s-2); }
+  .railed > :not(.railBtn) { display: none; }
+  .railed .railBtn { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: var(--r-6); background: none; color: var(--text-2); cursor: pointer; }
+  @media (hover: hover) and (pointer: fine) { .railed .railBtn:hover { background: var(--surface-2); color: var(--text); } }
+}
+@media (max-width: 767px) { .paneTools { display: none; } }
 
 @keyframes popIn { from { opacity: 0; transform: scale(0.96); } }
 @keyframes paneIn { from { opacity: 0; transform: translateX(24px); } }

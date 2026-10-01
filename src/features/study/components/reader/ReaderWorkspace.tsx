@@ -28,7 +28,7 @@ import { BibleCompare } from "../BibleCompare";
 import { NotesTab } from "./NotesTab";
 import { SermonTab } from "./SermonTab";
 import { WordTab } from "./WordTab";
-import { WorkspacePane } from "./WorkspacePane";
+import { WorkspacePane, type PaneView } from "./WorkspacePane";
 import styles from "./reader.module.css";
 
 export interface EditorData {
@@ -93,6 +93,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [ws, setWs] = useState<Workspace>(EMPTY_WS);
   const [closing, setClosing] = useState(false);
+  const [view, setView] = useState<PaneView>("split");
   const [noteAt, setNoteAt] = useState<VerseAt | null>(null);
   const [incoming, setIncoming] = useState<Incoming | null>(null);
   const [saved, setSaved] = useState<Record<string, Sermon>>({});
@@ -115,6 +116,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const open = useCallback((t: WsTab): void => {
     clearCloseTimer();
     setClosing(false);
+    setView("split"); // abrir algo traz a área de volta (recolhida ou em tela cheia)
     setWs((w) => openTab(w, t));
   }, [clearCloseTimer]);
 
@@ -125,6 +127,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
     closeTimer.current = window.setTimeout(() => {
       closeTimer.current = null;
       setWs(EMPTY_WS);
+      setView("split");
       setClosing(false);
     }, CLOSE_MS);
     focusLater(() => document.querySelector<HTMLElement>(TEXT_SELECTOR));
@@ -281,7 +284,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
     <Ctx.Provider value={api}>
       <div
         ref={gridRef}
-        className={`${styles.reader} ${paneOn ? styles.withPane : ""}`}
+        className={`${styles.reader} ${paneOn ? styles.withPane : ""} ${paneOn && view === "full" ? styles.paneFull : ""} ${paneOn && view === "rail" ? styles.paneRail : ""}`}
         style={paneW ? ({ "--pane-w": `${paneW}px` } as CSSProperties) : undefined}
       >
         <div className={styles.col}>{children}</div>
@@ -312,6 +315,8 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
             renderTab={renderTab}
             addable={addable}
             onAdd={(k) => (k === "notes" ? openNotes(null) : open({ kind: "sermon" }))}
+            view={view}
+            onView={setView}
           />
         ) : null}
       </div>

@@ -35,8 +35,9 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 
 ## Área de trabalho (painel da direita)
 
-- [ ] Abas com ícone por tipo (nota, definição), botão de **tela cheia** e de
-      **recolher o painel** no canto direito.
+- [x] Abas com ícone por tipo (nota, definição), botão de **tela cheia** e de
+      **recolher o painel** no canto direito. Feito em 2026-10-01
+      (recolher deixa um trilho de 44px com o botão de reabrir; só no desktop).
 - [ ] **Nota com editor rico**: título, H2, negrito, itálico, sublinhado, listas, citação,
       tabela, imagem; placeholder em serifa "Comece a escrever…".
 - [x] Alça visível no meio do divisor (nós já temos o divisor arrastável). Feito em 2026-10-01.

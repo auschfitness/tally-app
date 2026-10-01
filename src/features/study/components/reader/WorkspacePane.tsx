@@ -13,6 +13,27 @@ function tabLabel(t: WsTab, lex: Record<string, LexShort>): string {
   return t.kind === "notes" ? "Notas" : "Sermão";
 }
 
+export type PaneView = "split" | "full" | "rail";
+
+// Ícones de 16px, traço do tema (currentColor); o texto da aba continua sendo o nome.
+const ICON: Record<string, string> = {
+  word: "M3 13l3.5-9L10 13M4.4 10h4.2M12 6h2M12 9h2M12 12h2",
+  verse: "M8 3.5C6.5 2.5 4.5 2.5 2 3v9c2.5-.5 4.5-.5 6 .5 1.5-1 3.5-1 6-.5V3c-2.5-.5-4.5-.5-6 .5zM8 3.5v9",
+  notes: "M3 13l.7-3L10.5 3.2a1.4 1.4 0 0 1 2 0l.3.3a1.4 1.4 0 0 1 0 2L6 12.3zM9.5 4.2l2.3 2.3",
+  sermon: "M4 2.5h6l2.5 2.5v8.5H4zM10 2.5V5h2.5M6 8h4.5M6 10.5h4.5",
+  expand: "M6 2.5H2.5V6M10 2.5h3.5V6M6 13.5H2.5V10M10 13.5h3.5V10",
+  shrink: "M2.5 6H6V2.5M13.5 6H10V2.5M2.5 10H6v3.5M13.5 10H10v3.5",
+  fold: "M3.5 3.5L8 8l-4.5 4.5M8.5 3.5L13 8l-4.5 4.5",
+  unfold: "M12.5 3.5L8 8l4.5 4.5M7.5 3.5L3 8l4.5 4.5",
+};
+function Icon({ name }: { name: keyof typeof ICON }) {
+  return (
+    <svg className={styles.ico} viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={ICON[name]} />
+    </svg>
+  );
+}
+
 type Drag = { id: number; y0: number; dy: number; samples: { y: number; t: number }[] };
 
 export function WorkspacePane({
@@ -25,6 +46,8 @@ export function WorkspacePane({
   renderTab,
   addable,
   onAdd,
+  view,
+  onView,
 }: {
   ws: Workspace;
   lex: Record<string, LexShort>;
@@ -35,6 +58,8 @@ export function WorkspacePane({
   renderTab: (t: WsTab) => ReactNode;
   addable: { kind: "notes" | "sermon"; label: string }[];
   onAdd: (kind: "notes" | "sermon") => void;
+  view: PaneView;
+  onView: (v: PaneView) => void;
 }) {
   const [sheet, setSheet] = useState<SheetState>("half");
   const [addOpen, setAddOpen] = useState(false);
@@ -122,7 +147,8 @@ export function WorkspacePane({
   }
 
   return (
-    <aside ref={paneRef} className={`${styles.pane} ${sheet === "full" ? styles.full : ""} ${closing ? styles.paneOut : ""}`} aria-label="Área de trabalho" data-testid="workspace">
+    <aside ref={paneRef} className={`${styles.pane} ${sheet === "full" ? styles.full : ""} ${closing ? styles.paneOut : ""} ${view === "rail" ? styles.railed : ""}`} aria-label="Área de trabalho" data-testid="workspace">
+      <button type="button" className={styles.railBtn} aria-label="Abrir área de trabalho" onClick={() => onView("split")}><Icon name="unfold" /></button>
       <button
         type="button"
         className={styles.grab}
@@ -139,7 +165,7 @@ export function WorkspacePane({
           const label = tabLabel(t, lex);
           return (
             <span key={key} className={`${styles.tab} ${ws.active === key ? styles.tabOn : ""}`}>
-              <button type="button" role="tab" id={`ws-tab-${key}`} aria-controls={`ws-panel-${key}`} aria-selected={ws.active === key} className="link" onClick={() => onActivate(key)}>{label}</button>
+              <button type="button" role="tab" id={`ws-tab-${key}`} aria-controls={`ws-panel-${key}`} aria-selected={ws.active === key} className={`link ${styles.tabBtn}`} onClick={() => onActivate(key)}><Icon name={t.kind} />{label}</button>
               <button type="button" className={`link ${styles.tabX}`} aria-label={`Fechar ${label}`} onClick={() => onCloseTab(key)}>×</button>
             </span>
           );
@@ -156,6 +182,10 @@ export function WorkspacePane({
             ) : null}
           </span>
         ) : null}
+        <span className={styles.paneTools}>
+          <button type="button" className={styles.tool} aria-label={view === "full" ? "Sair da tela cheia" : "Tela cheia"} onClick={() => onView(view === "full" ? "split" : "full")}><Icon name={view === "full" ? "shrink" : "expand"} /></button>
+          <button type="button" className={styles.tool} aria-label="Recolher área de trabalho" onClick={() => onView("rail")}><Icon name="fold" /></button>
+        </span>
       </div>
       {ws.tabs.map((t) => {
         const key = tabKey(t);
