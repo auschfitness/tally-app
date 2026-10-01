@@ -1289,3 +1289,179 @@
 .trashRow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .trashText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .trashTitle { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Notas (spec 10 5): linha = referencia em destaque + data a direita; texto em ate 2
+   linhas, serifa. A linha inteira e link ou botao, com o mesmo afundar das demais. */
+.nRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--s-3);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--s-3) 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.nRow:active {
+  transform: scale(.97);
+}
+.nRef {
+  min-width: 0;
+  font-size: var(--t-13);
+  font-weight: 600;
+  color: var(--blue);
+  overflow-wrap: anywhere;
+}
+.nDate {
+  font-size: var(--t-13);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nText {
+  grid-column: 1 / -1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: var(--s-1);
+  font: 400 var(--t-15)/1.6 var(--font-read), Georgia, "Times New Roman", serif;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.nCount {
+  margin-left: var(--s-1);
+  font-weight: 400;
+  opacity: .8;
+}
+
+/* Folha "Nova nota": no computador, cartao centrado (modal, origem no centro) que entra
+   com fade + escala .96 em 150 ms; no celular sobe de baixo. Saida mais rapida (100 ms). */
+.sheetScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4);
+  background: rgba(10, 15, 28, .4);
+  opacity: 0;
+  transition: opacity 100ms ease-out;
+}
+.sheet {
+  width: min(520px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-14);
+  background: var(--surface);
+  box-shadow: var(--e-2);
+  opacity: 0;
+  transform: scale(.96);
+  transition: opacity 100ms ease-out, transform 100ms ease-out;
+}
+.sheetShown {
+  opacity: 1;
+  transition-duration: 150ms;
+}
+.sheetShown .sheet {
+  opacity: 1;
+  transform: none;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(.23, 1, .32, 1);
+}
+.sheet h2 {
+  margin: 0 0 var(--s-4);
+  font-size: var(--t-17);
+  font-weight: 600;
+}
+.sheetArea,
+.sheetPassage {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-10);
+  background: var(--surface);
+  color: var(--text);
+}
+.sheetArea {
+  min-height: 168px;
+  padding: var(--s-3);
+  font: 400 1.0625rem/1.6 var(--font-read), Georgia, "Times New Roman", serif;
+  resize: vertical;
+}
+.sheetPassage {
+  height: 36px;
+  margin-top: var(--s-3);
+  padding: 0 var(--s-3);
+  font: inherit;
+  font-size: var(--t-13);
+}
+.sheetArea:focus,
+.sheetPassage:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 25%, transparent);
+}
+.sheetHelp {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-13);
+  color: var(--text-2);
+}
+.sheetErr {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-13);
+  color: var(--danger, #c0392b);
+}
+.sheetActs {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  margin-top: var(--s-6);
+}
+.sheetDel {
+  margin-right: auto;
+  color: var(--danger, #c0392b);
+}
+@media (max-width: 640px) {
+  .sheetScrim {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .sheet {
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    opacity: 1;
+    transform: translateY(100%);
+    transition: transform 100ms ease-out;
+  }
+  .sheetShown .sheet {
+    transform: none;
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(.32, .72, 0, 1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nRow:active {
+    transform: none;
+  }
+  .sheet,
+  .sheetShown .sheet {
+    transform: none;
+  }
+  .sheet {
+    opacity: 0;
+  }
+  .sheetShown .sheet {
+    opacity: 1;
+  }
+}

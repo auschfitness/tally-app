@@ -7,7 +7,7 @@ import type { DB } from "@/lib/auth/session";
 import { TRASH_TABLE, trashCutoff, type TrashItem } from "./domain";
 import { chapterLabel } from "./reader";
 import { osisToUsfm } from "@/lib/bible/osis";
-import type { NoteScope, Scripture, Sermon, SermonContent, SermonStatus, SermonVisibility, Series, SeriesStatus, StudyNote } from "./types";
+import type { NoteScope, Scripture, Sermon, SermonContent, SermonStatus, SermonVisibility, Series, SeriesStatus, StudyNote, TextNote } from "./types";
 
 const SERMON_STATUS = new Set<SermonStatus>(["draft", "preparing", "ready", "preached", "archived"]);
 const SERMON_VIS = new Set<SermonVisibility>(["private", "leadership", "church", "public"]);
@@ -88,7 +88,7 @@ export async function listSeries(supabase: DB, orgId: string): Promise<Series[]>
 export async function listNotes(supabase: DB, orgId: string): Promise<StudyNote[]> {
   const res = await supabase
     .from("study_notes")
-    .select("id, title, content, scope, sermon_id, series_id, scripture_ref, topic, tags")
+    .select("id, title, content, scope, sermon_id, series_id, scripture_ref, topic, tags, updated_at")
     .eq("org_id", orgId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
@@ -103,7 +103,20 @@ export async function listNotes(supabase: DB, orgId: string): Promise<StudyNote[
     scripture_ref: r.scripture_ref ?? "",
     topic: r.topic ?? "",
     tags: Array.isArray(r.tags) ? r.tags : [],
+    updated_at: r.updated_at ?? "",
   }));
+}
+
+// Notas do texto bíblico de TODOS os capítulos (spec 10 §5). O RLS já limita ao autor.
+export async function listAllTextNotes(supabase: DB, orgId: string): Promise<TextNote[]> {
+  const res = await supabase
+    .from("study_text_notes")
+    .select("id, book, chapter, verse_start, verse_end, body, updated_at")
+    .eq("org_id", orgId)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
+  if (res.error) throw new Error(res.error.message);
+  return (res.data ?? []) as TextNote[];
 }
 
 // Todas as passagens (sermon_scriptures) da org — alimentam o Mapa de Escrituras e o

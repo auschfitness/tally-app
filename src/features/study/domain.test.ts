@@ -23,6 +23,14 @@ import {
   buildOriginalBlock,
   buildContextBlock,
   inProgressSermon,
+  splitNote,
+  joinNote,
+  mergeNotes,
+  searchNotes,
+  noteBucket,
+  groupNotesByDate,
+  groupNotesByBook,
+  noteDate,
   isBodyEmpty,
   missingParts,
   searchSermons,
@@ -309,5 +317,69 @@ describe("libraryGroups (Por data)", () => {
     expect(g.open.map((s) => s.id)).toEqual(["a"]);
     expect(g.preached.map((y) => [y.year, y.items.map((s) => s.id)])).toEqual([["2026", ["d"]], ["2025", ["c"]], ["", ["e"]]]);
     expect(g.archived.map((s) => s.id)).toEqual(["f"]);
+  });
+});
+
+describe("Notas (spec 10)", () => {
+  const tn = (id: string, book: string, chapter: number, vs: number | null, at: string, body = "texto") => ({
+    id, book, chapter, verse_start: vs, verse_end: null, body, updated_at: at,
+  });
+  const ln = (id: string, title: string, content: string, at: string) => ({
+    id, title, content, scope: "personal" as const, sermon_id: null, series_id: null, scripture_ref: "", topic: "", tags: [], updated_at: at,
+  });
+  const now = new Date(2026, 9, 1, 12); // 1 out 2026, hora local
+
+  it("splitNote: 1a linha vira título (até 80), o resto é conteúdo", () => {
+    expect(splitNote("Só uma linha")).toEqual({ title: "Só uma linha", content: "" });
+    expect(splitNote("Título\n\nCorpo\nmais")).toEqual({ title: "Título", content: "Corpo\nmais" });
+    const long = "a".repeat(100);
+    const r = splitNote(long);
+    expect(r.title).toHaveLength(80);
+    expect(r.title + r.content).toBe(long);
+    expect(joinNote("T", "C")).toBe("T\nC");
+    expect(joinNote("T", "")).toBe("T");
+  });
+
+  it("mergeNotes: mistura, mais recente primeiro; rótulo de referência e título solto", () => {
+    const items = mergeNotes(
+      [tn("a", "John", 2, 6, new Date(2026, 8, 1).toISOString()), tn("x", "Tob", 1, null, new Date(2026, 8, 1).toISOString())],
+      [ln("b", "", "Ideia\nresto", new Date(2026, 9, 1).toISOString()), ln("c", "Com título", "corpo", new Date(2026, 7, 1).toISOString())],
+    );
+    expect(items.map((i) => i.id)).toEqual(["b", "a", "c"]); // "Tob" (fora dos 66) sai
+    expect(items[0]).toMatchObject({ kind: "loose", label: "Ideia", body: "resto" });
+    expect(items[1]).toMatchObject({ kind: "text", label: "João 2:6", book: "JHN", chapter: 2 });
+    expect(items[2]).toMatchObject({ label: "Com título", body: "corpo", text: "Com título\ncorpo" });
+  });
+
+  it("searchNotes ignora acento", () => {
+    const items = mergeNotes([tn("a", "John", 3, 16, "2026-09-01T00:00:00Z", "Amor de Deus")], [ln("b", "Reflexão", "", "2026-09-02T00:00:00Z")]);
+    expect(searchNotes(items, "reflexao").map((i) => i.id)).toEqual(["b"]);
+    expect(searchNotes(items, "joao 3").map((i) => i.id)).toEqual(["a"]);
+    expect(searchNotes(items, "joão").map((i) => i.id)).toEqual(["a"]);
+  });
+
+  it("noteBucket e groupNotesByDate", () => {
+    const d = (y: number, m: number, day: number) => new Date(y, m, day, 9).toISOString();
+    expect(noteBucket(d(2026, 9, 1), now)).toBe("Hoje");
+    expect(noteBucket(d(2026, 8, 28), now)).toBe("Esta semana"); // 3 dias atrás, mês anterior
+    expect(noteBucket(d(2026, 9, 1 - 0), new Date(2026, 9, 20))).toBe("Este mês");
+    expect(noteBucket(d(2026, 7, 15), now)).toBe("Agosto de 2026");
+    const items = mergeNotes([], [ln("a", "A", "", d(2026, 9, 1)), ln("b", "B", "", d(2026, 7, 15)), ln("c", "C", "", d(2026, 7, 2))]);
+    expect(groupNotesByDate(items, now).map((g) => [g.label, g.items.map((i) => i.id)])).toEqual([["Hoje", ["a"]], ["Agosto de 2026", ["b", "c"]]]);
+  });
+
+  it("groupNotesByBook: ordem da Bíblia, versículos em ordem, soltas no fim", () => {
+    const items = mergeNotes(
+      [tn("r", "Rom", 8, 28, "2026-09-01T00:00:00Z"), tn("j2", "John", 3, 16, "2026-09-02T00:00:00Z"), tn("j1", "John", 2, 6, "2026-09-03T00:00:00Z"), tn("g", "Gen", 1, 1, "2026-09-04T00:00:00Z")],
+      [ln("s", "Solta", "", "2026-09-05T00:00:00Z")],
+    );
+    const g = groupNotesByBook(items);
+    expect(g.map((x) => x.label)).toEqual(["Gênesis", "João", "Romanos", "Sem passagem"]);
+    expect(g[1]!.items.map((i) => i.id)).toEqual(["j1", "j2"]);
+  });
+
+  it("noteDate: com ano só se não for o atual", () => {
+    expect(noteDate(new Date(2026, 8, 14, 10).toISOString(), now)).toBe("14 set");
+    expect(noteDate(new Date(2025, 8, 14, 10).toISOString(), now)).toBe("14 set 2025");
   });
 });

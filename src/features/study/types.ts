@@ -72,6 +72,7 @@ export interface StudyNote {
   scripture_ref: string;
   topic: string;
   tags: string[];
+  updated_at: string;
 }
 
 // Nota de estudo ancorada a uma passagem (aba Notas do hub "Estudo do Texto";

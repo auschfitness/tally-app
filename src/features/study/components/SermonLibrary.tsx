@@ -214,7 +214,7 @@ function Chevron() {
 }
 
 // Rodapé discreto: é o caminho da Lixeira no celular.
-function TrashLink() {
+export function TrashLink() {
   return (
     <div className={styles.libFoot}>
       <Link href="/study/trash">

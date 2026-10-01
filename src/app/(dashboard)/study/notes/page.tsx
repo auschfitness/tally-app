@@ -1,25 +1,20 @@
 import { requireOrg } from "@/lib/auth/session";
 import { flagOn } from "@/features/flags/gate";
-import { listNotes, listSermons, listSeries } from "@/features/study/queries";
-import { NotesBoard } from "@/features/study/components/NotesBoard";
+import { listAllTextNotes, listNotes } from "@/features/study/queries";
+import { mergeNotes } from "@/features/study/domain";
+import { NotesLibrary } from "@/features/study/components/NotesLibrary";
 import { StudyTabs } from "@/features/study/components/StudyTabs";
 
-// Notas de estudo (Server Component). Mutações via Server Actions.
-// A flag `study.library_v2` só troca a SUB-NAV aqui — a tela de notas em si é a de
-// hoje nos dois lados da flag (a reforma das notas é o Erro nº 4 da spec, outra fatia).
+// Notas (Server Component, spec 10 §5): as do texto bíblico (study_text_notes, do próprio
+// autor) e as soltas (study_notes) numa lista só. Mutações via Server Actions.
 export default async function StudyNotesPage() {
   const ctx = await requireOrg();
   const { supabase, orgId } = ctx;
-  const [notes, sermons, series] = await Promise.all([
-    listNotes(supabase, orgId),
-    listSermons(supabase, orgId),
-    listSeries(supabase, orgId),
-  ]);
-  const sermonOpts = sermons.map((s) => ({ id: s.id, title: s.title }));
+  const [loose, textNotes] = await Promise.all([listNotes(supabase, orgId), listAllTextNotes(supabase, orgId)]);
   return (
     <>
       <StudyTabs v2={flagOn(ctx, "study.library_v2")} reader={flagOn(ctx, "study.reader")} />
-      <NotesBoard notes={notes} sermons={sermonOpts} series={series} />
+      <NotesLibrary items={mergeNotes(textNotes, loose)} />
     </>
   );
 }

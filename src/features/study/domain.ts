@@ -1,7 +1,10 @@
 // Domínio de Study/Sermões. Rótulos, faixas, seções do canvas e regras puras
 // portadas de src/views/sermons.js. Glossário PT-BR FIXADO (CLAUDE.md): Esboço,
 // Ideia central, Notas, Ilustrações, Aplicação, Resposta de oração.
-import type { Scripture, Sermon, SermonStatus, SermonVisibility, SeriesStatus } from "./types";
+import type { Scripture, Sermon, SermonStatus, SermonVisibility, SeriesStatus, StudyNote, TextNote } from "./types";
+import { BOOKS, bookName } from "@/lib/bible/books";
+import { osisToUsfm } from "@/lib/bible/osis";
+import { buildReference } from "@/lib/bible/parse";
 
 // Spec 10: na interface só existem 3 estados escolhíveis. O banco guarda 5 valores:
 // `preparing` aparece como Rascunho e `archived` não é um estado, é a ação "Arquivar".
@@ -308,4 +311,129 @@ export function trashDaysLeft(deletedAt: string, now: Date = new Date()): number
 // Limite para apagar de vez: o que foi excluído antes disto já passou dos 30 dias.
 export function trashCutoff(now: Date = new Date()): string {
   return new Date(now.getTime() - TRASH_DAYS * 86400000).toISOString();
+}
+
+// --- Notas (spec 10 §5): as do texto bíblico e as soltas numa lista só ---
+export interface NoteItem {
+  key: string;
+  kind: "text" | "loose";
+  id: string;
+  label: string; // referência ("João 2:6") ou título da nota solta
+  body: string;
+  at: string; // ISO, para ordenar e agrupar
+  book: string | null; // USFM; só nota do texto
+  chapter: number | null;
+  verse: number | null;
+  text: string; // texto inteiro da nota solta, para reabrir na folha
+}
+
+// Texto livre → título (1ª linha, até 80 letras) + conteúdo (o resto; nada se perde).
+export function splitNote(text: string): { title: string; content: string } {
+  const t = (text || "").trim();
+  const nl = t.indexOf("\n");
+  const first = nl < 0 ? t : t.slice(0, nl);
+  if (first.length <= 80) return { title: first.trim(), content: nl < 0 ? "" : t.slice(nl + 1).trim() };
+  return { title: first.slice(0, 80).trimEnd(), content: t.slice(first.slice(0, 80).length).trim() };
+}
+
+export function joinNote(title: string, content: string): string {
+  return [title.trim(), content.trim()].filter(Boolean).join("\n");
+}
+
+// ponytail: nota de livro fora dos 66 (apócrifos) fica de fora; o app não abre esses capítulos.
+export function mergeNotes(textNotes: TextNote[], loose: StudyNote[]): NoteItem[] {
+  const out: NoteItem[] = [];
+  for (const n of textNotes) {
+    const book = osisToUsfm(n.book);
+    if (!book) continue;
+    out.push({
+      key: "t" + n.id,
+      kind: "text",
+      id: n.id,
+      label: n.chapter ? buildReference(book, n.chapter, n.verse_start, n.verse_end) : bookName(book),
+      body: n.body,
+      at: n.updated_at,
+      book,
+      chapter: n.chapter || null,
+      verse: n.verse_start,
+      text: n.body,
+    });
+  }
+  for (const n of loose) {
+    const sp = n.title.trim() ? { title: n.title.trim(), content: n.content.trim() } : splitNote(n.content);
+    out.push({
+      key: "l" + n.id,
+      kind: "loose",
+      id: n.id,
+      label: sp.title || "(sem título)",
+      body: sp.content,
+      at: n.updated_at,
+      book: null,
+      chapter: null,
+      verse: null,
+      text: joinNote(n.title, n.content),
+    });
+  }
+  return out.sort((a, b) => b.at.localeCompare(a.at));
+}
+
+export function searchNotes(items: NoteItem[], q: string): NoteItem[] {
+  const needle = fold(q).trim();
+  if (!needle) return items;
+  return items.filter((n) => fold(n.label).includes(needle) || fold(n.body).includes(needle));
+}
+
+const MES_LONGO = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+const DAY_MS = 86_400_000;
+const dayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+// "Hoje", "Esta semana" (últimos 6 dias), "Este mês", senão "agosto de 2026" (data local).
+export function noteBucket(iso: string, now: Date = new Date()): string {
+  const d = new Date(iso);
+  const days = Math.round((dayStart(now) - dayStart(d)) / DAY_MS);
+  if (days <= 0) return "Hoje";
+  if (days < 7) return "Esta semana";
+  if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) return "Este mês";
+  const m = MES_LONGO[d.getMonth()]!;
+  return `${m[0]!.toUpperCase()}${m.slice(1)} de ${d.getFullYear()}`;
+}
+
+// Já em ordem decrescente de data: os grupos saem contíguos.
+export function groupNotesByDate(items: NoteItem[], now: Date = new Date()): { label: string; items: NoteItem[] }[] {
+  const out: { label: string; items: NoteItem[] }[] = [];
+  for (const n of [...items].sort((a, b) => b.at.localeCompare(a.at))) {
+    const label = noteBucket(n.at, now);
+    const last = out[out.length - 1];
+    if (last && last.label === label) last.items.push(n);
+    else out.push({ label, items: [n] });
+  }
+  return out;
+}
+
+// Ordem da Bíblia; dentro do livro, capítulo e versículo. Soltas no fim ("Sem passagem").
+export function groupNotesByBook(items: NoteItem[]): { code: string | null; label: string; items: NoteItem[] }[] {
+  const order = new Map(BOOKS.map((b) => [b.code, b.order]));
+  const by = new Map<string, NoteItem[]>();
+  const none: NoteItem[] = [];
+  for (const n of items) {
+    if (!n.book) none.push(n);
+    else by.set(n.book, [...(by.get(n.book) ?? []), n]);
+  }
+  const out: { code: string | null; label: string; items: NoteItem[] }[] = [...by.entries()]
+    .sort((a, b) => (order.get(a[0]) ?? 999) - (order.get(b[0]) ?? 999))
+    .map(([code, list]) => ({
+      code,
+      label: bookName(code),
+      items: list.sort((a, b) => (a.chapter ?? 0) - (b.chapter ?? 0) || (a.verse ?? 0) - (b.verse ?? 0) || b.at.localeCompare(a.at)),
+    }));
+  if (none.length) out.push({ code: null, label: "Sem passagem", items: none.sort((a, b) => b.at.localeCompare(a.at)) });
+  return out;
+}
+
+// Data curta da linha: "14 set"; com ano se não for o atual ("14 set 2025").
+export function noteDate(iso: string, now: Date = new Date()): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const base = `${d.getDate()} ${MES[d.getMonth()]}`;
+  return d.getFullYear() === now.getFullYear() ? base : `${base} ${d.getFullYear()}`;
 }

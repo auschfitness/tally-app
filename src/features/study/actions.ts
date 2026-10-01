@@ -9,7 +9,7 @@ import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { coerceSermon, parseNoteInput, parseSeriesInput, type SermonSaveInput } from "./schema";
 import type { TextNote } from "./types";
 import { isHlColor } from "./reader";
-import { TRASH_TABLE, type TrashKind } from "./domain";
+import { TRASH_TABLE, splitNote, type TrashKind } from "./domain";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function uuidOrNull(v: string | null): string | null {
@@ -265,6 +265,29 @@ export async function deleteNoteAction(fd: FormData): Promise<void> {
   const { supabase } = await requireOrg();
   await supabase.from("study_notes").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   revalidatePath("/study/notes");
+}
+
+// Folha "Nova nota"/edição da página Notas (spec 10): um texto só; título = 1ª linha. Na
+// edição mexe só em título/conteúdo: escopo, tópico, sermão, série e tags ficam como estão.
+export async function saveLooseNoteAction(input: { id?: string | null; text: string }): Promise<ActionResult> {
+  try {
+    const { title, content } = splitNote(input.text ?? "");
+    if (!title && !content) return fail("Escreva algo para guardar.");
+    const { supabase, orgId } = await requireOrg();
+    const updated_at = new Date().toISOString();
+    if (input.id) {
+      if (!UUID.test(input.id)) return fail("Nota inválida.");
+      const { error } = await supabase.from("study_notes").update({ title: title || null, content: content || null, updated_at }).eq("id", input.id);
+      if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
+    } else {
+      const { error } = await supabase.from("study_notes").insert({ org_id: orgId, title: title || null, content: content || null, scope: "personal", updated_at });
+      if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
+    }
+    revalidatePath("/study/notes");
+    return ok(undefined);
+  } catch (e) {
+    return fail(toMessage(e));
+  }
 }
 
 // --- Notas de estudo ancoradas à passagem (aba Notas do hub "Estudo do Texto") ---

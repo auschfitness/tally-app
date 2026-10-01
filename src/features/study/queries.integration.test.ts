@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { hasTestFixture, signInTestUser } from "@/test-support/supabase";
-import { listSermons, listSeries, listNotes, listScriptures, listTrash } from "./queries";
+import { listSermons, listSeries, listNotes, listAllTextNotes, listScriptures, listTrash } from "./queries";
 
 // Integração: Sermões/Séries da org de teste (org-scoping/RLS/shape + content jsonb
 // como objeto, nunca null).
@@ -34,6 +34,11 @@ describe.skipIf(!hasTestFixture)("Study queries (integração, org de teste)", (
     for (const n of notes) {
       expect(Array.isArray(n.tags)).toBe(true);
       expect(["personal", "shared"]).toContain(n.scope);
+      expect(typeof n.updated_at).toBe("string");
+    }
+    for (const t of await listAllTextNotes(supabase, orgId)) {
+      expect(typeof t.book).toBe("string");
+      expect(typeof t.body).toBe("string");
     }
     for (const x of scriptures) {
       expect(typeof x.book).toBe("string");
