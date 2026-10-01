@@ -39,7 +39,7 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       **recolher o painel** no canto direito.
 - [ ] **Nota com editor rico**: título, H2, negrito, itálico, sublinhado, listas, citação,
       tabela, imagem; placeholder em serifa "Comece a escrever…".
-- [ ] Alça visível no meio do divisor (nós já temos o divisor arrastável).
+- [x] Alça visível no meio do divisor (nós já temos o divisor arrastável). Feito em 2026-10-01.
 
 ## Dicionário (parte 3 do plano)
 

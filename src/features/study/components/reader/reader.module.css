@@ -64,6 +64,10 @@
 /* Divisor: alça larga (9px) para o ponteiro, filete fino para o olho. */
 .split { position: relative; cursor: col-resize; touch-action: none; }
 .split::before { content: ""; position: absolute; inset: 0 4px; background: var(--border); transition: background-color 120ms ease, inset 120ms ease; }
+/* Alça: pílula no meio do filete, para o olho saber que dá para arrastar. */
+.split::after { content: ""; position: absolute; top: 50%; left: 50%; width: 5px; height: 40px; border-radius: 3px; transform: translate(-50%, -50%); background: color-mix(in srgb, var(--text) 28%, var(--surface)); transition: background-color 120ms ease; }
+.split:focus-visible::after, .split:active::after { background: var(--blue); }
+@media (hover: hover) and (pointer: fine) { .split:hover::after { background: var(--blue); } }
 .split:focus-visible { outline: none; }
 .split:focus-visible::before, .split:active::before { inset: 0 3px; background: var(--blue); }
 @media (hover: hover) and (pointer: fine) { .split:hover::before { inset: 0 3px; background: color-mix(in srgb, var(--blue) 60%, var(--border)); } }
