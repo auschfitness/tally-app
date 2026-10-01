@@ -4,6 +4,9 @@
 import fs from "node:fs";
 
 const pad = (n) => String(n).padStart(2, "0");
+// ALIGN_TAG=stat: valida jhn-NN.align.stat.json e grava tagged-john-stat.tsv, sem tocar no
+// gabarito. Nesse modo cobertura baixa é só informada (é a métrica do experimento).
+const TAG = process.env.ALIGN_TAG || "";
 const EDGE = /^[\s.,;:!?"'“”‘’()\[\]—–-]|[\s.,;:!?"'“”‘’()\[\]—–-]$/;
 
 // Arquivo ausente ou JSON quebrado vira mensagem legível, não stack trace.
@@ -22,7 +25,7 @@ function readJson(file) {
 
 function check(ch) {
   const input = readJson(`scripts/align/work/jhn-${pad(ch)}.input.json`);
-  const align = readJson(`scripts/align/work/jhn-${pad(ch)}.align.json`);
+  const align = readJson(`scripts/align/work/jhn-${pad(ch)}.align${TAG ? "." + TAG : ""}.json`);
   if (!Array.isArray(align)) return { errors: ["a saída precisa ser um array [{ verse, spans }]"], rows: [], coverage: 0 };
   const byVerse = new Map(align.map((a) => [a.verse, a.spans]));
   const errors = [];
@@ -52,7 +55,7 @@ function check(ch) {
     }
   }
   const coverage = content ? linked / content : 1;
-  if (coverage < 0.85) errors.push(`cobertura ${(coverage * 100).toFixed(1)}% < 85%`);
+  if (coverage < 0.85 && !TAG) errors.push(`cobertura ${(coverage * 100).toFixed(1)}% < 85%`);
   return { errors, rows, coverage };
 }
 
@@ -73,6 +76,6 @@ for (const ch of chapters) {
 }
 if (failed) process.exit(1);
 if (arg === "all") {
-  fs.writeFileSync("scripts/align/work/tagged-john.tsv", ["translation\tbook\tchapter\tverse\tposition\ttext\tstrong", ...all].join("\n") + "\n");
-  console.log(`TSV: scripts/align/work/tagged-john.tsv (${all.length} linhas)`);
+  fs.writeFileSync(`scripts/align/work/tagged-john${TAG ? "-" + TAG : ""}.tsv`, ["translation\tbook\tchapter\tverse\tposition\ttext\tstrong", ...all].join("\n") + "\n");
+  console.log(`TSV: tagged-john${TAG ? "-" + TAG : ""}.tsv (${all.length} linhas)`);
 }
