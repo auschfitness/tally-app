@@ -17,7 +17,7 @@ describe.skipIf(!hasTestFixture)("reader queries (integração)", () => {
   it("getLexShort traz lema e glosa do Strong", async () => {
     const { supabase } = await signInTestUser();
     const lex = await getLexShort(supabase, ["G3056"]);
-    expect(lex["G3056"]?.lemma).toBe("λόγος");
+    expect(lex["G3056"]?.lemma?.normalize("NFC")).toBe("λόγος".normalize("NFC"));
   });
 
   it("getTaggedChapter devolve trechos ordenados (ou vazio antes da carga)", async () => {
