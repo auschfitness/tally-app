@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { morphPt } from "../../morph";
-import { chapterLabel, glossOf, groupOccurrences, isHebrew, strongNum, type ChapterRef, type LexShort, type OccBook, type WordPick } from "../../reader";
+import { chapterLabel, glossOf, groupOccurrences, isHebrew, strongNum, type ChapterRef, type LexShort, type OccBook, type WordPick, withChapterCount } from "../../reader";
 import { selectHit } from "./ReaderWorkspace";
 import styles from "./reader.module.css";
 
@@ -18,6 +18,7 @@ export function WordTab({
   pick,
   lex,
   hits,
+  refNow,
   activeKey,
   onGo,
   onNote,
@@ -26,6 +27,7 @@ export function WordTab({
   pick: WordPick;
   lex: Record<string, LexShort>;
   hits: string[];
+  refNow: ChapterRef;
   activeKey: string | null;
   onGo: (r: ChapterRef) => void;
   onNote: () => void;
@@ -81,7 +83,8 @@ export function WordTab({
   }, [seg, occ, strong]);
 
   const total = occ?.status === "ok" ? occ.data.reduce((s, b) => s + b.total, 0) : freq;
-  const maxBook = occ?.status === "ok" ? Math.max(1, ...occ.data.map((b) => b.total)) : 1;
+  const books = occ?.status === "ok" ? withChapterCount(occ.data, refNow, hits.length) : [];
+  const maxBook = Math.max(1, ...books.map((b) => b.total));
   const at = activeKey ? hits.indexOf(activeKey) : -1;
   const gloss = glossOf(l);
   const grammar = morphPt(pick.morph);
@@ -168,7 +171,7 @@ export function WordTab({
               </span>
             </div>
           ) : null}
-          {occ.data.map((b) => (
+          {books.map((b) => (
             <div key={b.book}>
               <button type="button" className={styles.occBook} aria-expanded={openBook === b.book} onClick={() => setOpenBook((o) => (o === b.book ? "" : b.book))}>
                 <span className={styles.occName}>{b.name}</span>

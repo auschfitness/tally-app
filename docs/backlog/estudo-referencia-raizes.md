@@ -9,9 +9,9 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
 - [x] **Tocar numa ocorrência leva ao versículo exato**, com a palavra marcada e o texto
       rolado até ela (liga o Interlinear sozinho se estiver desligado). Feito em 2026-10-01.
 - [x] **Contador "1 de 3 neste capítulo" com ‹ ›**. Feito em 2026-10-01.
-- [ ] Cartão do capítulo pode divergir do contador por 1 (Mt 1: cartão 41, contador 40):
-      o cartão conta palavras do grego, o contador conta trechos ligados no português
-      (a ligação às vezes junta duas palavras num trecho). Decidir qual número mostrar.
+- [x] Cartão do capítulo divergia do contador por 1 (Mt 1: cartão 41, contador 40).
+      Decidido em 2026-10-01: o capítulo aberto mostra o número do contador (o que dá
+      para percorrer com ‹ ›); os outros capítulos seguem com a contagem do grego.
 - [ ] **Filtro "Filtrar por livro ou capítulo…"** no topo da lista.
 - [ ] Livros como sanfona com seta; capítulos em cartões ("Capítulo 1 · 41 ocorrências").
       Temos o gráfico de barras por livro, que eles não têm; manter os dois.

@@ -180,7 +180,9 @@ export function ReaderView({
   return (
     <div className={styles.main}>
       <div className={styles.bar}>
+        <button type="button" className={styles.arrow} aria-label="Capítulo anterior" disabled={!prev} onClick={() => go(prev)}>‹</button>
         <ChapterPicker current={refNow} onPick={go} />
+        <button type="button" className={styles.arrow} aria-label="Próximo capítulo" disabled={!next} onClick={() => go(next)}>›</button>
         <span className={styles.sep} aria-hidden />
         <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => setMode(e.target.value === "original" ? "original" : "bible")}>
           <option value="bible">Bíblia</option>

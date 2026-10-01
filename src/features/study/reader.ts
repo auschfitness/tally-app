@@ -162,6 +162,20 @@ export function groupOccurrences(rows: OccRow[]): OccBook[] {
     .map((b) => ({ ...b, chapters: [...b.chapters].sort((x, y) => x.chapter - y.chapter) }));
 }
 
+// O cartão do capítulo aberto mostra o mesmo número do contador "1 de N": a RPC conta
+// palavras do grego, o contador conta trechos ligados no português (a ligação às vezes
+// junta duas palavras num trecho). Só o capítulo aberto tem os trechos carregados; os
+// outros ficam com a contagem do grego. n = 0 (nada carregado ainda) não mexe.
+export function withChapterCount(books: OccBook[], at: ChapterRef, n: number): OccBook[] {
+  if (n <= 0) return books;
+  return books.map((b) => {
+    if (b.book !== at.book) return b;
+    const old = b.chapters.find((c) => c.chapter === at.chapter);
+    if (!old) return b;
+    return { ...b, total: b.total - old.n + n, chapters: b.chapters.map((c) => (c === old ? { ...c, n } : c)) };
+  });
+}
+
 // Área de trabalho: abas com chave estável. Abrir o que já está aberto só ativa. A área
 // sobrevive à troca de capítulo, então a aba Versículo guarda o próprio capítulo.
 // A aba Palavra é UMA só (como no Raízes): tocar outra palavra troca o conteúdo.

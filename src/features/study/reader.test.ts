@@ -10,6 +10,7 @@ import {
   groupOriginal,
   openTab,
   releaseVelocity,
+  withChapterCount,
   parseLastRead,
   parseRouteRef,
   pushRecent,
@@ -106,6 +107,18 @@ describe("léxico e ocorrências", () => {
     expect(g[0]?.total).toBe(2);
     expect(g[0]?.chapters.map((c) => c.chapter)).toEqual([1, 10]);
     expect(g[0]?.name).toBe("Gênesis");
+  });
+
+  it("withChapterCount põe o número do contador no capítulo aberto e acerta o total", () => {
+    const g = groupOccurrences([
+      { book: "Matt", chapter: 1, n: 41 },
+      { book: "Matt", chapter: 2, n: 5 },
+    ]);
+    const mt = withChapterCount(g, { book: "MAT", chapter: 1 }, 40)[0];
+    expect(mt?.chapters.map((c) => c.n)).toEqual([40, 5]);
+    expect(mt?.total).toBe(45);
+    expect(withChapterCount(g, { book: "MAT", chapter: 1 }, 0)).toBe(g);
+    expect(withChapterCount(g, { book: "MAT", chapter: 9 }, 3)).toEqual(g);
   });
 });
 

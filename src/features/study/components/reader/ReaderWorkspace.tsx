@@ -263,7 +263,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
         sendBlock(`${chapterLabel(t)}:${t.verse} · ` + buildKeywordBlock({ lemma: l?.lemma || t.strong, strong: t.strong, meaning: glossOf(l), occurrences: null }), DEFAULT_SECTION);
         open({ kind: "sermon" });
       };
-      return <WordTab pick={t} lex={lex} hits={hits} activeKey={wordKey} onGo={(r) => goTo(r, t.strong)} onNote={() => openNotes(at)} onSermon={sermonOpen ? toSermon : undefined} />;
+      return <WordTab pick={t} lex={lex} hits={hits} refNow={refNow} activeKey={wordKey} onGo={(r) => goTo(r, t.strong)} onNote={() => openNotes(at)} onSermon={sermonOpen ? toSermon : undefined} />;
     }
     if (t.kind === "verse") {
       const r = { book: t.book, chapter: t.chapter, verse_start: t.verse, verse_end: null, reference: `${bookName(t.book)} ${t.chapter}:${t.verse}` };

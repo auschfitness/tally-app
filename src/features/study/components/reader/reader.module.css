@@ -11,6 +11,10 @@
 
 /* Barra: material translúcido, o texto rola por baixo (sem filete duro). */
 .bar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-4); background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px); box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 70%, transparent); font-family: var(--font-ui); }
+.arrow { width: 32px; height: 32px; border: 0; border-radius: var(--r-6); background: none; color: var(--text); font: 600 18px/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease), background-color 120ms ease; }
+.arrow:active:not(:disabled) { transform: scale(0.97); }
+.arrow:disabled { opacity: 0.35; cursor: default; }
+@media (hover: hover) and (pointer: fine) { .arrow:hover:not(:disabled) { background: var(--surface-2); } }
 .sep { width: 1px; height: 16px; background: var(--border); }
 .toggle { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-13); font-weight: 600; color: var(--text); cursor: pointer; }
 
