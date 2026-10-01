@@ -94,10 +94,10 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       fetch-*.mjs) e nas 3 linhas do NT já no banco. Ap 17:14 tem ")" sem "(" no próprio texto
       da fonte: corrigido só no banco (refazer se o NT for importado de novo). O resto dos
       desemparelhados são parênteses/aspas que atravessam versículos (normal).
-- [ ] **Refazer a página Sermões** (a biblioteca atual é inútil do jeito que está).
-- [ ] **Refazer "Escrituras" e "Propriedades"** do editor de sermão (botões no canto que
+- [x] **Refazer a página Sermões** (a biblioteca atual é inútil do jeito que está).
+- [x] **Refazer "Escrituras" e "Propriedades"** do editor de sermão (botões no canto que
       ninguém entende).
-- [ ] **Refazer Notas** (página atual: um cartão solto, sem utilidade clara).
+- [x] (spec 10, no ar) **Refazer Notas** (página atual: um cartão solto, sem utilidade clara).
 - [ ] Frente B (sublinhado completo) em andamento: ver "Frente B" abaixo.
 
 ## Frente B: sublinhado completo (estado em 2026-10-01)

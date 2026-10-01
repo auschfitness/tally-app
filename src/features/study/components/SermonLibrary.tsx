@@ -136,7 +136,7 @@ export function SermonLibrary({
               <h2 className={styles.libSec}>Pregados</h2>
               {groups.preached.map((g) => (
                 <div key={g.year}>
-                  <div className={styles.libYear}>{g.year || "Sem data"}</div>
+                  {g.year ? <div className={styles.libYear}>{g.year}</div> : null}
                   {g.items.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
                 </div>
               ))}
