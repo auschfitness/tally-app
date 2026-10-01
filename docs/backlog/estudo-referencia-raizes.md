@@ -22,7 +22,8 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       pílulas Bíblia/Biblioteca/Notas ocupando altura; o texto começa logo abaixo de
       "Mateus 20 ▾ | Bíblia ▾ · Interlinear". Depende da troca do menu lateral (o dono
       vai extinguir o menu atual).
-- [ ] **Setas ‹ › de capítulo no topo do texto**, ao lado de "MATEUS 20", não só no rodapé.
+- [x] **Setas ‹ › de capítulo no topo do texto**, ao lado de "MATEUS 20", não só no rodapé.
+      Feito em 2026-10-01.
 - [ ] **Parágrafos.** O texto deles quebra em parágrafos (Mt 20: v.1, v.6, v.11); o nosso é
       um bloco único. A Bíblia Livre traz a marcação de parágrafo; precisa vir na carga.
 - [ ] Aspas curvas (“ ”) no texto.
