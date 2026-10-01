@@ -16,6 +16,7 @@ import {
   cleanSurface,
   glossOf,
   groupOriginal,
+  toParagraphs,
   originalFor,
   type ChapterRef,
   type LexShort,
@@ -33,6 +34,7 @@ const TOGGLE_KEY = "tally.reader.interlinear";
 export function ReaderView({
   refNow,
   verses,
+  paragraphStarts,
   tagged,
   original,
   lex,
@@ -41,6 +43,7 @@ export function ReaderView({
 }: {
   refNow: ChapterRef;
   verses: ReaderVerse[];
+  paragraphStarts: number[];
   tagged: boolean;
   original: OrigWord[];
   lex: Record<string, LexShort>;
@@ -176,6 +179,7 @@ export function ReaderView({
   }
 
   const byVerse = mode === "original" ? groupOriginal(original) : [];
+  const paragraphs = useMemo(() => toParagraphs(verses, paragraphStarts), [verses, paragraphStarts]);
 
   return (
     <div className={styles.main}>
@@ -200,15 +204,17 @@ export function ReaderView({
         <article className={styles.text} lang="pt-BR" data-testid="reader-text" tabIndex={-1}>
           <div className={styles.eyebrow}>{chapterLabel(refNow)} · Bíblia Livre</div>
           {textError ? <p className={styles.muted}>{textError}</p> : null}
-          <p className={styles.para}>
-            <span className={styles.dropcap} aria-hidden>{refNow.chapter}</span>
-            {verses.map((v) => (
-              <span key={v.n}>
-                <button type="button" className={styles.vnum} aria-label={`Estudar ${chapterLabel(refNow)}:${v.n}`} onClick={() => open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: v.n })}>{v.n}</button>
-                {v.spans.map((s, i) => renderSpan(s, v, i))}{" "}
-              </span>
-            ))}
-          </p>
+          {paragraphs.map((para, pi) => (
+            <p key={para[0]?.n ?? pi} className={styles.para}>
+              {pi === 0 ? <span className={styles.dropcap} aria-hidden>{refNow.chapter}</span> : null}
+              {para.map((v) => (
+                <span key={v.n}>
+                  <button type="button" className={styles.vnum} aria-label={`Estudar ${chapterLabel(refNow)}:${v.n}`} onClick={() => open({ kind: "verse", book: refNow.book, chapter: refNow.chapter, verse: v.n })}>{v.n}</button>
+                  {v.spans.map((s, i) => renderSpan(s, v, i))}{" "}
+                </span>
+              ))}
+            </p>
+          ))}
           <p className={styles.attrib}>Bíblia Livre (BLIVRE), CC BY 4.0{showWords ? ` · ${lexCredit}` : ""}</p>
         </article>
       ) : (

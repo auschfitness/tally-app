@@ -25,8 +25,10 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
       vai extinguir o menu atual).
 - [x] **Setas ‹ › de capítulo no topo do texto**, ao lado de "MATEUS 20", não só no rodapé.
       Feito em 2026-10-01.
-- [ ] **Parágrafos.** O texto deles quebra em parágrafos (Mt 20: v.1, v.6, v.11); o nosso é
-      um bloco único. A Bíblia Livre traz a marcação de parágrafo; precisa vir na carga.
+- [x] **Parágrafos.** A Bíblia Livre NÃO marca parágrafo (só um \p por capítulo); a
+      divisão vem da World English Bible (domínio público, mesma numeração), em
+      `src/lib/bible/paragraphs.json`, gerado por `scripts/build-paragraphs.mjs`. Salmos e
+      poesia saem num bloco só (a WEB marca poesia linha a linha). Feito em 2026-10-01.
 - [x] Aspas curvas (“ ”) no texto. Feito em 2026-10-01 (ao carregar o texto; o banco segue intacto).
 - [ ] Menu lateral próprio do Estudo: Nova nota, Buscar, Biblioteca, Comentário Bíblico,
       Oração, Tutorial; seção "Notas" com estado vazio ("Criar primeira nota").

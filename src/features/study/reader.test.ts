@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { paragraphStartsOf } from "@/lib/bible/paragraphs";
 import {
   EMPTY_WS,
   MAX_TABS,
@@ -12,6 +13,7 @@ import {
   groupOriginal,
   openTab,
   releaseVelocity,
+  toParagraphs,
   withChapterCount,
   parseLastRead,
   parseRouteRef,
@@ -121,6 +123,19 @@ describe("léxico e ocorrências", () => {
     expect(mt?.total).toBe(45);
     expect(withChapterCount(g, { book: "MAT", chapter: 1 }, 0)).toBe(g);
     expect(withChapterCount(g, { book: "MAT", chapter: 9 }, 3)).toEqual(g);
+  });
+});
+
+describe("parágrafos", () => {
+  const vs = [1, 2, 3, 4, 5].map((n) => ({ n, spans: [] }));
+  it("toParagraphs abre bloco novo nos versículos marcados", () => {
+    expect(toParagraphs(vs, [3, 5]).map((p) => p.map((v) => v.n))).toEqual([[1, 2], [3, 4], [5]]);
+    expect(toParagraphs(vs, [])).toHaveLength(1);
+    expect(toParagraphs([], [3])).toEqual([]);
+  });
+  it("paragraphStartsOf lê o mapa gerado (Gênesis 1 quebra por dia)", () => {
+    expect(paragraphStartsOf("GEN", 1).slice(0, 3)).toEqual([3, 6, 9]);
+    expect(paragraphStartsOf("XXX", 1)).toEqual([]);
   });
 });
 

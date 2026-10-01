@@ -75,6 +75,19 @@ export function versesFromPlain(vs: { n: number; text: string }[]): ReaderVerse[
   return vs.map((v) => ({ n: v.n, spans: curlyQuotes([{ text: v.text, strong: null }]) }));
 }
 
+// Quebra os versículos em parágrafos: `starts` são os versículos que abrem parágrafo novo
+// (src/lib/bible/paragraphs.json). Sem marcação, o capítulo sai num bloco só.
+export function toParagraphs(verses: ReaderVerse[], starts: number[]): ReaderVerse[][] {
+  const opens = new Set(starts);
+  const out: ReaderVerse[][] = [];
+  for (const v of verses) {
+    const last = out[out.length - 1];
+    if (!last || opens.has(v.n)) out.push([v]);
+    else last.push(v);
+  }
+  return out;
+}
+
 export function groupOriginal(words: OrigWord[]): { n: number; words: OrigWord[] }[] {
   const byVerse = new Map<number, OrigWord[]>();
   for (const w of words) {

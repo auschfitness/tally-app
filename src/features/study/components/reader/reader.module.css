@@ -36,6 +36,7 @@
 .text { max-width: 36rem; margin: 0 auto; padding: var(--s-8) var(--s-5) var(--s-6); font-family: var(--font-read), Georgia, "Times New Roman", serif; font-optical-sizing: auto; font-size: 1.1875rem; line-height: 1.8; color: var(--text); }
 .eyebrow { font: 600 var(--t-11)/1.4 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: var(--s-5); }
 .para { margin: 0; }
+.para + .para { margin-top: 0.9em; }
 .dropcap { float: left; font-size: 3.6em; font-weight: 500; line-height: 0.82; letter-spacing: -0.02em; margin: 0.08em 0.14em 0 0; }
 .vnum { font: 600 0.6em/1 var(--font-ui); color: var(--blue); vertical-align: super; padding: 0 3px 0 6px; background: none; border: 0; cursor: pointer; font-variant-numeric: tabular-nums; }
 

@@ -7,6 +7,7 @@ import { fetchChapterText } from "@/lib/bible/helloao";
 import { listSermons, listSeries } from "@/features/study/queries";
 import { listServices } from "@/features/services/queries";
 import { parseRouteRef, versesFromPlain, versesFromTagged, type ReaderVerse } from "@/features/study/reader";
+import { paragraphStartsOf } from "@/lib/bible/paragraphs";
 import { READER_TRANSLATION, getLexShort, getOriginalChapter, getTaggedChapter } from "@/features/study/reader-queries";
 import { ReaderView } from "@/features/study/components/reader/ReaderView";
 import { StudyTabs } from "@/features/study/components/StudyTabs";
@@ -58,6 +59,7 @@ export default async function BibleChapterPage({ params }: { params: Promise<{ b
         key={`${ref.book}-${ref.chapter}`}
         refNow={ref}
         verses={verses}
+        paragraphStarts={paragraphStartsOf(ref.book, ref.chapter)}
         tagged={tagged.length > 0 && flagOn(ctx, "study.interlinear")}
         original={original}
         lex={lex}
