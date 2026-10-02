@@ -19,7 +19,7 @@ Leia este arquivo inteiro antes de agir. Ele substitui o CLAUDE.md, que está de
 
 ## Fila de tarefas (nesta ordem)
 
-### 1. AT passo 2: traduzir o léxico hebraico para português (PRÓXIMA)
+### 1. AT passo 2: traduzir o léxico hebraico para português (FEITO em 2026-10-02: 8.515 verbetes no banco; pular para a 2)
 
 Hoje a aba Palavra mostra a definição do hebraico em inglês. Os lotes já estão montados:
 `scripts/align/work/lex-69.input.json` até `lex-175.input.json` (8.515 verbetes, 80 por lote). Os lotes 1 a 68 são do NT e já estão prontos (não mexer).
@@ -67,6 +67,8 @@ Pedido do dono: "a tela de login de modo geral tá bem ruim". Arquivos: `src/app
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
 
 ## Já feito (não refazer)
+
+- AT passo 2: definições do hebraico em português no banco (lex-69 a lex-175, carregados em 2026-10-02).
 
 - AT passo 1: palavra em português ligada ao hebraico nos 39 livros (844 mil linhas em `bible_tagged_words`). Como refazer: `docs/backlog/estudo-referencia-raizes.md`, seção "Antigo Testamento".
 - NT: ligação, léxico em PT, dicionário UBS completo.
