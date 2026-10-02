@@ -26,7 +26,7 @@ Regras:
 1. Concatenar os t de um versículo devolve pt EXATAMENTE (espaços e pontuação inclusos).
 2. Espaços e pontuação ficam em trechos próprios com s: null. Trecho com Strong não começa nem termina com espaço ou pontuação.
 3. s só pode ser um Strong que aparece no greek daquele versículo. Um Strong por trecho.
-4. TODA palavra portuguesa fica num trecho com Strong. Artigos, preposições, pronomes oblíquos e verbos auxiliares entram no trecho da palavra que acompanham ("No princípio" → Strong de ἀρχῇ; "tens enviado" → Strong de ἀπέστειλας; "se perturbe" → Strong de ταρασσέσθω). Palavra acrescentada pela tradução entra no trecho da palavra vizinha a que se refere. Ex.: "em Deus" é UM trecho só (Strong de θεὸν); "o caminho" é UM trecho só (Strong de ὁδὸν). Nunca isole a preposição ou o artigo num trecho próprio quando há palavra de conteúdo junto.
+4. TODA palavra portuguesa fica num trecho com Strong. Artigos, preposições, pronomes oblíquos e verbos auxiliares entram no trecho da palavra que acompanham ("No princípio" → Strong de ἀρχῇ; "tens enviado" → Strong de ἀπέστειλας; "se perturbe" → Strong de ταρασσέσθω). Palavra acrescentada pela tradução entra no trecho da palavra vizinha a que se refere. Ex.: "em Deus" é UM trecho só (Strong de θεὸν); "o caminho" é UM trecho só (Strong de ὁδὸν). Nunca isole a preposição ou o artigo num trecho próprio quando há palavra de conteúdo junto. Mesmo que o grego tenha a preposição correspondente (εἰς, ἐν, πρός, διά, ἀπό...), ela entra no trecho do substantivo ou verbo. Exceção: partícula de negação (οὐ, μή) e pronome com correspondente grego explícito (ὑμᾶς, ἐγώ) ganham trecho próprio.
 5. Artigo grego (G3588) só ganha trecho próprio se não houver palavra de conteúdo para ele.`;
 
 async function ask(verses) {
@@ -73,6 +73,26 @@ export function fixEdges(spans) {
     const last = merged[merged.length - 1];
     if (last && !last.s && !s.s) last.t += s.t;
     else merged.push({ t: s.t, s: s.s || null });
+  }
+  return merged.filter((s) => s.t !== "");
+}
+
+export function attachOrphans(spans) {
+  const out = spans.map((s) => ({ t: s.t ?? "", s: s.s || null }));
+  for (let i = 0; i < out.length; i++) {
+    if (out[i].s || !/[\p{L}\p{N}]/u.test(out[i].t)) continue;
+    let j = i + 1;
+    while (j < out.length && !out[j].s) j++;
+    if (j < out.length) { out[j].t = out[i].t + out[j].t; out.splice(i, 1); i--; continue; }
+    let k = i - 1;
+    while (k >= 0 && !out[k].s) k--;
+    if (k >= 0) { out[k].t = out[k].t + out[i].t; out.splice(i, 1); i--; }
+  }
+  const merged = [];
+  for (const s of out) {
+    const last = merged[merged.length - 1];
+    if (last && !last.s && !s.s) last.t += s.t;
+    else merged.push(s);
   }
   return merged.filter((s) => s.t !== "");
 }
@@ -126,7 +146,7 @@ for (let ch = a; ch <= (b || a); ch++) {
       netFail = 0;
       for (const v of part) {
         const got = r.out.find((x) => x && x.verse === v.verse);
-        const fixed = got && Array.isArray(got.spans) ? { spans: fixEdges(got.spans) } : got;
+        const fixed = got && Array.isArray(got.spans) ? { spans: attachOrphans(fixEdges(got.spans)) } : got;
         const why = checkVerse(v, fixed);
         if (!why) result.set(v.verse, { verse: v.verse, spans: fixed.spans.map(({ t, s }) => ({ t, s: s || null })) });
         else reasons.set(v.verse, why);
