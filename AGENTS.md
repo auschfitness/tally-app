@@ -52,6 +52,8 @@ Quando os 107 lotes passarem:
 
 ### 2. Frente B: sublinhado completo (NT)
 
+EM ANDAMENTO (2026-10-02): `bash scripts/align/run-gemini-nt.sh` (de scripts/align) roda o NT todo pelo Gemini grátis, grava em `work/gem/`, log em `work/gem-run.log`. Para sozinho quando a cota acaba (sem gravar capítulo pela metade); é só rodar de novo. Depois: medir, montar o TSV e carregar (versículo com `failed` fica com o estatístico).
+
 Estado e números em `docs/backlog/estudo-referencia-raizes.md`, seção "Frente B". Resumo: a regra sem IA (`scripts/align/fill-gaps.mjs`) acerta só ~42%; o piloto `scripts/align/gemini-align.mjs` passou no formato em só 44 de 91 versículos. Primeiro descubra por que falha e meça contra o gabarito de João, antes de rodar no NT inteiro. Spec: `docs/specs/09-estudo-dicionario-comentarios.md`.
 
 ### 3. Frente C: comentários bíblicos em João

@@ -159,6 +159,11 @@ for (let ch = a; ch <= (b || a); ch++) {
     if (!todo.length) break;
     await runBatch(todo, 1);
   }
+  // Cota acabou: não grava (senão o capítulo fica "já feito" com versículos falhos para sempre).
+  if ([...reasons.values()].some((r) => String(r).startsWith("cota"))) {
+    console.log(`${book} ${ch}: cota do Gemini esgotada, parando sem gravar; rode de novo mais tarde`);
+    process.exit(2);
+  }
   for (const v of verses) {
     if (!result.has(v.verse)) console.log(`${book} ${ch} v${v.verse}: ${reasons.get(v.verse) || "falha"}`);
   }
