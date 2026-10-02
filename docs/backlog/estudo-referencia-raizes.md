@@ -127,5 +127,8 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
   ligadas e 94% de acordo com o gabarito (14: 88%, 15: 95%, 16: 99%). Teto: 6 versículos
   do cap 14 mudaram de texto desde o gabarito e parte do desacordo é ambiguidade real
   (negação, preposição com correspondente grega). Medido em 2026-10-02.
+- PENDENTE (pós-NT, anotado em 2026-10-02): regenerar o gabarito de João nos versículos
+  com texto mudado (ex. Jo 14: v5, v8, v22, v23, v31) e remediar o acordo do cap 14,
+  para buscar os 99%.
 
 Fonte das telas: conversa de 2026-10-01 (Mateus 1, 19 e 20 no Raízes).
