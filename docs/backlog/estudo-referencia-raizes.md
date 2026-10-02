@@ -122,8 +122,10 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
   só ~42% das preenchidas batem com o gabarito de João (que agrupa palavra pequena com a
   de conteúdo). Abaixo da meta da spec 09.
 - Plano B, IA grátis (`scripts/align/gemini-align.mjs`, Gemini flash-lite, toda palavra
-  num trecho): piloto em João 14-16 passou no formato em só 44 de 91 versículos. Falta
-  medir a qualidade contra o gabarito e entender as falhas (texto alterado? Strong fora do
-  versículo?) antes de rodar o NT.
+  num trecho): piloto em João 14-16 com checagem dura + conserto mecânico de borda e de
+  órfãs chega a 90 de 91 versículos no formato (Jo 14: 31 de 31), 100% das palavras
+  ligadas e 94% de acordo com o gabarito (14: 88%, 15: 95%, 16: 99%). Teto: 6 versículos
+  do cap 14 mudaram de texto desde o gabarito e parte do desacordo é ambiguidade real
+  (negação, preposição com correspondente grega). Medido em 2026-10-02.
 
 Fonte das telas: conversa de 2026-10-01 (Mateus 1, 19 e 20 no Raízes).
