@@ -76,3 +76,28 @@ export async function getChapterMarks(supabase: DB, orgId: string, osis: string,
   const noted = [...new Set((notes.data ?? []).map((n) => n.verse_start).filter((v): v is number => v != null))];
   return { highlights, noted };
 }
+
+// Comentários bíblicos (Frente C, spec 09): tabela global bible_commentary
+export interface BibleCommentaryItem {
+  id: string;
+  source: string;
+  book: string;
+  chapter: number;
+  verse_start: number;
+  verse_end: number;
+  kind: string;
+  text_pt: string;
+  text_en: string;
+}
+
+export async function getChapterCommentaries(supabase: DB, osis: string, chapter: number): Promise<BibleCommentaryItem[]> {
+  const { data, error } = await supabase
+    .from("bible_commentary")
+    .select("id, source, book, chapter, verse_start, verse_end, kind, text_pt, text_en")
+    .eq("book", osis)
+    .eq("chapter", chapter)
+    .order("verse_start")
+    .order("id");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as BibleCommentaryItem[];
+}

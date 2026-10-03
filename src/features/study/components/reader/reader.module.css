@@ -310,3 +310,48 @@
 @media (prefers-reduced-transparency: reduce) {
   .bar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
+
+/* Aba Comentário */
+.commentaryCard {
+  border: 1px solid var(--border);
+  border-radius: var(--r-10);
+  background: var(--surface);
+  padding: var(--s-4) var(--s-5);
+  margin-bottom: var(--s-4);
+}
+.commentaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--border);
+}
+.commentaryAuthor {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--t-14);
+  color: var(--text);
+}
+.commentaryBadge {
+  font: 500 11px/1.2 var(--font-ui);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.commentaryText {
+  font-family: var(--font-read), Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.commentaryFooter {
+  margin-top: var(--s-3);
+  padding-top: var(--s-2);
+  border-top: 1px dashed var(--border);
+  font: var(--t-11)/1.4 var(--font-ui);
+  color: var(--text-2);
+}

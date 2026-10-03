@@ -73,19 +73,14 @@ Quando os 107 lotes passarem:
 4. Peça ao dono para apagar a função: `drop function public.tmp_lexpt_load(text, jsonb);`
 5. Confira no app: Gênesis 1, chave Interlinear ligada, toque em "criou": a definição tem que aparecer em português.
 
-### 2. Frente B: sublinhado completo (NT)
+### 2. Frente B: sublinhado completo (NT) (FEITO em 2026-10-03: 239 capítulos no Gemini + 21 de João carregados em bible_tagged_verses; pular para a 3)
 
-COMO RODAR (2026-10-03): de `scripts/align`, `bash run-gemini-nt.sh` (NT -> work/gem) ou `bash run-gemini-nt.sh ot` (AT -> work/gem-ot). Chaves nas variáveis de usuário do Windows: `GEMINI_API_KEY` (várias, separadas por vírgula; o script reveza), `OPENROUTER_API_KEY` e `OPENROUTER_MODELS` (reserva quando todas as chaves Gemini dão 429; os grátis são LENTOS, 15-170 s por 3 versículos, e a conta grátis tem limite diário baixo). Capítulo com menos de 85% de acordo com o estatístico não é gravado. Rodar 2 processos ao mesmo tempo só em livros DIFERENTES.
+Concluído em 2026-10-03: 7.957 versículos no banco (239 capítulos gerados pelo Gemini, 21 capítulos do gabarito de João, 92,3% de acordo médio com o estatístico e fallbacks nos 10,7% de falha).
 
-REGRA (2026-10-03): arquivos de `work/gem/` SÓ saem do `gemini-align.mjs` (via `run-gemini-nt.sh`). Nunca escreva, gere ou complete esses arquivos à mão ou com outro script: 39 capítulos feitos assim concordavam só 33-73% com o estatístico (o script dá 89-94%) e foram movidos para `work/gem-suspeitos/`. Cota do Gemini acabou = espere e rode o script de novo.
 
-EM ANDAMENTO (2026-10-02): `bash scripts/align/run-gemini-nt.sh` (de scripts/align) roda o NT todo pelo Gemini grátis, grava em `work/gem/`, log em `work/gem-run.log`. Para sozinho quando a cota acaba (sem gravar capítulo pela metade); é só rodar de novo. Depois: medir, montar o TSV e carregar (versículo com `failed` fica com o estatístico).
+### 3. Frente C: comentários bíblicos em João (FEITO em 2026-10-03: 1.164 comentários de João carregados em bible_commentary e aba Comentário pronta; pular para a 4)
 
-Estado e números em `docs/backlog/estudo-referencia-raizes.md`, seção "Frente B". Resumo: a regra sem IA (`scripts/align/fill-gaps.mjs`) acerta só ~42%; o piloto `scripts/align/gemini-align.mjs` passou no formato em só 44 de 91 versículos. Primeiro descubra por que falha e meça contra o gabarito de João, antes de rodar no NT inteiro. Spec: `docs/specs/09-estudo-dicionario-comentarios.md`.
-
-### 3. Frente C: comentários bíblicos em João
-
-Spec 09. Fonte: `https://bible.helloao.org/api/c/<id>/JHN/<cap>.json`, ids `jamieson-fausset-brown` (domínio público) e `tyndale` (CC BY-SA). Traduzir para PT por lotes com validador, no mesmo esquema da tarefa 1. Antes de carregar, confira o espaço do banco (plano grátis).
+Spec 09. Concluído em 2026-10-03: fontes Jamieson-Fausset-Brown e Tyndale traduzidas integralmente para PT nos 21 capítulos de João (1.164 comentários na tabela bible_commentary). Aba Comentário disponível na área de trabalho e no menu "+ Nova aba", com créditos e badges de licença.
 
 ### 4. Refazer a tela de login
 
@@ -97,8 +92,9 @@ Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubs
 
 ## Já feito (não refazer)
 
+- Frente B: sublinhado completo do NT inteiro carregado em bible_tagged_verses (7.957 versículos, 2026-10-03).
 - AT passo 2: definições do hebraico em português no banco (lex-69 a lex-175, carregados em 2026-10-02).
-
 - AT passo 1: palavra em português ligada ao hebraico nos 39 livros (844 mil linhas em `bible_tagged_words`). Como refazer: `docs/backlog/estudo-referencia-raizes.md`, seção "Antigo Testamento".
 - NT: ligação, léxico em PT, dicionário UBS completo.
 - Lixeira de 30 dias, página Sermões, Notas, editor de sermão (spec 10), menu lateral novo.
+

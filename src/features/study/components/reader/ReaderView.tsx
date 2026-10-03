@@ -69,7 +69,7 @@ export function ReaderView({
   const next = useMemo(() => adjacentChapter(refNow, 1), [refNow]);
   const [mode, setMode] = useState<Mode>("bible");
   const [interlinear, setInterlinear] = useState(false);
-  const { publish, open, openNotes, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
+  const { publish, open, openNotes, setCommentaryVerse, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
   // Destaques: estado otimista; a página só manda o retrato inicial do capítulo.
   const [hl, setHl] = useState(highlights);
   const [hlError, setHlError] = useState("");
@@ -81,6 +81,7 @@ export function ReaderView({
   const swallow = useRef(false); // o clique que sucede um toque longo não vale
 
   function select(n: number, at: { x: number; y: number }, how: "toggle" | "add"): void {
+    setCommentaryVerse(n);
     setSel((cur) => {
       if (cur.includes(n)) return how === "add" ? cur : cur.filter((v) => v !== n);
       return [...cur, n].sort((a, b) => a - b);

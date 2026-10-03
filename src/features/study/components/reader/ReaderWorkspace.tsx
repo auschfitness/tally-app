@@ -25,6 +25,7 @@ import { DEFAULT_SECTION, buildKeywordBlock, type SectionKey } from "../../domai
 import type { Sermon, Series } from "../../types";
 import { EMPTY_WS, chapterLabel, closeTab, glossOf, openTab, tabKey, type ChapterRef, type LexShort, type Workspace, type WsTab } from "../../reader";
 import { BibleCompare } from "../BibleCompare";
+import { CommentaryTab } from "./CommentaryTab";
 import { NotesTab } from "./NotesTab";
 import { SermonTab } from "./SermonTab";
 import { WordTab } from "./WordTab";
@@ -50,6 +51,8 @@ interface WorkspaceApi {
   clearJump: () => void;
   setHits: (keys: string[]) => void;
   openNotes: (at: VerseAt | null) => void;
+  openCommentary: (verse: number | null) => void;
+  setCommentaryVerse: (verse: number | null) => void;
   sendBlock: (block: string, section: SectionKey) => void;
   publish: (refNow: ChapterRef, lex: Record<string, LexShort>, editor: EditorData) => void;
 }
@@ -93,6 +96,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const [closing, setClosing] = useState(false);
   const [view, setView] = useState<PaneView>("split");
   const [noteAt, setNoteAt] = useState<VerseAt | null>(null);
+  const [commentaryVerse, setCommentaryVerse] = useState<number | null>(null);
   const [incoming, setIncoming] = useState<Incoming | null>(null);
   const [saved, setSaved] = useState<Record<string, Sermon>>({});
   const [refNow, setRefNow] = useState<ChapterRef | null>(null);
@@ -144,6 +148,11 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
     open({ kind: "notes" });
   }, [open]);
 
+  const openCommentary = useCallback((v: number | null): void => {
+    setCommentaryVerse(v);
+    open({ kind: "commentary", verse: v });
+  }, [open]);
+
   const sendBlock = useCallback((block: string, section: SectionKey): void => {
     seq.current += 1;
     setIncoming({ block, section, seq: seq.current });
@@ -172,8 +181,8 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const wordKey = word?.key ?? null;
   const wordStrong = word?.strong ?? null;
   const api = useMemo<WorkspaceApi>(
-    () => ({ sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, setHits, openNotes, sendBlock, publish }),
-    [sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, openNotes, sendBlock, publish],
+    () => ({ sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, setHits, openNotes, openCommentary, setCommentaryVerse, sendBlock, publish }),
+    [sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, openNotes, openCommentary, setCommentaryVerse, sendBlock, publish],
   );
 
   // Divisor entre texto e área de trabalho: arrasta 1:1, duplo clique volta ao padrão,
@@ -251,8 +260,9 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const addable: { kind: "notes" | "sermon"; label: string }[] = [];
+  const addable: { kind: "notes" | "sermon" | "commentary"; label: string }[] = [];
   if (!ws.tabs.some((t) => t.kind === "notes")) addable.push({ kind: "notes", label: "Notas" });
+  if (!ws.tabs.some((t) => t.kind === "commentary")) addable.push({ kind: "commentary", label: "Comentário" });
   if (!sermonOpen) addable.push({ kind: "sermon", label: "Sermão" });
 
   function renderTab(t: WsTab): ReactNode {
@@ -273,6 +283,10 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
     if (t.kind === "notes") {
       const verse = noteAt && noteAt.book === refNow.book && noteAt.chapter === refNow.chapter ? noteAt.verse : null;
       return <NotesTab refNow={refNow} verse={verse} />;
+    }
+    if (t.kind === "commentary") {
+      const verse = t.verse ?? (noteAt && noteAt.book === refNow.book && noteAt.chapter === refNow.chapter ? noteAt.verse : commentaryVerse);
+      return <CommentaryTab refNow={refNow} verse={verse} />;
     }
     return <SermonTab editor={editor} incoming={incoming} saved={saved} onSaved={onSaved} onIncomingDone={onIncomingDone} />;
   }
@@ -312,7 +326,11 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
             onCloseAll={closeAll}
             renderTab={renderTab}
             addable={addable}
-            onAdd={(k) => (k === "notes" ? openNotes(null) : open({ kind: "sermon" }))}
+            onAdd={(k) => {
+              if (k === "notes") openNotes(null);
+              else if (k === "commentary") openCommentary(null);
+              else open({ kind: "sermon" });
+            }}
             view={view}
             onView={setView}
           />

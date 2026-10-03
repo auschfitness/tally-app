@@ -41,12 +41,19 @@ export interface ChapterRef {
   chapter: number;
 }
 
+// Limpa ')' perdido de nota de rodapé que tenha restado no fim do versículo
+function cleanTrailingPunctuation(text: string, isLastSpan: boolean): string {
+  if (!isLastSpan) return text;
+  return text.replace(/\.\s*\)$/, ".");
+}
+
 // Aspas retas do texto viram curvas (“ ” ‘ ’). Abre depois de início, espaço ou abertura;
 // o resto fecha (inclui apóstrofo). O contexto atravessa os trechos do versículo.
 export function curlyQuotes(spans: Span[]): Span[] {
   let prev = " ";
-  return spans.map((s) => {
-    const text = s.text.replace(/["']/g, (q, i: number, all: string) => {
+  return spans.map((s, idx) => {
+    let text = cleanTrailingPunctuation(s.text, idx === spans.length - 1);
+    text = text.replace(/["']/g, (q, i: number, all: string) => {
       const before = i > 0 ? (all[i - 1] ?? " ") : prev;
       const opens = /[\s([{—“‘]/.test(before);
       return q === '"' ? (opens ? "“" : "”") : opens ? "‘" : "’";
@@ -255,7 +262,8 @@ export type WsTab =
   | ({ kind: "word" } & WordPick)
   | { kind: "verse"; book: string; chapter: number; verse: number }
   | { kind: "notes" }
-  | { kind: "sermon" };
+  | { kind: "sermon" }
+  | { kind: "commentary"; verse?: number | null };
 export interface Workspace {
   tabs: WsTab[];
   active: string | null;
@@ -266,6 +274,7 @@ export const EMPTY_WS: Workspace = { tabs: [], active: null };
 export function tabKey(t: WsTab): string {
   if (t.kind === "word") return "word";
   if (t.kind === "verse") return `verse:${t.book}.${t.chapter}.${t.verse}`;
+  if (t.kind === "commentary") return "commentary";
   return t.kind;
 }
 

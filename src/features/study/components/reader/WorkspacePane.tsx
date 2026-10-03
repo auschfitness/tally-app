@@ -10,6 +10,7 @@ import styles from "./reader.module.css";
 function tabLabel(t: WsTab, lex: Record<string, LexShort>): string {
   if (t.kind === "word") return lex[t.strong]?.lemma ?? t.strong;
   if (t.kind === "verse") return `${chapterLabel(t)}:${t.verse}`;
+  if (t.kind === "commentary") return "Comentário";
   return t.kind === "notes" ? "Notas" : "Sermão";
 }
 
@@ -21,6 +22,7 @@ const ICON: Record<string, string> = {
   verse: "M8 3.5C6.5 2.5 4.5 2.5 2 3v9c2.5-.5 4.5-.5 6 .5 1.5-1 3.5-1 6-.5V3c-2.5-.5-4.5-.5-6 .5zM8 3.5v9",
   notes: "M3 13l.7-3L10.5 3.2a1.4 1.4 0 0 1 2 0l.3.3a1.4 1.4 0 0 1 0 2L6 12.3zM9.5 4.2l2.3 2.3",
   sermon: "M4 2.5h6l2.5 2.5v8.5H4zM10 2.5V5h2.5M6 8h4.5M6 10.5h4.5",
+  commentary: "M2.5 3.5h11v7h-5l-3 2v-2h-3z",
   expand: "M9.5 2.5h4v4M13.5 2.5L9 7M6.5 13.5h-4v-4M2.5 13.5L7 9",
   shrink: "M13.5 2.5L9.5 6.5M9.5 3v3.5H13M2.5 13.5l4-4M6.5 13V9.5H3",
   fold: "M2.5 3.5h11v9h-11zM10 3.5v9", // painel lateral (como o do menu esquerdo, espelhado)
@@ -57,8 +59,8 @@ export function WorkspacePane({
   onCloseTab: (key: string) => void;
   onCloseAll: () => void;
   renderTab: (t: WsTab) => ReactNode;
-  addable: { kind: "notes" | "sermon"; label: string }[];
-  onAdd: (kind: "notes" | "sermon") => void;
+  addable: { kind: "notes" | "sermon" | "commentary"; label: string }[];
+  onAdd: (kind: "notes" | "sermon" | "commentary") => void;
   view: PaneView;
   onView: (v: PaneView) => void;
 }) {

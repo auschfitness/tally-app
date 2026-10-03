@@ -9,6 +9,7 @@ import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { coerceSermon, parseNoteInput, parseSeriesInput, type SermonSaveInput } from "./schema";
 import type { TextNote } from "./types";
 import { isHlColor } from "./reader";
+import { getChapterCommentaries, type BibleCommentaryItem } from "./reader-queries";
 import { TRASH_TABLE, splitNote, type TrashKind } from "./domain";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -388,5 +389,17 @@ export async function setHighlightAction(input: { book: string; chapter: number;
     return ok(null);
   } catch (e) {
     return fail(toMessage(e));
+  }
+}
+
+// Comentários bíblicos do capítulo (spec 09). Tabela global de leitura livre.
+export async function listCommentariesAction(book: string, chapter: number): Promise<ActionResult<BibleCommentaryItem[]>> {
+  try {
+    if (!book || !chapter) return ok([]);
+    const { supabase } = await requireOrg();
+    const items = await getChapterCommentaries(supabase, book, chapter);
+    return ok(items);
+  } catch (e) {
+    return fail(toMessage(e, "Não consegui carregar os comentários."));
   }
 }

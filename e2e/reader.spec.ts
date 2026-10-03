@@ -151,11 +151,39 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     expect((await v6.innerText()).trim()).not.toMatch(/\)$/);
   });
 
-  test("Lixeira abre pelo menu", async ({ page }) => {
+  test("aba Comentário abre em João 3:16, mostra JFB e Tyndale com créditos", async ({ page }) => {
     await login(page);
-    await page.goto("/study/bible/JHN/1");
-    await page.getByRole("link", { name: "Lixeira" }).click();
-    await expect(page.getByRole("heading", { name: "Lixeira" })).toBeVisible();
+    await page.goto("/study/bible/JHN/3");
+
+    // Seleciona o versículo 16
+    const verse = page.locator('[data-verse="16"]');
+    const num = verse.getByRole("button", { name: /^Versículo João 3:16$/ });
+    await num.click();
+
+    // Abre a aba Comentário pelo menu "+ Nova aba"
+    // Primeiro garante que o workspace está aberto caso não esteja, ou clica no botão da barra de seleção se houver,
+    // ou abre "+ Nova aba"
+    // Se o workspace não estiver aberto, abre via seleção ou abre via botão
+    const newTabBtn = page.getByRole("button", { name: "Nova aba" });
+    if (await newTabBtn.isVisible()) {
+      await newTabBtn.click();
+      await page.getByRole("menuitem", { name: "Comentário" }).click();
+    } else {
+      // Abre a barra ou qualquer aba para abrir o workspace
+      await page.getByTestId("selection-bar").getByRole("button", { name: "Anotar" }).click();
+      await page.getByRole("button", { name: "Nova aba" }).click();
+      await page.getByRole("menuitem", { name: "Comentário" }).click();
+    }
+
+    const tab = page.getByTestId("commentary-tab");
+    await expect(tab).toBeVisible();
+    await expect(tab).toContainText("João 3:16");
+    await expect(tab.getByRole("heading", { name: "Jamieson-Fausset-Brown" })).toBeVisible();
+    await expect(tab.getByRole("heading", { name: "Comentário Tyndale" })).toBeVisible();
+    await expect(tab.getByText("Domínio público").first()).toBeVisible();
+    await expect(tab.getByText("CC BY-SA 4.0").first()).toBeVisible();
+
+    await page.screenshot({ path: "docs/previews/commentary-john-3-16.png" });
   });
 });
 

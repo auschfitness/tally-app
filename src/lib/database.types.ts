@@ -181,6 +181,42 @@ export type Database = {
         }
         Relationships: []
       }
+      bible_commentary: {
+        Row: {
+          book: string
+          chapter: number
+          id: string
+          kind: string
+          source: string
+          text_en: string
+          text_pt: string
+          verse_end: number
+          verse_start: number
+        }
+        Insert: {
+          book: string
+          chapter: number
+          id: string
+          kind?: string
+          source: string
+          text_en: string
+          text_pt: string
+          verse_end: number
+          verse_start: number
+        }
+        Update: {
+          book?: string
+          chapter?: number
+          id?: string
+          kind?: string
+          source?: string
+          text_en?: string
+          text_pt?: string
+          verse_end?: number
+          verse_start?: number
+        }
+        Relationships: []
+      }
       bible_original_tokens: {
         Row: {
           book: string
