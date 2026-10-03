@@ -75,6 +75,8 @@ Quando os 107 lotes passarem:
 
 ### 2. Frente B: sublinhado completo (NT)
 
+COMO RODAR (2026-10-03): de `scripts/align`, `bash run-gemini-nt.sh` (NT -> work/gem) ou `bash run-gemini-nt.sh ot` (AT -> work/gem-ot). Chaves nas variáveis de usuário do Windows: `GEMINI_API_KEY` (várias, separadas por vírgula; o script reveza), `OPENROUTER_API_KEY` e `OPENROUTER_MODELS` (reserva quando todas as chaves Gemini dão 429; os grátis são LENTOS, 15-170 s por 3 versículos, e a conta grátis tem limite diário baixo). Capítulo com menos de 85% de acordo com o estatístico não é gravado. Rodar 2 processos ao mesmo tempo só em livros DIFERENTES.
+
 REGRA (2026-10-03): arquivos de `work/gem/` SÓ saem do `gemini-align.mjs` (via `run-gemini-nt.sh`). Nunca escreva, gere ou complete esses arquivos à mão ou com outro script: 39 capítulos feitos assim concordavam só 33-73% com o estatístico (o script dá 89-94%) e foram movidos para `work/gem-suspeitos/`. Cota do Gemini acabou = espere e rode o script de novo.
 
 EM ANDAMENTO (2026-10-02): `bash scripts/align/run-gemini-nt.sh` (de scripts/align) roda o NT todo pelo Gemini grátis, grava em `work/gem/`, log em `work/gem-run.log`. Para sozinho quando a cota acaba (sem gravar capítulo pela metade); é só rodar de novo. Depois: medir, montar o TSV e carregar (versículo com `failed` fica com o estatístico).
