@@ -18,18 +18,23 @@ async function pageAll<T>(fetchPage: (from: number, to: number) => PromiseLike<{
   }
 }
 
+// Uma linha por versículo (m58): spans = [[texto, strong|null], ...] na ordem.
+// Um capítulo tem no máximo 176 versículos, cabe numa chamada só.
 export async function getTaggedChapter(supabase: DB, osis: string, chapter: number): Promise<TaggedWordRow[]> {
-  return pageAll((from, to) =>
-    supabase
-      .from("bible_tagged_words")
-      .select("verse, position, text, strong")
-      .eq("translation", READER_TRANSLATION)
-      .eq("book", osis)
-      .eq("chapter", chapter)
-      .order("verse")
-      .order("position")
-      .range(from, to),
-  );
+  const { data, error } = await supabase
+    .from("bible_tagged_verses")
+    .select("verse, spans")
+    .eq("translation", READER_TRANSLATION)
+    .eq("book", osis)
+    .eq("chapter", chapter)
+    .order("verse");
+  if (error) throw new Error(error.message);
+  const out: TaggedWordRow[] = [];
+  for (const row of data ?? []) {
+    const spans = row.spans as [string, string | null][];
+    spans.forEach(([text, strong], i) => out.push({ verse: row.verse, position: i + 1, text, strong }));
+  }
+  return out;
 }
 
 export async function getOriginalChapter(supabase: DB, osis: string, chapter: number): Promise<OrigWord[]> {

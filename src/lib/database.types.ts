@@ -226,6 +226,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bible_tagged_verses: {
+        Row: {
+          book: string
+          chapter: number
+          spans: Json
+          translation: string
+          verse: number
+        }
+        Insert: {
+          book: string
+          chapter: number
+          spans: Json
+          translation: string
+          verse: number
+        }
+        Update: {
+          book?: string
+          chapter?: number
+          spans?: Json
+          translation?: string
+          verse?: number
+        }
+        Relationships: []
+      }
       bible_tagged_words: {
         Row: {
           book: string

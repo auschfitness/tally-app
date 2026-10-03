@@ -20,7 +20,7 @@ import fs from "node:fs";
 const TABLES = {
   tokens: "bible_original_tokens",
   lexicon: "strongs_lexicon",
-  tagged: "bible_tagged_words", // ligação português↔original (spec 07)
+  tagged: "bible_tagged_verses", // ligação português↔original, uma linha por versículo (spec 07, m58)
   lexpt: "strongs_lexicon",     // só gloss_pt/definition_pt (spec 07)
 };
 const NUMERIC = new Set(["chapter", "verse", "position"]);
@@ -71,7 +71,7 @@ async function flush() {
     : mode === "lexicon" || mode === "lexpt"
     ? supabase.from(table).upsert(rows, { onConflict: "strong" })
     : mode === "tagged"
-      ? supabase.from(table).upsert(rows, { onConflict: "translation,book,chapter,verse,position" })
+      ? supabase.from(table).upsert(rows, { onConflict: "translation,book,chapter,verse" })
       : supabase.from(table).insert(rows);
   const { error } = await q;
   if (error) {
@@ -82,6 +82,25 @@ async function flush() {
   process.stdout.write(`\rInseridas: ${total}`);
 }
 
+// Modo tagged: o TSV continua uma linha por trecho, mas o banco guarda uma linha por versículo
+// (m58). Agrupa tudo em memória (ordem do arquivo não importa) e envia em lotes de versículos.
+const verses = new Map();
+function addTagged(row) {
+  const k = `${row.translation}|${row.book}|${row.chapter}|${row.verse}`;
+  let v = verses.get(k);
+  if (!v) {
+    v = { translation: row.translation, book: row.book, chapter: row.chapter, verse: row.verse, parts: [] };
+    verses.set(k, v);
+  }
+  v.parts.push([row.position, row.text ?? "", row.strong ?? null]);
+}
+function versesToRows() {
+  return [...verses.values()].map((v) => ({
+    translation: v.translation, book: v.book, chapter: v.chapter, verse: v.verse,
+    spans: v.parts.sort((a, b) => a[0] - b[0]).map(([, text, strong]) => [text, strong]),
+  }));
+}
+
 // Lê o arquivo inteiro e itera por linha (evita o readline async iterator, que no
 // Node 24 lança ERR_USE_AFTER_CLOSE ao fim do stream e perderia o último lote).
 const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
@@ -89,8 +108,17 @@ for (const line of lines) {
   if (line.trim() === "") continue;
   const cols = line.split("\t");
   if (!header) { header = cols.map((c) => c.trim()); continue; }
+  if (mode === "tagged") { addTagged(toRow(cols)); continue; }
   batch.push(toRow(cols));
   if (batch.length >= 2000) await flush();
 }
+if (mode === "tagged") {
+  const all = versesToRows();
+  for (let i = 0; i < all.length; i += 500) {
+    batch = all.slice(i, i + 500);
+    await flush();
+  }
+}
 await flush();
 console.log(`\nConcluído: ${total} linhas em ${table}.`);
+
