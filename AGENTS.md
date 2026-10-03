@@ -19,6 +19,29 @@ Leia este arquivo inteiro antes de agir. Ele substitui o CLAUDE.md, que está de
 
 ## Fila de tarefas (nesta ordem)
 
+### 0. PRIORIDADE: compactar a ligação no banco (espaço, plano grátis)
+
+O banco está em ~333 MB de 500 MB; `bible_tagged_words` sozinha ocupa 160 MB (1,1 milhão de linhas, uma por trecho, incluindo espaços). Meta: uma linha por VERSÍCULO. Ordem segura (o app nunca fica sem dados):
+
+1. Migration nova `supabase/migrations/<data>_m58_bible_tagged_verses.sql` (o dono cola no SQL Editor, ou o Claude aplica):
+   ```sql
+   create table if not exists public.bible_tagged_verses (
+     translation text not null, book text not null, chapter int not null, verse int not null,
+     spans jsonb not null,  -- [["No princípio","G0746"],[" ",null],...] na ordem
+     primary key (translation, book, chapter, verse)
+   );
+   alter table public.bible_tagged_verses enable row level security;
+   create policy tagged_verses_read on public.bible_tagged_verses for select using (true);
+   insert into public.bible_tagged_verses (translation, book, chapter, verse, spans)
+   select translation, book, chapter, verse, jsonb_agg(jsonb_build_array(text, strong) order by position)
+   from public.bible_tagged_words group by translation, book, chapter, verse
+   on conflict do nothing;
+   ```
+2. `src/features/study/reader-queries.ts`, `getTaggedChapter`: ler `bible_tagged_verses` (select verse, spans; eq translation/book/chapter; order verse) e devolver o MESMO `TaggedWordRow[]` de hoje (position = índice + 1, text = spans[i][0], strong = spans[i][1]). Nada mais no app muda. Ajustar `reader-queries.integration.test.ts` e `src/lib/database.types.ts` (tipo da tabela nova).
+3. `scripts/seed-original-text.mjs` modo `tagged`: continuar lendo o mesmo TSV, mas agrupar por versículo e fazer upsert em `bible_tagged_verses` (onConflict translation,book,chapter,verse). No caminho via token, a função temporária `tmp_tagged_load` precisa gravar na tabela nova.
+4. Verificar: `npm run verify` + `npx playwright test e2e/reader.spec.ts` (João 1 e Gênesis 1). Publicar (`git push origin HEAD:main`).
+5. Só DEPOIS de publicado e conferido no ar: `drop table public.bible_tagged_words;` (dono/Claude). Conferir o tamanho com `select pg_size_pretty(pg_database_size(current_database()));`.
+
 ### 1. AT passo 2: traduzir o léxico hebraico para português (FEITO em 2026-10-02: 8.515 verbetes no banco; pular para a 2)
 
 Hoje a aba Palavra mostra a definição do hebraico em inglês. Os lotes já estão montados:
