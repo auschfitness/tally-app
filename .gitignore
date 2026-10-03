@@ -46,3 +46,6 @@ docs/testing-fixture.md
 # dados gerados da ligação/léxico (spec 07) — não versionar
 scripts/align/work/
 scripts/ubs/work/
+
+# Config local do Claude Code (tem chave de API)
+.claude/settings.local.json
