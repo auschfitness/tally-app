@@ -19,7 +19,7 @@ Leia este arquivo inteiro antes de agir. Ele substitui o CLAUDE.md, que está de
 
 ## Fila de tarefas (nesta ordem)
 
-### 0. PRIORIDADE: compactar a ligação no banco (espaço, plano grátis)
+### 0. FEITO em 2026-10-03 (main f915577; banco 333 -> 202 MB). Lição: o drop da tabela antiga veio ANTES de publicar e o app ficou quebrado no ar; banco só muda depois do código no ar.
 
 O banco está em ~333 MB de 500 MB; `bible_tagged_words` sozinha ocupa 160 MB (1,1 milhão de linhas, uma por trecho, incluindo espaços). Meta: uma linha por VERSÍCULO. Ordem segura (o app nunca fica sem dados):
 
