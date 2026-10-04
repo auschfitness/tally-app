@@ -121,6 +121,24 @@ D) Verificação e entrega
 2. `npx playwright test e2e/tmp-shot.spec.ts e2e/auth.spec.ts` (screenshots em docs/previews/: login claro/escuro/celular, forgot, reset). Depois APAGUE `e2e/tmp-shot.spec.ts`.
 3. Commit na branch (o hook faz push da branch). NÃO publique na main: mostre as prévias ao dono e espere "aprovado". Aí `git push origin HEAD:main`.
 
+### 4c. Leitura: comentário corrido, sol/lua, sem Recentes, "Original" (pedido do dono em 2026-10-04)
+
+Texto em PT-BR, sem travessão longo, sem emoji. Sem animação em ação frequente (troca de versículo, troca de tema).
+
+1. **Aba Comentário vira texto corrido do capítulo** (`src/features/study/components/reader/CommentaryTab.tsx`, `src/features/study/commentary.ts`).
+   - Nova função pura `chapterCommentary(rows, source, chapter): { blocks: (CmtBlock & { anchor?: { start: number; end: number } })[] }` que devolve TODOS os blocos da fonte escolhida, na ordem do capítulo (JFB: intro primeiro, depois cada linha por verse_start; Tyndale: cada segmento de `tyndaleSegments` na ordem). O primeiro bloco de cada trecho leva `anchor` (versículo inicial/final que ele cobre). `pickCommentary` pode continuar existindo para os testes antigos, mas a tela não usa mais.
+   - Render: título fixo "Comentário de João N" + seletor JFB|Tyndale (como hoje). Corpo = todos os blocos. Antes de cada trecho com `anchor`, uma linha de referência pequena ("Jo 1.1-5", classe `.cmtLabel` já existe) com `id="cmt-v{start}"` e `data-start`/`data-end`.
+   - Versículo selecionado no texto (`verse`): achar o trecho cujo intervalo cobre o versículo (o último que cobre, se vários); `scrollIntoView({ block: "start" })` SEM smooth, dentro do painel da aba (não a página); marcar o trecho com `data-on="true"` (barra fina à esquerda na cor var(--blue), sem transição). Sem versículo selecionado: nada marcado, texto começa do início. Remover a frase "Toque num versículo para ver o comentário." e o aviso "não comenta o versículo N" (não faz mais sentido; se a fonte não cobre o versículo, só não rola).
+   - Crédito da fonte no fim, como hoje. Atualizar `commentary.test.ts` com um teste de `chapterCommentary` (ordem e anchors) e o e2e/smoke que existir para a aba.
+
+2. **Sol/lua na barra da Bíblia** (`ReaderView.tsx`, barra superior onde estão Interlinear, Sermão, Notas): colocar `<ThemeToggle />` (versão ícone, já existe em `src/components/shared/ThemeToggle.tsx`) entre o interruptor Interlinear e o botão Sermão. Botão 32x32, ícone 18px, cor var(--text-2), `:active { transform: scale(0.95) }`, sem outra animação. Manter também a linha no menu do perfil.
+
+3. **Tirar "Recentes" do menu lateral** (`src/components/shared/Sidebar.tsx`, bloco `STUDY_ONLY && recent.length`): apagar o bloco e o que ficar sem uso (prop/estado `recent`, CSS `.sb-recent` se só servir ali). O menu de capítulos (`ChapterPicker.tsx`) continua mostrando os recentes.
+
+4. **Barra de seleção**: em `SelectionBar.tsx` trocar o rótulo "Estudar" por "Original" (abre a aba do versículo no grego/hebraico). Ajustar teste/e2e que procure "Estudar".
+
+5. Verificar: `npm run verify` (teste de integração com "JWT issued at future" = reexecutar só ele com `--no-file-parallelism`), `npx playwright test e2e/reader.spec.ts`. Prévia: screenshot de João 1 com a aba Comentário aberta e o versículo 3 selecionado (claro e escuro) em docs/previews/. Commit na branch; só publicar (`git push origin HEAD:main`) depois do "aprovado" do dono.
+
 ### 5. AT passo 3: dicionário UBS hebraico (SDBH)
 
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
