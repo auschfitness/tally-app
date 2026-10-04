@@ -129,7 +129,7 @@ export function WordTab({
 
   async function copyCitation(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(main ? ubsCitation(main.lemma, main.entry_code, new Date()) : citation);
+      await navigator.clipboard.writeText(main ? ubsCitation(main.lemma, main.entry_code, new Date(), heb) : citation);
       setCopied(true);
     } catch {
       setCopied(false);
@@ -226,7 +226,7 @@ export function WordTab({
           {/* "Citar" desligado até o app ter domínio próprio (pedido do dono, 2026-10-01): a
               citação precisa apontar para o endereço do versículo. Ver backlog do Estudo. */}
           <p className={styles.source}>
-            {main ? "Fonte: Dicionário Grego do Novo Testamento da UBS (CC BY-SA 4.0), tradução Tally" : `Fonte: léxico STEPBible (CC BY 4.0)${def.status === "ok" && def.data.pt ? ", tradução Tally" : ""}`}
+            {main ? (heb ? "Fonte: Dicionário de Hebraico Bíblico da UBS (SDBH, CC BY-SA 4.0), edição em português da UBS, adaptação de formato Tally" : "Fonte: Dicionário Grego do Novo Testamento da UBS (CC BY-SA 4.0), tradução Tally") : `Fonte: léxico STEPBible (CC BY 4.0)${def.status === "ok" && def.data.pt ? ", tradução Tally" : ""}`}
             {CITE_ON ? <>{" · "}<button type="button" className="link" onClick={copyCitation}>{copied ? "Citação copiada" : main ? "Citar (ABNT)" : "Citar"}</button></> : null}
           </p>
         </div>

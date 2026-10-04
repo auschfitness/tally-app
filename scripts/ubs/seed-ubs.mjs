@@ -8,35 +8,8 @@ import assert from "node:assert/strict";
 import { checkBatch } from "./validate-ubs.mjs";
 
 const DIR = "scripts/ubs/work";
-// BBB da UBS (040 = Mateus) → OSIS do banco e abreviação brasileira.
-const BOOKS = [
-  ["Matt", "Mt"], ["Mark", "Mc"], ["Luke", "Lc"], ["John", "Jo"], ["Acts", "At"], ["Rom", "Rm"],
-  ["1Cor", "1Co"], ["2Cor", "2Co"], ["Gal", "Gl"], ["Eph", "Ef"], ["Phil", "Fp"], ["Col", "Cl"],
-  ["1Thess", "1Ts"], ["2Thess", "2Ts"], ["1Tim", "1Tm"], ["2Tim", "2Tm"], ["Titus", "Tt"], ["Phlm", "Fm"],
-  ["Heb", "Hb"], ["Jas", "Tg"], ["1Pet", "1Pe"], ["2Pet", "2Pe"], ["1John", "1Jo"], ["2John", "2Jo"],
-  ["3John", "3Jo"], ["Jude", "Jd"], ["Rev", "Ap"],
-];
-const book = (bbb) => BOOKS[Number(bbb) - 40];
-// Os comentários também citam o AT (001 = Gênesis): só a abreviação, para o texto.
-const OT = "Gn Êx Lv Nm Dt Js Jz Rt 1Sm 2Sm 1Rs 2Rs 1Cr 2Cr Ed Ne Et Jó Sl Pv Ec Ct Is Jr Lm Ez Dn Os Jl Am Ob Jn Mq Na Hc Sf Ag Zc Ml".split(" ");
-const abbr = (bbb) => (Number(bbb) < 40 ? OT[Number(bbb) - 1] : book(bbb)?.[1]);
-export const osisRef = (r) => `${book(r.slice(0, 3))[0]}.${Number(r.slice(3, 6))}.${Number(r.slice(6, 9))}`;
-
-// Marcações da UBS → texto de leitura: {S:ref} vira "Mt 3.7", {L:lema<…>} vira o lema,
-// {D:25.33} vira "25.33", notas {N:001} e letras de homógrafo [a] somem, " | " e <br> viram parágrafo.
-export function cleanUbs(s) {
-  return String(s ?? "")
-    .replace(/(\p{L})\{S:/gu, "$1 {S:") // a UBS às vezes cola a referência na palavra ("En{S:…}")
-    .replace(/\{S:(\d{3})(\d{3})(\d{3})\d*\}/g, (_, b, c, v) => (abbr(b) ? `${abbr(b)} ${Number(c)}${Number(v) ? `.${Number(v)}` : ""}` : ""))
-    .replace(/\{L:([^<}]+)(<[^}]*)?\}/g, "$1")
-    .replace(/\{D:([\d.]+)\}/g, "$1")
-    .replace(/\{N:\d+\}/g, "")
-    .replace(/(\p{Script=Greek})\[[a-z]\]/gu, "$1")
-    .replace(/\s*(\||<br\s*\/?>)\s*/g, "\n\n")
-    .replace(/[ \t]+/g, " ")
-    .replace(/ ([,.;:)])/g, "$1")
-    .trim();
-}
+import { book, cleanUbs, osisRef } from "./ubs-text.mjs";
+export { cleanUbs, osisRef } from "./ubs-text.mjs";
 
 if (process.argv.includes("--check")) {
   assert.equal(cleanUbs("ver {S:04000300700022} e {S:06601100600052}"), "ver Mt 3.7 e Ap 11.6");

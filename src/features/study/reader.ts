@@ -407,7 +407,9 @@ export function orderSenses(senses: UbsSense[], hereIds: string[]): (UbsSense & 
 }
 
 const ABNT_MONTHS = ["jan.", "fev.", "mar.", "abr.", "maio", "jun.", "jul.", "ago.", "set.", "out.", "nov.", "dez."];
-export function ubsCitation(lemma: string, entryCode: string | null, today: Date): string {
+export function ubsCitation(lemma: string, entryCode: string | null, today: Date, hebrew = false): string {
   const at = `${today.getDate()} ${ABNT_MONTHS[today.getMonth()]} ${today.getFullYear()}`;
-  return `SOCIEDADES BÍBLICAS UNIDAS. Dicionário Grego do Novo Testamento. Verbete ${lemma}${entryCode ? ` (${entryCode})` : ""}. Tradução Tally do original em espanhol. Licença CC BY-SA 4.0. Disponível em: https://github.com/ubsicap/ubs-open-license. Acesso em: ${at}.`;
+  const title = hebrew ? "Dicionário de Hebraico Bíblico (SDBH)" : "Dicionário Grego do Novo Testamento";
+  const translation = hebrew ? "Edição em português da UBS. Adaptação de formato Tally." : "Tradução Tally do original em espanhol.";
+  return `SOCIEDADES BÍBLICAS UNIDAS. ${title}. Verbete ${lemma}${entryCode ? ` (${entryCode})` : ""}. ${translation} Licença CC BY-SA 4.0. Disponível em: https://github.com/ubsicap/ubs-open-license. Acesso em: ${at}.`;
 }

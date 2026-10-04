@@ -168,6 +168,15 @@ Entrega: commits na branch, prévia para o dono, publicar só depois do "aprovad
 
 ### 5. AT passo 3: dicionário UBS hebraico (SDBH)
 
+PREPARADA em 2026-10-04, aguardando SQL e aprovação da carga. Fonte oficial UBS
+v0.9.3 já em português: 18.620 linhas, 7.981 Strong, aproximadamente 9,88 MB de JSON.
+Scripts, conferências e ordem de carga em `scripts/ubs/README-HEBREW.md`.
+SQL com senha preenchida em `scripts/ubs/work/hebrew/load.sql` (local, gitignored).
+Prévia com dados UBS simulados: `docs/previews/task5-hebrew-gen1.png`.
+Verificação passou: npm run verify (545 testes), 6 testes do importador e 11 e2e.
+Nada do hebraico foi carregado no banco nem publicado nesta entrega. Não marcar
+como feita até carregar, conferir no app e apagar a função temporária.
+
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
 
 ## Já feito (não refazer)

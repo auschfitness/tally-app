@@ -297,6 +297,12 @@ describe("dicionário UBS", () => {
     expect(ubsCitation("βάπτισμα", "53.41", new Date(2026, 9, 1))).toContain("Verbete βάπτισμα (53.41).");
     expect(ubsCitation("βάπτισμα", null, new Date(2026, 4, 9))).toContain("Acesso em: 9 maio 2026.");
   });
+  it("atribui o hebraico à edição portuguesa da UBS", () => {
+    const citation = ubsCitation("ברא", null, new Date(2026, 9, 4), true);
+    expect(citation).toContain("Dicionário de Hebraico Bíblico (SDBH)");
+    expect(citation).toContain("Edição em português da UBS");
+    expect(citation).not.toContain("original em espanhol");
+  });
 });
 
 describe("capítulos recentes", () => {
