@@ -113,7 +113,7 @@ async function askGemini(verses) {
           contents: [{ role: "user", parts: [{ text: JSON.stringify(requestInput(verses)) }] }],
           generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: WORD_TAG_MODE ? 8192 : 65536 },
         }),
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(180000),
       });
     } catch {
       return { error: "rede falhou (timeout)" };
