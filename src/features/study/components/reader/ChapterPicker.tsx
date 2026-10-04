@@ -6,6 +6,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BOOKS, normToken } from "@/lib/bible/books";
 import { RECENT_KEY, chapterCount, chapterLabel, pushRecent, type ChapterRef } from "../../reader";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { ChevronDown } from "lucide-react";
 import styles from "./reader.module.css";
 
 function readRecent(): ChapterRef[] {
@@ -72,7 +74,7 @@ export function ChapterPicker({ current, onPick }: { current: ChapterRef; onPick
   return (
     <div className={styles.pickWrap} ref={boxRef}>
       <button type="button" className={styles.pickBtn} aria-expanded={open} onClick={() => { setBook(current.book); setOpen((o) => !o); }}>
-        {chapterLabel(current)} <span aria-hidden>▾</span>
+        {chapterLabel(current)} <UiIcon icon={ChevronDown} />
       </button>
       {open ? (
         <div className={styles.picker} role="dialog" aria-label="Escolher capítulo">

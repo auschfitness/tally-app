@@ -5,6 +5,8 @@
 // embaixo. Esc ou o X limpam a seleção; toda ação limpa depois de agir.
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { HL_COLORS, HL_LABEL, type HlColor } from "../../reader";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { X, Pencil, Languages, Copy, Check } from "lucide-react";
 import styles from "./reader.module.css";
 
 export function SelectionBar({
@@ -80,15 +82,15 @@ export function SelectionBar({
           />
         ))}
         {colors.some(Boolean) ? (
-          <button type="button" className={styles.swatchOff} aria-label="Tirar destaque" onClick={() => onColor(null)}>×</button>
+          <button type="button" className={styles.swatchOff} aria-label="Tirar destaque" onClick={() => onColor(null)}><UiIcon icon={X} /></button>
         ) : null}
       </span>
       <span className={styles.selActions}>
-        <button type="button" className={styles.selAction} onClick={onNote}>Anotar</button>
-        <button type="button" className={styles.selAction} onClick={onStudy}>Original</button>
-        <button type="button" className={styles.selAction} onClick={copy} disabled={copied}>{copied ? "Copiado" : "Copiar"}</button>
+        <button type="button" className={styles.selAction} onClick={onNote}><UiIcon icon={Pencil} />Anotar</button>
+        <button type="button" className={styles.selAction} onClick={onStudy}><UiIcon icon={Languages} />Original</button>
+        <button type="button" className={styles.selAction} onClick={copy} disabled={copied}><UiIcon icon={copied ? Check : Copy} />{copied ? "Copiado" : "Copiar"}</button>
       </span>
-      <button type="button" className={styles.selClose} aria-label="Fechar seleção" onClick={onClose}>×</button>
+      <button type="button" className={styles.selClose} aria-label="Fechar seleção" onClick={onClose}><UiIcon icon={X} /></button>
     </div>
   );
 }

@@ -20,6 +20,7 @@
     "@supabase/ssr": "^0.12.2",
     "@supabase/supabase-js": "^2.45.0",
     "chart.js": "^4.4.1",
+    "lucide-react": "^1.52.0",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

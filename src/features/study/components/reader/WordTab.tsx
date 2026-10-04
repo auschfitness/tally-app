@@ -13,6 +13,8 @@ import { morphPt } from "../../morph";
 import { usfmToOsis } from "@/lib/bible/osis";
 import { chapterLabel, glossOf, filterOccurrences, groupOccurrences, isHebrew, orderSenses, strongNum, ubsCitation, type ChapterRef, type LexShort, type OccBook, type UbsSense, type WordPick, withChapterCount } from "../../reader";
 import { selectHit } from "./ReaderWorkspace";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import styles from "./reader.module.css";
 
 type Load<T> = { status: "loading" } | { status: "error" } | { status: "ok"; data: T };
@@ -236,8 +238,8 @@ export function WordTab({
             <div className={styles.here}>
               <span>{at >= 0 ? <><b>{at + 1}</b> de {hits.length}</> : hits.length} neste capítulo</span>
               <span className={styles.stepper}>
-                <button type="button" aria-label="Ocorrência anterior" disabled={at <= 0} onClick={() => selectHit(hits[at - 1] ?? "", "center")}>‹</button>
-                <button type="button" aria-label="Próxima ocorrência" disabled={at >= hits.length - 1} onClick={() => selectHit(hits[at + 1] ?? "", "center")}>›</button>
+                <button type="button" aria-label="Ocorrência anterior" disabled={at <= 0} onClick={() => selectHit(hits[at - 1] ?? "", "center")}><UiIcon icon={ChevronLeft} /></button>
+                <button type="button" aria-label="Próxima ocorrência" disabled={at >= hits.length - 1} onClick={() => selectHit(hits[at + 1] ?? "", "center")}><UiIcon icon={ChevronRight} /></button>
               </span>
             </div>
           ) : null}
@@ -253,7 +255,7 @@ export function WordTab({
           {shown.map((b) => (
             <div key={b.book}>
               <button type="button" className={styles.occBook} aria-expanded={byChapter || openBook === b.book} onClick={() => setOpenBook((o) => (o === b.book ? "" : b.book))}>
-                <span className={styles.occChev} aria-hidden>›</span>
+                <UiIcon icon={ChevronRight} className={styles.occChev} />
                 <span className={styles.occName}>{b.name}</span>
                 <span className={styles.occBar} aria-hidden><i style={{ transform: `scaleX(${b.total / maxBook})` }} /></span>
                 <span className={styles.occN}>{b.total}</span>

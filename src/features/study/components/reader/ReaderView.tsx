@@ -36,6 +36,8 @@ import { ChapterPicker } from "./ChapterPicker";
 import { SelectionBar } from "./SelectionBar";
 import { selectHit, useWorkspace, type EditorData } from "./ReaderWorkspace";
 import { Icon } from "./WorkspacePane";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { ChevronLeft, ChevronRight, SquarePen } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import styles from "./reader.module.css";
 
@@ -310,9 +312,9 @@ export function ReaderView({
   return (
     <div className={styles.main}>
       <div className={styles.bar}>
-        <button type="button" className={styles.arrow} aria-label="Capítulo anterior" disabled={!prev} onClick={() => go(prev)}>‹</button>
+        <button type="button" className={styles.arrow} aria-label="Capítulo anterior" disabled={!prev} onClick={() => go(prev)}><UiIcon icon={ChevronLeft} /></button>
         <ChapterPicker current={refNow} onPick={go} />
-        <button type="button" className={styles.arrow} aria-label="Próximo capítulo" disabled={!next} onClick={() => go(next)}>›</button>
+        <button type="button" className={styles.arrow} aria-label="Próximo capítulo" disabled={!next} onClick={() => go(next)}><UiIcon icon={ChevronRight} /></button>
         <span className={styles.sep} aria-hidden />
         <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => { setMode(e.target.value === "original" ? "original" : "bible"); setSel([]); setCommentaryVerse(null); }}>
           <option value="bible">Bíblia</option>
@@ -372,7 +374,7 @@ export function ReaderView({
                   </span>
                   {notedSet.has(v.n) ? (
                     <button type="button" className={styles.noteMark} aria-label={`Ver notas de ${chapterLabel(refNow)}:${v.n}`} data-testid="note-mark" onClick={() => openNotes({ book: refNow.book, chapter: refNow.chapter, verse: v.n })}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /><path d="M18.4 2.6a2 2 0 0 1 2.9 2.9L12 14.8l-3.9 1 1-3.9z" /></svg>
+                      <UiIcon icon={SquarePen} />
                     </button>
                   ) : null}{" "}
                 </span>
@@ -433,8 +435,8 @@ export function ReaderView({
       )}
 
       <nav className={styles.chapNav} aria-label="Capítulos">
-        {prev ? <button type="button" className="link" onClick={() => go(prev)}>‹ {chapterLabel(prev)}</button> : <span />}
-        {next ? <button type="button" className="link" onClick={() => go(next)}>{chapterLabel(next)} ›</button> : <span />}
+        {prev ? <button type="button" className="link" onClick={() => go(prev)}><UiIcon icon={ChevronLeft} /> {chapterLabel(prev)}</button> : <span />}
+        {next ? <button type="button" className="link" onClick={() => go(next)}>{chapterLabel(next)} <UiIcon icon={ChevronRight} /></button> : <span />}
       </nav>
     </div>
   );

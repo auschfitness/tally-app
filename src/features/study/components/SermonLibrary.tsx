@@ -20,11 +20,12 @@ import {
 import type { Scripture, Sermon, Series } from "../types";
 import { SeriesModal } from "./SeriesModal";
 import { ScriptureMap } from "./ScriptureMap";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { ChevronRight, Trash2 } from "lucide-react";
 import styles from "../study.module.css";
 
 export type LibraryView = "data" | "serie" | "livro";
 const VIEWS: [LibraryView, string][] = [["data", "Por data"], ["serie", "Por série"], ["livro", "Por livro"]];
-const TRASH_PATH = "M4.5 6.5h15M9.5 6.5V4h5v2.5M6.5 6.5l1 14h9l1-14M10 10.5v6.5M14 10.5v6.5";
 
 export function SermonLibrary({
   sermons,
@@ -207,9 +208,7 @@ function Row({ s, titles }: { s: Sermon; titles: Map<string, string> }) {
 
 function Chevron() {
   return (
-    <svg className={styles.chev} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M9 6l6 6-6 6" />
-    </svg>
+    <UiIcon icon={ChevronRight} className={styles.chev} />
   );
 }
 
@@ -218,7 +217,7 @@ export function TrashLink() {
   return (
     <div className={styles.libFoot}>
       <Link href="/study/trash">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={TRASH_PATH} /></svg>
+        <UiIcon icon={Trash2} />
         Lixeira
       </Link>
     </div>

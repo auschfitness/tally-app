@@ -12,6 +12,8 @@ import { STATUS_LBL } from "../../domain";
 import type { Sermon, SermonStatus } from "../../types";
 import { SermonEditor } from "../SermonEditor";
 import type { EditorData, Incoming } from "./ReaderWorkspace";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { ChevronDown } from "lucide-react";
 import styles from "./reader.module.css";
 
 const OPEN = new Set<SermonStatus>(["draft", "preparing", "ready"]);
@@ -69,7 +71,7 @@ export function SermonTab({
         <span className={styles.senseTag}>{sermon ? "Continuando" : "Novo sermão"}</span>
         <b>{sermon ? sermon.title || "Sem título" : "Sem título"}</b>
         {sermon ? <span className={styles.muted}>{STATUS_LBL[sermon.status]}</span> : null}
-        <span className={styles.continuingChev} aria-hidden>⌄</span>
+        <UiIcon icon={ChevronDown} className={styles.continuingChev} />
       </button>
       <SermonEditor
         key={pick.slot}
