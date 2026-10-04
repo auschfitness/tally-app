@@ -1,60 +1,55 @@
-/* Comunicação. O global já traz panel, row2, table, ministrip, btn, field,
-   filtchips/fchip, empty, muted, meta, gerr. Aqui só o específico da feature. */
-
 .tabs {
   display: flex;
-  gap: 8px;
-  margin: 14px 0 18px;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 var(--s-4);
 }
 
 .compose {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
-  gap: 18px;
+  gap: var(--s-4);
   align-items: start;
 }
-@media (max-width: 900px) {
+@media (max-width: 56.25rem) {
   .compose {
     grid-template-columns: 1fr;
   }
 }
 
 .hint {
-  font-size: 12.5px;
+  font-size: var(--t-13);
   color: var(--text-2);
   line-height: 1.6;
 }
 
 .audienceHints {
-  font-size: 12.5px;
+  font-size: var(--t-13);
   color: var(--text-2);
-  margin-top: 6px;
+  margin-top: var(--s-1);
 }
-
-/* Contadores da pré-visualização */
 .counts {
   display: flex;
-  gap: 22px;
-  padding: 12px 0 4px;
+  gap: var(--s-5);
+  padding: var(--s-3) 0 var(--s-1);
 }
 .countBig {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: var(--t-22);
+  font-weight: 500;
   line-height: 1.1;
 }
 
 .previewList {
-  max-height: 320px;
+  max-height: 20rem;
   overflow: auto;
-  margin-top: 8px;
+  margin-top: var(--s-2);
 }
 .recRow {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13.5px;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  font-size: var(--t-13);
 }
 .recRow:last-child {
   border-bottom: none;
@@ -62,59 +57,55 @@
 .recRow .em {
   color: var(--text-2);
   margin-left: auto;
-  font-size: 12.5px;
+  font-size: var(--t-13);
 }
-
-/* Seletor manual de pessoas */
 .manualBox {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 8px;
-  max-height: 260px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-2);
+  max-height: 16.25rem;
   overflow: auto;
 }
 .manualRow {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 6px 6px;
-  border-radius: 8px;
-  font-size: 13.5px;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-1);
+  border-radius: var(--r-6);
+  font-size: var(--t-13);
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .manualRow:hover {
   background: var(--surface-2, rgba(0, 0, 0, 0.03));
 }
-
-/* Prévia do corpo com {nome} resolvido */
+}
 .bodyPreview {
   white-space: pre-wrap;
-  font-size: 13.5px;
+  font-size: var(--t-13);
   line-height: 1.6;
   color: var(--text);
   background: var(--surface-2, rgba(0, 0, 0, 0.02));
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-3);
 }
 
 .deliveryNote {
-  font-size: 12px;
+  font-size: var(--t-13);
   color: var(--text-2);
-  margin-top: 10px;
+  margin-top: var(--s-2);
   line-height: 1.6;
 }
-
-/* Histórico */
 .msgSubject {
-  font-weight: 600;
+  font-weight: 500;
 }
 .pill {
   display: inline-block;
-  font-size: 11.5px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
+  font-size: var(--t-11);
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-6);
+  border: 0;
   color: var(--text-2);
 }
 .logRow {

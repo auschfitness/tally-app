@@ -1,63 +1,60 @@
-/* Estilos da feature Care (por feature; o global tem panel, av, ministrip, hb,
-   btn, field, modal/overlay, check...). */
-
 .header {
-  margin-bottom: 8px;
+  margin-bottom: var(--s-2);
 }
 .sectionTitle {
-  font-size: 15px;
+  font-size: var(--t-15);
   font-weight: 600;
-  margin: 22px 0 12px;
+  margin: var(--s-5) 0 var(--s-3);
   color: var(--text);
 }
 .pos {
-  color: var(--green, #22a06b);
+  color: var(--green);
 }
 .neg {
-  color: var(--coral, #ea5b4c);
+  color: var(--coral);
 }
 
 .itemTop {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--s-3);
 }
 .itemBody {
   flex: 1;
 }
 .itemName {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .itemMeta {
-  font-size: 12.5px;
+  font-size: var(--t-13);
   color: var(--text-2);
-  margin-top: 4px;
+  margin-top: var(--s-1);
 }
 .itemActions {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s-1);
 }
 .log {
-  margin-top: 8px;
-  border-top: 1px solid var(--border);
-  padding-top: 6px;
+  margin-top: var(--s-2);
+  border-top: 0;
+  padding-top: var(--s-1);
 }
 .logLine {
-  font-size: 12.5px;
+  font-size: var(--t-13);
   color: var(--text-2);
-  padding: 3px 0;
+  padding: var(--s-1) 0;
 }
 .logLine b {
   color: var(--text);
 }
 .noteLine {
-  font-size: 12.5px;
+  font-size: var(--t-13);
   color: var(--text-2);
-  padding: 3px 0;
+  padding: var(--s-1) 0;
   font-style: italic;
 }

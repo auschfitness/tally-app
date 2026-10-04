@@ -1,7 +1,3 @@
-/* Tela de login: dois painéis no desktop (texto bíblico em Literata sobre o azul-marinho
-   do menu lateral + formulário com ar), uma coluna no celular. design-principles.md:
-   ação primária única, hierarquia por tipografia, sem cartão pesado. */
-
 .page {
   min-height: 100dvh;
   display: grid;
@@ -11,203 +7,208 @@
   font-family: var(--font-ui);
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
 }
-
-/* Painel da marca */
 .brand {
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 40px 48px;
+  padding: var(--s-8) var(--s-8);
   background: var(--sidebar);
-  color: #E7ECF5;
+  color: var(--text);
   overflow: hidden;
+  --text: var(--sidebar-text);
+  --text-2: var(--sidebar-muted);
 }
 .wordmark {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 600;
+  gap: var(--s-3);
+  font-size: var(--t-17);
+  font-weight: 500;
   letter-spacing: -.01em;
 }
 .verse {
   position: relative;
   margin: 0;
   max-width: 24ch;
-  font: 500 clamp(26px, 2.6vw, 36px)/1.25 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 400 var(--t-22)/var(--lh-22) var(--font-read), Georgia, serif;
   letter-spacing: -.01em;
   text-wrap: balance;
 }
 .verse cite {
   display: block;
-  margin-top: 18px;
-  font: 400 15px/1.4 var(--font-ui);
+  margin-top: var(--s-4);
+  font: 400 var(--t-15)/1.4 var(--font-ui);
   font-style: normal;
   letter-spacing: .01em;
-  color: #94A2B8;
+  color: var(--text-2);
 }
-
-/* Painel do formulário */
 .pane {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: var(--s-8) var(--s-6);
 }
 .form {
   width: 100%;
-  max-width: 360px;
+  max-width: 22.5rem;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--s-3);
   transition: opacity 240ms var(--ease-out-strong), transform 240ms var(--ease-out-strong);
 }
-@starting-style { .form { opacity: 0; transform: translateY(6px); } }
+@starting-style { .form { opacity: 0; transform: translateY(0.375rem); } }
 .title {
   margin: 0;
-  font-size: 32px;
+  font-size: var(--t-22);
   font-weight: 600;
   letter-spacing: -.025em;
-  line-height: 1.1;
+  line-height: var(--lh-22);
 }
 .swap { transition: filter 150ms ease, opacity 150ms ease; }
-.swapping { filter: blur(2px); opacity: .7; }
+.swapping { filter: blur(0.125rem); opacity: .7; }
 .sub {
-  margin: -8px 0 10px;
-  font-size: 14.5px;
+  margin: calc(-1 * var(--s-2)) 0 var(--s-2);
+  font-size: var(--t-13);
   color: var(--text-2);
+  line-height: var(--lh-13);
 }
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: var(--s-1);
+  font-size: var(--t-13);
+  font-weight: 500;
   color: var(--text-2);
 }
 .field input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 0 var(--control-px);
   font: inherit;
   font-weight: 400;
-  font-size: 15px;
+  font-size: var(--t-13);
   color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--surface-2);
+  border: 0;
+  border-radius: var(--r-6);
   transition: border-color 120ms var(--ease-out-strong), box-shadow 120ms var(--ease-out-strong);
+  height: var(--control-h);
+  min-height: var(--control-h);
 }
-.field[data-invalid="true"] input { border-color: var(--coral); }
+.field[data-invalid="true"] input { border-color: var(--coral); box-shadow: 0 0 0 2px var(--coral); }
 .pw { position: relative; }
-.pw input { padding-right: 44px; }
+.pw input { padding-right: calc(var(--control-h) + var(--s-2)); }
 .eye {
   position: absolute;
   top: 50%;
-  right: 6px;
+  right: 0;
   transform: translateY(-50%);
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: var(--control-h);
+  height: var(--control-h);
   color: var(--text-2);
   background: none;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--r-6);
   cursor: pointer;
+  min-height: var(--control-h);
+  padding: 0;
 }
 .forgot {
   align-self: flex-end;
-  margin-top: -6px;
-  font-size: 13px;
+  margin-top: calc(-1 * var(--s-1));
+  font-size: var(--t-13);
   color: var(--text-2);
 }
 .field input:focus {
   outline: none;
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(43, 92, 230, .18);
+  box-shadow: 0 0 0 2px var(--blue);
 }
 .err {
-  min-height: 18px;
-  margin: -4px 0;
-  font-size: 13px;
+  min-height: 1.125rem;
+  margin: calc(-1 * var(--s-1)) 0;
+  font-size: var(--t-13);
   color: var(--coral);
   opacity: 0;
-  transform: translateY(-2px);
+  transform: translateY(-0.125rem);
   transition: opacity 150ms var(--ease-out-strong), transform 150ms var(--ease-out-strong);
 }
 .err[data-on="true"] { opacity: 1; transform: translateY(0); }
-.ok { min-height: 18px; margin: -4px 0; font-size: 13px; color: var(--text-2); }
+.ok { min-height: 1.125rem; margin: calc(-1 * var(--s-1)) 0; font-size: var(--t-13); color: var(--text-2); }
 .btn {
   width: 100%;
-  padding: 13px;
+  padding: 0 var(--control-px);
   font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
+  font-size: var(--t-13);
+  font-weight: 500;
+  color: var(--on-blue);
   background: var(--blue);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--r-6);
   cursor: pointer;
-  transition: transform 160ms var(--ease-out-strong), background 160ms ease, border-color 160ms ease;
+  transition: transform 120ms var(--ease-press), background 100ms ease;
+  height: var(--control-h);
+  min-height: var(--control-h);
 }
 @media (hover: hover) and (pointer: fine) {
   .forgot:hover, .switch button:hover { text-decoration: underline; }
   .btn:hover { background: var(--blue-deep); }
   .google:hover { background: var(--surface-2); border-color: var(--text-2); }
 }
-.btn:active { transform: scale(0.97); }
-.google:active { transform: scale(0.98); }
+.btn:active { transform: scale(.97); }
+.google:active { transform: scale(.97); }
 .btn:disabled { opacity: .6; cursor: default; }
 .or {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 12.5px;
+  gap: var(--s-3);
+  font-size: var(--t-13);
   color: var(--text-2);
 }
-.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.or::before, .or::after { content: ""; flex: 1; height: 0.0625rem; background: var(--border); }
 .google {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--s-2);
   width: 100%;
-  padding: 12px;
+  padding: 0 var(--control-px);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--t-13);
   font-weight: 500;
   color: var(--text);
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 0;
+  border-radius: var(--r-6);
   cursor: pointer;
-  transition: transform 160ms var(--ease-out-strong), background 160ms ease, border-color 160ms ease;
+  transition: transform 120ms var(--ease-press), background 100ms ease;
+  height: var(--control-h);
+  min-height: var(--control-h);
 }
 .google:disabled { opacity: .6; cursor: default; }
 .switch {
-  margin-top: 10px;
-  font-size: 14px;
+  margin-top: var(--s-2);
+  font-size: var(--t-13);
   color: var(--text-2);
   text-align: center;
 }
 .switch button {
   padding: 0;
   font: inherit;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--blue);
   background: none;
   border: none;
   cursor: pointer;
 }
-
-/* Celular e tablet: uma coluna; a marca vira uma faixa curta */
-@media (max-width: 860px) {
+@media (max-width: 53.75rem) {
   .page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-  .brand { padding: 28px 24px 32px; gap: 24px; }
-  .verse { max-width: none; font-size: 22px; }
-  .verse cite { margin-top: 10px; font-size: 13px; }
-  .pane { align-items: flex-start; padding: 32px 24px 48px; }
+  .brand { padding: var(--s-6) var(--s-6) var(--s-8); gap: var(--s-6); --text: var(--sidebar-text); --text-2: var(--sidebar-muted); color: var(--text); }
+  .verse { max-width: none; font-size: var(--t-22); font: 400 var(--t-22)/var(--lh-22) var(--font-read), Georgia, serif; }
+  .verse cite { margin-top: var(--s-2); font-size: var(--t-13); }
+  .pane { align-items: flex-start; padding: var(--s-8) var(--s-6) var(--s-8); }
 }
 
 @media (prefers-reduced-motion: reduce) {

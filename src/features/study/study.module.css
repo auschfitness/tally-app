@@ -1,109 +1,123 @@
-/* Estilos de Study/Sermões (por feature; global tem panel, li, hb, chip, empty,
-   btn, field, mrow, actions, muted, meta, sub, page, filtchips/fchip se existirem). */
-
-/* Biblioteca */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--s-3);
 }
 .card {
   display: block;
   width: 100%;
   text-align: left;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #e6e8ee);
-  border-radius: 16px;
-  padding: 16px;
+  background: var(--surface);
+  border: 0;
+  border-radius: var(--r-10);
+  padding: var(--s-4);
   cursor: pointer;
   transition: transform var(--dur-micro, 0.12s) var(--ease, ease), box-shadow var(--dur-micro, 0.12s) var(--ease, ease), border-color var(--dur-micro, 0.12s) var(--ease, ease);
   color: inherit;
   text-decoration: none;
 }
+@media (hover: hover) and (pointer: fine) {
 .card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(20, 30, 60, 0.08);
+  transform: none;
+  box-shadow: none;
+  background: var(--surface-2);
+}
 }
 .cardTop {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .cardName {
-  font-weight: 600;
+  font-weight: 500;
 }
 .cardSub {
-  color: var(--text-2, #6b7280);
-  font-size: 13px;
-  margin-top: 4px;
+  color: var(--text-2);
+  font-size: var(--t-13);
+  margin-top: var(--s-1);
 }
 .cardFoot {
-  color: var(--text-2, #6b7280);
-  font-size: 12px;
-  margin-top: 8px;
+  color: var(--text-2);
+  font-size: var(--t-13);
+  margin-top: var(--s-2);
 }
 .headerRow {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
 }
 .filters {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: var(--s-3);
 }
 .chips {
   display: inline-flex;
-  gap: 6px;
+  gap: var(--s-1);
   flex-wrap: wrap;
 }
 .fchip {
-  border: 1px solid var(--border, #e6e8ee);
-  background: var(--surface, #fff);
-  color: var(--text-2, #6b7280);
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 13px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text-2);
+  border-radius: var(--r-6);
+  padding: 0 var(--control-px);
+  font-size: var(--t-13);
   cursor: pointer;
   text-decoration: none;
   transition: background var(--dur-micro, 0.14s) var(--ease, ease), color var(--dur-micro, 0.14s) var(--ease, ease), border-color var(--dur-micro, 0.14s) var(--ease, ease);
+  height: var(--control-h);
+  min-height: var(--control-h);
+  font-weight: 500;
 }
+@media (hover: hover) and (pointer: fine) {
 .fchip:hover {
-  border-color: var(--blue, #2b5ce6);
-  color: var(--text, #12213d);
+  border-color: var(--blue);
+  color: var(--text);
+}
 }
 .fchip.on {
-  background: var(--blue, #2b5ce6);
-  border-color: var(--blue, #2b5ce6);
-  color: #fff;
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: none;
 }
+@media (hover: hover) and (pointer: fine) {
 .fchip.on:hover {
-  color: #fff;
+  color: var(--text);
+  background: var(--surface-2);
+  font-weight: 500;
+  border-color: transparent;
+  box-shadow: none;
+}
 }
 .select {
-  padding: 6px 10px;
-  border: 1px solid var(--border, #e6e8ee);
-  border-radius: 8px;
-  background: var(--surface, #fff);
+  padding: 0 var(--control-px);
+  border: 0;
+  border-radius: var(--r-6);
+  background: var(--surface-2);
   color: inherit;
+  height: var(--control-h);
+  min-height: var(--control-h);
+  font-size: var(--t-13);
+  font-weight: 500;
 }
-
-/* Editor canvas */
 .bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
 }
 .status {
-  color: var(--text-2, #6b7280);
-  font-size: 13px;
+  color: var(--text-2);
+  font-size: var(--t-13);
 }
 .canvas {
-  max-width: 760px;
+  max-width: 47.5rem;
   margin: 0 auto;
 }
 .title {
@@ -111,10 +125,11 @@
   border: 0;
   outline: 0;
   background: transparent;
-  font: 600 32px/1.15 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 600 var(--t-22)/var(--lh-22) var(--font-ui);
   letter-spacing: -0.01em;
   color: inherit;
-  padding: 6px 0;
+  padding: var(--s-1) 0;
+  height: var(--control-h);
 }
 .doc {
   width: 100%;
@@ -124,315 +139,321 @@
   resize: none;
   overflow: hidden;
   color: inherit;
-  font-size: 15px;
+  font-size: var(--t-15);
   line-height: 1.7;
   font-family: inherit;
-  min-height: 40px;
+  min-height: 2.5rem;
 }
 .block {
-  margin-top: 20px;
+  margin-top: var(--s-5);
 }
 .sech {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
 }
 .seclabel {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--t-13);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-2, #6b7280);
+  color: var(--text-2);
 }
 .addsec {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 20px;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
 }
 .addbtn {
-  border: 1px dashed var(--border, #cdd2df);
+  border: 0;
   background: transparent;
-  color: var(--text-2, #6b7280);
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 13px;
+  color: var(--text-2);
+  border-radius: var(--r-6);
+  padding: 0 var(--control-px);
+  font-size: var(--t-13);
   cursor: pointer;
+  height: var(--control-h);
+  min-height: var(--control-h);
+  font-weight: 500;
 }
+@media (hover: hover) and (pointer: fine) {
 .addbtn:hover {
-  border-color: var(--blue, #2b5ce6);
-  color: var(--blue, #2b5ce6);
+  border-color: var(--blue);
+  color: var(--blue);
 }
-
-/* Mapa de Escrituras */
+}
 .smap {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: var(--s-1);
 }
 .smapCell {
   position: relative;
-  border: 1px solid var(--border, #e6e8ee);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 12px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-2) var(--s-2);
+  font-size: var(--t-13);
   text-align: left;
   cursor: pointer;
   color: inherit;
 }
 .smapN {
   position: absolute;
-  top: 4px;
-  right: 7px;
-  font-size: 10px;
-  font-weight: 700;
+  top: var(--s-1);
+  right: var(--s-2);
+  font-size: var(--t-11);
+  font-weight: 500;
   opacity: 0.85;
 }
-
-/* Comparar Bíblia — modal largo com colunas de versões lado a lado */
 .cmp {
-  width: min(860px, 94vw);
-  max-width: 860px;
+  width: min(53.75rem, 94vw);
+  max-width: 53.75rem;
 }
 .cmpSel {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
 }
 .cmpSel input[type="number"] {
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: 0 var(--control-px);
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: var(--t-13);
   color: var(--text);
   background: var(--surface-2);
+  height: var(--control-h);
+  min-height: var(--control-h);
+  font-weight: 500;
 }
 .cmpHead {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
 }
-/* "Mais versões" — link discreto que revela o resto do catálogo (revelação progressiva). */
 .cmpMore {
   border: 0;
   background: none;
   color: var(--blue);
-  font-size: 12.5px;
-  font-weight: 600;
-  padding: 5px 4px;
+  font-size: var(--t-13);
+  font-weight: 500;
+  padding: var(--s-1) var(--s-1);
   cursor: pointer;
 }
 .cmpVers {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
 }
 .cmpVer {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12.5px;
+  gap: var(--s-1);
+  font-size: var(--t-13);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface-2);
-  border-radius: 999px;
-  padding: 4px 8px 4px 11px;
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-3);
 }
 .cmpVer.on {
-  border-color: var(--blue);
-  color: var(--blue);
-  background: rgba(43, 92, 230, 0.08);
+  border-color: transparent;
+  color: var(--text);
+  background: var(--surface-2);
+  font-weight: 500;
+  box-shadow: none;
 }
 .cmpVerLbl {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--s-1);
   cursor: pointer;
 }
-/* Estrela de favoritar versão — âncora sutil, ganha cor quando marcada. */
 .cmpStar {
   border: 0;
   background: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--t-15);
   line-height: 1;
-  padding: 0 2px;
+  padding: 0 var(--s-1);
   color: var(--text-2);
   transition: color var(--dur-micro, 0.14s) var(--ease, ease), transform var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .cmpStar:hover {
   transform: scale(1.12);
   color: var(--blue);
 }
-.cmpStar.on {
-  color: #e5a41a;
 }
-/* Toggle de destaque de diferenças. */
+.cmpStar.on {
+  color: var(--warn);
+}
 .cmpDiffToggle {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
+  gap: var(--s-2);
+  font-size: var(--t-13);
   color: var(--text-2);
-  margin-bottom: 10px;
+  margin-bottom: var(--s-2);
   cursor: pointer;
 }
-/* Palavra que diverge entre versões — realce sutil (cor contida). */
 .cmpDiff {
   background: rgba(43, 92, 230, 0.12);
   color: inherit;
-  border-radius: 4px;
-  padding: 0 1px;
+  border-radius: var(--r-6);
+  padding: 0 var(--s-1);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
-
-/* --- Hub "Estudo do Texto": cabeçalho, abas, histórico, placeholders --- */
 .stEyebrow {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--t-11);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-2);
 }
 .stRef {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: var(--t-22);
+  font-weight: 500;
   color: var(--text);
-  margin: 2px 0 0;
+  margin: var(--s-1) 0 0;
   line-height: 1.15;
 }
 .stHist {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: var(--s-1);
+  margin-bottom: var(--s-3);
 }
 .stHistLabel {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--t-11);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-2);
-  margin-right: 2px;
+  margin-right: var(--s-1);
 }
 .stHistChip {
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface-2);
   color: var(--text-2);
-  border-radius: 999px;
-  padding: 3px 10px;
-  font-size: 12px;
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-2);
+  font-size: var(--t-13);
   cursor: pointer;
   transition: border-color var(--dur-micro, 0.14s) var(--ease, ease), color var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .stHistChip:hover {
   border-color: var(--blue);
   color: var(--text);
 }
+}
 .stTabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 14px;
+  gap: var(--s-1);
+  border-bottom: 0;
+  margin-bottom: var(--s-3);
 }
 .stTab {
   border: 0;
   background: none;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: var(--t-13);
   font-weight: 500;
-  padding: 8px 12px;
+  padding: var(--s-2) var(--s-3);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  border-bottom: 0;
+  margin-bottom: calc(-1 * var(--s-1));
   transition: color var(--dur-micro, 0.14s) var(--ease, ease), border-color var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .stTab:hover {
   color: var(--text);
+}
 }
 .stTab.on {
   color: var(--blue);
   border-bottom-color: var(--blue);
-  font-weight: 600;
+  font-weight: 500;
 }
 .stPh {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
-  padding: 40px 16px;
+  gap: var(--s-2);
+  padding: var(--s-8) var(--s-4);
 }
 .stPhTitle {
-  font-size: 15px;
+  font-size: var(--t-15);
   font-weight: 600;
   color: var(--text);
 }
 .stSoon {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 600;
+  margin-top: var(--s-1);
+  font-size: var(--t-11);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 3px 10px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-2);
 }
-
-/* Aba Referências (cross-refs TSK) — chips de textos relacionados + crédito CC BY. */
 .stRefs {
-  min-height: 120px;
+  min-height: 7.5rem;
 }
 .stRelChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .stRelChip {
-  border: 1px solid var(--border);
+  border: 0;
   background: rgba(43, 92, 230, 0.06);
   color: var(--blue);
-  border-radius: 999px;
-  padding: 6px 13px;
-  font-size: 13px;
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-3);
+  font-size: var(--t-13);
   cursor: pointer;
   transition: background var(--dur-micro, 0.14s) var(--ease, ease), border-color var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .stRelChip:hover {
   border-color: var(--blue);
   background: rgba(43, 92, 230, 0.12);
 }
+}
 .stCredit {
-  margin-top: 18px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  font-size: 11.5px;
+  margin-top: var(--s-4);
+  padding-top: var(--s-2);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  font-size: var(--t-11);
   color: var(--text-2);
 }
 .stCredit a {
   color: var(--text-2);
   text-decoration: underline;
 }
+@media (hover: hover) and (pointer: fine) {
 .stCredit a:hover {
   color: var(--blue);
 }
-
-/* Aba Original (texto grego/hebraico, palavra a palavra + popover) */
+}
 .stOrig {
-  min-height: 120px;
+  min-height: 7.5rem;
 }
 .stOrigText {
-  font-size: 20px;
+  font-size: var(--t-17);
   line-height: 2.1;
   color: var(--text);
 }
@@ -440,79 +461,77 @@
   display: inline;
 }
 .stOrigVn {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--t-11);
+  font-weight: 500;
   color: var(--text-2);
-  margin: 0 4px;
+  margin: 0 var(--s-1);
   vertical-align: super;
 }
-/* Palavra do original — alvo de toque; realça a selecionada. */
 .stWord {
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
   cursor: pointer;
-  padding: 1px 3px;
-  margin: 0 1px;
-  border-radius: 6px;
+  padding: var(--s-1) var(--s-1);
+  margin: 0 var(--s-1);
+  border-radius: var(--r-6);
   transition: background var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .stWord:hover {
   background: rgba(43, 92, 230, 0.08);
+}
 }
 .stWord.on {
   background: rgba(43, 92, 230, 0.16);
   color: var(--blue);
 }
 .stWordHint {
-  margin-top: 14px;
-  font-size: 12.5px;
+  margin-top: var(--s-3);
+  font-size: var(--t-13);
   color: var(--text-2);
 }
-/* Card de detalhe da palavra (popover-like, revelado ao tocar). */
 .stWordCard {
-  margin-top: 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  margin-top: var(--s-4);
+  border: 0;
+  border-radius: var(--r-10);
   background: var(--surface-2);
-  padding: 14px 16px;
+  padding: var(--s-3) var(--s-4);
 }
 .stWordHead {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
 }
 .stWordSurface {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: var(--t-22);
+  font-weight: 500;
   color: var(--text);
 }
 .stWordTranslit {
-  font-size: 13px;
+  font-size: var(--t-13);
   color: var(--text-2);
   font-style: italic;
 }
 .stWordDl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 14px;
+  gap: var(--s-1) var(--s-3);
   margin: 0;
-  font-size: 13.5px;
+  font-size: var(--t-13);
 }
 .stWordDl dt {
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: 500;
 }
 .stWordDl dd {
   margin: 0;
   color: var(--text);
 }
-
-/* Aba Palavras-chave — lista ranqueada (raras primeiro) + ver ocorrências */
 .stKw {
-  min-height: 120px;
+  min-height: 7.5rem;
 }
 .stKwList {
   list-style: none;
@@ -520,10 +539,10 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
 }
 .stKwItem {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
 }
 .stKwItem:last-child {
   border-bottom: 0;
@@ -532,33 +551,35 @@
   width: 100%;
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--s-3);
   background: none;
   border: 0;
   cursor: pointer;
   text-align: left;
-  padding: 10px 6px;
+  padding: var(--s-2) var(--s-1);
   color: inherit;
-  border-radius: 8px;
+  border-radius: var(--r-6);
   transition: background var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .stKwHead:hover {
   background: rgba(43, 92, 230, 0.06);
+}
 }
 .stKwHead.on {
   background: rgba(43, 92, 230, 0.1);
 }
 .stKwLemma {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: var(--t-17);
+  font-weight: 500;
   color: var(--text);
   flex-shrink: 0;
-  min-width: 72px;
+  min-width: 4.5rem;
 }
 .stKwMeaning {
   flex: 1;
   min-width: 0;
-  font-size: 13.5px;
+  font-size: var(--t-13);
   color: var(--text-2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -567,84 +588,80 @@
 .stKwMeta {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
   flex-shrink: 0;
 }
 .stKwCount {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--t-11);
+  font-weight: 500;
   color: var(--blue);
   background: rgba(43, 92, 230, 0.1);
-  border-radius: 999px;
-  padding: 2px 8px;
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-2);
 }
 .stKwFreq {
-  font-size: 11.5px;
+  font-size: var(--t-11);
   color: var(--text-2);
   white-space: nowrap;
 }
 .stKwOcc {
-  padding: 4px 6px 12px;
+  padding: var(--s-1) var(--s-1) var(--s-3);
 }
-
-/* Aba Contexto — cartão editorial calmo (resumo é o foco; resto é apoio) */
 .stCtx {
-  min-height: 120px;
-  max-width: 620px;
+  min-height: 7.5rem;
+  max-width: 38.75rem;
 }
 .stCtxEyebrow {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--t-11);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-2);
 }
 .stCtxTitle {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--t-17);
+  font-weight: 600;
   color: var(--text);
-  margin: 2px 0 0;
+  margin: var(--s-1) 0 0;
 }
 .stCtxTheme {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--t-15);
+  font-weight: 500;
   color: var(--blue);
-  margin-top: 8px;
+  margin-top: var(--s-2);
 }
 .stCtxSummary {
-  font-size: 14.5px;
+  font-size: var(--t-15);
   line-height: 1.7;
   color: var(--text);
-  margin: 12px 0 0;
+  margin: var(--s-3) 0 0;
 }
 .stCtxMeta {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 6px 16px;
-  margin: 18px 0 0;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-  font-size: 13px;
+  gap: var(--s-1) var(--s-4);
+  margin: var(--s-4) 0 0;
+  padding-top: var(--s-3);
+  border-top: 0;
+  font-size: var(--t-13);
 }
 .stCtxMeta dt {
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: 500;
 }
 .stCtxMeta dd {
   margin: 0;
   color: var(--text);
 }
-
-/* Aba Notas — editor simples + lista de notas da passagem (privadas por autor) */
 .stNotes {
-  min-height: 120px;
-  max-width: 620px;
+  min-height: 7.5rem;
+  max-width: 38.75rem;
 }
 .stNoteNew {
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 0;
+  border-radius: var(--r-6);
   background: var(--surface-2);
-  padding: 10px 12px;
+  padding: var(--s-2) var(--s-3);
 }
 .stNoteInput {
   width: 100%;
@@ -652,130 +669,128 @@
   outline: 0;
   background: transparent;
   resize: vertical;
-  min-height: 60px;
+  min-height: 3.75rem;
   color: var(--text);
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--t-15);
   line-height: 1.6;
 }
 .stNoteFoot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 8px;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
 }
 .stNoteErr {
-  margin-top: 8px;
-  font-size: 12.5px;
-  color: #c0392b;
+  margin-top: var(--s-2);
+  font-size: var(--t-13);
+  color: var(--coral);
 }
 .stNoteList {
   list-style: none;
-  margin: 16px 0 0;
+  margin: var(--s-4) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s-2);
 }
 .stNoteItem {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-3) var(--s-3);
   background: var(--surface);
 }
 .stNoteHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
 }
 .stNoteRef {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--t-11);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-2);
 }
 .stNoteActions {
   display: inline-flex;
-  gap: 12px;
+  gap: var(--s-3);
 }
 .stNoteBody {
-  font-size: 14px;
+  font-size: var(--t-15);
   line-height: 1.7;
   color: var(--text);
   white-space: pre-wrap;
   word-break: break-word;
 }
-/* --- Fase 4: "Adicionar ao sermão" com seletor de seção (revelação progressiva) --- */
-/* Gatilho discreto por lente (link azul, sem caixa). */
 .addLens {
   border: 0;
   background: none;
   color: var(--blue);
-  font-size: 12.5px;
-  font-weight: 600;
-  padding: 4px 2px;
+  font-size: var(--t-13);
+  font-weight: 500;
+  padding: var(--s-1) var(--s-1);
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .addLens:hover {
   text-decoration: underline;
+}
 }
 .addLens:disabled {
   color: var(--text-2);
   cursor: default;
   text-decoration: none;
 }
-/* Linha de escolha revelada: rótulo + chips das 5 seções + cancelar. */
 .addPick {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s-1);
 }
 .addPickLabel {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--t-11);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-2);
 }
 .addPickBtn {
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface-2);
   color: var(--text);
-  border-radius: 999px;
-  padding: 4px 11px;
-  font-size: 12.5px;
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-3);
+  font-size: var(--t-13);
   cursor: pointer;
   transition: border-color var(--dur-micro, 0.14s) var(--ease, ease), color var(--dur-micro, 0.14s) var(--ease, ease), background var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .addPickBtn:hover {
   border-color: var(--blue);
   color: var(--blue);
 }
-/* "Notas" — destino padrão, com destaque sutil. */
+}
 .addPickBtn.on {
   border-color: var(--blue);
   color: var(--blue);
   background: rgba(43, 92, 230, 0.08);
 }
-
-/* Painel de notas de estudo da passagem no Assistente (item 3). */
 .asstNotes {
-  margin-top: 18px;
+  margin-top: var(--s-4);
 }
 .asstNoteItem {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-2) var(--s-3);
   background: var(--surface-2);
-  margin-top: 8px;
+  margin-top: var(--s-2);
 }
 .asstNoteBody {
-  font-size: 13.5px;
+  font-size: var(--t-13);
   line-height: 1.6;
   color: var(--text);
   white-space: pre-wrap;
@@ -783,49 +798,42 @@
 }
 .asstNoteFoot {
   display: flex;
-  margin-top: 8px;
+  margin-top: var(--s-2);
 }
 
 .cmpCols {
   display: grid;
-  gap: 12px;
+  gap: var(--s-3);
 }
 .cmpCol {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-3);
   background: var(--surface-2);
   min-width: 0;
 }
 .cmpColh {
-  font-size: 11px;
+  font-size: var(--t-11);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-2);
-  font-weight: 700;
-  margin-bottom: 6px;
+  font-weight: 500;
+  margin-bottom: var(--s-1);
 }
 .cmpText {
   line-height: 1.7;
-  font-size: 14px;
+  font-size: var(--t-15);
   color: var(--text);
-  max-height: 320px;
+  max-height: 20rem;
   overflow: auto;
 }
 .cmpActions {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
-  border-top: 1px solid var(--border);
-  padding-top: 8px;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+  border-top: 0;
+  padding-top: var(--s-2);
 }
-
-/* ============================================================
-   Biblioteca de Sermões (specs 06 e 10).
-   Só tokens (docs/design-tokens.md): nada de px/hex cru daqui para baixo.
-   ============================================================ */
-
-/* Sub-nav: itens à esquerda, "···" à direita. Teto de 3 itens — ver StudyTabs.tsx. */
 .subnav {
   display: flex;
   align-items: center;
@@ -836,7 +844,6 @@
   position: relative;
   margin-left: var(--s-1);
 }
-/* O disclosure nativo com cara de chip: sem o triângulo do navegador. */
 .moreBtn {
   list-style: none;
   display: inline-flex;
@@ -844,8 +851,8 @@
   justify-content: center;
   min-width: var(--s-8);
   height: var(--s-6);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
+  border: 0;
+  border-radius: var(--r-6);
   color: var(--text-2);
   font-size: var(--t-13);
   line-height: 1;
@@ -855,7 +862,12 @@
 .moreBtn::-webkit-details-marker {
   display: none;
 }
-.moreBtn:hover,
+@media (hover: hover) and (pointer: fine) {
+.moreBtn:hover {
+  border-color: var(--blue);
+  color: var(--text);
+}
+}
 .moreBtn.on {
   border-color: var(--blue);
   color: var(--text);
@@ -870,9 +882,9 @@
   flex-direction: column;
   padding: var(--s-1);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--r-10);
-  box-shadow: var(--e-2);
+  box-shadow: var(--e-1);
   transform-origin: top right;
   animation: studyMenuIn var(--dur-micro) var(--ease);
 }
@@ -887,15 +899,13 @@
   font-size: var(--t-13);
   text-decoration: none;
   white-space: nowrap;
-  transition: background var(--dur-micro) var(--ease);
+  transition: background 100ms ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .moreItem:hover {
   background: var(--surface-2);
 }
-
-/* Coluna de leitura da biblioteca (spec 10). Em `rem` para acompanhar o tamanho do
-   texto do sistema. Movimento: botões e linhas clicáveis afundam no :active (120 ms),
-   hover só com mouse; trocar de segmento não anima. */
+}
 .lib {
   max-width: 48rem;
 }
@@ -906,32 +916,42 @@
   gap: var(--s-3);
   margin-bottom: var(--s-5);
 }
-
-/* Botões da página (sem o .btn global, que tem hover fora da media query). */
 .primary,
 .secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
+  height: 2.25rem;
   padding: 0 var(--s-4);
-  border-radius: var(--r-10);
+  border-radius: var(--r-6);
   font-size: var(--t-13);
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 120ms ease-out, transform 120ms ease-out;
+  transition: background 100ms ease, transform 120ms var(--ease-press);
 }
 .primary {
   border: 0;
   background: var(--blue);
-  color: #fff;
+  color: var(--on-blue);
+  height: var(--control-h);
+  min-height: var(--control-h);
+  padding: 0 var(--control-px);
+  font-size: var(--t-13);
+  font-weight: 500;
+  border-radius: var(--r-6);
 }
 .secondary {
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface);
   color: var(--text);
+  height: var(--control-h);
+  min-height: var(--control-h);
+  padding: 0 var(--control-px);
+  font-size: var(--t-13);
+  font-weight: 500;
+  border-radius: var(--r-6);
 }
 .primary:active,
 .secondary:active,
@@ -948,8 +968,6 @@
     background: var(--surface-2);
   }
 }
-
-/* Busca + segmentado na mesma linha; no celular o segmentado desce. */
 .libBar {
   display: flex;
   flex-wrap: wrap;
@@ -959,10 +977,10 @@
 .libSearch {
   flex: 1 1 14rem;
   min-width: 0;
-  height: 40px;
+  height: 2.5rem;
   padding: 0 var(--s-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-10);
+  border: 0;
+  border-radius: var(--r-6);
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -971,17 +989,17 @@
 .libSearch:focus {
   outline: none;
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 25%, transparent);
+  box-shadow: 0 0 0 2px var(--blue);
 }
 .segmented {
   display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--r-10);
+  gap: var(--s-1);
+  padding: var(--s-1);
+  border-radius: var(--r-6);
   background: var(--surface-2);
 }
 .segmented button {
-  height: 34px;
+  height: 2.125rem;
   padding: 0 var(--s-3);
   border: 0;
   border-radius: var(--r-6);
@@ -994,9 +1012,9 @@
 .segmented button[aria-pressed="true"] {
   background: var(--surface);
   color: var(--text);
-  box-shadow: var(--e-1);
+  box-shadow: none;
 }
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .libSearch {
     flex-basis: 100%;
   }
@@ -1014,7 +1032,7 @@
   margin: var(--s-6) 0 var(--s-2);
   font-size: var(--t-13);
   line-height: var(--lh-13);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-2);
 }
 .libSerHead {
@@ -1029,9 +1047,9 @@
 }
 .libYear {
   padding: var(--s-4) 0 var(--s-2);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
   font-size: var(--t-13);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-2);
 }
 .libCount {
@@ -1039,20 +1057,18 @@
   font-size: var(--t-13);
   color: var(--text-2);
 }
-
-/* "Continuar": um destaque, o cartão inteiro é o link. */
 .cont {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--s-1);
   padding: var(--pad-card);
-  border: 1px solid var(--border);
-  border-radius: var(--r-14);
+  border: 0;
+  border-radius: var(--r-6);
   background: var(--surface);
   color: inherit;
   text-decoration: none;
-  transition: border-color 120ms ease-out, transform 120ms ease-out;
+  transition: border-color 120ms ease-out, transform 120ms var(--ease-press);
 }
 @media (hover: hover) and (pointer: fine) {
   .cont:hover {
@@ -1070,13 +1086,13 @@
 .dot {
   display: inline-block;
   flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--r-6);
 }
 .contTitle {
   margin-top: var(--s-1);
-  font: 500 1.375rem/1.3 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 500 var(--t-22)/1.3 var(--font-ui);
   color: var(--text);
 }
 .contRef {
@@ -1100,18 +1116,16 @@
 .contBtn {
   margin-top: var(--s-4);
 }
-
-/* Linha de sermão: data | título, e embaixo "passagem · série". */
 .srm {
   display: grid;
   grid-template-columns: 4.5rem minmax(0, 1fr);
   column-gap: var(--s-3);
   align-items: baseline;
   padding: var(--s-3) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
   color: inherit;
   text-decoration: none;
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--ease-press);
 }
 .srmDate {
   font-size: var(--t-13);
@@ -1123,7 +1137,7 @@
 }
 .srmTitle {
   min-width: 0;
-  font: 500 1rem/1.4 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 500 var(--t-17)/var(--lh-17) var(--font-ui);
   overflow-wrap: anywhere;
   transition: color 120ms ease-out;
 }
@@ -1138,18 +1152,16 @@
     color: var(--blue);
   }
 }
-
-/* Linha de série. */
 .ser {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s-4);
   padding: var(--s-4) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
   color: inherit;
   text-decoration: none;
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--ease-press);
 }
 .serText {
   display: flex;
@@ -1160,7 +1172,7 @@
   grid-column: auto;
 }
 .serTitle {
-  font: 500 1.125rem/1.35 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 500 var(--t-17)/var(--lh-17) var(--font-ui);
   overflow-wrap: anywhere;
   transition: color 120ms ease-out;
 }
@@ -1169,8 +1181,6 @@
   font-size: var(--t-13);
   color: var(--text-2);
 }
-
-/* Blocos recolhíveis (Arquivados, Sem série). */
 .libArch {
   margin-top: var(--s-6);
 }
@@ -1181,14 +1191,14 @@
   list-style: none;
   cursor: pointer;
   font-size: var(--t-13);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-2);
 }
 .libArch > summary::-webkit-details-marker {
   display: none;
 }
 .chev {
-  transition: transform 150ms ease-out;
+  transition: transform 120ms var(--ease-press);
 }
 .libArch[open] .chev {
   transform: rotate(90deg);
@@ -1202,12 +1212,10 @@
   padding: var(--s-6) 0;
   color: var(--text-2);
 }
-
-/* Rodapé discreto com a Lixeira. */
 .libFoot {
   margin-top: var(--s-8);
   padding-top: var(--s-4);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .libFoot a {
   display: inline-flex;
@@ -1222,8 +1230,6 @@
     color: var(--text);
   }
 }
-
-/* Reduced motion: sem deslocamento nem escala, só mudança de cor/opacidade. */
 @media (prefers-reduced-motion: reduce) {
   .primary:active,
   .secondary:active,
@@ -1236,26 +1242,17 @@
     transition: none;
   }
 }
-
-/* BibleCompare dentro da área de trabalho da leitura (spec 07): sem cartão de modal. */
 .cmpEmbedded { display: block; width: 100%; }
-
-/* Aviso "Adicionado em Esboço · Desfazer" (bloco vindo da leitura). Sobe de leve. */
-.addedToast { position: sticky; bottom: 12px; z-index: 46; display: flex; align-items: center; gap: 14px; width: fit-content; margin: 16px auto 0; padding: 9px 10px 9px 16px; border-radius: 999px; background: var(--text); color: var(--bg); font: 500 13px/1 var(--font-ui); box-shadow: var(--e-2); animation: toastUp 200ms cubic-bezier(0.23, 1, 0.32, 1); }
-.addedToast button { border: 0; border-radius: 999px; padding: 6px 10px; background: color-mix(in srgb, var(--bg) 16%, transparent); color: inherit; font: 600 13px/1 var(--font-ui); cursor: pointer; transition: transform 120ms ease-out; }
-.addedToast button:active { transform: scale(0.97); }
-@keyframes toastUp { from { opacity: 0; transform: translateY(6px); } }
+.addedToast { position: sticky; bottom: var(--s-3); z-index: 46; display: flex; align-items: center; gap: var(--s-3); width: fit-content; margin: var(--s-4) auto 0; padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); border-radius: var(--r-10); background: var(--text); color: var(--bg); font: 500 var(--t-13)/1 var(--font-ui); box-shadow: none; animation: toastUp 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+.addedToast button { border: 0; border-radius: var(--r-10); padding: var(--s-1) var(--s-2); background: color-mix(in srgb, var(--bg) 16%, transparent); color: inherit; font: 500 var(--t-13)/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press); }
+.addedToast button:active { transform: scale(.97); }
+@keyframes toastUp { from { opacity: 0; transform: translateY(0.375rem); } }
 @media (prefers-reduced-motion: reduce) { .addedToast { animation: toastFade 200ms ease; } }
 @keyframes toastFade { from { opacity: 0; } }
-
-/* Lixeira: lista simples, uma linha por item, separador fino. */
-.trashList { list-style: none; margin: 8px 0 0; padding: 0; max-width: 760px; }
-.trashRow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.trashText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.trashList { list-style: none; margin: var(--s-2) 0 0; padding: 0; max-width: 47.5rem; }
+.trashRow { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.trashText { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; flex: 1; }
 .trashTitle { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* Notas (spec 10 5): linha = referencia em destaque + data a direita; texto em ate 2
-   linhas, serifa. A linha inteira e link ou botao, com o mesmo afundar das demais. */
 .nRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1264,14 +1261,14 @@
   width: 100%;
   padding: var(--s-3) 0;
   border: 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   background: none;
   color: inherit;
   font: inherit;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--ease-press);
 }
 .nRow:active {
   transform: scale(.97);
@@ -1279,7 +1276,7 @@
 .nRef {
   min-width: 0;
   font-size: var(--t-13);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--blue);
   overflow-wrap: anywhere;
 }
@@ -1305,9 +1302,6 @@
   font-weight: 400;
   opacity: .8;
 }
-
-/* Folha "Nova nota": no computador, cartao centrado (modal, origem no centro) que entra
-   com fade + escala .96 em 150 ms; no celular sobe de baixo. Saida mais rapida (100 ms). */
 .sheetScrim {
   position: fixed;
   inset: 0;
@@ -1321,17 +1315,17 @@
   transition: opacity 100ms ease-out;
 }
 .sheet {
-  width: min(520px, 100%);
+  width: min(32.5rem, 100%);
   max-height: 100%;
   overflow-y: auto;
   padding: var(--s-6);
-  border: 1px solid var(--border);
-  border-radius: var(--r-14);
+  border: 0;
+  border-radius: var(--r-10);
   background: var(--surface);
   box-shadow: var(--e-2);
   opacity: 0;
   transform: scale(.96);
-  transition: opacity 100ms ease-out, transform 100ms ease-out;
+  transition: opacity 100ms ease-out, transform 120ms var(--ease-press);
 }
 .sheetShown {
   opacity: 1;
@@ -1352,29 +1346,33 @@
 .sheetPassage {
   display: block;
   width: 100%;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--r-10);
   background: var(--surface);
   color: var(--text);
 }
 .sheetArea {
-  min-height: 168px;
+  min-height: 10.5rem;
   padding: var(--s-3);
-  font: 400 1.0625rem/1.6 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 400 var(--t-17)/1.6 var(--font-read), Georgia, "Times New Roman", serif;
   resize: vertical;
 }
 .sheetPassage {
-  height: 36px;
+  height: var(--control-h);
   margin-top: var(--s-3);
-  padding: 0 var(--s-3);
+  padding: 0 var(--control-px);
   font: inherit;
   font-size: var(--t-13);
+  min-height: var(--control-h);
+  font-weight: 500;
+  border-radius: var(--r-6);
+  background: var(--surface-2);
 }
 .sheetArea:focus,
 .sheetPassage:focus {
   outline: none;
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 25%, transparent);
+  box-shadow: 0 0 0 2px var(--blue);
 }
 .sheetHelp {
   margin: var(--s-2) 0 0;
@@ -1384,7 +1382,7 @@
 .sheetErr {
   margin: var(--s-3) 0 0;
   font-size: var(--t-13);
-  color: var(--danger, #c0392b);
+  color: var(--coral);
 }
 .sheetActs {
   display: flex;
@@ -1394,19 +1392,19 @@
 }
 .sheetDel {
   margin-right: auto;
-  color: var(--danger, #c0392b);
+  color: var(--coral);
 }
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .sheetScrim {
     align-items: flex-end;
     padding: 0;
   }
   .sheet {
     width: 100%;
-    border-radius: 20px 20px 0 0;
+    border-radius: var(--r-10);
     opacity: 1;
     transform: translateY(100%);
-    transition: transform 100ms ease-out;
+    transition: transform 120ms var(--ease-press);
   }
   .sheetShown .sheet {
     transform: none;
@@ -1429,33 +1427,33 @@
     opacity: 1;
   }
 }
-
-/* ===== Editor de sermão (spec 10): barra, menus, pílulas, painel Passagens ===== */
 .cnt {
   display: inline-grid;
   place-items: center;
-  min-width: 20px;
-  height: 20px;
+  min-width: 1.25rem;
+  height: 1.25rem;
   margin-left: var(--s-2);
-  padding: 0 6px;
-  border-radius: 10px;
+  padding: 0 var(--s-1);
+  border-radius: var(--r-6);
   background: var(--surface-2);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--t-13);
+  font-weight: 500;
 }
 .edIcon {
   display: inline-grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: var(--control-h);
+  height: var(--control-h);
   border: 0;
-  border-radius: var(--r-10);
+  border-radius: var(--r-6);
   background: none;
   color: var(--text-2);
-  font-size: 20px;
+  font-size: var(--t-17);
   line-height: 1;
   cursor: pointer;
-  transition: background-color 120ms ease-out, transform 120ms ease-out;
+  transition: background 100ms ease, transform 120ms var(--ease-press);
+  min-height: var(--control-h);
+  padding: 0;
 }
 .edIcon[aria-expanded="true"] {
   background: var(--surface-2);
@@ -1473,27 +1471,25 @@
     color: var(--text);
   }
 }
-
-/* Popover: cresce do botão (transform-origin no gatilho). Entra 150 ms, sai 100 ms. */
 .popWrap {
   position: relative;
 }
 .pop {
   position: absolute;
   z-index: 30;
-  top: calc(100% + 6px);
-  min-width: 200px;
-  max-width: min(300px, calc(100vw - 32px));
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  top: calc(100% + var(--s-1));
+  min-width: 12.5rem;
+  max-width: min(18.75rem, calc(100vw - 2rem));
+  padding: var(--s-1);
+  border: 0;
+  border-radius: var(--r-10);
   background: var(--surface);
-  box-shadow: var(--e-2);
+  box-shadow: var(--e-1);
   opacity: 0;
   transform: scale(.96);
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 100ms ease-out, transform 100ms ease-out, visibility 0s linear 100ms;
+  transition: opacity 100ms ease-out, transform 120ms var(--ease-press), visibility 0s linear 100ms;
 }
 .popLeft {
   left: 0;
@@ -1502,7 +1498,7 @@
 .popRight {
   right: 0;
   transform-origin: top right;
-  width: 248px;
+  width: 15.5rem;
 }
 .popOpen {
   opacity: 1;
@@ -1512,21 +1508,21 @@
   transition: opacity 150ms cubic-bezier(.23, 1, .32, 1), transform 150ms cubic-bezier(.23, 1, .32, 1), visibility 0s;
 }
 .popDate {
-  width: 232px;
-  padding: 8px;
+  width: 14.5rem;
+  padding: var(--s-2);
 }
 .popList {
-  max-height: 260px;
+  max-height: 16.25rem;
   overflow-y: auto;
 }
 .mi {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   width: 100%;
-  padding: 9px 10px;
+  padding: 0 var(--control-px);
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--r-6);
   background: none;
   color: var(--text);
   font: inherit;
@@ -1534,7 +1530,9 @@
   font-weight: 500;
   text-align: left;
   cursor: pointer;
-  transition: background-color 120ms ease-out, transform 120ms ease-out;
+  transition: background 100ms ease, transform 120ms var(--ease-press);
+  height: var(--control-h);
+  min-height: var(--control-h);
 }
 .mi span:first-of-type:not(.miCk) {
   flex: 1;
@@ -1544,7 +1542,7 @@
   cursor: default;
 }
 .miDanger {
-  color: var(--danger, #c0392b);
+  color: var(--coral);
 }
 .miMuted {
   margin-top: var(--s-2);
@@ -1559,14 +1557,14 @@
   visibility: visible;
 }
 .miSep {
-  margin: 4px 0;
+  margin: var(--s-1) 0;
   border: 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .miNote {
-  margin: -4px 0 0;
-  padding: 0 10px 8px;
-  font-size: 12px;
+  margin: calc(-1 * var(--s-1)) 0 0;
+  padding: 0 var(--s-2) var(--s-2);
+  font-size: var(--t-13);
   color: var(--text-2);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1579,10 +1577,8 @@
 .edIcon:focus-visible,
 .pvHead:focus-visible {
   outline: 2px solid var(--blue);
-  outline-offset: -2px;
+  outline-offset: -0.125rem;
 }
-
-/* Pílulas abaixo do título + passagem e ideia central sem rótulo. */
 .pills {
   display: flex;
   flex-wrap: wrap;
@@ -1593,18 +1589,20 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  height: 28px;
+  height: var(--control-h);
   max-width: 100%;
-  padding: 0 12px;
+  padding: 0 var(--control-px);
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-6);
   background: var(--surface-2);
   color: var(--text);
   font: inherit;
   font-size: var(--t-13);
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 120ms ease-out, transform 120ms ease-out;
+  transition: background 100ms ease, transform 120ms var(--ease-press);
+  min-height: var(--control-h);
+  font-weight: 500;
 }
 .pill[aria-expanded="true"] {
   background: var(--border);
@@ -1626,35 +1624,43 @@
   background: transparent;
 }
 .passageInput {
-  padding: 2px 0;
+  padding: 0 var(--control-px);
   color: var(--blue);
-  font-size: 15px;
+  font-size: var(--t-13);
   font-weight: 500;
+  height: var(--control-h);
+  min-height: var(--control-h);
+  border-radius: var(--r-6);
+  background: var(--surface-2);
 }
 .ideaInput {
   margin: var(--s-2) 0 var(--s-4);
-  padding: 2px 0;
+  padding: 0 var(--control-px);
   color: var(--text);
-  font: italic 400 1.25rem/1.5 var(--font-read), Georgia, "Times New Roman", serif;
+  font: italic 400 var(--t-17)/1.5 var(--font-read), Georgia, "Times New Roman", serif;
+  height: var(--control-h);
+  min-height: var(--control-h);
+  font-size: var(--t-13);
+  font-weight: 500;
+  border-radius: var(--r-6);
+  background: var(--surface-2);
 }
 .passageInput::placeholder,
 .ideaInput::placeholder {
   color: var(--text-2);
   opacity: .8;
 }
-
-/* Painel Passagens: entra pela direita, sem véu; no celular é folha de baixo. */
 .passPanel {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
   z-index: 45;
-  width: min(380px, 100%);
+  width: min(23.75rem, 100%);
   overflow-y: auto;
-  border-left: 1px solid var(--border);
+  border-left: 0;
   background: var(--surface);
-  box-shadow: -8px 0 30px rgba(20, 30, 60, .12);
+  box-shadow: var(--e-2);
   transform: translateX(100%);
   visibility: hidden;
   transition: transform 240ms cubic-bezier(.32, .72, 0, 1), visibility 0s linear 240ms;
@@ -1664,15 +1670,15 @@
   visibility: visible;
   transition: transform 240ms cubic-bezier(.32, .72, 0, 1), visibility 0s;
 }
-@media (max-width: 719px) {
+@media (max-width: 44.9375rem) {
   .passPanel {
     top: auto;
     left: 0;
     width: auto;
     height: 80dvh;
     border-left: 0;
-    border-top: 1px solid var(--border);
-    border-radius: 20px 20px 0 0;
+    border-top: 0;
+    border-radius: var(--r-10);
     transform: translateY(100%);
   }
   .passPanelOpen {
@@ -1705,12 +1711,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
+  height: 3.5rem;
   padding: 0 var(--s-3) 0 var(--s-5);
 }
 .passHead h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--t-15);
   font-weight: 600;
 }
 .passEmpty {
@@ -1725,49 +1731,49 @@
   list-style: none;
 }
 .pvRow {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .pvHead {
   display: flex;
   align-items: center;
   gap: var(--s-2);
   width: 100%;
-  padding: 12px var(--s-5);
+  padding: var(--s-3) var(--s-5);
   border: 0;
   background: none;
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--t-15);
   font-weight: 500;
   text-align: left;
   cursor: pointer;
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--ease-press);
 }
 .pvChev {
   color: var(--text-2);
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--ease-press);
 }
 .pvHead[aria-expanded="true"] .pvChev {
   transform: rotate(90deg);
 }
 .pvTag {
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-6);
   background: color-mix(in srgb, var(--blue) 14%, var(--surface));
   color: var(--blue);
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: var(--t-11);
+  font-weight: 500;
 }
 .pvBody {
   padding: 0 var(--s-5) var(--s-5);
 }
 .pvText {
   margin: 0;
-  font: 400 1rem/1.7 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 400 var(--t-15)/1.7 var(--font-read), Georgia, "Times New Roman", serif;
 }
 .pvText sup {
-  margin-right: 2px;
-  font: 600 10px var(--font-ui, inherit);
+  margin-right: var(--s-1);
+  font: 500 var(--t-11) var(--font-ui, inherit);
   color: var(--text-2);
 }
 .pvHot {
@@ -1775,7 +1781,7 @@
 }
 .pvMuted {
   margin: var(--s-2) 0 0;
-  font-size: 12px;
+  font-size: var(--t-13);
   color: var(--text-2);
 }
 .pvActs {
@@ -1786,27 +1792,27 @@
 }
 .pvNotesH {
   margin: var(--s-6) 0 var(--s-1);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--t-13);
+  font-weight: 500;
   color: var(--text-2);
 }
 .pvNote {
   padding: var(--s-3) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0;
 }
 .pvNote:last-child {
   border-bottom: 0;
 }
 .pvNoteRef {
   display: block;
-  margin-bottom: 2px;
-  font-size: 12.5px;
+  margin-bottom: var(--s-1);
+  font-size: var(--t-13);
   font-weight: 500;
   color: var(--blue);
 }
 .pvNote p {
   margin: 0 0 var(--s-2);
-  font: 400 .875rem/1.6 var(--font-read), Georgia, "Times New Roman", serif;
+  font: 400 var(--t-15)/1.6 var(--font-read), Georgia, "Times New Roman", serif;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

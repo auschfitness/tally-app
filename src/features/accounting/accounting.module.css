@@ -1,31 +1,23 @@
-/* Contabilidade — estilos da feature. Apoia-se no sistema global (.btn/.panel/.stat/
-   .tabs) e adiciona só o que é próprio: linhas do plano de contas, o editor de partidas
-   e as tabelas de relatório. Temático claro E escuro via tokens globais. */
-
 .head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--s-4);
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: var(--s-3);
 }
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   flex-wrap: wrap;
 }
-
-/* Barra de estatísticas (totais, DRE) */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(9.375rem, 1fr));
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
 }
-
-/* ---- Plano de contas (árvore) ---- */
 .tree {
   display: flex;
   flex-direction: column;
@@ -33,9 +25,9 @@
 .acctRow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 6px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-1);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .acctRow:last-child {
   border-bottom: none;
@@ -43,16 +35,16 @@
 .acctCode {
   font-variant-numeric: tabular-nums;
   color: var(--text-2);
-  font-weight: 600;
-  font-size: 12px;
-  min-width: 58px;
+  font-weight: 500;
+  font-size: var(--t-13);
+  min-width: 3.625rem;
 }
 .acctName {
   font-weight: 500;
   color: var(--text);
 }
 .acctName.root {
-  font-weight: 700;
+  font-weight: 500;
 }
 .acctName.inactive {
   color: var(--text-2);
@@ -63,19 +55,19 @@
 }
 .acctActions {
   display: flex;
-  gap: 6px;
+  gap: var(--s-1);
   opacity: 0;
   transition: opacity var(--dur-micro) var(--ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .acctRow:hover .acctActions {
   opacity: 1;
 }
-
-/* ---- Editor de lançamento (partidas) ---- */
+}
 .entryGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--s-3);
 }
 .entryGrid .full {
   grid-column: 1 / -1;
@@ -83,26 +75,26 @@
 .linesTable {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 4px;
+  margin-top: var(--s-1);
 }
 .linesTable th {
   text-align: left;
-  font-size: 11px;
+  font-size: var(--t-11);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-2);
-  font-weight: 600;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+  padding: var(--s-1) var(--s-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .linesTable th.num,
 .linesTable td.num {
   text-align: right;
-  width: 130px;
+  width: 8.125rem;
 }
 .linesTable td {
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--s-1) var(--s-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   vertical-align: middle;
 }
 .linesTable input,
@@ -110,28 +102,28 @@
   width: 100%;
 }
 .lineDrop {
-  width: 34px;
+  width: 2.125rem;
   text-align: center;
 }
 
 .totals {
   display: flex;
   justify-content: flex-end;
-  gap: 26px;
-  padding: 12px 8px 2px;
+  gap: var(--s-6);
+  padding: var(--s-3) var(--s-2) var(--s-1);
   font-variant-numeric: tabular-nums;
 }
 .totals .tk {
-  font-size: 11px;
+  font-size: var(--t-11);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: 500;
   display: block;
 }
 .totals .tv {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--t-17);
+  font-weight: 500;
   color: var(--text);
 }
 .diffOk {
@@ -142,15 +134,15 @@
 }
 
 .hintList {
-  margin: 10px 0 0;
+  margin: var(--s-2) 0 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-1);
 }
 .hintList li {
-  font-size: 12.5px;
+  font-size: var(--t-13);
   color: var(--coral);
 }
 
@@ -158,34 +150,32 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 18px;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
   flex-wrap: wrap;
 }
 .footerActions {
   display: flex;
-  gap: 8px;
+  gap: var(--s-2);
   flex-wrap: wrap;
 }
-
-/* ---- Tabelas de relatório / lista ---- */
 .table {
   width: 100%;
   border-collapse: collapse;
 }
 .table th {
   text-align: left;
-  font-size: 11px;
+  font-size: var(--t-11);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-2);
-  font-weight: 600;
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+  padding: var(--s-2) var(--s-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .table td {
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--s-2) var(--s-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   color: var(--text);
 }
 .table tr:last-child td {
@@ -198,35 +188,37 @@
 .table .code {
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
-  font-size: 12px;
+  font-size: var(--t-13);
 }
 .rowLink {
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .rowLink:hover td {
   background: var(--surface-2, rgba(43, 92, 230, 0.05));
 }
+}
 .groupHd td {
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text);
   background: transparent;
-  padding-top: 16px;
+  padding-top: var(--s-4);
 }
 .totalRow td {
-  font-weight: 700;
-  border-top: 2px solid var(--border);
+  font-weight: 500;
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
 .badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 20px;
+  font-size: var(--t-11);
+  font-weight: 500;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-6);
   white-space: nowrap;
 }
 .badge.draft {
   background: rgba(107, 79, 214, 0.16);
-  color: #8b74e8;
+  color: var(--blue);
 }
 .badge.posted {
   background: rgba(31, 169, 122, 0.16);
@@ -239,6 +231,6 @@
 
 .err {
   color: var(--coral);
-  font-size: 13px;
-  margin: 8px 0 0;
+  font-size: var(--t-13);
+  margin: var(--s-2) 0 0;
 }

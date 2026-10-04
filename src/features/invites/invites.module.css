@@ -1,16 +1,13 @@
-/* Convites de membro. O global já traz panel, btn, link, empty, muted, gerr, page, sub,
-   chip. Aqui só o específico da feature. Tema claro E escuro via CSS vars com fallback. */
-
 .section {
-  margin-top: 22px;
+  margin-top: var(--s-5);
 }
 .sectionLabel {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--t-13);
+  font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-2, #6b7280);
-  margin: 0 2px 10px;
+  color: var(--text-2);
+  margin: 0 var(--s-1) var(--s-2);
 }
 
 .list {
@@ -20,9 +17,9 @@
 .row {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 13px 2px;
-  border-bottom: 1px solid var(--border, #e6e8ee);
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-1);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .row:last-child {
   border-bottom: none;
@@ -32,35 +29,33 @@
   margin-right: auto;
 }
 .name {
-  font-weight: 600;
-  font-size: 14.5px;
+  font-weight: 500;
+  font-size: var(--t-15);
 }
 .meta {
-  font-size: 12.5px;
-  color: var(--text-2, #6b7280);
-  margin-top: 2px;
+  font-size: var(--t-13);
+  color: var(--text-2);
+  margin-top: var(--s-1);
 }
 .rowActions {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s-3);
   flex-shrink: 0;
-  padding-top: 2px;
+  padding-top: var(--s-1);
 }
-
-/* Linha do link do convite (input read-only + copiar). */
 .linkRow {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
 }
 .linkRow input {
   flex: 1;
   min-width: 0;
-  font-size: 12.5px;
-  border: 1px solid var(--border, #e6e8ee);
-  border-radius: 8px;
-  padding: 7px 9px;
-  background: var(--surface-2, #f7f8fb);
-  color: var(--text, #1f2430);
+  font-size: var(--t-13);
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-2) var(--s-2);
+  background: var(--surface-2);
+  color: var(--text);
 }

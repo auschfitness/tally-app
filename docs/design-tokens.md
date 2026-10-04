@@ -1,155 +1,55 @@
-# Tally — Tokens de Design
+# Tally: tokens de design
 
-Este documento **governa todo trabalho visual** do app. `docs/design-principles.md` diz
-*por que* (uma ação primária, revelação progressiva, ar no lugar de caixas, cor contida);
-este aqui diz *com quais valores*. Se um componente precisa de um número que não está
-abaixo, o número está errado — não o documento.
-
-Regra única e inegociável: **nenhum valor cru em `src/features/**/*.module.css`.**
-Sem hex, sem px de tipografia/raio/sombra/espaço. Só `var(--token)`.
-
-```bash
-# a lista do que ainda falta converter
-grep -rEn "#[0-9a-fA-F]{3,6}|[0-9]+px" src/features/**/*.module.css
-```
-
----
-
-## Como este documento está ligado ao código
-
-Os tokens vivem em `src/app/globals.css`, no `:root`, e valem para todas as telas, inclusive o login. O tema escuro substitui apenas cores e sombras. O v1 e a flag de design foram aposentados na tarefa 4d.
-
----
+A tarefa 4d define uma única régua visual. Os tokens vivem no `:root` de
+`src/app/globals.css` e valem também para o login. Não há flag nem visual v1.
 
 ## Tipografia
 
-A UI usa a fonte do sistema. Literata permanece para a leitura.
+UI: `-apple-system, "Segoe UI Variable", system-ui, sans-serif`.
+Literata permanece para texto bíblico e conteúdo de leitura.
 
-```css
---font-ui: -apple-system, "Segoe UI Variable", system-ui, sans-serif;
-```
-
-Escala fechada. **Não existe valor fora dela, e não existe meio pixel.**
-
-| token | v2 | entrelinha | uso |
+| Token | Tamanho | Entrelinha | Uso |
 |---|---|---|---|
-| `--t-11` | 11px | `--lh-11` 16 | rótulo, caption, chip |
-| `--t-13` | 13px | `--lh-13` 18 | secundário, meta |
-| `--t-15` | 15px | `--lh-15` 22 | corpo (era 14 — sobe, é mais respirado) |
-| `--t-17` | 17px | `--lh-17` 24 | título de painel |
-| `--t-22` | 22px | `--lh-22` 28 | título de tela |
-| `--t-28` | 28px | `--lh-28` 34 | número de destaque |
-| `--t-34` | 34px | `--lh-34` 40 | número herói |
+| `--t-11` | 11px | `--lh-11`: 16px | Legendas |
+| `--t-13` | 13px | `--lh-13`: 18px | Controles, menu, metadados |
+| `--t-15` | 15px | `--lh-15`: 22px | Corpo |
+| `--t-17` | 17px | `--lh-17`: 24px | Título de painel |
+| `--t-22` | 22px | `--lh-22`: 28px | Título de página |
 
-Entrelinha é token separado (`--lh-*`) porque no v1 ela vale `normal` — assim adotar
-`font-size: var(--t-15)` num componente não mexe no espaçamento atual.
+Pesos: 400 texto, 500 rótulo/controle, 600 título. Texto secundário usa `--text-2`.
+Números usam `font-variant-numeric: tabular-nums`.
 
-- **Pesos:** 400 corpo, 500 ênfase, 600 título. **Nunca 700.**
-- **Letter-spacing:** `var(--track-tight)` (−0.01em no v2, `normal` no v1) em tudo ≥22px.
-- **Números:** sempre `font-variant-numeric: tabular-nums`. Coluna de valor que dança
-  quando o dígito muda é acabamento errado.
+## Geometria
 
-## Raios
+- `--r-6`: controles, chips e abas.
+- `--r-10`: cards, painéis, menus e folhas.
+- `--r-pill`: avatar e interruptor.
+- `--control-h`: 32px. `--control-px`: 10px de padding horizontal.
+- `--bar-h`: 48px, para a barra da Bíblia.
+- `--s-1`, `--s-2`, `--s-3`, `--s-4`, `--s-5`, `--s-6`, `--s-8`: 4, 8, 12, 16, 20, 24, 32px.
+- Recuo lateral: `--s-4` no menu, barra e conteúdo.
 
-Quatro degraus. Um quinto raio numa tela nova é bug de revisão.
+Larguras máximas de leitura e pontos de quebra são dimensões de layout em rem,
+não novos tamanhos de texto ou espaçamento. CSS custom properties não funcionam
+nas condições de media queries.
 
-| token | v2 | uso |
-|---|---|---|
-| `--r-6` | 6px | controle pequeno: chip, tag, `<select>` compacto |
-| `--r-10` | 10px | botão, input |
-| `--r-14` | 14px | cartão, painel, tabela |
-| `--r-20` | 20px | modal, sheet, drawer |
+## Superfícies e estados
 
-`--r-pill` (999px no v2) é **forma**, não degrau da escala: pílula, avatar, badge
-redondo. Não use para cantos de caixa.
+Cards: `--surface`, sem borda nem sombra. Inputs: `--surface-2`, sem borda em
+repouso; foco com anel de 2px `--blue`. Separadores de lista: 1px `--border` a 60%.
+Menus/popovers: `--e-1`. Modal/sheet: `--e-2`.
 
-## Elevação
+Hover: `--surface-2`, 100ms ease, somente com mouse/ponteiro preciso.
+Selecionado: `--surface-2`, texto `--text`, peso 500. Pressionado: escala .97,
+120ms `--ease-press`. Foco por teclado: anel azul de 2px.
+Tema e seleção de versículo mudam sem animação.
 
-Dois níveis, sutis. A referência usa **borda antes de sombra** — se a borda já separa a
-superfície do fundo, não empilhe sombra em cima.
+Azul: ação primária, link e seleção bíblica. Cores de marcação bíblica vivem em
+`--highlight-*` e representam a escolha do usuário. Cores secundárias de estado
+comunicam erro/atenção, sem decorar cards. A região escura da marca usa os tokens
+`--sidebar-text`, `--sidebar-muted`, `--sidebar-hover` para preservar contraste.
 
-```css
---e-1: 0 1px 2px rgba(16,24,40,.05);   /* cartão pousado */
---e-2: 0 8px 24px rgba(16,24,40,.08);  /* painel, modal, drawer */
-```
+## Verificação
 
-No tema escuro os dois tokens ganham valores próprios (sombra clara não existe sobre
-fundo escuro). Não escreva `box-shadow` literal: use `var(--e-1)` / `var(--e-2)` e o
-tema se resolve sozinho.
-
-## Cor
-
-**Um acento.** O azul da marca (`--blue`, #2B5CE6) é o **único fill colorido da
-interface**: ação primária, seleção, link, preenchimento de barra. Nada mais.
-
-Verde, laranja e coral **não são fundo**. São texto e ponto.
-
-```html
-<!-- antes: pílula vermelha preenchida -->
-<span class="hb risk">Risco</span>
-
-<!-- depois: ponto de 6px + texto na cor do corpo -->
-<span class="hb risk">Precisa de atenção</span>
-```
-
-O `.hb` é o mesmo elemento — quem muda é o CSS sob `[data-design="v2"]`. Essa única
-troca remove a maior parte da cara de dashboard gerado. Já aplicado em `.hb`,
-`.stat.alert`, `.engbar > i`, `.gbar > i`, na legenda de gráfico (`.leg`) e na faixa
-"Hoje no Tally" da Home (`home.module.css`, `.stripItem`).
-
-**Ponto substitui pílula e bolinha de status — não substitui quantidade.** O número
-continua número (só perde a cor e ganha um ponto ao lado); a barra continua barra. Na
-legenda de gráfico a cor do ponto FICA: ali ela é a chave do gráfico, ou seja, é o dado.
-
-**Barra de saúde é exceção deliberada.** Numa barra a *largura* é o dado; a cor só
-repetia o que o número ao lado já dizia. Então a barra continua barra (trocá-la por um
-ponto destruiria a quantidade) e o preenchimento vira azul. O estado fica no ponto/texto
-vizinho.
-
-Neutros com leve viés frio, contraste alto no texto: `--text`, `--text-2`, `--border`,
-`--surface`, `--surface-2`, `--bg`, `--main`. **Cinza é o material da interface; cor é
-exceção.** Antes de usar `--green`/`--coral`/`--warn`, pergunte: isso comunica estado ou
-está decorando? Se decora, é cinza.
-
-## Ar
-
-Grid base de **4px**. Todo espaço é múltiplo.
-
-| token | valor |
-|---|---|
-| `--s-1` … `--s-8` | 4, 8, 12, 16, 20, 24, 32px |
-
-- `--pad-card`: padding de cartão — sobe de 16 para **20** no v2.
-- `.cards` deixa de ser 4 colunas fixas: `repeat(auto-fit, minmax(200px, 1fr))`.
-- Hierarquia por espaçamento e tipografia, **não** por borda e cartão. Um painel dentro
-  de um painel dentro de um cartão é sinal de que faltou ar, não de que faltou caixa.
-
-## Movimento
-
-Os tokens de duração já existiam e continuam bons:
-
-```css
---dur-micro: 140ms;   /* hover, press, troca de aba */
---dur-panel: 220ms;   /* modal, drawer, troca de view */
---ease:        cubic-bezier(.2,.8,.2,1);    /* padrão */
---ease-spring: cubic-bezier(.32,.72,0,1);   /* entrada de painel e sheet — a curva iOS */
-```
-
-`--ease-spring` é para **entrada** de painel/sheet/modal, não para hover. Movimento é
-função: comunica de onde a coisa veio. Se não comunica nada, não anima.
-
-`prefers-reduced-motion: reduce` já é respeitado globalmente por um bloco `!important`
-no fim do `globals.css` — qualquer animação nova é coberta automaticamente. Não
-reintroduza animação em `style` inline, que escapa dele.
-
----
-
-## O que ainda falta (não feito nesta passada)
-
-1. **Varredura dos `*.module.css`** das features (≈877 valores crus). Cada um vira token.
-2. **Restos de semáforo fora da lista acima**: `.av.c` (avatar coral — hoje o mais
-   visível, aparece 8x na Home), `.flag`, `.chip.*`, `.wk.present/.absent`,
-   `.jstep.cur .jdot`, `.tlrow::before`, `.pos`/`.neg`, `.seg button.on`. Mesma regra:
-   fundo colorido → ponto + texto.
-3. **Ajuste componente a componente**, só depois que 1 e 2 estiverem prontos.
-4. Aposentar o bloco v1 e a flag, quando o dono aprovar.
+Não usar hex nem px crus nos módulos de features, exceto 1px de linha e 2px de foco.
+Usar os cinco tokens de texto e os dois raios. Conferir claro/escuro e celular.

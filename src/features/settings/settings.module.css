@@ -1,55 +1,51 @@
-/* Estilos de Settings (o global tem tabs/tab, switch, field, btn, panel, chip...). */
-
 .setrow {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border, #e6e8ee);
+  gap: var(--s-4);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .setrow:last-child {
   border-bottom: none;
 }
 .lbl {
-  flex: 0 0 220px;
-  font-weight: 600;
+  flex: 0 0 13.75rem;
+  font-weight: 500;
   color: var(--text);
 }
 .lbl small {
   display: block;
   font-weight: 400;
-  color: var(--text-2, #6b7280);
-  margin-top: 2px;
+  color: var(--text-2);
+  margin-top: var(--s-1);
 }
 .ctrl {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .ctrl input,
 .ctrl select {
-  max-width: 320px;
+  max-width: 20rem;
 }
-
-/* Gestão de Campus: lista quieta (ar, não caixas), uma linha por campus. */
 .campusList {
   list-style: none;
-  margin: 0 0 4px;
+  margin: 0 0 var(--s-1);
   padding: 0;
-  max-width: 420px;
+  max-width: 26.25rem;
 }
 .campusEmpty {
-  color: var(--text-2, #6b7280);
-  font-size: 13px;
-  padding: 6px 0;
+  color: var(--text-2);
+  font-size: var(--t-13);
+  padding: var(--s-1) 0;
 }
 .campusRow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 2px;
-  border-bottom: 1px solid var(--border, #e6e8ee);
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-1);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .campusRow:last-child {
   border-bottom: none;
@@ -60,67 +56,69 @@
   color: var(--text);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .campusOff .campusName {
-  color: var(--text-2, #6b7280);
+  color: var(--text-2);
   font-weight: 400;
 }
 .campusBadge {
-  font-size: 11px;
+  font-size: var(--t-11);
   font-weight: 500;
-  color: var(--text-2, #6b7280);
-  background: var(--surface-2, #f2f4f8);
-  border-radius: 10px;
-  padding: 1px 8px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-2);
 }
 .campusActions {
   display: flex;
-  gap: 14px;
+  gap: var(--s-3);
   align-items: center;
 }
 .campusEdit {
   display: flex;
-  gap: 8px;
+  gap: var(--s-2);
   align-items: center;
   flex: 1;
 }
 .campusEdit input {
-  max-width: 220px;
+  max-width: 13.75rem;
 }
-
-/* Dados jurídicos: toggle de país (neutro, acento azul quando ativo) + seções. */
 .fiscalSeg {
-  max-width: 260px;
-  margin-bottom: 14px;
+  max-width: 16.25rem;
+  margin-bottom: var(--s-3);
 }
 .fiscalSeg button.on {
-  background: rgba(43, 92, 230, 0.14);
-  color: var(--blue, #2b5ce6);
-  border-color: rgba(43, 92, 230, 0.4);
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: transparent;
+  font-weight: 500;
+  box-shadow: none;
 }
 .fiscalSection {
-  margin: 18px 0 8px;
-  font-size: 12px;
-  font-weight: 700;
+  margin: var(--s-4) 0 var(--s-2);
+  font-size: var(--t-13);
+  font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--text-2, #6b7280);
+  color: var(--text-2);
 }
 .fiscalForm {
-  max-width: 520px;
+  max-width: 32.5rem;
 }
 .fiscalNote {
-  color: var(--text-2, #6b7280);
-  font-size: 13px;
-  margin-bottom: 14px;
+  color: var(--text-2);
+  font-size: var(--t-13);
+  margin-bottom: var(--s-3);
 }
 
 .addRow {
   display: flex;
-  gap: 8px;
+  gap: var(--s-2);
   align-items: center;
 }
 .addRow input {
-  max-width: 200px;
+  max-width: 12.5rem;
 }
+
+@media (max-width: 40rem) { .setrow { flex-direction: column; gap: var(--s-2); } .lbl { flex-basis: auto; } .ctrl { width: 100%; min-width: 0; } .campusActions { flex-wrap: wrap; } }

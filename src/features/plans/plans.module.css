@@ -1,83 +1,80 @@
-/* Planos — vitrine + upsell. Apoia-se no sistema global (.panel/.btn/.chip); adiciona só
-   os cartões de plano e a grade de comparação. Temático claro E escuro via tokens. */
-
 .upsell {
   text-align: center;
-  padding: 40px 24px;
-  max-width: 520px;
+  padding: var(--s-8) var(--s-6);
+  max-width: 32.5rem;
   margin: 0 auto;
 }
 .upsellIcon {
-  font-size: 30px;
+  font-size: var(--t-22);
   line-height: 1;
-  margin-bottom: 12px;
+  margin-bottom: var(--s-3);
 }
 .upsellTitle {
-  font-size: 20px;
+  font-size: var(--t-17);
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: var(--s-1);
 }
 .upsellText {
   color: var(--text-2);
   line-height: 1.6;
-  margin-bottom: 18px;
+  margin-bottom: var(--s-4);
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--s-4);
 }
 
 .card {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px;
+  border: 0;
+  border-radius: var(--r-10);
+  padding: var(--s-5);
   background: var(--surface);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s-3);
 }
 .card.current {
   border-color: var(--blue);
-  box-shadow: 0 0 0 1px var(--blue) inset;
+  box-shadow: none;
 }
 .cardHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .planName {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: var(--t-17);
+  font-weight: 500;
   color: var(--text);
 }
 .planPrice {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--t-15);
+  font-weight: 500;
   color: var(--text-2);
 }
 .planTag {
   color: var(--text-2);
-  font-size: 13px;
+  font-size: var(--t-13);
   line-height: 1.5;
-  min-height: 40px;
+  min-height: 2.5rem;
 }
 .featureList {
   list-style: none;
-  margin: 4px 0 0;
+  margin: var(--s-1) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .featureList li {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  font-size: 13.5px;
+  gap: var(--s-2);
+  font-size: var(--t-13);
   color: var(--text);
 }
 .featureList li.off {
@@ -85,7 +82,7 @@
 }
 .check {
   color: var(--green);
-  font-weight: 700;
+  font-weight: 500;
   flex-shrink: 0;
 }
 .dash {
@@ -93,16 +90,16 @@
   flex-shrink: 0;
 }
 .currentBadge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 20px;
+  font-size: var(--t-11);
+  font-weight: 500;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-6);
   background: rgba(43, 92, 230, 0.15);
   color: var(--blue);
 }
 .coreNote {
-  margin-top: 16px;
+  margin-top: var(--s-4);
   color: var(--text-2);
-  font-size: 13px;
+  font-size: var(--t-13);
   line-height: 1.6;
 }

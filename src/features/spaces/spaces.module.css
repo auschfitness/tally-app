@@ -1,52 +1,49 @@
-/* Espaços (Comunicação estilo Basecamp). O global já traz panel, btn, field, link,
-   empty, muted, gerr, page, sub, row2. Aqui só o específico da feature. Tema claro E
-   escuro via CSS vars com fallback. */
-
-/* ---- Hub: seções por tipo + cartões ---- */
 .section {
-  margin-top: 26px;
+  margin-top: var(--s-6);
 }
 .sectionLabel {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--t-13);
+  font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-2, #6b7280);
-  margin: 0 2px 12px;
+  color: var(--text-2);
+  margin: 0 var(--s-1) var(--s-3);
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(16.25rem, 1fr));
+  gap: var(--s-3);
 }
 
 .spaceCard {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 16px 16px 14px;
-  border: 1px solid var(--border, #e6e8ee);
-  border-radius: 14px;
-  background: var(--surface, #fff);
+  gap: var(--s-1);
+  padding: var(--s-4) var(--s-4) var(--s-3);
+  border: 0;
+  border-radius: var(--r-10);
+  background: var(--surface);
   text-decoration: none;
   color: inherit;
   transition: border-color var(--dur-micro, 0.14s) var(--ease, ease),
     transform var(--dur-micro, 0.14s) var(--ease, ease),
     box-shadow var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .spaceCard:hover {
-  border-color: var(--blue, #2b5ce6);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(43, 92, 230, 0.08);
+  border-color: var(--blue);
+  transform: translateY(-0.0625rem);
+  box-shadow: none;
+}
 }
 .spaceName {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 500;
+  font-size: var(--t-15);
 }
 .spaceDesc {
-  font-size: 13px;
-  color: var(--text-2, #6b7280);
+  font-size: var(--t-13);
+  color: var(--text-2);
   line-height: 1.55;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -54,23 +51,21 @@
   overflow: hidden;
 }
 .spaceMeta {
-  font-size: 12.5px;
-  color: var(--text-2, #6b7280);
-  margin-top: 2px;
+  font-size: var(--t-13);
+  color: var(--text-2);
+  margin-top: var(--s-1);
 }
 
 .badge {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border, #e6e8ee);
-  color: var(--text-2, #6b7280);
+  font-size: var(--t-11);
+  font-weight: 500;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-6);
+  border: 0;
+  color: var(--text-2);
   align-self: flex-start;
 }
-
-/* ---- Quadro: lista de posts ---- */
 .postList {
   display: flex;
   flex-direction: column;
@@ -78,9 +73,9 @@
 .postItem {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  padding: 12px 2px;
-  border-bottom: 1px solid var(--border, #e6e8ee);
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-1);
+  border-bottom: 0;
 }
 .postItem:last-child {
   border-bottom: none;
@@ -91,54 +86,52 @@
 }
 .postTitle {
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: var(--t-15);
   text-decoration: none;
   color: inherit;
 }
+@media (hover: hover) and (pointer: fine) {
 .postTitle:hover {
-  color: var(--blue, #2b5ce6);
+  color: var(--blue);
+}
 }
 .postMeta {
-  font-size: 12.5px;
-  color: var(--text-2, #6b7280);
-  margin-top: 3px;
+  font-size: var(--t-13);
+  color: var(--text-2);
+  margin-top: var(--s-1);
 }
 .pin {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--blue, #2b5ce6);
+  font-size: var(--t-11);
+  font-weight: 500;
+  color: var(--blue);
 }
 .rowActions {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s-3);
   flex-shrink: 0;
 }
-
-/* ---- Novo post / edição inline ---- */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
 }
-
-/* ---- Post aberto + comentários ---- */
 .postBody {
   white-space: pre-wrap;
   line-height: 1.65;
-  font-size: 14.5px;
-  margin-top: 10px;
+  font-size: var(--t-15);
+  margin-top: var(--s-2);
 }
 .commentList {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 6px;
+  gap: var(--s-1);
+  margin-top: var(--s-1);
 }
 .comment {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border, #e6e8ee);
+  padding: var(--s-3) 0;
+  border-bottom: 0;
 }
 .comment:last-child {
   border-bottom: none;
@@ -146,62 +139,60 @@
 .commentHead {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: var(--s-2);
+  margin-bottom: var(--s-1);
 }
 .commentAuthor {
-  font-weight: 600;
-  font-size: 13.5px;
+  font-weight: 500;
+  font-size: var(--t-13);
 }
 .commentBody {
   white-space: pre-wrap;
   line-height: 1.6;
-  font-size: 14px;
+  font-size: var(--t-15);
 }
 .commentActions {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s-3);
   margin-left: auto;
 }
 .composer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 14px;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
 }
 .composerRow {
   display: flex;
-  gap: 8px;
+  gap: var(--s-2);
   align-items: flex-end;
 }
 .composerRow textarea {
   flex: 1;
   resize: vertical;
 }
-
-/* ---- Chat ao vivo (Fase 4) ---- */
 .chatPanel {
   display: flex;
   flex-direction: column;
-  max-height: min(60vh, 560px);
+  max-height: min(60vh, 35rem);
   overflow-y: auto;
 }
 .chatLoadMore {
   text-align: center;
-  padding: 2px 0 10px;
+  padding: var(--s-1) 0 var(--s-2);
 }
 .daySep {
   align-self: center;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: var(--t-11);
+  font-weight: 500;
   letter-spacing: 0.03em;
-  color: var(--text-2, #6b7280);
-  background: var(--surface-2, #f7f8fb);
-  border: 1px solid var(--border, #e6e8ee);
-  border-radius: 999px;
-  padding: 2px 12px;
-  margin: 12px auto 6px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-1) var(--s-3);
+  margin: var(--s-3) auto var(--s-1);
 }
 .chatMsg {
   display: flex;
@@ -210,20 +201,20 @@
 .chatAuthor {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .chatName {
-  font-weight: 600;
-  font-size: 13.5px;
+  font-weight: 500;
+  font-size: var(--t-13);
 }
 .chatTime {
-  font-size: 11px;
-  color: var(--text-2, #6b7280);
+  font-size: var(--t-11);
+  color: var(--text-2);
 }
 .chatRow {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--s-2);
 }
 .chatBody {
   min-width: 0;
@@ -231,57 +222,57 @@
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.5;
-  font-size: 14px;
+  font-size: var(--t-15);
 }
 .chatActions {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   flex-shrink: 0;
 }
 .chatDel {
   flex-shrink: 0;
   opacity: 0;
-  font-size: 12px;
+  font-size: var(--t-13);
   transition: opacity var(--dur-micro, 0.14s) var(--ease, ease);
 }
+@media (hover: hover) and (pointer: fine) {
 .chatRow:hover .chatDel {
   opacity: 0.7;
 }
-
-/* ---- Tarefas ---- */
+}
 .listHead {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--s-3);
 }
 .listName {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 500;
+  font-size: var(--t-15);
   margin-right: auto;
 }
 .progress {
-  font-size: 12.5px;
-  color: var(--text-2, #6b7280);
+  font-size: var(--t-13);
+  color: var(--text-2);
   white-space: nowrap;
 }
 .todoList {
   display: flex;
   flex-direction: column;
-  margin-top: 6px;
+  margin-top: var(--s-1);
 }
 .todoRow {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 9px 2px;
-  border-bottom: 1px solid var(--border, #e6e8ee);
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-1);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .todoRow:last-child {
   border-bottom: none;
 }
 .todoCheck {
-  margin-top: 2px;
+  margin-top: var(--s-1);
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -290,58 +281,58 @@
   margin-right: auto;
 }
 .todoTitle {
-  font-size: 14px;
+  font-size: var(--t-15);
   line-height: 1.4;
 }
 .todoDone {
   text-decoration: line-through;
-  color: var(--text-2, #6b7280);
+  color: var(--text-2);
 }
 .todoMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--s-2);
   align-items: center;
-  font-size: 12px;
-  color: var(--text-2, #6b7280);
-  margin-top: 3px;
+  font-size: var(--t-13);
+  color: var(--text-2);
+  margin-top: var(--s-1);
 }
 .todoNotes {
-  font-size: 12.5px;
-  color: var(--text-2, #6b7280);
+  font-size: var(--t-13);
+  color: var(--text-2);
   line-height: 1.5;
-  margin-top: 3px;
+  margin-top: var(--s-1);
   white-space: pre-wrap;
 }
 .assignee {
   display: inline-block;
-  padding: 0 7px;
-  border-radius: 999px;
-  border: 1px solid var(--border, #e6e8ee);
-  font-size: 11.5px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-6);
+  border: 0;
+  font-size: var(--t-11);
 }
 .overdue {
-  color: var(--coral, #e5484d);
-  font-weight: 600;
+  color: var(--coral);
+  font-weight: 500;
 }
 .todoActions {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   flex-shrink: 0;
 }
 .addForm {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
 }
 .addGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: var(--s-2);
 }
-@media (max-width: 620px) {
+@media (max-width: 38.75rem) {
   .addGrid {
     grid-template-columns: 1fr;
   }

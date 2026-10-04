@@ -1,34 +1,31 @@
-/* Giving/Doações. O global já traz panel, row2, table, ministrip, btn, field,
-   filtchips/fchip, empty, muted, pos/neg. Aqui só o específico da feature + recibo. */
-
 .filters {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
   flex-wrap: wrap;
-  margin: 6px 0 16px;
+  margin: var(--s-1) 0 var(--s-4);
 }
 
 .donorCard {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
 }
 .donorActions {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s-2);
 }
 
 .fundrow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13.5px;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  font-size: var(--t-13);
 }
 .fundrow:last-child {
   border-bottom: none;
@@ -37,9 +34,9 @@
 .receiptRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   text-decoration: none;
   color: inherit;
   transition: opacity var(--dur-micro) var(--ease);
@@ -47,45 +44,45 @@
 .receiptRow:last-child {
   border-bottom: none;
 }
+@media (hover: hover) and (pointer: fine) {
 .receiptRow:hover {
   opacity: 0.72;
 }
-
-/* ---- Recibo (documento imprimível) ---- */
+}
 .receiptWrap {
-  max-width: 760px;
+  max-width: 47.5rem;
   margin: 0 auto;
 }
 .receiptBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: var(--s-4);
 }
 .receipt {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
+  border: 0;
+  border-radius: var(--r-6);
+  padding: var(--s-8);
+  box-shadow: none;
 }
 .receiptHead {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--s-5);
   align-items: flex-start;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 18px;
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  margin-bottom: var(--s-4);
 }
 .receiptOrg {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: var(--t-17);
+  font-weight: 500;
   color: var(--text);
 }
 .receiptMuted {
   color: var(--text-2);
-  font-size: 12.5px;
+  font-size: var(--t-13);
   line-height: 1.6;
 }
 .receiptNo {
@@ -93,57 +90,57 @@
   flex-shrink: 0;
 }
 .receiptTitle {
-  font-size: 15px;
+  font-size: var(--t-15);
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: var(--s-1);
 }
 .receiptDonor {
-  margin-bottom: 18px;
+  margin-bottom: var(--s-4);
 }
 .receiptTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: var(--t-13);
   border: none;
   background: transparent;
-  margin-bottom: 18px;
+  margin-bottom: var(--s-4);
 }
 .receiptTable th {
   text-align: left;
-  font-size: 11px;
+  font-size: var(--t-11);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: 500;
   background: transparent;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--s-2) var(--s-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .receiptTable td {
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--s-2) var(--s-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   color: var(--text);
 }
 .receiptTable tfoot td {
   border-bottom: none;
-  border-top: 2px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 .receiptLegal {
-  font-size: 12px;
+  font-size: var(--t-13);
   color: var(--text-2);
   line-height: 1.6;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
 }
 .receiptSign {
-  margin-top: 34px;
-  width: 260px;
+  margin-top: var(--s-8);
+  width: 16.25rem;
 }
 .receiptSignLine {
-  border-top: 1px solid var(--text-2);
-  margin-bottom: 6px;
+  border-top: 0;
+  margin-bottom: var(--s-1);
 }
 
 @media print {
