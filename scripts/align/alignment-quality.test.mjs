@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkVerse, fixEdges, wordMarks, compareSpans, restoreSourceText, spansFromWordTags } from "./alignment-quality.mjs";
+import { checkVerse, fixEdges, wordMarks, compareSpans, restoreSourceText, spansFromWordTags, fillOnlyGaps } from "./alignment-quality.mjs";
 
 test("valida texto completo, cobertura e Strong do próprio versículo", () => {
   const v = { pt: "No princípio criou.", greek: [{ s: "H7225" }, { s: "H1254" }] };
@@ -46,4 +46,13 @@ test("tags por posição preservam o texto e recusam posições ausentes ou dupl
   assert.deepEqual(fixed.spans, [{ t: "No princípio", s: "H7225" }, { t: ", ", s: null }, { t: "criou", s: "H1254" }, { t: ".", s: null }]);
   assert.equal(spansFromWordTags(source, { tags: [{ p: 1, s: "H7225" }] }), null);
   assert.equal(spansFromWordTags(source, { tags: [{ p: 1, s: "H7225" }, { p: 1, s: "H7225" }, { p: 3, s: "H1254" }] }), null);
+});
+test("preenchimento mantém Strong existente mesmo se o candidato discordar", () => {
+  const baseline = [{ t: "No princípio", s: "H7225" }, { t: " criou ", s: null }, { t: "Deus", s: "H0430" }];
+  const candidate = [{ t: "No princípio", s: "H0001" }, { t: " ", s: null }, { t: "criou", s: "H1254" }, { t: " ", s: null }, { t: "Deus", s: "H0002" }];
+  const out = fillOnlyGaps(candidate, baseline);
+  assert.equal(out.map((s) => s.t).join(""), "No princípio criou Deus");
+  assert.deepEqual(wordMarks(out).map((s) => s.strong), ["H7225", "H7225", "H1254", "H0430"]);
+  assert.deepEqual(out[0], baseline[0]);
+  assert.deepEqual(out.at(-1), baseline.at(-1));
 });

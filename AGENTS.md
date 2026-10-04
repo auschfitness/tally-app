@@ -188,6 +188,8 @@ Piloto por palavras numeradas: 167 versículos, 3.887 palavras, 100% de cobertur
 94,39% de acordo com os gabaritos nas palavras comparáveis. Os 12 gabaritos manuais
 ficam preservados na carga final. O modelo escolhe Strong por posição; o texto é
 recomposto da fonte local. Documentação: `scripts/align/README-OT-COMPLETE.md`.
+Trechos já ligados pelo estatístico também são preservados; só suas lacunas são
+preenchidas pelo candidato. A qualidade é medida antes dessa combinação.
 Só montar a carga após todos os 929 capítulos e cobertura final >=95%. SQL e dados
 ficam prontos automaticamente após geração, medição e montagem aprovadas. Conferir
 espaço, pedir aprovação da carga, executar SQL pelo dono, carregar, conferir no

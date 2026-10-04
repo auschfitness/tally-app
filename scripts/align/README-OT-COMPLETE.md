@@ -63,6 +63,10 @@ Um versículo que falhar nas tentativas usa o alinhamento estatístico na montag
 sem inventar ligação. Isso é contabilizado como fallback e reduz a cobertura
 final. Gabaritos manuais são preservados, inclusive suas omissões. A montagem
 recusa gerar o TSV de carga se a cobertura final ficar abaixo de 95%.
+Em versículos aprovados, cada trecho já ligado pelo estatístico é preservado.
+As ligações do candidato Gemini são usadas apenas nas lacunas. A concordância
+de 85% é medida no candidato original, antes desse preenchimento, e não pode
+ser inflada pela preservação das ligações existentes.
 
 ## Preparação e gravação
 

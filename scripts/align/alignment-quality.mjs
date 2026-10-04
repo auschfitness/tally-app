@@ -97,6 +97,31 @@ export function compareSpans(candidate, baseline) {
   return { same, both, words: a.length, linked: a.filter((t) => t.strong).length };
 }
 
+// Preserva cada trecho já ligado; usa o candidato somente nas lacunas.
+export function fillOnlyGaps(candidate, baseline) {
+  if (candidate.map((s) => s.t).join("") !== baseline.map((s) => s.t).join("")) throw new Error("Textos diferentes no preenchimento");
+  const marks = [];
+  let candidatePos = 0;
+  for (const span of candidate) { marks.push([candidatePos, span.s]); candidatePos += span.t.length; }
+  const strongAt = (pos) => marks.findLast(([start]) => start <= pos)?.[1] ?? null;
+  const out = [];
+  let pos = 0;
+  for (const span of baseline) {
+    if (span.s) out.push({ ...span });
+    else {
+      let last = 0;
+      for (const word of span.t.matchAll(WORD)) {
+        if (word.index > last) out.push({ t: span.t.slice(last, word.index), s: null });
+        out.push({ t: word[0], s: strongAt(pos + word.index) });
+        last = word.index + word[0].length;
+      }
+      if (last < span.t.length) out.push({ t: span.t.slice(last), s: null });
+    }
+    pos += span.t.length;
+  }
+  return out;
+}
+
 // Só restaura grafia/pontuação/espaços se a sequência inteira de letras e números
 // for idêntica. Qualquer letra acrescentada, removida ou trocada impede o reparo.
 export function restoreSourceText(v, got) {

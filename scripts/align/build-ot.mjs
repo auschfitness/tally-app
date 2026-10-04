@@ -1,7 +1,7 @@
 // Monta AT completo, preservando gabaritos; nunca grava dados no banco.
 // Só emite o TSV de carga quando todos os capítulos estiverem processados e a cobertura >=95%.
 import fs from "node:fs";
-import { checkVerse, compareSpans, wordMarks } from "./alignment-quality.mjs";
+import { checkVerse, compareSpans, wordMarks, fillOnlyGaps } from "./alignment-quality.mjs";
 
 const ROOT = "scripts/align/work";
 const OSIS = Object.fromEntries("GEN:Gen EXO:Exod LEV:Lev NUM:Num DEU:Deut JOS:Josh JDG:Judg RUT:Ruth 1SA:1Sam 2SA:2Sam 1KI:1Kgs 2KI:2Kgs 1CH:1Chr 2CH:2Chr EZR:Ezra NEH:Neh EST:Esth JOB:Job PSA:Ps PRO:Prov ECC:Eccl SNG:Song ISA:Isa JER:Jer LAM:Lam EZK:Ezek DAN:Dan HOS:Hos JOL:Joel AMO:Amos OBA:Obad JON:Jonah MIC:Mic NAM:Nah HAB:Hab ZEP:Zeph HAG:Hag ZEC:Zech MAL:Mal".split(" ").map((s) => s.split(":")));
@@ -33,6 +33,7 @@ for (const file of fs.readdirSync(`${ROOT}/ot`).filter((f) => /^[1-3A-Z]{3}-\d+\
     if (result.spans.some((s) => !s.t || (s.s && !allowed.has(s.s)))) report.errors.push(`${name}:${v.verse}: trecho inválido`);
     const score = compareSpans(result.spans, stat.get(v.verse).spans);
     if (!gold && !fallback) { chapterSame += score.same; chapterBoth += score.both; report.sameBaseline += score.same; report.bothBaseline += score.both; }
+    if (!gold && !fallback) result = { ...result, spans: fillOnlyGaps(result.spans, stat.get(v.verse).spans) };
     const tags = wordMarks(result.spans);
     report.words += tags.length; report.linkedWords += tags.filter((t) => t.strong).length;
     report.verses++;
