@@ -166,9 +166,9 @@ Diagnóstico do dono: "o site parece genérico, o Codex e o app do Claude parece
 
 Entrega: commits na branch, prévia para o dono, publicar só depois do "aprovado". Se a 4c (Antigravity) ainda não tiver sido mesclada, fazer rebase antes da etapa 2 para não conflitar no CommentaryTab/ReaderView.
 
-### 5. AT passo 3: dicionário UBS hebraico (SDBH)
+### 5. AT passo 3: dicionário UBS hebraico (SDBH) (FEITA e PUBLICADA em 2026-10-04: 18.620 sentidos H carregados via MCP, função temporária apagada, banco 219 MB)
 
-PREPARADA em 2026-10-04, aguardando SQL e aprovação da carga. Fonte oficial UBS
+PREPARADA em 2026-10-04, carga concluída pelo Claude. Fonte oficial UBS
 v0.9.3 já em português: 18.620 linhas, 7.981 Strong, aproximadamente 9,88 MB de JSON.
 Scripts, conferências e ordem de carga em `scripts/ubs/README-HEBREW.md`.
 SQL com senha preenchida em `scripts/ubs/work/hebrew/load.sql` (local, gitignored).
