@@ -181,11 +181,15 @@ Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubs
 ### 6. Completar o sublinhado do Antigo Testamento (EM EXECUÇÃO em 2026-10-04)
 
 Pedido do dono: completar as ligações das palavras, além da carga estatística já presente.
-Fluxo retomável: `node --env-file=.env.local scripts/align/run-complete-ot.mjs`.
+Fluxo retomável: definir `GEMINI_ALIGN_MODEL=gemini-3.1-flash-lite` no ambiente e
+rodar `node --env-file=.env.local scripts/align/run-complete-ot.mjs`.
 Não iniciar outra execução se esse processo já estiver ativo. Progresso e resultados
-em `scripts/align/work/gem-ot/`; piloto em `work/gem-ot-word-pilot/` (gitignored).
+em `scripts/align/work/gem-ot/`; piloto atual em
+`work/gem-ot-word-pilot-gemini-3.1-flash-lite/` (gitignored).
 Piloto por palavras numeradas: 167 versículos, 3.887 palavras, 100% de cobertura,
-94,39% de acordo com os gabaritos nas palavras comparáveis. Os 12 gabaritos manuais
+96,06% de acordo com os gabaritos nas palavras comparáveis. O modelo inicial
+Gemini 3.5 Flash Lite marcou 94,39% e atingiu a cota diária; a troca de modelo
+passou por um novo piloto antes de retomar a geração. Os 12 gabaritos manuais
 ficam preservados na carga final. O modelo escolhe Strong por posição; o texto é
 recomposto da fonte local. Documentação: `scripts/align/README-OT-COMPLETE.md`.
 Trechos já ligados pelo estatístico também são preservados; só suas lacunas são
