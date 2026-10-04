@@ -174,8 +174,7 @@ Scripts, conferências e ordem de carga em `scripts/ubs/README-HEBREW.md`.
 SQL com senha preenchida em `scripts/ubs/work/hebrew/load.sql` (local, gitignored).
 Prévia com dados UBS simulados: `docs/previews/task5-hebrew-gen1.png`.
 Verificação passou: npm run verify (545 testes), 6 testes do importador e 11 e2e.
-Nada do hebraico foi carregado no banco nem publicado nesta entrega. Não marcar
-como feita até carregar, conferir no app e apagar a função temporária.
+Carga e publicação concluídas pelo Claude; função temporária apagada.
 
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
 
@@ -183,7 +182,7 @@ Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubs
 
 - Frente B: sublinhado completo do NT inteiro carregado em bible_tagged_verses (7.957 versículos, 2026-10-03).
 - AT passo 2: definições do hebraico em português no banco (lex-69 a lex-175, carregados em 2026-10-02).
-- AT passo 1: palavra em português ligada ao hebraico nos 39 livros (844 mil linhas em `bible_tagged_words`). Como refazer: `docs/backlog/estudo-referencia-raizes.md`, seção "Antigo Testamento".
+- AT passo 1: palavra em português ligada ao hebraico nos 39 livros. Os dados antigos de `bible_tagged_words` foram migrados para `bible_tagged_verses`: 23.145 versículos. Conferência integral em 2026-10-04: nenhum versículo faltando e nenhuma diferença frente aos TSVs estatístico + gabarito. A carga já está feita; cobertura de palavras portuguesas ligadas = 66,1%, portanto completar o sublinhado é uma melhoria distinta. Evidência: `docs/previews/at-carga-revisao.md`. Como refazer: `docs/backlog/estudo-referencia-raizes.md`, seção "Antigo Testamento".
 - NT: ligação, léxico em PT, dicionário UBS completo.
 - Lixeira de 30 dias, página Sermões, Notas, editor de sermão (spec 10), menu lateral novo.
 

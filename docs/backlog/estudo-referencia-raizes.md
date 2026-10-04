@@ -116,6 +116,13 @@ Itens de IA ("Conversas") ficam fora, por decisão do pivô.
   a cobertura era 55%. Aramaico (Esdras, Daniel) fica mais fraco (~72% do original ligado).
 - 844 mil linhas em bible_tagged_words (~110 MB; banco no plano grátis, limite 500 MB).
 
+Atualização em 2026-10-04: os trechos foram migrados para `bible_tagged_verses`,
+com uma linha por versículo. Auditoria integral dos 39 livros confirmou 23.145
+versículos iguais aos TSVs estatístico + gabarito, sem faltas nem diferenças.
+A carga já está feita. Completar a cobertura do sublinhado é outra etapa: hoje
+66,1% das palavras portuguesas dos trechos estão ligadas a Strong. Evidência em
+`docs/previews/at-carga-revisao.md`.
+
 ## Frente B: sublinhado completo (estado em 2026-10-01)
 
 - Regra sem IA (`scripts/align/fill-gaps.mjs`): leva a 100% das palavras sublinhadas, mas
