@@ -15,7 +15,8 @@ const pilot = ["GEN-22", "RUT-01", "PSA-51", "PRO-03", "JER-31", "2KI-05"];
 const names = process.argv.includes("--pilot") ? pilot : fs.readdirSync(input)
   .filter((f) => /^[1-3A-Z]{3}-\d+\.json$/.test(f)).map((f) => f.slice(0, -5)).sort();
 // No conjunto completo, gabaritos manuais são preservados pelo montador.
-const queue = names.filter((name) => process.argv.includes("--pilot") || !fs.existsSync(path.join(input, name + ".gold.json")));
+const queue = names.filter((name) => (pilotMode || !fs.existsSync(path.join(input, name + ".gold.json")))
+  && !fs.existsSync(path.join(output, name + ".align.json")));
 const logFile = path.join(output, pilotMode ? "pilot-run.log" : "run.log");
 const statusFile = path.join(output, pilotMode ? "pilot-run-status.json" : "run-status.json");
 const log = (line) => { console.log(line); fs.appendFileSync(logFile, `${new Date().toISOString()} ${line}\n`); };

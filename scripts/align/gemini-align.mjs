@@ -223,6 +223,8 @@ for (let ch = a; ch <= (b || a); ch++) {
   const agr = agreement([...result.values()], `work/${OT ? "ot" : "nt"}/${book}-${pad(ch)}.align.stat.json`);
   if (agr < 0.85) {
     console.log(`${book} ${ch}: só ${Math.round(agr * 100)}% de acordo com o estatístico, NÃO gravado (refaça depois)`);
+    // Preservar para diagnóstico, sem retomar as mesmas ligações reprovadas.
+    if (fs.existsSync(partialFile)) fs.renameSync(partialFile, partialFile.replace(".partial.json", `.rejected-${Date.now()}.json`));
     continue;
   }
   fs.writeFileSync(outFile, "[\n" + out.map((v) => JSON.stringify(v)).join(",\n") + "\n]\n");
