@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { checkVerse, compareSpans } from "./alignment-quality.mjs";
 
 const root = "scripts/align/work";
-const outDir = process.argv[2] || `${root}/gem-ot-word-pilot`;
+const outDir = process.argv[2] || process.env.ALIGN_PILOT_DIR || `${root}/gem-ot-word-pilot`;
 let same = 0, both = 0, words = 0, linked = 0, checked = 0, failed = 0;
 const chapters = [];
 for (const file of fs.readdirSync(`${root}/ot`).filter((f) => f.endsWith(".gold.json"))) {

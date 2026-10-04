@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkVerse, fixEdges, wordMarks, compareSpans, restoreSourceText, spansFromWordTags, fillOnlyGaps } from "./alignment-quality.mjs";
+import { checkVerse, fixEdges, wordMarks, compareSpans, restoreSourceText, spansFromWordTags, fillOnlyGaps, verseBatches } from "./alignment-quality.mjs";
 
 test("valida texto completo, cobertura e Strong do próprio versículo", () => {
   const v = { pt: "No princípio criou.", greek: [{ s: "H7225" }, { s: "H1254" }] };
@@ -55,4 +55,11 @@ test("preenchimento mantém Strong existente mesmo se o candidato discordar", ()
   assert.deepEqual(wordMarks(out).map((s) => s.strong), ["H7225", "H7225", "H1254", "H0430"]);
   assert.deepEqual(out[0], baseline[0]);
   assert.deepEqual(out.at(-1), baseline.at(-1));
+});
+test("lotes respeitam limite de palavras e mantêm todos os versículos na ordem", () => {
+  const verses = [1, 2, 3, 4, 5].map((verse) => ({ verse, pt: "uma duas três" }));
+  const batches = verseBatches(verses, 12, 7);
+  assert.deepEqual(batches.map((b) => b.map((v) => v.verse)), [[1, 2], [3, 4], [5]]);
+  assert.deepEqual(batches.flat(), verses);
+  assert.deepEqual(verseBatches(verses, 1, 180).map((b) => b.length), [1, 1, 1, 1, 1]);
 });

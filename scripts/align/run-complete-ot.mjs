@@ -9,8 +9,11 @@ const run = (args) => new Promise((resolve) => {
   child.on("close",(code)=>resolve(code ?? 1));
 });
 const stateFile = "scripts/align/work/gem-ot/pipeline-status.json";
+const model=process.env.GEMINI_ALIGN_MODEL||"gemini-3.5-flash-lite";
+if (!/^[a-z0-9.-]+$/.test(model)) throw new Error("Modelo inválido");
+if (model!=="gemini-3.5-flash-lite"&&!process.env.ALIGN_PILOT_DIR) process.env.ALIGN_PILOT_DIR=`scripts/align/work/gem-ot-word-pilot-${model}`;
 fs.mkdirSync("scripts/align/work/gem-ot",{recursive:true});
-const state = { startedAt:new Date().toISOString(), stage:"pilot", complete:false };
+const state = { startedAt:new Date().toISOString(), model, stage:"pilot", complete:false };
 const save = () => fs.writeFileSync(stateFile,JSON.stringify(state,null,2));
 save();
 for (const [stage,args] of [
@@ -24,8 +27,9 @@ for (const [stage,args] of [
   console.log(`Etapa: ${stage}`);
   let code=await run(args);
   if (stage === "generation") {
-    for (let attempt=2;code===1&&attempt<=3;attempt++) {
+    for (let attempt=2;(code===1||code===2)&&attempt<=3;attempt++) {
       console.log(`Nova tentativa dos capítulos pendentes: ${attempt}/3`);
+      if (code===2) await new Promise((resolve)=>setTimeout(resolve,60000));
       code=await run(args);
     }
   }

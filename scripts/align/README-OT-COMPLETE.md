@@ -10,6 +10,7 @@ texto da Bíblia e não grava no banco durante a geração.
 Da raiz do projeto, com as chaves já configuradas:
 
 ```powershell
+$env:GEMINI_ALIGN_MODEL = 'gemini-3.1-flash-lite'
 node --env-file=.env.local scripts/align/run-complete-ot.mjs
 ```
 
@@ -29,15 +30,16 @@ node scripts/align/build-ot.mjs
 
 São 929 capítulos, sendo 12 com gabaritos manuais preservados na carga final.
 O piloto mede Gn 22, Rt 1, Sl 51, Pv 3, Jr 31 e 2Rs 5. Resultados e logs ficam
-em `scripts/align/work/gem-ot-word-pilot/`; a geração final fica em `work/gem-ot/`,
+em `scripts/align/work/gem-ot-word-pilot-<modelo>/` quando o modelo é escolhido
+pelo ambiente; a geração final fica em `work/gem-ot/`,
 separada da geração do NT. A execução usa dois
 processos de geração, para não consumir toda a cota em uma rajada.
 
 O coordenador para quando a API esgota a cota ou um processo falha. Para retomar,
 execute o mesmo comando. Capítulos concluídos são pulados. Versículos aprovados
 de capítulos incompletos são preservados em arquivos `.partial.json`, com hash
-da fonte e nome do modelo, para evitar perder chamadas ou reaproveitar texto
-de uma versão diferente.
+da fonte e nome do modelo. Uma troca de modelo exige um novo piloto, mas permite
+retomar versículos da mesma fonte que passem novamente pelas conferências.
 
 ## Conferências antes da carga
 
@@ -52,6 +54,8 @@ Na geração do AT, o modelo retorna apenas Strong para cada posição de palavr
 portuguesa numerada. A montagem recompõe os trechos diretamente do texto fonte,
 recusando posições ausentes, repetidas ou Strong fora do versículo. Isso elimina
 alterações de texto pelo modelo e reduz o volume da resposta.
+Os pedidos agrupam até 12 versículos e 180 palavras portuguesas. Versículos
+maiores que esse limite seguem sozinhos. Isso limita o tamanho da resposta.
 
 Grafia, pontuação e espaços omitidos pelo modelo só são restaurados quando a
 sequência completa de letras e números coincide com a fonte. Palavras alteradas,
@@ -113,6 +117,8 @@ Os arquivos grandes e o progresso da geração permanecem locais. Não versionar
 chaves, senhas ou arquivos da pasta `work/`.
 
 Piloto conferido em 04/10/2026: todos os seis capítulos, 167 versículos e 3.887
-palavras, 100% de cobertura, 94,39% de concordância nas palavras comparáveis dos
-gabaritos. Essa medição não é revisão manual de todo o AT. A carga final preserva
+palavras e 100% de cobertura. O piloto inicial com Gemini 3.5 Flash Lite marcou
+94,39% de concordância nas palavras comparáveis dos gabaritos. Após o limite
+diário desse modelo, o Gemini 3.1 Flash Lite passou por novo piloto e marcou
+96,06%. Essa medição não é revisão manual de todo o AT. A carga final preserva
 os 12 capítulos com gabarito e mede a cobertura novamente no conjunto completo.

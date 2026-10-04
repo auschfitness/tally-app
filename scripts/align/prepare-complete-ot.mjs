@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 const root = "scripts/align/work";
 const build = JSON.parse(fs.readFileSync(`${root}/gem-ot/build-status.json`, "utf8"));
-const pilot = JSON.parse(fs.readFileSync(`${root}/gem-ot-word-pilot/pilot-quality.json`, "utf8"));
+const pilot = JSON.parse(fs.readFileSync(`${process.env.ALIGN_PILOT_DIR || `${root}/gem-ot-word-pilot`}/pilot-quality.json`, "utf8"));
 assert(build.ready && build.verses === 23145, "AT ainda não está completo e validado");
 const heldOut = ["GEN-22", "RUT-01", "PSA-51", "PRO-03", "JER-31", "2KI-05"];
 assert(heldOut.every((name) => pilot.chapters.some((ch) => ch.chapter === name)), "Faltam capítulos de medição");

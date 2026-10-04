@@ -9,7 +9,7 @@
 //   Capítulo que concorda menos de 85% com o alinhador estatístico NÃO é gravado (modelo fraco).
 import fs from "node:fs";
 import { createHash } from "node:crypto";
-import { fixEdges, attachOrphans, checkVerse, compareSpans, restoreSourceText, indexedWords, spansFromWordTags } from "./alignment-quality.mjs";
+import { fixEdges, attachOrphans, checkVerse, compareSpans, restoreSourceText, indexedWords, spansFromWordTags, verseBatches } from "./alignment-quality.mjs";
 export { fixEdges, attachOrphans, checkVerse } from "./alignment-quality.mjs";
 
 const KEYS = (process.env.GEMINI_API_KEY || "").split(/[,\s]+/).map((k) => k.trim()).filter(Boolean);
@@ -27,7 +27,7 @@ if (!(KEYS.length || (OR_KEY && OR_MODELS.length)) || !book || !Number.isInteger
 const pad = (n) => String(n).padStart(2, "0");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const CHUNK = WORD_TAG_MODE ? 3 : 12;
+const CHUNK = 12;
 
 const TEXT_RULES = `Você liga um texto bíblico em português (Bíblia Livre) às palavras do original (grego no NT, hebraico/aramaico no AT).
 Recebe [{ verse, pt, greek: [{ p, w, s, g }] }] (greek = palavras do original, mesmo no AT; s = número Strong, g = glosa inglesa).
@@ -94,6 +94,7 @@ async function ask(verses) {
 
 async function askGemini(verses) {
   let attempts = 0;
+  let reason = "Gemini HTTP 429";
   while (attempts < KEYS.length) {
     const key = KEYS[keyIdx % KEYS.length];
     keyIdx++;
@@ -106,15 +107,15 @@ async function askGemini(verses) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: RULES }] },
           contents: [{ role: "user", parts: [{ text: JSON.stringify(requestInput(verses)) }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: 65536 },
+          generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: WORD_TAG_MODE ? 8192 : 65536 },
         }),
         signal: AbortSignal.timeout(60000),
       });
     } catch {
       return { error: "rede falhou (timeout)" };
     }
-    if (res.status === 429) continue;
-    if (res.status >= 500) return { wait: 15000 };
+    if (res.status === 429) { reason = "Gemini HTTP 429"; continue; }
+    if (res.status >= 500) return { wait: 15000, reason: `Gemini HTTP ${res.status}` };
     const body = await res.json();
     if (!res.ok) return { error: `HTTP ${res.status}` };
     try {
@@ -123,7 +124,7 @@ async function askGemini(verses) {
       return { error: "JSON inválido" };
     }
   }
-  return { wait: 60000 };
+  return { wait: 60000, reason };
 }
 
 // Concordância com o alinhador estatístico nas palavras que os dois ligam (trava de qualidade:
@@ -155,7 +156,7 @@ for (let ch = a; ch <= (b || a); ch++) {
   const result = new Map();
   if (fs.existsSync(partialFile)) {
     const partial = JSON.parse(fs.readFileSync(partialFile, "utf8"));
-    if (partial.sourceHash === sourceHash && partial.model === model) {
+    if (partial.sourceHash === sourceHash) {
       for (const got of partial.verses ?? []) {
         const input = verses.find((v) => v.verse === got.verse);
         if (input && !checkVerse(input, got)) result.set(got.verse, got);
@@ -166,20 +167,19 @@ for (let ch = a; ch <= (b || a); ch++) {
   const reasons = new Map();
   const runBatch = async (list, size) => {
     let netFail = 0;
-    for (let i = 0; i < list.length; i += size) {
-      const part = list.slice(i, i + size);
+    for (const part of verseBatches(list, size, WORD_TAG_MODE ? 180 : Infinity)) {
       let r = await ask(part);
       let waits = 0;
       while (r.wait) {
         waits++;
-        console.log(`${book} ${ch}: API indisponível, tentativa ${waits}/3`);
-        if (waits > 2) { r = { error: "cota ou indisponibilidade persistente da API" }; break; }
+        console.log(`${book} ${ch}: API indisponível (${r.reason || "provedores sem resposta"}), tentativa ${waits}/3`);
+        if (waits > 2) { r = { error: "indisponibilidade persistente da API", blocked: true }; break; }
         await sleep(r.wait);
         r = await ask(part);
       }
       if (r.error || !Array.isArray(r.out)) {
-        if (r.error?.startsWith("cota")) {
-          console.log(`${book} ${ch}: cota esgotada; progresso parcial preservado`);
+        if (r.blocked) {
+          console.log(`${book} ${ch}: API indisponível; progresso parcial preservado`);
           process.exit(2);
         }
         for (const v of part) reasons.set(v.verse, r.error || "resposta nao e array");
@@ -224,5 +224,6 @@ for (let ch = a; ch <= (b || a); ch++) {
     continue;
   }
   fs.writeFileSync(outFile, "[\n" + out.map((v) => JSON.stringify(v)).join(",\n") + "\n]\n");
+  fs.writeFileSync(outFile.replace(".align.json", ".metadata.json"), JSON.stringify({ model, sourceHash, completedAt: new Date().toISOString(), agreement: agr, format: WORD_TAG_MODE ? "word-tags" : "spans" }, null, 2));
   console.log(`${book} ${ch}: ${result.size}/${verses.length} versículos, acordo ${Math.round(agr * 100)}%`);
 }

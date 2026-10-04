@@ -60,6 +60,20 @@ export function checkVerse(v, got) {
 const WORD = /[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu;
 export const indexedWords = (pt) => [...pt.matchAll(WORD)].map((m, i) => ({ p: i + 1, w: m[0] }));
 
+export function verseBatches(verses, maxCount, maxWords = Infinity) {
+  const batches = [];
+  let batch = [], words = 0;
+  for (const verse of verses) {
+    const count = indexedWords(verse.pt).length;
+    if (batch.length && (batch.length >= maxCount || words + count > maxWords)) {
+      batches.push(batch); batch = []; words = 0;
+    }
+    batch.push(verse); words += count;
+  }
+  if (batch.length) batches.push(batch);
+  return batches;
+}
+
 // O modelo escolhe só o Strong por posição; o texto sempre vem da fonte local.
 export function spansFromWordTags(v, got) {
   const source = [...v.pt.matchAll(WORD)];
