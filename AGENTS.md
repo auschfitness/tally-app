@@ -121,7 +121,7 @@ D) Verificação e entrega
 2. `npx playwright test e2e/tmp-shot.spec.ts e2e/auth.spec.ts` (screenshots em docs/previews/: login claro/escuro/celular, forgot, reset). Depois APAGUE `e2e/tmp-shot.spec.ts`.
 3. Commit na branch (o hook faz push da branch). NÃO publique na main: mostre as prévias ao dono e espere "aprovado". Aí `git push origin HEAD:main`.
 
-### 4c. Leitura: comentário corrido, sol/lua, sem Recentes, "Original" (pedido do dono em 2026-10-04)
+### 4c. Leitura: comentário corrido, sol/lua, sem Recentes, "Original" (FEITA e PUBLICADA em 2026-10-04)
 
 Texto em PT-BR, sem travessão longo, sem emoji. Sem animação em ação frequente (troca de versículo, troca de tema).
 
@@ -139,7 +139,7 @@ Texto em PT-BR, sem travessão longo, sem emoji. Sem animação em ação freque
 
 5. Verificar: `npm run verify` (teste de integração com "JWT issued at future" = reexecutar só ele com `--no-file-parallelism`), `npx playwright test e2e/reader.spec.ts`. Prévia: screenshot de João 1 com a aba Comentário aberta e o versículo 3 selecionado (claro e escuro) em docs/previews/. Commit na branch; só publicar (`git push origin HEAD:main`) depois do "aprovado" do dono.
 
-### 4d. Harmonia visual: uma decisão só para cada coisa (FEITA em 2026-10-04 na branch; AGUARDANDO APROVAÇÃO para publicar)
+### 4d. Harmonia visual: uma decisão só para cada coisa (FEITA e PUBLICADA em 2026-10-04, main b9f2459)
 
 Entrega: quatro etapas verificadas, v2 definitivo, régua de estilos aplicada e ícones Lucide. A 4c entrou no commit `fdaf896` antes da etapa 2. Prévias e evidências em `docs/previews/4d-revisao.md`. Não refazer nem publicar sem aprovação das novas prévias.
 
