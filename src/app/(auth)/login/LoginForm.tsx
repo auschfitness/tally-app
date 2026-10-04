@@ -1,19 +1,42 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import Link from "next/link";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { signInAction, signUpAction, type AuthState } from "./actions";
+import { PasswordInput } from "./PasswordInput";
 import s from "./login.module.css";
 
 const INITIAL: AuthState = { error: null };
 
 export function LoginForm({ next = "/" }: { next?: string }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [hideError, setHideError] = useState(false);
   const [state, formAction, pending] = useActionState(
-    mode === "login" ? signInAction : signUpAction,
+    async (prev: AuthState, data: FormData) => {
+      const result = await (mode === "login" ? signInAction : signUpAction)(prev, data);
+      setHideError(false);
+      return result;
+    },
     INITIAL,
   );
+  const [swapping, setSwapping] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  const error = hideError ? null : state.error;
+  const field = error ? state.field : undefined;
   const login = mode === "login";
+  const swap = `${s.swap} ${swapping ? s.swapping : ""}`;
+
+  function toggleMode() {
+    if (pending || swapping) return;
+    setHideError(true);
+    setSwapping(true);
+    timer.current = setTimeout(() => {
+      setMode(login ? "signup" : "login");
+      setSwapping(false);
+    }, 150);
+  }
 
   async function handleGoogle() {
     const supabase = createClient();
@@ -26,28 +49,42 @@ export function LoginForm({ next = "/" }: { next?: string }) {
 
   return (
     <form action={formAction} className={s.form}>
-      <h1 className={s.title}>{login ? "Entrar" : "Criar conta"}</h1>
-      <p className={s.sub}>
+      <h1 className={`${s.title} ${swap}`}>{login ? "Entrar" : "Criar conta"}</h1>
+      <p className={`${s.sub} ${swap}`}>
         {login ? "Bem-vindo de volta. Continue de onde parou." : "Leva menos de um minuto."}
       </p>
 
       <input type="hidden" name="next" value={next} />
-      <label className={s.field}>
+      <label className={s.field} data-invalid={field === "email"}>
         E-mail
-        <input name="email" type="email" placeholder="E-mail" autoComplete="email" required />
-      </label>
-      <label className={s.field}>
-        Senha
         <input
-          name="password"
-          type="password"
-          placeholder="Senha"
-          autoComplete={login ? "current-password" : "new-password"}
+          name="email"
+          type="email"
+          placeholder="E-mail"
+          autoComplete="email"
+          aria-invalid={field === "email"}
+          aria-describedby={field === "email" ? "auth-error" : undefined}
           required
         />
       </label>
+      <label className={s.field} data-invalid={field === "password"}>
+        Senha
+        <PasswordInput
+          name="password"
+          placeholder="Senha"
+          autoComplete={login ? "current-password" : "new-password"}
+          aria-invalid={field === "password"}
+          aria-describedby={field === "password" ? "auth-error" : undefined}
+          required
+        />
+      </label>
+      {login && (
+        <Link href="/esqueci-senha" className={s.forgot}>
+          Esqueci a senha
+        </Link>
+      )}
 
-      <div className={s.err} role="alert">{state.error ?? ""}</div>
+      <div id="auth-error" className={s.err} role="alert" data-on={!!error}>{error ?? ""}</div>
 
       <button className={s.btn} type="submit" disabled={pending}>
         {pending ? "Aguarde..." : login ? "Entrar" : "Criar conta"}
@@ -62,7 +99,7 @@ export function LoginForm({ next = "/" }: { next?: string }) {
 
       <p className={s.switch}>
         {login ? "Não tem conta? " : "Já tem conta? "}
-        <button type="button" onClick={() => setMode(login ? "signup" : "login")}>
+        <button type="button" onClick={toggleMode} disabled={pending || swapping}>
           {login ? "Cadastre-se" : "Entrar"}
         </button>
       </p>

@@ -9,6 +9,7 @@
   background: var(--main);
   color: var(--text);
   font-family: var(--font-ui);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* Painel da marca */
@@ -21,16 +22,6 @@
   background: var(--sidebar);
   color: #E7ECF5;
   overflow: hidden;
-}
-.brand::after {
-  content: "";
-  position: absolute;
-  inset: auto -30% -40% auto;
-  width: 70%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(43, 92, 230, .35), transparent 70%);
-  pointer-events: none;
 }
 .wordmark {
   display: flex;
@@ -53,11 +44,7 @@
   margin-top: 18px;
   font: 400 15px/1.4 var(--font-ui);
   font-style: normal;
-  color: #94A2B8;
-}
-.tagline {
-  position: relative;
-  font-size: 13.5px;
+  letter-spacing: .01em;
   color: #94A2B8;
 }
 
@@ -74,14 +61,18 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  transition: opacity 240ms var(--ease-out-strong), transform 240ms var(--ease-out-strong);
 }
+@starting-style { .form { opacity: 0; transform: translateY(6px); } }
 .title {
   margin: 0;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 600;
-  letter-spacing: -.02em;
-  line-height: 1.15;
+  letter-spacing: -.025em;
+  line-height: 1.1;
 }
+.swap { transition: filter 150ms ease, opacity 150ms ease; }
+.swapping { filter: blur(2px); opacity: .7; }
 .sub {
   margin: -8px 0 10px;
   font-size: 14.5px;
@@ -105,7 +96,31 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  transition: border-color var(--dur-micro) var(--ease), box-shadow var(--dur-micro) var(--ease);
+  transition: border-color 120ms var(--ease-out-strong), box-shadow 120ms var(--ease-out-strong);
+}
+.field[data-invalid="true"] input { border-color: var(--coral); }
+.pw { position: relative; }
+.pw input { padding-right: 44px; }
+.eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--text-2);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.forgot {
+  align-self: flex-end;
+  margin-top: -6px;
+  font-size: 13px;
+  color: var(--text-2);
 }
 .field input:focus {
   outline: none;
@@ -117,7 +132,12 @@
   margin: -4px 0;
   font-size: 13px;
   color: var(--coral);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 150ms var(--ease-out-strong), transform 150ms var(--ease-out-strong);
 }
+.err[data-on="true"] { opacity: 1; transform: translateY(0); }
+.ok { min-height: 18px; margin: -4px 0; font-size: 13px; color: var(--text-2); }
 .btn {
   width: 100%;
   padding: 13px;
@@ -129,10 +149,15 @@
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: background var(--dur-micro) var(--ease), transform var(--dur-micro) var(--ease);
+  transition: transform 160ms var(--ease-out-strong), background 160ms ease, border-color 160ms ease;
 }
-.btn:hover { background: var(--blue-deep); }
-.btn:active { transform: translateY(1px); }
+@media (hover: hover) and (pointer: fine) {
+  .forgot:hover, .switch button:hover { text-decoration: underline; }
+  .btn:hover { background: var(--blue-deep); }
+  .google:hover { background: var(--surface-2); border-color: var(--text-2); }
+}
+.btn:active { transform: scale(0.97); }
+.google:active { transform: scale(0.98); }
 .btn:disabled { opacity: .6; cursor: default; }
 .or {
   display: flex;
@@ -157,9 +182,8 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   cursor: pointer;
-  transition: background var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease);
+  transition: transform 160ms var(--ease-out-strong), background 160ms ease, border-color 160ms ease;
 }
-.google:hover { background: var(--surface-2); border-color: var(--text-2); }
 .google:disabled { opacity: .6; cursor: default; }
 .switch {
   margin-top: 10px;
@@ -176,7 +200,6 @@
   border: none;
   cursor: pointer;
 }
-.switch button:hover { text-decoration: underline; }
 
 /* Celular e tablet: uma coluna; a marca vira uma faixa curta */
 @media (max-width: 860px) {
@@ -184,10 +207,14 @@
   .brand { padding: 28px 24px 32px; gap: 24px; }
   .verse { max-width: none; font-size: 22px; }
   .verse cite { margin-top: 10px; font-size: 13px; }
-  .tagline { display: none; }
   .pane { align-items: flex-start; padding: 32px 24px 48px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .field input, .btn, .google { transition: none; }
+  .form { transform: none; transition-property: opacity; }
+  @starting-style { .form { transform: none; } }
+  .swap { filter: none; transition-property: opacity; }
+  .err { transform: none; transition-property: opacity; }
+  .btn:active, .google:active { transform: none; }
 }

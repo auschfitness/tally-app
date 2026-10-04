@@ -86,9 +86,9 @@ Spec 09. Concluído em 2026-10-03: fontes Jamieson-Fausset-Brown e Tyndale tradu
 
 Pedido do dono: "a tela de login de modo geral tá bem ruim". Arquivos: `src/app/(auth)/login/` (page.tsx, LoginForm.tsx). Siga `docs/design-principles.md` e o visual novo do Estudo (menu lateral escuro, Literata no texto). Mostre uma prévia ao dono antes de publicar. O teste `e2e/auth.spec.ts` usa os placeholders "E-mail"/"Senha" e o botão "Entrar": mantenha-os ou ajuste o teste junto.
 
-### 4b. Polir o login + "Esqueci a senha" (EM ANDAMENTO 2026-10-04: arquivos já criados no disco, falta terminar, verificar e mostrar prévia)
+### 4b. Polir o login + "Esqueci a senha" (FEITA em 2026-10-04 na branch, AGUARDANDO APROVAÇÃO do dono para publicar)
 
-Já existe no disco (não commitado): `src/app/(auth)/login/{BrandPanel,PasswordInput}.tsx`, `src/app/(auth)/esqueci-senha/`, `src/app/(auth)/redefinir-senha/`, mudanças em LoginForm/actions/login.module.css/page.tsx e `/esqueci-senha` + `/redefinir-senha` em PUBLIC_PREFIXES do middleware, e um `e2e/tmp-shot.spec.ts` temporário. Leia tudo, confira contra a spec abaixo e complete o que faltar. Não refaça do zero.
+Implementados o polimento do login, o botão de mostrar senha e os fluxos de recuperação e redefinição. Links de recuperação inválidos levam ao aviso de link expirado. Prévias em `docs/previews/`: `login-*.png`, `forgot-desktop-light.png`, `reset-desktop-light.png` e `reset-expired-desktop-light.png`. Não refazer. Publicar somente após o dono aprovar as prévias. O recebimento do e-mail real ainda depende de conferir a URL permitida no Supabase e testar com uma caixa de e-mail.
 
 Spec (texto em PT-BR, sem travessão longo, sem emoji; manter placeholders "E-mail"/"Senha" e botão "Entrar", o e2e depende):
 

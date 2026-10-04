@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { studyOnlyRedirect } from "@/config/nav";
 
-export type AuthState = { error: string | null };
+export type AuthState = { error: string | null; field?: "email" | "password" };
 
 function readCredentials(formData: FormData): { email: string; password: string } | null {
   const email = String(formData.get("email") ?? "").trim();
@@ -32,7 +32,13 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(creds);
-  if (error) return { error: error.message };
+  if (error) {
+    const m = error.message;
+    if (m.includes("Invalid login credentials")) return { error: "E-mail ou senha incorretos.", field: "password" };
+    if (m.includes("Email not confirmed")) return { error: "Confirme o e-mail pelo link que enviamos.", field: "email" };
+    if (/invalid/i.test(m) && /email/i.test(m)) return { error: "E-mail inválido.", field: "email" };
+    return { error: "Não foi possível entrar. Tente novamente." };
+  }
 
   redirect(next);
 }
@@ -44,7 +50,13 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp(creds);
-  if (error) return { error: error.message };
+  if (error) {
+    const m = error.message;
+    if (/already registered/i.test(m)) return { error: "Este e-mail já tem conta. Entre com a senha.", field: "email" };
+    if (m.includes("Password should be")) return { error: "A senha precisa ter pelo menos 6 caracteres.", field: "password" };
+    if (/invalid/i.test(m) && /email/i.test(m)) return { error: "E-mail inválido.", field: "email" };
+    return { error: "Não foi possível criar a conta. Tente novamente." };
+  }
 
   // Com "Confirm email" desligado (config do Tally) já vem sessão → entra direto.
   if (data.session) redirect(next);

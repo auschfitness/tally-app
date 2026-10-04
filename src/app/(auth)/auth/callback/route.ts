@@ -16,5 +16,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/login`);
+  const fallback = next === "/redefinir-senha" ? "/redefinir-senha?expired=1" : "/login";
+  return NextResponse.redirect(`${origin}${fallback}`);
 }
