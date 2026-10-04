@@ -139,6 +139,31 @@ Texto em PT-BR, sem travessão longo, sem emoji. Sem animação em ação freque
 
 5. Verificar: `npm run verify` (teste de integração com "JWT issued at future" = reexecutar só ele com `--no-file-parallelism`), `npx playwright test e2e/reader.spec.ts`. Prévia: screenshot de João 1 com a aba Comentário aberta e o versículo 3 selecionado (claro e escuro) em docs/previews/. Commit na branch; só publicar (`git push origin HEAD:main`) depois do "aprovado" do dono.
 
+### 4d. Harmonia visual: uma decisão só para cada coisa (pedido do dono em 2026-10-04; executor: Codex)
+
+Diagnóstico do dono: "o site parece genérico, o Codex e o app do Claude parecem um objeto só". A causa não é cor; é que o Tally toma a MESMA decisão de vários jeitos (7 tamanhos de texto, 8 raios, borda em tudo, ícones de traços diferentes, controles de alturas diferentes). A 4d é uma régua. Leia `docs/design-principles.md` e `docs/design-tokens.md` antes. Não mude fluxo nem funcionalidade; só visual. Trabalhe em ordem, um commit por etapa, `npm run verify` em cada uma.
+
+**Etapa 1. Aposentar o v1 e ligar o v2 de vez** (`src/app/globals.css`, `src/app/layout.tsx`, `src/app/(dashboard)/layout.tsx`, `src/features/flags/catalog.ts`).
+- O conteúdo do bloco `[data-design="v2"]` sobe para o `:root`; o bloco v1 (valores "mentirosos") some; o seletor `[data-design="v2"]` e a flag `ui.design_v2` são removidos (catálogo, teste, layout). Confira que a tela de leitura e o login também recebem a fonte do sistema (o login hoje está fora do layout do dashboard).
+- Tirar a Poppins do `app/layout.tsx` e de `globals.css` (`--font-poppins`). A Literata fica (é a fonte de leitura).
+- Resultado esperado: UI inteira em `-apple-system, "Segoe UI Variable", system-ui`, 15px/22px no corpo.
+
+**Etapa 2. A régua** (valores finais; qualquer outro número é erro):
+- Texto: só `--t-11` (rótulo/legenda), `--t-13` (controles, menu, metadados), `--t-15` (corpo), `--t-17` (título de painel), `--t-22` (título de página). Pesos: 400 texto, 500 rótulo/controle, 600 título. Cor secundária sempre `var(--text-2)`. Nada de 12px, 12.5px, 13.5px, 14px, 24px, 26px.
+- Raio: `--r-6` para controles (botão, input, item de menu, chip, aba), `--r-10` para painéis/cards/popovers/menus. `--r-pill` só para avatar e interruptor. Apagar `--r-14` e `--r-20` dos usos (cards usam `--r-10`).
+- Altura de controle: 32px (botão, input, select, item de barra). Item do menu lateral: 32px. Padding horizontal 10px. Barra superior da Bíblia: 48px de altura, controles de 32px alinhados ao centro.
+- Grade: todo espaçamento em `--s-*` (4, 8, 12, 16, 20, 24, 32). Recuo lateral de conteúdo: 16px no menu lateral, na barra superior e na coluna de leitura (o mesmo valor nos três).
+- Bordas: remover `border: 1px solid var(--border)` de cards, painéis, tabelas, inputs em repouso e abas. Separação passa a ser por fundo: superfície = `var(--surface)`, painel ou hover = `var(--surface-2)`. Input em repouso: fundo `var(--surface-2)`, sem borda; no foco: anel de 2px `var(--blue)` por `box-shadow`. Borda só onde a diferença de fundo não existe (linha divisória de lista: 1px `var(--border)` com opacidade .6).
+- Sombra: `--e-1` em popover/menu, `--e-2` em modal e sheet. Cards sem sombra.
+- Estados: hover = fundo `var(--surface-2)` em 100ms `ease`; ativo (selecionado) = fundo `var(--surface-2)` + texto `var(--text)` peso 500, sem azul e sem borda; pressionado = `transform: scale(.97)` em 120ms `cubic-bezier(.23,1,.32,1)`; foco por teclado = anel `var(--blue)` 2px (`:focus-visible`). Hover só dentro de `@media (hover: hover) and (pointer: fine)`. Cor azul fica reservada para ação primária, link e seleção de texto da Bíblia.
+- Aplicar a régua em: `globals.css` (botões, inputs, menu lateral `.sb*`, tabelas, chips, abas, `.iconbtn`), `src/features/study/study.module.css`, `src/features/study/components/reader/reader.module.css`, `src/app/(auth)/login/login.module.css`. Ao final, `grep -rEn "#[0-9a-fA-F]{3,6}|[0-9]+(\.[0-9]+)?px" src/features/**/*.module.css` tem que voltar vazio (fora `0px`, `1px` de linha e `2px` de anel de foco).
+
+**Etapa 3. Um conjunto de ícones só.** Instalar `lucide-react`. Trocar todos os SVGs soltos de ícone (menu lateral, barra da Bíblia, abas da área de trabalho, SelectionBar, ThemeToggle, botão olho do login, Google fica) por Lucide com `size={16}` e `strokeWidth={1.75}`, alinhados ao centro da linha do texto (`display:inline-flex; align-items:center; gap: var(--s-2)`). O LogoMark não muda.
+
+**Etapa 4. Varredura final com olho de régua.** Abrir Bíblia (João 1 com Comentário), Sermões, Notas, Ajustes, login, claro e escuro, 1280px e 390px. Checar: mesmo recuo lateral em menu/barra/conteúdo; nenhuma borda sobrando; todos os controles com 32px; nenhum texto fora dos 5 tamanhos; ícones do mesmo traço. Screenshots em `docs/previews/4d-*.png`.
+
+Entrega: commits na branch, prévia para o dono, publicar só depois do "aprovado". Se a 4c (Antigravity) ainda não tiver sido mesclada, fazer rebase antes da etapa 2 para não conflitar no CommentaryTab/ReaderView.
+
 ### 5. AT passo 3: dicionário UBS hebraico (SDBH)
 
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
