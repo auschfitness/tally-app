@@ -178,6 +178,21 @@ Carga e publicação concluídas pelo Claude; função temporária apagada.
 
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
 
+### 6. Completar o sublinhado do Antigo Testamento (EM EXECUÇÃO em 2026-10-04)
+
+Pedido do dono: completar as ligações das palavras, além da carga estatística já presente.
+Fluxo retomável: `node --env-file=.env.local scripts/align/run-complete-ot.mjs`.
+Não iniciar outra execução se esse processo já estiver ativo. Progresso e resultados
+em `scripts/align/work/gem-ot/`; piloto em `work/gem-ot-word-pilot/` (gitignored).
+Piloto por palavras numeradas: 167 versículos, 3.887 palavras, 100% de cobertura,
+94,39% de acordo com os gabaritos nas palavras comparáveis. Os 12 gabaritos manuais
+ficam preservados na carga final. O modelo escolhe Strong por posição; o texto é
+recomposto da fonte local. Documentação: `scripts/align/README-OT-COMPLETE.md`.
+Só montar a carga após todos os 929 capítulos e cobertura final >=95%. SQL e dados
+ficam prontos automaticamente após geração, medição e montagem aprovadas. Conferir
+espaço, pedir aprovação da carga, executar SQL pelo dono, carregar, conferir no
+leitor e apagar a função temporária. Não marcar feita antes dessas etapas.
+
 ## Já feito (não refazer)
 
 - Frente B: sublinhado completo do NT inteiro carregado em bible_tagged_verses (7.957 versículos, 2026-10-03).
