@@ -86,6 +86,41 @@ Spec 09. Concluído em 2026-10-03: fontes Jamieson-Fausset-Brown e Tyndale tradu
 
 Pedido do dono: "a tela de login de modo geral tá bem ruim". Arquivos: `src/app/(auth)/login/` (page.tsx, LoginForm.tsx). Siga `docs/design-principles.md` e o visual novo do Estudo (menu lateral escuro, Literata no texto). Mostre uma prévia ao dono antes de publicar. O teste `e2e/auth.spec.ts` usa os placeholders "E-mail"/"Senha" e o botão "Entrar": mantenha-os ou ajuste o teste junto.
 
+### 4b. Polir o login + "Esqueci a senha" (EM ANDAMENTO 2026-10-04: arquivos já criados no disco, falta terminar, verificar e mostrar prévia)
+
+Já existe no disco (não commitado): `src/app/(auth)/login/{BrandPanel,PasswordInput}.tsx`, `src/app/(auth)/esqueci-senha/`, `src/app/(auth)/redefinir-senha/`, mudanças em LoginForm/actions/login.module.css/page.tsx e `/esqueci-senha` + `/redefinir-senha` em PUBLIC_PREFIXES do middleware, e um `e2e/tmp-shot.spec.ts` temporário. Leia tudo, confira contra a spec abaixo e complete o que faltar. Não refaça do zero.
+
+Spec (texto em PT-BR, sem travessão longo, sem emoji; manter placeholders "E-mail"/"Senha" e botão "Entrar", o e2e depende):
+
+A) CSS `login.module.css`
+1. Sem `.brand::after` (brilho) e sem `.tagline`.
+2. Custom property `--ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1)` no `.page`.
+3. `.btn`/`.google`: `transition: transform 160ms var(--ease-out-strong), background 160ms ease, border-color 160ms ease`; `:active { transform: scale(0.97) }` (google 0.98). Hover só dentro de `@media (hover: hover) and (pointer: fine)`.
+4. `.field input`: transition de border-color/box-shadow 120ms var(--ease-out-strong).
+5. `.title`: 32px, letter-spacing -0.025em, line-height 1.1. `.verse cite`: letter-spacing .01em.
+6. `.err`: opacity 0 + translateY(-2px) por padrão; `[data-on="true"]` opacity 1, translateY(0); 150ms ease-out-strong; min-height 18px.
+7. Troca Entrar/Criar conta: título e subtítulo com `.swap` (transition filter/opacity 150ms ease) e `.swapping` (blur 2px, opacity .7); o modo troca após 150ms (setTimeout) e tira o swapping.
+8. `.form` entra com `@starting-style { opacity 0; translateY(6px) }`, 240ms ease-out-strong.
+9. `@media (prefers-reduced-motion: reduce)`: sem blur nem transform, só opacity.
+10. Campo de senha com botão olho (`PasswordInput.tsx`): type="button", aria-label "Mostrar senha"/"Ocultar senha", SVG 18px cor var(--text-2), input com padding-right 44px.
+11. Link "Esqueci a senha" (13px, var(--text-2), alinhado à direita, abaixo de Senha, só no modo login) para `/esqueci-senha`.
+
+B) Erro no campo certo (`actions.ts` + LoginForm)
+- `AuthState = { error: string | null; field?: "email" | "password" }`.
+- signIn: "Invalid login credentials" -> "E-mail ou senha incorretos." (password); "Email not confirmed" -> "Confirme o e-mail pelo link que enviamos." (email); mensagem com "invalid" e "email" -> "E-mail inválido." (email).
+- signUp: "already registered" -> "Este e-mail já tem conta. Entre com a senha." (email); "Password should be" -> "A senha precisa ter pelo menos 6 caracteres." (password).
+- `.field[data-invalid="true"] input { border-color: var(--coral) }` + `aria-invalid`. Texto do erro só no `.err` (uma vez).
+
+C) Esqueci a senha
+- `/esqueci-senha`: mesmo layout (`s.page` + `<BrandPanel />`), título "Redefinir senha", campo E-mail, botão "Enviar link", link "Voltar para entrar". Action chama `supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + "/auth/callback?next=/redefinir-senha" })` montando origin do mesmo jeito que o callback. Resposta sempre neutra: "Se existir conta com esse e-mail, enviamos um link para redefinir a senha."
+- `/redefinir-senha`: "Nova senha" + "Confirmar senha" (iguais, mínimo 6), botão "Salvar senha", action `supabase.auth.updateUser({ password })` e `redirect("/")`. Sem sessão: "Link expirado. Peça um novo." com link para /esqueci-senha.
+- Supabase: o dono precisa adicionar a URL de produção + `/auth/callback` em Authentication > URL Configuration se ainda não estiver (já deve estar, por causa do Google).
+
+D) Verificação e entrega
+1. `npm run verify`. Se um teste de integração falhar com "JWT issued at future", reexecute só ele: `npx vitest run <arquivo> --no-file-parallelism`. Nunca rode build com dev server no ar.
+2. `npx playwright test e2e/tmp-shot.spec.ts e2e/auth.spec.ts` (screenshots em docs/previews/: login claro/escuro/celular, forgot, reset). Depois APAGUE `e2e/tmp-shot.spec.ts`.
+3. Commit na branch (o hook faz push da branch). NÃO publique na main: mostre as prévias ao dono e espere "aprovado". Aí `git push origin HEAD:main`.
+
 ### 5. AT passo 3: dicionário UBS hebraico (SDBH)
 
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
