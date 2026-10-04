@@ -90,7 +90,7 @@ async function ask(verses) {
   const r = await askGemini(verses);
   // No AT, falha temporária do Gemini deve ser repetida no mesmo provedor.
   // O fallback pode consumir dois timeouts antes de cada nova tentativa.
-  if (r.wait && (!WORD_TAG_MODE || r.reason === "Gemini HTTP 429") && OR_KEY && OR_MODELS.length) return (await askOpenRouter(verses)) ?? r;
+  if (r.wait && (!WORD_TAG_MODE || r.reason?.startsWith("Gemini HTTP 429")) && OR_KEY && OR_MODELS.length) return (await askOpenRouter(verses)) ?? r;
   return r;
 }
 
@@ -116,7 +116,15 @@ async function askGemini(verses) {
     } catch {
       return { error: "rede falhou (timeout)" };
     }
-    if (res.status === 429) { reason = "Gemini HTTP 429"; continue; }
+    if (res.status === 429) {
+      let quota;
+      try {
+        const errorBody = await res.json();
+        quota = errorBody.error?.details?.flatMap((detail) => detail.violations ?? []).map((violation) => violation.quotaId).filter(Boolean).join(", ");
+      } catch {}
+      reason = `Gemini HTTP 429${quota ? ` (${quota})` : ""}`;
+      continue;
+    }
     if (res.status >= 500) return { wait: 15000, reason: `Gemini HTTP ${res.status}` };
     const body = await res.json();
     if (!res.ok) return { error: `HTTP ${res.status}` };
