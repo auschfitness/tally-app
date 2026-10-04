@@ -185,5 +185,36 @@ test.describe("Estudo → Bíblia (leitura)", () => {
 
     await page.screenshot({ path: "docs/previews/commentary-john-3-16.png" });
   });
+
+  test("captura prints da aba Palavra para logos, theos e en", async ({ page }) => {
+    await login(page);
+    await page.goto("/study/bible/JHN/1");
+    await page.getByTestId("interlinear-toggle").check();
+
+    // 1. João 1:1 - logos (G3056)
+    const logosBtn = page.getByTestId("reader-text").locator('[data-strong="G3056"]').first();
+    await logosBtn.click();
+    const wordTab = page.getByTestId("word-tab");
+    await expect(wordTab).toBeVisible();
+    await expect(wordTab.getByRole("heading", { name: /palavra/i })).toBeVisible();
+    await page.screenshot({ path: "docs/previews/word-logos.png" });
+
+    // 2. João 1:1 - theos (G2316)
+    const theosBtn = page.getByTestId("reader-text").locator('[data-strong="G2316"]').first();
+    await theosBtn.click();
+    await expect(wordTab.getByRole("heading", { name: /deus/i })).toBeVisible();
+    // Confere que details "Ler nota do dicionário" está presente (θεός tem comentários longos da UBS)
+    await expect(wordTab.getByText("Ler nota do dicionário").first()).toBeVisible();
+    await page.screenshot({ path: "docs/previews/word-theos.png" });
+
+    // 3. João 1:2 - en / eimi (G1510)
+    // No versículo 2: <span data-verse="2"> tem [data-strong="G1510"] ("estava")
+    const v2 = page.locator('[data-verse="2"]');
+    const enBtn = v2.locator('[data-strong="G1510"]').first();
+    await enBtn.click();
+    // G1510 cai no STEPBible: título "ser, existir, estar", definição formatada, citação e fatos
+    await expect(wordTab.getByRole("heading", { name: /ser, existir, estar/i })).toBeVisible();
+    await page.screenshot({ path: "docs/previews/word-en.png" });
+  });
 });
 

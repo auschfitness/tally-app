@@ -174,7 +174,7 @@ export function WordTab({
                   <p className={styles.senseTag}>Outros sentidos</p>
                   {senses.slice(1).map((s, n) => (
                     <details key={s.sense_id} className={styles.sense}>
-                      <summary><span className={styles.senseN}>{n + 2}</span>{s.glosses.join(", ") || s.definition}</summary>
+                      <summary><span className={styles.senseN}>{n + 2}</span>{s.glosses.join(", ") || formatDefinition(s.definition)}</summary>
                       <SenseBody s={s} />
                     </details>
                   ))}
@@ -182,14 +182,23 @@ export function WordTab({
               ) : null}
             </>
           ) : null}
-          {ubs.status !== "loading" && !main && gloss ? <h3 className={styles.wGloss}>{gloss}</h3> : null}
-          {ubs.status === "loading" || main ? null
-          : def.status === "loading" ? <p className={styles.muted}>Carregando…</p>
-          : def.status === "error" ? <p className={styles.muted}>Não consegui carregar a definição agora.</p>
-          : def.data.pt ? <p className={styles.wDef}>{def.data.pt}</p>
-          : def.data.en ? (
-            <p className={styles.wDef}><span className={styles.muted}>(verbete em inglês) </span>{def.data.en.length > EN_MAX ? def.data.en.slice(0, EN_MAX) + "…" : def.data.en}</p>
-          ) : <p className={styles.muted}>Sem definição cadastrada.</p>}
+          {ubs.status === "loading" || main ? null : (
+            <>
+              {gloss ? <h3 className={styles.wGloss}>{gloss}</h3> : null}
+              {def.status === "loading" ? <p className={styles.muted}>Carregando…</p>
+              : def.status === "error" ? <p className={styles.muted}>Não consegui carregar a definição agora.</p>
+              : def.data.pt ? <p className={styles.wDef}>{formatDefinition(def.data.pt)}</p>
+              : def.data.en ? (
+                <p className={styles.wDef}><span className={styles.muted}>(verbete em inglês) </span>{formatDefinition(def.data.en.length > EN_MAX ? def.data.en.slice(0, EN_MAX) + "…" : def.data.en)}</p>
+              ) : <p className={styles.muted}>Sem definição cadastrada.</p>}
+              {pick.quote ? (
+                <blockquote className={styles.wQuote}>
+                  {pick.quote.before}<mark>{pick.quote.word}</mark>{pick.quote.after}
+                  <cite> · {here}</cite>
+                </blockquote>
+              ) : null}
+            </>
+          )}
 
           <dl className={styles.facts}>
             {l?.lemma ? (
@@ -267,16 +276,37 @@ export function WordTab({
   );
 }
 
+function formatDefinition(raw: string | null | undefined): string {
+  if (!raw) return "";
+  let str = raw.trim();
+  if (!str) return "";
+  str = str.charAt(0).toUpperCase() + str.slice(1);
+  if (!/[.!?]$/.test(str)) {
+    str += ".";
+  }
+  return str;
+}
+
 // Um sentido UBS: glosas como título (só no principal), definição, comentário em
-// parágrafos e domínios.
+// <details> "Ler nota do dicionário" (fechado por padrão) e domínios.
 function SenseBody({ s, gloss }: { s: UbsSense; gloss?: string }): React.ReactElement {
   const title = s.glosses.join(", ") || gloss;
   const tags = [...s.domains, ...s.subdomains];
+  const defFormatted = formatDefinition(s.definition);
+  const comments = s.comments?.trim();
+
   return (
     <>
       {gloss !== undefined && title ? <h3 className={styles.wGloss}>{title}</h3> : null}
-      {s.definition ? <p className={styles.wDef}>{s.definition}</p> : null}
-      {s.comments?.split(/\n\n+/).map((p, i) => <p key={i} className={styles.wCmt}>{p}</p>)}
+      {defFormatted ? <p className={styles.wDef}>{defFormatted}</p> : null}
+      {comments ? (
+        <details className={styles.wComments}>
+          <summary>Ler nota do dicionário</summary>
+          {comments.split(/\n\n+/).map((p, i) => (
+            <p key={i} className={styles.wCmt}>{p}</p>
+          ))}
+        </details>
+      ) : null}
       {tags.length ? (
         <div className={styles.tags}>
           {tags.map((t, i) => <span key={i} className={styles.tag}>{t}</span>)}
