@@ -105,10 +105,10 @@
 .split:focus-visible { outline: none; }
 .split:focus-visible::before, .split:active::before { inset: 0 var(--s-1); background: var(--blue); }
 @media (hover: hover) and (pointer: fine) { .split:hover::before { inset: 0 var(--s-1); background: color-mix(in srgb, var(--blue) 60%, var(--border)); } }
-.pane { min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); animation: paneIn var(--dur-panel) var(--ease); }
+.pane { min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); animation: paneIn var(--dur-panel) var(--ease); }
 .paneOut { animation: paneOut var(--dur-micro) var(--ease) forwards; }
 .grab { display: none; height: var(--control-h); }
-.tabBar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); background: var(--surface); border-bottom: 0; font-family: var(--font-ui); }
+.tabBar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); background: var(--bg); border-bottom: 0; font-family: var(--font-ui); }
 .tabs { display: flex; align-items: flex-end; gap: var(--s-1); flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { display: inline-flex; align-items: center; gap: 0; padding: 0 0 0 var(--control-px); border: 0; border-bottom: 0; border-radius: var(--r-6); color: var(--text-2); font-size: var(--t-13); font-weight: 500; white-space: nowrap; transition: background 100ms ease, color 120ms ease; height: var(--control-h); min-height: var(--control-h); }
