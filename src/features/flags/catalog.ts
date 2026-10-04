@@ -16,8 +16,7 @@ export type FlagKey =
   | "study.reader"
   | "teams.v2"
   | "groups.v2"
-  | "billing.checkout"
-  | "ui.design_v2";
+  | "billing.checkout";
 
 // Todas as flags, na ordem de exibição no painel.
 export const ALL_FLAGS: FlagKey[] = [
@@ -30,7 +29,6 @@ export const ALL_FLAGS: FlagKey[] = [
   "teams.v2",
   "groups.v2",
   "billing.checkout",
-  "ui.design_v2",
 ];
 
 // Alcance do default global da flag (coluna `rollout`): 'off' não vale para ninguém,

@@ -36,80 +36,7 @@
   --s-6: 24px;
   --s-8: 32px;
 
-  /* ============================================================
-     ESCALAS — BLOCO v1 (valores de HOJE).
-
-     ponytail: este bloco é ANDAIME TEMPORÁRIO. Os NOMES são os do v2
-     (docs/design-tokens.md), os VALORES são os que o app usa hoje de fato — por isso
-     `--t-15: 14px` e `--r-14: 16px` parecem mentira. É proposital: permite trocar
-     valor cru por token nos *.module.css sem alterar uma vírgula do visual atual,
-     enquanto a flag `ui.design_v2` estiver desligada.
-
-     GATILHO PARA DELETAR: quando o dono aprovar o v2 e a flag for aposentada
-     (rollout 'all' e sem volta). Aí este bloco some, o conteúdo do bloco
-     [data-design="v2"] sobe para o :root, e os nomes voltam a dizer a verdade.
-     ============================================================ */
-
-  /* Tipografia. `--lh-*: normal` no v1 = aplicar o token não muda entrelinha. */
-  --font-ui: var(--font-poppins), 'Poppins', system-ui, -apple-system, sans-serif;
-  --t-11: 11px;
-  --lh-11: normal;
-  --t-13: 13px;
-  --lh-13: normal;
-  --t-15: 14px;
-  --lh-15: normal;
-  --t-17: 15px;
-  --lh-17: normal;
-  --t-22: 24px;
-  --lh-22: normal;
-  --t-28: 26px;
-  --lh-28: normal;
-  --t-34: 26px;
-  --lh-34: normal;
-  --track-tight: normal; /* letter-spacing dos tamanhos grandes */
-
-  /* Raios. `--r-pill` é FORMA (pílula/avatar), não degrau da escala. */
-  --r-6: 8px;
-  --r-10: 9px;
-  --r-14: 16px;
-  --r-20: 16px;
-  --r-pill: 20px;
-
-  /* Elevação (as duas combinações ad-hoc que existem hoje). */
-  --e-1: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .05);
-  --e-2: 0 1px 2px rgba(16, 24, 40, .04), 0 6px 20px rgba(16, 24, 40, .05);
-
-  --pad-card: 16px;
-}
-
-:root[data-theme="dark"] {
-  --bg: #0A0F1C;
-  --main: #0E1626;
-  --surface: #141E33;
-  --surface-2: #1C2A44;
-  --sidebar: #0A1120;
-  --text: #E7ECF5;
-  --text-2: #94A2B8;
-  --border: #26344F;
-  --blue: #4C7BFF;
-}
-
-/* ============================================================
-   ESCALAS — BLOCO v2 (docs/design-tokens.md), atrás da flag `ui.design_v2`.
-
-   Token de CSS não liga/desliga por Server Component, então o gate vira um atributo
-   no elemento raiz do app — mesmo truque do `data-theme` acima. Quem escreve o
-   atributo é o layout do dashboard, a partir de flagOn(ctx, "ui.design_v2").
-   Flag desligada → nenhum destes seletores casa → o app é byte-a-byte o v1.
-
-   O seletor é `[data-design="v2"]` (sem `:root`) de propósito: hoje o atributo mora
-   no <div class="app">, e continua valendo se um dia subir para o <html>.
-   ============================================================ */
-[data-design="v2"] {
-  /* Stack do sistema: é o que dá o "cheiro" macOS de graça e tira um webfont do
-     carregamento (o Poppins não é nem baixado — ver preload:false em app/layout.tsx). */
-  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable",
-    "Inter", system-ui, sans-serif;
+  --font-ui: -apple-system, "Segoe UI Variable", system-ui, sans-serif;
   --t-11: 11px;
   --lh-11: 16px;
   --t-13: 13px;
@@ -136,19 +63,22 @@
   --e-2: 0 8px 24px rgba(16, 24, 40, .08);
 
   --pad-card: 20px;
+}
 
-  /* Fonte e corpo precisam ser DECLARADOS aqui, não só redefinidos como token: o
-     `body` resolve `var(--font-ui)` / `var(--t-15)` no PRÓPRIO body — que é PAI do
-     elemento com [data-design="v2"] — e os filhos herdam o valor já computado (v1).
-     Sem estas duas linhas o corpo continuaria em Poppins 14px no v2.
-     Vale para todo token que o bloco v2 redefine e o `body` consome: hoje só estes
-     dois (`background`/`color` usam --bg/--text, que o v2 não toca). */
-  font-family: var(--font-ui);
-  font-size: var(--t-15);
+:root[data-theme="dark"] {
+  --bg: #0A0F1C;
+  --main: #0E1626;
+  --surface: #141E33;
+  --surface-2: #1C2A44;
+  --sidebar: #0A1120;
+  --text: #E7ECF5;
+  --text-2: #94A2B8;
+  --border: #26344F;
+  --blue: #4C7BFF;
 }
 
 /* Elevação no escuro: sombra clara não existe sobre fundo escuro. */
-:root[data-theme="dark"] [data-design="v2"] {
+:root[data-theme="dark"] {
   --e-1: 0 1px 2px rgba(0, 0, 0, .40);
   --e-2: 0 8px 24px rgba(0, 0, 0, .45);
 }
@@ -160,6 +90,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-size: var(--t-15);
+  line-height: var(--lh-15);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -490,56 +421,56 @@ h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var
    ============================================================ */
 
 /* Selo de saúde: pílula preenchida → ponto de 6px + texto. */
-[data-design="v2"] .hb {
+.hb {
   display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   padding: 0; border-radius: 0; font-size: var(--t-13); line-height: var(--lh-13); font-weight: 500;
 }
-[data-design="v2"] .hb.healthy, [data-design="v2"] .hb.attention, [data-design="v2"] .hb.risk {
+.hb.healthy, .hb.attention, .hb.risk {
   background: none; color: var(--text);
 }
-[data-design="v2"] .hb::before {
+.hb::before {
   content: ""; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--text-2);
 }
-[data-design="v2"] .hb.healthy::before { background: var(--green); }
-[data-design="v2"] .hb.attention::before { background: var(--warn); }
-[data-design="v2"] .hb.risk::before { background: var(--coral); }
+.hb.healthy::before { background: var(--green); }
+.hb.attention::before { background: var(--warn); }
+.hb.risk::before { background: var(--coral); }
 
 /* Barras de saúde/progresso: a LARGURA é o dado (quanto); a cor era decoração (que
    estado) — e o estado já está no ponto/número ao lado. Some o semáforo, fica o azul.
    Trocar a barra por um ponto destruiria a quantidade, então a geometria permanece. */
-[data-design="v2"] .engbar > i, [data-design="v2"] .gbar > i,
-[data-design="v2"] .engbar > i.healthy, [data-design="v2"] .engbar > i.attention, [data-design="v2"] .engbar > i.risk,
-[data-design="v2"] .gbar > i.healthy, [data-design="v2"] .gbar > i.attention, [data-design="v2"] .gbar > i.risk {
+.engbar > i, .gbar > i,
+.engbar > i.healthy, .engbar > i.attention, .engbar > i.risk,
+.gbar > i.healthy, .gbar > i.attention, .gbar > i.risk {
   background: var(--blue);
 }
 
 /* Legenda de gráfico: o quadradinho de 10px vira o mesmo ponto de 6px do resto do
    app. A COR fica — numa legenda ela é a chave do gráfico (é o dado), não decoração;
    o texto é que sai do cinza e volta para a cor do corpo. */
-[data-design="v2"] .leg { color: var(--text); font-size: var(--t-13); line-height: var(--lh-13); }
-[data-design="v2"] .leg i { width: 6px; height: 6px; border-radius: 50%; }
+.leg { color: var(--text); font-size: var(--t-13); line-height: var(--lh-13); }
+.leg i { width: 6px; height: 6px; border-radius: 50%; }
 
 /* Avatar de quem precisa de Care: o coral era o preenchimento mais gritante da tela
    (8 de uma vez no painel Care em largura cheia). Cinza é o material da interface; o
    estado já está dito no texto ao lado, não precisa colorir a pessoa. Pega Care e
    Inbox junto, que usam o mesmo `.av.c`. */
-[data-design="v2"] .av.c { background: var(--surface-2); color: var(--text-2); }
+.av.c { background: var(--surface-2); color: var(--text-2); }
 
 /* Cartão em alerta: fundo/borda coral → cartão normal com um ponto no rótulo. */
-[data-design="v2"] .stat.alert { border-color: var(--border); background: var(--surface); }
-[data-design="v2"] .stat.alert .v { color: var(--text); }
-[data-design="v2"] .stat.alert .k { display: flex; align-items: center; gap: 6px; }
-[data-design="v2"] .stat.alert .k::before {
+.stat.alert { border-color: var(--border); background: var(--surface); }
+.stat.alert .v { color: var(--text); }
+.stat.alert .k { display: flex; align-items: center; gap: 6px; }
+.stat.alert .k::before {
   content: ""; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--coral);
 }
 
 /* Ar: cartões deixam de ser 4 colunas fixas (docs/design-tokens.md §Ar). */
-[data-design="v2"] .cards { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.cards { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
 /* Movimento: entrada de painel/sheet na curva iOS. O bloco de prefers-reduced-motion
    abaixo desliga com !important, então nada novo escapa dele. */
-[data-design="v2"] .overlay .modal { animation: modalIn var(--dur-panel) var(--ease-spring); }
-[data-design="v2"] .drawer { animation: drawerIn var(--dur-panel) var(--ease-spring); }
+.overlay .modal { animation: modalIn var(--dur-panel) var(--ease-spring); }
+.drawer { animation: drawerIn var(--dur-panel) var(--ease-spring); }
 
 /* Responsivo: some a sidebar e colapsa grids em telas estreitas.
    ESTE BLOCO FICA DEPOIS DAS REGRAS BASE, E ISSO IMPORTA. Ele vivia antes de

@@ -1,21 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { Literata, Poppins } from "next/font/google";
+import { Literata } from "next/font/google";
 import "./globals.css";
-
-// A Poppins é a fonte do design v1. `preload: false` de propósito: sem o <link
-// rel="preload">, o arquivo só é baixado quando algum texto realmente pede a família —
-// ou seja, o design v2 (que usa a stack do sistema, docs/design-tokens.md) não baixa
-// webfont nenhum, e o v1 continua com Poppins. O custo para o v1 é o arquivo ser
-// descoberto pelo CSS em vez do preload; `display: "swap"` já cobre esse intervalo.
-// ponytail: `preload: false` sai junto com o v1, quando o v2 for aprovado.
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
-  display: "swap",
-  preload: false,
-});
 
 // Literata: serifa de leitura longa (Google Play Livros), com eixo óptico e grego
 // politônico. Só a tela da Bíblia pede a família, então também sem preload.
@@ -40,7 +26,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const theme = (await cookies()).get("tally-theme")?.value === "dark" ? "dark" : "light";
   return (
-    <html lang="pt-BR" data-theme={theme} className={`${poppins.variable} ${literata.variable}`}>
+    <html lang="pt-BR" data-theme={theme} className={literata.variable}>
       <body>{children}</body>
     </html>
   );

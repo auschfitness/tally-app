@@ -27,9 +27,9 @@ describe("integridade do catálogo", () => {
   });
 
 
-  it("tem exatamente as 10 chaves, sem duplicata", () => {
-    expect(ALL_FLAGS).toHaveLength(10);
-    expect(new Set(ALL_FLAGS).size).toBe(10);
+  it("tem exatamente as 9 chaves, sem duplicata", () => {
+    expect(ALL_FLAGS).toHaveLength(9);
+    expect(new Set(ALL_FLAGS).size).toBe(9);
   });
 
   it("as chaves batem com as que as migrations semearam", () => {
@@ -42,14 +42,15 @@ describe("integridade do catálogo", () => {
     if (!files.length) throw new Error("nenhuma migration *feature_flags.sql encontrada");
     const sql = files.map((f) => readFileSync(dir + f, "utf8")).join("\n");
     const seeded = [...sql.matchAll(/^\s*\('([a-z0-9_.]+)',/gm)].map((m) => m[1]);
-    expect(seeded.sort()).toEqual([...ALL_FLAGS].sort());
+    // A migration histórica do visual permanece; sua flag já foi aposentada.
+    expect(seeded.filter((key) => key !== "ui.design_v2").sort()).toEqual([...ALL_FLAGS].sort());
   });
 
   it("toda chave é reconhecida por isFlagKey, e só ela", () => {
     for (const k of ALL_FLAGS) expect(isFlagKey(k)).toBe(true);
     expect(isFlagKey("finance.v3")).toBe(false);
     expect(isFlagKey("")).toBe(false);
-    expect(isFlagKey("ui.design_v2 ")).toBe(false);
+    expect(isFlagKey("ui.design_v2")).toBe(false);
   });
 
   it("chave é sempre 'modulo.assunto' em minúsculas", () => {
@@ -99,6 +100,6 @@ describe("flagOn", () => {
   it("a precedência (override por org > rollout global) já vem resolvida do banco", () => {
     // `org_flags` devolve a lista final; o gate do app é pertinência pura — se um dia a
     // precedência mudar, muda no SQL, num lugar só.
-    expect(flagOn(ctx([...ALL_FLAGS]), "ui.design_v2")).toBe(true);
+    expect(flagOn(ctx([...ALL_FLAGS]), "study.reader")).toBe(true);
   });
 });

@@ -17,50 +17,17 @@ grep -rEn "#[0-9a-fA-F]{3,6}|[0-9]+px" src/features/**/*.module.css
 
 ## Como este documento está ligado ao código
 
-Os tokens vivem em `src/app/globals.css`, definidos **duas vezes**:
-
-| bloco | seletor | valores |
-|---|---|---|
-| **v1** (hoje) | `:root` | o que o app usa hoje de fato |
-| **v2** (o alvo) | `[data-design="v2"]` | o que está neste documento |
-
-O `[data-design="v2"]` é escrito pelo layout do dashboard a partir de
-`flagOn(ctx, "ui.design_v2")` — mesmo truque que o `data-theme` do layout raiz usa para
-o tema escuro. **Flag desligada → nenhum seletor v2 casa → o app é exatamente o de
-hoje.** Em produção a flag está **ligada** (`rollout='all'`), em avaliação do dono.
-
-⚠️ **Redefinir o token não basta quando quem consome é o `body`.** O atributo
-`data-design` mora no `<div class="app">`, que é FILHO do `body`: o `body` resolve
-`var(--font-ui)`/`var(--t-15)` no escopo v1 e os filhos herdam o valor já computado.
-Por isso `font-family` e `font-size` são **re-declarados** dentro do bloco v2. Todo token
-novo que o `body` (ou o `html`) consumir precisa do mesmo tratamento.
-
-Consequência que confunde na primeira leitura: no bloco v1 o nome do token **mente**
-(`--t-15: 14px`, `--r-14: 16px`). É andaime proposital. Sem isso, trocar `14px` por
-`var(--t-15)` num `module.css` já mudaria o visual atual e a flag viraria decoração.
-O bloco v1 está marcado com um comentário `ponytail:` no `globals.css` e some quando
-o dono aprovar o v2 — aí o conteúdo do bloco v2 sobe para o `:root` e os nomes voltam
-a dizer a verdade.
-
-**Escreva sempre o token, nunca o valor.** Quem escreve `var(--r-14)` acerta nas duas
-versões; quem escreve `14px` acerta em uma e erra na outra.
+Os tokens vivem em `src/app/globals.css`, no `:root`, e valem para todas as telas, inclusive o login. O tema escuro substitui apenas cores e sombras. O v1 e a flag de design foram aposentados na tarefa 4d.
 
 ---
 
 ## Tipografia
 
-A Poppins sai no v2. Ela é a fonte geométrica arredondada de todo template e todo
-gerador de site — sozinha já entrega o jogo de "feito por IA". A stack do sistema dá o
-acabamento macOS de graça e ainda remove um webfont do carregamento.
+A UI usa a fonte do sistema. Literata permanece para a leitura.
 
 ```css
---font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable",
-           "Inter", system-ui, sans-serif;
+--font-ui: -apple-system, "Segoe UI Variable", system-ui, sans-serif;
 ```
-
-> Conflito conhecido: `docs/design-principles.md` §Linguagem visual ainda diz "Poppins".
-> Enquanto a flag estiver desligada, ele está certo. Quando o v2 for aprovado, aquela
-> linha precisa ser atualizada para apontar para cá.
 
 Escala fechada. **Não existe valor fora dela, e não existe meio pixel.**
 

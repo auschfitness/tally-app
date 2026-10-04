@@ -21,12 +21,12 @@
 .stripItem[data-tone="celeb"] b { color: #8b74e8; }
 .stripItem[data-tone="prayer"] b { color: var(--green); }
 
-:global([data-design="v2"]) .stripItem {
+.stripItem {
   display: flex;
   align-items: baseline;
   gap: var(--s-2);
 }
-:global([data-design="v2"]) .stripItem::before {
+.stripItem::before {
   content: "";
   width: 6px;
   height: 6px;
@@ -34,17 +34,17 @@
   flex-shrink: 0;
   background: var(--text-2);
 }
-:global([data-design="v2"]) .stripItem b {
+.stripItem b {
   color: var(--text);
   font-size: var(--t-17);
   line-height: var(--lh-17);
   font-variant-numeric: tabular-nums;
 }
-:global([data-design="v2"]) .stripItem[data-tone="care"]::before { background: var(--coral); }
-:global([data-design="v2"]) .stripItem[data-tone="groups"]::before { background: var(--warn); }
-:global([data-design="v2"]) .stripItem[data-tone="comm"]::before { background: var(--blue); }
-:global([data-design="v2"]) .stripItem[data-tone="celeb"]::before { background: #8b74e8; }
-:global([data-design="v2"]) .stripItem[data-tone="prayer"]::before { background: var(--green); }
+.stripItem[data-tone="care"]::before { background: var(--coral); }
+.stripItem[data-tone="groups"]::before { background: var(--warn); }
+.stripItem[data-tone="comm"]::before { background: var(--blue); }
+.stripItem[data-tone="celeb"]::before { background: #8b74e8; }
+.stripItem[data-tone="prayer"]::before { background: var(--green); }
 
 .neg {
   color: var(--coral, #ea5b4c);
