@@ -1,0 +1,32 @@
+[
+  {
+    "name": "login",
+    "overflow": false,
+    "fonts": [],
+    "controls": []
+  },
+  {
+    "name": "sermoes",
+    "overflow": false,
+    "fonts": [],
+    "controls": []
+  },
+  {
+    "name": "notas",
+    "overflow": false,
+    "fonts": [],
+    "controls": []
+  },
+  {
+    "name": "ajustes",
+    "overflow": false,
+    "fonts": [],
+    "controls": []
+  },
+  {
+    "name": "biblia",
+    "overflow": false,
+    "fonts": [],
+    "controls": []
+  }
+]
