@@ -34,6 +34,7 @@ for (const file of fs.readdirSync(`${ROOT}/ot`).filter((f) => /^[1-3A-Z]{3}-\d+\
     const score = compareSpans(result.spans, stat.get(v.verse).spans);
     if (!gold && !fallback) { chapterSame += score.same; chapterBoth += score.both; report.sameBaseline += score.same; report.bothBaseline += score.both; }
     if (!gold && !fallback) result = { ...result, spans: fillOnlyGaps(result.spans, stat.get(v.verse).spans) };
+    if (result.spans.map((s) => s.t).join("") !== v.pt || result.spans.some((s) => s.s && !allowed.has(s.s))) report.errors.push(`${name}:${v.verse}: ligação final inválida`);
     const tags = wordMarks(result.spans);
     report.words += tags.length; report.linkedWords += tags.filter((t) => t.strong).length;
     report.verses++;

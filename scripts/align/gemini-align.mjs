@@ -101,6 +101,8 @@ async function askGemini(verses) {
     const key = KEYS[keyIdx % KEYS.length];
     keyIdx++;
     attempts++;
+    // Dois processos: até 30 pedidos/minuto, mesmo quando a API responde rápido.
+    if (WORD_TAG_MODE) await sleep(4000);
     let res;
     try {
       res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
