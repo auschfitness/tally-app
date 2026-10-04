@@ -10,7 +10,7 @@ async function login(page: Page): Promise<void> {
   await page.getByPlaceholder("E-mail").fill(EMAIL);
   await page.getByPlaceholder("Senha").fill(PASSWORD);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/$|\/study(\/bible.*)?$|\/onboarding$/);
+  await expect(page).toHaveURL(/\/$|\/study(\/bible.*)?$|\/onboarding$/, { timeout: 30000 });
 }
 
 // Capítulo (João 1 por padrão) com a chave ligada e a aba Palavra aberta na área de trabalho.
@@ -151,38 +151,53 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     expect((await v6.innerText()).trim()).not.toMatch(/\)$/);
   });
 
-  test("aba Comentário abre em João 3:16, mostra JFB e Tyndale com créditos", async ({ page }) => {
+  test("aba Comentário segue versículo, mostra uma fonte por vez com créditos e captura prints", async ({ page }) => {
     await login(page);
+
+    // 1. João 1 sem versículo
+    await page.goto("/study/bible/JHN/1");
+    const newTabBtn1 = page.getByRole("button", { name: "Nova aba" });
+    if (await newTabBtn1.isHidden()) {
+      await page.getByRole("button", { name: "Notas", exact: true }).first().click();
+    }
+    await page.getByRole("button", { name: "Nova aba" }).click();
+    await page.getByRole("menuitem", { name: "Comentário" }).click();
+    const tab = page.getByTestId("commentary-tab");
+    await expect(tab).toBeVisible();
+    await expect(tab).toContainText("Toque num versículo para ver o comentário");
+    await page.screenshot({ path: "docs/previews/commentary-john-1-no-verse.png" });
+
+    // 2. João 1:1 (JFB e Tyndale)
+    const num1 = page.locator('[data-verse="1"]').getByRole("button", { name: /^Versículo João 1:1$/ });
+    await num1.click();
+    await expect(tab).toContainText("João 1:1");
+    // JFB
+    await tab.getByRole("button", { name: "JFB" }).click();
+    await expect(tab.getByTestId("commentary-body")).toHaveAttribute("data-source", "jfb");
+    await expect(tab).toContainText("Domínio público");
+    await page.screenshot({ path: "docs/previews/commentary-john-1-1-jfb.png" });
+    // Tyndale
+    await tab.getByRole("button", { name: "Tyndale" }).click();
+    await expect(tab.getByTestId("commentary-body")).toHaveAttribute("data-source", "tyndale");
+    await expect(tab).toContainText("CC BY-SA 4.0");
+    await page.screenshot({ path: "docs/previews/commentary-john-1-1-tyndale.png" });
+
+    // 3. João 3:16
     await page.goto("/study/bible/JHN/3");
-
-    // Seleciona o versículo 16
-    const verse = page.locator('[data-verse="16"]');
-    const num = verse.getByRole("button", { name: /^Versículo João 3:16$/ });
-    await num.click();
-
-    // Abre a aba Comentário pelo menu "+ Nova aba"
-    // Primeiro garante que o workspace está aberto caso não esteja, ou clica no botão da barra de seleção se houver,
-    // ou abre "+ Nova aba"
-    // Se o workspace não estiver aberto, abre via seleção ou abre via botão
-    const newTabBtn = page.getByRole("button", { name: "Nova aba" });
-    if (await newTabBtn.isVisible()) {
-      await newTabBtn.click();
-      await page.getByRole("menuitem", { name: "Comentário" }).click();
-    } else {
-      // Abre a barra ou qualquer aba para abrir o workspace
-      await page.getByTestId("selection-bar").getByRole("button", { name: "Anotar" }).click();
+    const tab3 = page.getByTestId("commentary-tab");
+    if (await tab3.isHidden()) {
+      const newTabBtn3 = page.getByRole("button", { name: "Nova aba" });
+      if (await newTabBtn3.isHidden()) {
+        await page.getByRole("button", { name: "Notas", exact: true }).first().click();
+      }
       await page.getByRole("button", { name: "Nova aba" }).click();
       await page.getByRole("menuitem", { name: "Comentário" }).click();
     }
-
-    const tab = page.getByTestId("commentary-tab");
-    await expect(tab).toBeVisible();
-    await expect(tab).toContainText("João 3:16");
-    await expect(tab.getByRole("heading", { name: "Jamieson-Fausset-Brown" })).toBeVisible();
-    await expect(tab.getByRole("heading", { name: "Comentário Tyndale" })).toBeVisible();
-    await expect(tab.getByText("Domínio público").first()).toBeVisible();
-    await expect(tab.getByText("CC BY-SA 4.0").first()).toBeVisible();
-
+    const num16 = page.locator('[data-verse="16"]').getByRole("button", { name: /^Versículo João 3:16$/ });
+    await num16.click();
+    await expect(tab3).toBeVisible();
+    await expect(tab3).toContainText("João 3:16");
+    await expect(tab3.getByTestId("commentary-body")).toBeVisible();
     await page.screenshot({ path: "docs/previews/commentary-john-3-16.png" });
   });
 

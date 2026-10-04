@@ -2,6 +2,7 @@
 // ocorrências por livro, abas da área de trabalho e a gaveta do celular. Sem React,
 // sem Supabase: tudo aqui é testável em reader.test.ts.
 import { BOOKS, bookByCode, bookName } from "@/lib/bible/books";
+export { bookName } from "@/lib/bible/books";
 import { osisToUsfm } from "@/lib/bible/osis";
 
 export interface Span {

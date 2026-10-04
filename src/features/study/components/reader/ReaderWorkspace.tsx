@@ -53,6 +53,7 @@ interface WorkspaceApi {
   openNotes: (at: VerseAt | null) => void;
   openCommentary: (verse: number | null) => void;
   setCommentaryVerse: (verse: number | null) => void;
+  commentaryTargetVerse: number | null;
   sendBlock: (block: string, section: SectionKey) => void;
   publish: (refNow: ChapterRef, lex: Record<string, LexShort>, editor: EditorData) => void;
 }
@@ -180,9 +181,10 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
   const word = !closing && activeTab?.kind === "word" ? activeTab : null;
   const wordKey = word?.key ?? null;
   const wordStrong = word?.strong ?? null;
+  const commentaryTargetVerse = !closing && activeTab?.kind === "commentary" ? commentaryVerse : null;
   const api = useMemo<WorkspaceApi>(
-    () => ({ sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, setHits, openNotes, openCommentary, setCommentaryVerse, sendBlock, publish }),
-    [sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, openNotes, openCommentary, setCommentaryVerse, sendBlock, publish],
+    () => ({ sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, setHits, openNotes, openCommentary, setCommentaryVerse, commentaryTargetVerse, sendBlock, publish }),
+    [sermonOpen, wordKey, wordStrong, jump, open, closeAll, clearJump, openNotes, openCommentary, setCommentaryVerse, commentaryTargetVerse, sendBlock, publish],
   );
 
   // Divisor entre texto e área de trabalho: arrasta 1:1, duplo clique volta ao padrão,
@@ -285,7 +287,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
       return <NotesTab refNow={refNow} verse={verse} />;
     }
     if (t.kind === "commentary") {
-      const verse = t.verse ?? (noteAt && noteAt.book === refNow.book && noteAt.chapter === refNow.chapter ? noteAt.verse : commentaryVerse);
+      const verse = commentaryVerse;
       return <CommentaryTab refNow={refNow} verse={verse} />;
     }
     return <SermonTab editor={editor} incoming={incoming} saved={saved} onSaved={onSaved} onIncomingDone={onIncomingDone} />;
@@ -328,7 +330,7 @@ export function ReaderWorkspace({ children }: { children: ReactNode }) {
             addable={addable}
             onAdd={(k) => {
               if (k === "notes") openNotes(null);
-              else if (k === "commentary") openCommentary(null);
+              else if (k === "commentary") openCommentary(commentaryVerse);
               else open({ kind: "sermon" });
             }}
             view={view}

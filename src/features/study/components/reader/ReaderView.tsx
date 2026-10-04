@@ -69,7 +69,7 @@ export function ReaderView({
   const next = useMemo(() => adjacentChapter(refNow, 1), [refNow]);
   const [mode, setMode] = useState<Mode>("bible");
   const [interlinear, setInterlinear] = useState(false);
-  const { publish, open, openNotes, setCommentaryVerse, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
+  const { publish, open, openNotes, setCommentaryVerse, commentaryTargetVerse, closeAll, wordKey, wordStrong, jump, clearJump, setHits } = useWorkspace();
   // Destaques: estado otimista; a página só manda o retrato inicial do capítulo.
   const [hl, setHl] = useState(highlights);
   const [hlError, setHlError] = useState("");
@@ -80,11 +80,15 @@ export function ReaderView({
   const press = useRef<{ timer: number; x: number; y: number } | null>(null);
   const swallow = useRef(false); // o clique que sucede um toque longo não vale
 
+  useEffect(() => {
+    setCommentaryVerse(null);
+  }, [refNow.book, refNow.chapter, setCommentaryVerse]);
+
   function select(n: number, at: { x: number; y: number }, how: "toggle" | "add"): void {
-    setCommentaryVerse(n);
     setSel((cur) => {
-      if (cur.includes(n)) return how === "add" ? cur : cur.filter((v) => v !== n);
-      return [...cur, n].sort((a, b) => a - b);
+      const next = cur.includes(n) ? (how === "add" ? cur : cur.filter((v) => v !== n)) : [...cur, n].sort((a, b) => a - b);
+      setCommentaryVerse(next.length > 0 ? (next.includes(n) ? n : (next[0] ?? null)) : null);
+      return next;
     });
     setAnchor(at);
   }
@@ -139,7 +143,10 @@ export function ReaderView({
     e.stopPropagation();
   }
   const first = sel[0]; // a nota e o estudo abrem no primeiro versículo da seleção
-  const clearSel = useCallback((): void => setSel([]), []);
+  const clearSel = useCallback((): void => {
+    setSel([]);
+    setCommentaryVerse(null);
+  }, [setCommentaryVerse]);
 
   // Aplica (ou tira, com null) a cor em toda a seleção; otimista e desfaz se falhar.
   async function paint(picked: HlColor | null): Promise<void> {
@@ -210,7 +217,10 @@ export function ReaderView({
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return; // Alt+← é do navegador
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       if (t?.closest('[data-testid="workspace"]')) return; // teclas dentro da área de trabalho são dela
-      if (e.key === "Escape" && sel.length) return setSel([]);
+      if (e.key === "Escape" && sel.length) {
+        setCommentaryVerse(null);
+        return setSel([]);
+      }
       if (e.key === "Escape" && wordKey) return closeAll();
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       const dir = e.key === "ArrowLeft" ? -1 : 1;
@@ -227,7 +237,7 @@ export function ReaderView({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go, prev, next, wordKey, closeAll, sel.length]);
+  }, [go, prev, next, wordKey, closeAll, sel.length, setCommentaryVerse]);
 
   const showWords = tagged && interlinear && mode === "bible";
 
@@ -303,7 +313,7 @@ export function ReaderView({
         <ChapterPicker current={refNow} onPick={go} />
         <button type="button" className={styles.arrow} aria-label="Próximo capítulo" disabled={!next} onClick={() => go(next)}>›</button>
         <span className={styles.sep} aria-hidden />
-        <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => { setMode(e.target.value === "original" ? "original" : "bible"); setSel([]); }}>
+        <Select compact value={mode} aria-label="Modo de leitura" onChange={(e) => { setMode(e.target.value === "original" ? "original" : "bible"); setSel([]); setCommentaryVerse(null); }}>
           <option value="bible">Bíblia</option>
           <option value="original">Original</option>
         </Select>
@@ -355,7 +365,7 @@ export function ReaderView({
                   >
                     {v.n}
                   </button>
-                  <span className={[styles.hl, hl[v.n] ? styles[`hl_${hl[v.n]}`] : "", sel.includes(v.n) ? styles.selected : ""].filter(Boolean).join(" ")} data-hl={hl[v.n]} data-testid="verse-text">
+                  <span className={[styles.hl, hl[v.n] ? styles[`hl_${hl[v.n]}`] : "", sel.includes(v.n) ? styles.selected : "", commentaryTargetVerse === v.n ? styles.commentaryHit : ""].filter(Boolean).join(" ")} data-hl={hl[v.n]} data-testid="verse-text">
                     {v.spans.map((s, i) => renderSpan(s, v, i))}
                   </span>
                   {notedSet.has(v.n) ? (
