@@ -122,3 +122,5 @@
 }
 
 @media (max-width: 40rem) { .setrow { flex-direction: column; gap: var(--s-2); } .lbl { flex-basis: auto; } .ctrl { width: 100%; min-width: 0; } .campusActions { flex-wrap: wrap; } }
+
+.ctrl input { height: var(--control-h); padding: 0 var(--control-px); background: var(--surface-2); color: var(--text); border: 0; border-radius: var(--r-6); font: 400 var(--t-13)/var(--lh-13) var(--font-ui); }

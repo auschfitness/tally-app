@@ -381,9 +381,12 @@
 }
 }
 .stTab.on {
-  color: var(--blue);
+  color: var(--text);
   border-bottom-color: var(--blue);
   font-weight: 500;
+  background: var(--surface-2);
+  border-color: transparent;
+  box-shadow: none;
 }
 .stPh {
   display: flex;
@@ -775,9 +778,11 @@
 }
 }
 .addPickBtn.on {
-  border-color: var(--blue);
-  color: var(--blue);
-  background: rgba(43, 92, 230, 0.08);
+  border-color: transparent;
+  color: var(--text);
+  background: var(--surface-2);
+  font-weight: 500;
+  box-shadow: none;
 }
 .asstNotes {
   margin-top: var(--s-4);
@@ -869,8 +874,11 @@
 }
 }
 .moreBtn.on {
-  border-color: var(--blue);
+  border-color: transparent;
   color: var(--text);
+  background: var(--surface-2);
+  font-weight: 500;
+  box-shadow: none;
 }
 .moreMenu {
   position: absolute;
@@ -977,11 +985,11 @@
 .libSearch {
   flex: 1 1 14rem;
   min-width: 0;
-  height: 2.5rem;
-  padding: 0 var(--s-3);
+  height: var(--control-h);
+  padding: 0 var(--control-px);
   border: 0;
   border-radius: var(--r-6);
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--text);
   font: inherit;
   font-size: var(--t-13);
@@ -994,13 +1002,13 @@
 .segmented {
   display: inline-flex;
   gap: var(--s-1);
-  padding: var(--s-1);
+  padding: 0;
   border-radius: var(--r-6);
-  background: var(--surface-2);
+  background: var(--surface);
 }
 .segmented button {
-  height: 2.125rem;
-  padding: 0 var(--s-3);
+  height: var(--control-h);
+  padding: 0 var(--control-px);
   border: 0;
   border-radius: var(--r-6);
   background: none;
@@ -1010,21 +1018,28 @@
   white-space: nowrap;
 }
 .segmented button[aria-pressed="true"] {
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--text);
   box-shadow: none;
+  font-weight: 500;
 }
 @media (max-width: 40rem) {
   .libSearch {
     flex-basis: 100%;
+    height: var(--control-h);
+    padding: 0 var(--control-px);
+    background: var(--surface-2);
   }
   .segmented {
     display: flex;
     width: 100%;
+    background: var(--surface);
+    padding: 0;
   }
   .segmented button {
     flex: 1 1 0;
-    padding: 0 var(--s-2);
+    padding: 0 var(--control-px);
+    height: var(--control-h);
   }
 }
 

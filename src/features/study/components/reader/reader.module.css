@@ -6,7 +6,7 @@
 .text:focus { outline: none; }
 .muted { color: var(--text-2); font-family: var(--font-ui); font-size: var(--t-13); }
 .bar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--s-1); padding: var(--s-2) var(--s-4); background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: saturate(180%) blur(1rem); -webkit-backdrop-filter: saturate(180%) blur(1rem); box-shadow: none; font-family: var(--font-ui); height: var(--bar-h); min-height: var(--bar-h); }
-.arrow { width: var(--control-h); height: var(--control-h); border: 0; border-radius: var(--r-6); background: none; color: var(--text); font: 500 var(--t-17)/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press), background 100ms ease; min-height: var(--control-h); padding: 0; }
+.arrow { width: var(--control-h); height: var(--control-h); border: 0; border-radius: var(--r-6); background: none; color: var(--text); font: 500 var(--t-17)/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press), background 100ms ease; min-height: var(--control-h); padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .arrow:active:not(:disabled) { transform: scale(.97); }
 .arrow:disabled { opacity: 0.35; cursor: default; }
 @media (hover: hover) and (pointer: fine) { .arrow:hover:not(:disabled) { background: var(--surface-2); } }
@@ -59,7 +59,7 @@
 @media (prefers-reduced-motion: reduce) { .sw, .sw::after { transition: none; } }
 
 .pickWrap { position: relative; }
-.pickBtn { font: 500 var(--t-13)/var(--lh-13) var(--font-ui); white-space: nowrap; color: var(--text); background: none; border: 0; padding: 0 var(--control-px); border-radius: var(--r-6); cursor: pointer; transition: transform 120ms var(--ease-press), background 100ms ease; height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; }
+.pickBtn { font: 500 var(--t-13)/var(--lh-13) var(--font-ui); white-space: nowrap; color: var(--text); background: none; border: 0; padding: 0 var(--control-px); border-radius: var(--r-6); cursor: pointer; transition: transform 120ms var(--ease-press), background 100ms ease; height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; display: inline-flex; align-items: center; gap: var(--s-2); }
 .pickBtn:active { transform: scale(.97); }
 @media (hover: hover) and (pointer: fine) { .pickBtn:hover { background: var(--surface-2); } }
 .picker { position: absolute; top: calc(100% + var(--s-1)); left: 0; z-index: 20; width: min(35rem, calc(100vw - 2rem)); background: var(--surface); border: 0; border-radius: var(--r-10); box-shadow: var(--e-1); padding: var(--s-3); transform-origin: top left; animation: popIn var(--dur-micro) var(--ease); }
@@ -107,17 +107,17 @@
 @media (hover: hover) and (pointer: fine) { .split:hover::before { inset: 0 var(--s-1); background: color-mix(in srgb, var(--blue) 60%, var(--border)); } }
 .pane { min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); animation: paneIn var(--dur-panel) var(--ease); }
 .paneOut { animation: paneOut var(--dur-micro) var(--ease) forwards; }
-.grab { display: none; }
+.grab { display: none; height: var(--control-h); }
 .tabBar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); background: var(--surface); border-bottom: 0; font-family: var(--font-ui); }
 .tabs { display: flex; align-items: flex-end; gap: var(--s-1); flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
-.tab { display: inline-flex; align-items: center; gap: var(--s-2); padding: 0 var(--control-px); border: 0; border-bottom: 0; border-radius: var(--r-6); color: var(--text-2); font-size: var(--t-13); font-weight: 500; white-space: nowrap; transition: background 100ms ease, color 120ms ease; height: var(--control-h); min-height: var(--control-h); }
+.tab { display: inline-flex; align-items: center; gap: 0; padding: 0 0 0 var(--control-px); border: 0; border-bottom: 0; border-radius: var(--r-6); color: var(--text-2); font-size: var(--t-13); font-weight: 500; white-space: nowrap; transition: background 100ms ease, color 120ms ease; height: var(--control-h); min-height: var(--control-h); }
 @media (hover: hover) and (pointer: fine) { .tab:not(.tabOn):hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); } }
 .tabOn { background: var(--surface-2); color: var(--text); font-weight: 500; border-color: transparent; margin-bottom: 0; padding-bottom: 0; box-shadow: none; }
 .tabOn .ico { color: var(--text-2); }
-.tabBtn { display: inline-flex; align-items: center; gap: var(--s-2); color: inherit; font: inherit; text-decoration: none; }
+.tabBtn { display: inline-flex; align-items: center; gap: var(--s-2); color: inherit; font: inherit; text-decoration: none; height: var(--control-h); }
 .ico { flex: none; }
-.tabX { display: grid; place-items: center; width: var(--s-4); height: var(--s-4); border-radius: var(--r-6); color: var(--text-2); font-size: var(--t-15); line-height: 1; text-decoration: none; }
+.tabX { display: grid; place-items: center; width: var(--control-h); height: var(--control-h); border-radius: var(--r-6); color: var(--text-2); font-size: var(--t-15); line-height: 1; text-decoration: none; }
 @media (hover: hover) and (pointer: fine) { .tabX:hover { background: color-mix(in srgb, var(--text) 9%, transparent); color: var(--text); } }
 .tabActions { display: inline-flex; align-items: center; gap: var(--s-1); flex: none; padding-bottom: 0; }
 .addWrap { position: relative; }
@@ -191,7 +191,7 @@
 .here { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); font-size: var(--t-13); color: var(--text-2); }
 .here b { color: var(--text); font-variant-numeric: tabular-nums; }
 .stepper { display: inline-flex; gap: var(--s-1); }
-.stepper button { width: var(--control-h); height: var(--control-h); border: 0; border-radius: var(--r-6); background: var(--surface); color: var(--text); font: 500 var(--t-15)/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press), background 100ms ease; min-height: var(--control-h); padding: 0; }
+.stepper button { width: var(--control-h); height: var(--control-h); border: 0; border-radius: var(--r-6); background: var(--surface); color: var(--text); font: 500 var(--t-15)/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press), background 100ms ease; min-height: var(--control-h); padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .stepper button:active:not(:disabled) { transform: scale(.97); }
 .stepper button:disabled { opacity: 0.4; cursor: default; }
 @media (hover: hover) and (pointer: fine) { .stepper button:hover:not(:disabled) { background: var(--surface-2); } }
@@ -238,7 +238,7 @@
   .pane { position: fixed; left: 0; right: 0; bottom: 0; top: auto; height: 55dvh; z-index: 55; border-top: 0; border-radius: var(--r-10); box-shadow: var(--e-2); animation-name: sheetIn; transition: height var(--dur-panel) var(--ease); }
   .paneOut { animation-name: sheetOut; }
   .full { height: 92dvh; }
-  .grab { display: block; width: 100%; padding: var(--s-2) 0 var(--s-1); background: none; border: 0; touch-action: none; cursor: grab; }
+  .grab { display: block; width: 100%; padding: var(--s-2) 0 var(--s-1); background: none; border: 0; touch-action: none; cursor: grab; height: var(--control-h); }
   .grab::before { content: ""; display: block; width: 2.25rem; height: 0.25rem; margin: 0 auto; border-radius: var(--r-6); background: var(--border); }
   .pickCols { grid-template-columns: 1fr; }
   .pickBooks { max-height: 28dvh; }
@@ -260,7 +260,7 @@
 .selLabel { font-weight: 500; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .selColors, .selActions { display: inline-flex; align-items: center; gap: var(--s-2); }
 .selActions { gap: var(--s-1); }
-.selAction, .selClose { background: none; border: 0; padding: 0 var(--control-px); border-radius: var(--r-6); color: var(--text); font: inherit; cursor: pointer; white-space: nowrap; height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; }
+.selAction, .selClose { background: none; border: 0; padding: 0 var(--control-px); border-radius: var(--r-6); color: var(--text); font: inherit; cursor: pointer; white-space: nowrap; height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2); }
 .selAction:disabled { color: var(--text-2); cursor: default; }
 .selClose { padding: 0; font-size: var(--t-17); line-height: 1; color: var(--text-2); height: var(--control-h); width: var(--control-h); min-height: var(--control-h); }
 @media (hover: hover) and (pointer: fine) { .selAction:hover:not(:disabled), .selClose:hover { background: var(--surface-2); } }

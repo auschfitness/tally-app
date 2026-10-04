@@ -181,7 +181,7 @@ function FiscalForm({
       {errorMsg ? <div className="gerr">{errorMsg}</div> : null}
 
       {canManage ? (
-        <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ marginTop: "var(--s-4)", display: "flex", alignItems: "center", gap: "var(--s-3)" }}>
           <button className="btn" type="submit" disabled={pending}>{pending ? "Salvando…" : "Salvar"}</button>
           {justSaved && !pending ? <span className="muted">Salvo.</span> : null}
         </div>

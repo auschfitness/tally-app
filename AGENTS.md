@@ -139,7 +139,9 @@ Texto em PT-BR, sem travessão longo, sem emoji. Sem animação em ação freque
 
 5. Verificar: `npm run verify` (teste de integração com "JWT issued at future" = reexecutar só ele com `--no-file-parallelism`), `npx playwright test e2e/reader.spec.ts`. Prévia: screenshot de João 1 com a aba Comentário aberta e o versículo 3 selecionado (claro e escuro) em docs/previews/. Commit na branch; só publicar (`git push origin HEAD:main`) depois do "aprovado" do dono.
 
-### 4d. Harmonia visual: uma decisão só para cada coisa (pedido do dono em 2026-10-04; executor: Codex)
+### 4d. Harmonia visual: uma decisão só para cada coisa (FEITA em 2026-10-04 na branch; AGUARDANDO APROVAÇÃO para publicar)
+
+Entrega: quatro etapas verificadas, v2 definitivo, régua de estilos aplicada e ícones Lucide. A 4c entrou no commit `fdaf896` antes da etapa 2. Prévias e evidências em `docs/previews/4d-revisao.md`. Não refazer nem publicar sem aprovação das novas prévias.
 
 Diagnóstico do dono: "o site parece genérico, o Codex e o app do Claude parecem um objeto só". A causa não é cor; é que o Tally toma a MESMA decisão de vários jeitos (7 tamanhos de texto, 8 raios, borda em tudo, ícones de traços diferentes, controles de alturas diferentes). A 4d é uma régua. Leia `docs/design-principles.md` e `docs/design-tokens.md` antes. Não mude fluxo nem funcionalidade; só visual. Trabalhe em ordem, um commit por etapa, `npm run verify` em cada uma.
 
