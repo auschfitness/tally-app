@@ -121,7 +121,8 @@ async function askGemini(verses) {
     const body = await res.json();
     if (!res.ok) return { error: `HTTP ${res.status}` };
     try {
-      return { out: JSON.parse((body.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? "").join("")) };
+      const txt = (body.candidates?.[0]?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? "").join("").trim();
+      return { out: JSON.parse(txt.replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/, "$1")) };
     } catch {
       return { error: "JSON inválido" };
     }
@@ -199,7 +200,7 @@ for (let ch = a; ch <= (b || a); ch++) {
         if (!why) result.set(v.verse, { verse: v.verse, spans: fixed.spans.map(({ t, s }) => ({ t, s: s || null })) });
         else reasons.set(v.verse, why);
       }
-      fs.writeFileSync(partialFile, JSON.stringify({ sourceHash, model, verses: [...result.values()] }));
+      fs.writeFileSync(partialFile, JSON.stringify({ sourceHash, model, verses: [...result.values()], reasons: Object.fromEntries([...reasons].filter(([verse]) => !result.has(verse))) }));
       console.log(`${book} ${ch}: conferidos ${result.size}/${verses.length} versículos`);
     }
   };
