@@ -82,7 +82,7 @@ Concluído em 2026-10-03: 7.957 versículos no banco (239 capítulos gerados pel
 
 Spec 09. Concluído em 2026-10-03: fontes Jamieson-Fausset-Brown e Tyndale traduzidas integralmente para PT nos 21 capítulos de João (1.164 comentários na tabela bible_commentary). Aba Comentário disponível na área de trabalho e no menu "+ Nova aba", com créditos e badges de licença.
 
-### 4. Refazer a tela de login
+### 4. Refazer a tela de login (FEITA em 2026-10-04 na branch, AGUARDANDO APROVAÇÃO do dono para publicar; prévias em docs/previews/login-*.png)
 
 Pedido do dono: "a tela de login de modo geral tá bem ruim". Arquivos: `src/app/(auth)/login/` (page.tsx, LoginForm.tsx). Siga `docs/design-principles.md` e o visual novo do Estudo (menu lateral escuro, Literata no texto). Mostre uma prévia ao dono antes de publicar. O teste `e2e/auth.spec.ts` usa os placeholders "E-mail"/"Senha" e o botão "Entrar": mantenha-os ou ajuste o teste junto.
 

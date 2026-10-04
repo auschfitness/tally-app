@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { signInAction, signUpAction, type AuthState } from "./actions";
+import s from "./login.module.css";
 
 const INITIAL: AuthState = { error: null };
 
@@ -12,6 +13,7 @@ export function LoginForm({ next = "/" }: { next?: string }) {
     mode === "login" ? signInAction : signUpAction,
     INITIAL,
   );
+  const login = mode === "login";
 
   async function handleGoogle() {
     const supabase = createClient();
@@ -23,45 +25,58 @@ export function LoginForm({ next = "/" }: { next?: string }) {
   }
 
   return (
-    <form action={formAction}>
-      <div className="gtitle">Tally</div>
-      <div className="gsub">{mode === "login" ? "Entre na sua conta" : "Crie a sua conta"}</div>
+    <form action={formAction} className={s.form}>
+      <h1 className={s.title}>{login ? "Entrar" : "Criar conta"}</h1>
+      <p className={s.sub}>
+        {login ? "Bem-vindo de volta. Continue de onde parou." : "Leva menos de um minuto."}
+      </p>
 
       <input type="hidden" name="next" value={next} />
-      <div className="gfield">
+      <label className={s.field}>
+        E-mail
         <input name="email" type="email" placeholder="E-mail" autoComplete="email" required />
-      </div>
-      <div className="gfield">
+      </label>
+      <label className={s.field}>
+        Senha
         <input
           name="password"
           type="password"
           placeholder="Senha"
-          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          autoComplete={login ? "current-password" : "new-password"}
           required
         />
-      </div>
+      </label>
 
-      <div className="gerr">{state.error ?? ""}</div>
+      <div className={s.err} role="alert">{state.error ?? ""}</div>
 
-      <button className="gbtn" type="submit" disabled={pending}>
-        {pending ? "Aguarde…" : mode === "login" ? "Entrar" : "Criar conta"}
+      <button className={s.btn} type="submit" disabled={pending}>
+        {pending ? "Aguarde..." : login ? "Entrar" : "Criar conta"}
       </button>
-      <button className="gbtn goauth" type="button" onClick={handleGoogle} disabled={pending}>
+
+      <div className={s.or}>ou</div>
+
+      <button className={s.google} type="button" onClick={handleGoogle} disabled={pending}>
+        <GoogleIcon />
         Continuar com Google
       </button>
 
-      <div className="gswitch">
-        {mode === "login" ? (
-          <>
-            Não tem conta?{" "}
-            <a onClick={() => setMode("signup")}>Cadastre-se</a>
-          </>
-        ) : (
-          <>
-            Já tem conta? <a onClick={() => setMode("login")}>Entrar</a>
-          </>
-        )}
-      </div>
+      <p className={s.switch}>
+        {login ? "Não tem conta? " : "Já tem conta? "}
+        <button type="button" onClick={() => setMode(login ? "signup" : "login")}>
+          {login ? "Cadastre-se" : "Entrar"}
+        </button>
+      </p>
     </form>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
+      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.5 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z" />
+      <path fill="#FBBC05" d="M10.5 28.7A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z" />
+      <path fill="#34A853" d="M24 48c6.3 0 11.7-2.1 15.6-5.7l-7.6-5.9c-2.1 1.4-4.8 2.3-8 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.1C6.5 42.6 14.6 48 24 48z" />
+    </svg>
   );
 }
