@@ -15,7 +15,6 @@ import { NAV_GROUPS, TOP_ITEMS, PLANS_ITEM, SETTINGS_ITEM, ADMIN_ITEM, STUDY_ONL
 import { planAllows, type PlanCode, type FeatureKey } from "@/features/plans/catalog";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { parseRefs } from "@/lib/bible/parse";
-import { RECENT_KEY, chapterLabel, parseRecent, type ChapterRef } from "@/features/study/reader";
 
 export interface NavCounts {
   inbox: number;
@@ -75,31 +74,18 @@ export function Sidebar({
   const path = usePathname();
   const router = useRouter();
   const [mini, setMini] = useState(false);
-  const [recent, setRecent] = useState<ChapterRef[]>([]);
   const [menu, setMenu] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Preferência e recentes vêm do aparelho, depois de montar (sem divergir da hidratação).
+  // Preferência vem do aparelho, depois de montar (sem divergir da hidratação).
   useEffect(() => {
     try {
       setMini(localStorage.getItem(MINI_KEY) === "1");
     } catch {
       /* armazenamento bloqueado: menu aberto */
     }
-  }, []);
-  useEffect(() => {
-    const load = (): void => {
-      try {
-        setRecent(parseRecent(localStorage.getItem(RECENT_KEY)));
-      } catch {
-        setRecent([]);
-      }
-    };
-    load();
-    window.addEventListener("tally:recent", load);
-    return () => window.removeEventListener("tally:recent", load);
   }, []);
 
   const toggleMini = useCallback((): void => {
@@ -235,20 +221,6 @@ export function Sidebar({
             </div>
           ))}
         </nav>
-
-        {STUDY_ONLY && recent.length && !mini ? (
-          <div className="sb-section">
-            <p className="sb-sectionhd">Recentes</p>
-            {recent.map((r) => {
-              const href = `/study/bible/${r.book}/${r.chapter}`;
-              return (
-                <Link key={href} href={href} className={`sb-item sb-recent${path === href ? " on" : ""}`}>
-                  <span className="sb-label">{chapterLabel(r)}</span>
-                </Link>
-              );
-            })}
-          </div>
-        ) : null}
 
         <div className="sb-foot">
           {footer.map(item)}

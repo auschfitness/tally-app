@@ -23,6 +23,28 @@
 .barBtn .ico { color: var(--text-2); }
 .barBtn:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) { .barBtn:hover { background: color-mix(in srgb, var(--text) 6%, transparent); } }
+.themeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-6);
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 0;
+}
+.themeBtn:active {
+  transform: scale(0.95);
+}
+@media (hover: hover) and (pointer: fine) {
+  .themeBtn:hover {
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+    color: var(--text);
+  }
+}
 /* Celular: tudo na mesma linha. Some o texto dos botões e o "Interlinear" (que continua
    nome acessível da chave, só fora da vista), os separadores e o vão entre itens encolhem. */
 @media (max-width: 560px) {
@@ -337,6 +359,15 @@
   font-size: 1.1875rem;
   line-height: 1.8;
   color: var(--text);
+}
+.cmtChunk {
+  border-left: 2px solid transparent;
+  padding-left: var(--s-3);
+  margin-left: calc(-1 * var(--s-3));
+  margin-bottom: var(--s-4);
+}
+.cmtChunk[data-on="true"] {
+  border-left-color: var(--blue);
 }
 .cmtSection {
   margin: var(--s-5) 0 var(--s-2);

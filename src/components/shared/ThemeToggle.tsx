@@ -18,7 +18,7 @@ const SUN = (
 );
 
 // `row`: versão de linha de menu (menu do perfil), com o nome do tema para onde vai.
-export function ThemeToggle({ row = false }: { row?: boolean }) {
+export function ThemeToggle({ row = false, className }: { row?: boolean; className?: string }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -35,14 +35,14 @@ export function ThemeToggle({ row = false }: { row?: boolean }) {
 
   if (row) {
     return (
-      <button type="button" role="menuitem" className="sb-menuitem" onClick={toggle}>
+      <button type="button" role="menuitem" className={className ?? "sb-menuitem"} onClick={toggle}>
         {theme === "dark" ? SUN : MOON}
         {theme === "dark" ? "Tema claro" : "Tema escuro"}
       </button>
     );
   }
   return (
-    <button className="iconbtn" title="Alternar tema" onClick={toggle} aria-label="Alternar tema">
+    <button className={className ?? "iconbtn"} title="Alternar tema" onClick={toggle} aria-label="Alternar tema">
       {theme === "dark" ? SUN : MOON}
     </button>
   );

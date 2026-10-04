@@ -151,54 +151,56 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     expect((await v6.innerText()).trim()).not.toMatch(/\)$/);
   });
 
-  test("aba Comentário segue versículo, mostra uma fonte por vez com créditos e captura prints", async ({ page }) => {
+  test("aba Comentário em texto corrido segue versículo, sol/lua alterna tema e barra tem Original", async ({ page }) => {
     await login(page);
 
     // 1. João 1 sem versículo
     await page.goto("/study/bible/JHN/1");
-    const newTabBtn1 = page.getByRole("button", { name: "Nova aba" });
-    if (await newTabBtn1.isHidden()) {
+    const newTabBtn = page.getByRole("button", { name: "Nova aba" });
+    if (await newTabBtn.isHidden()) {
       await page.getByRole("button", { name: "Notas", exact: true }).first().click();
     }
     await page.getByRole("button", { name: "Nova aba" }).click();
     await page.getByRole("menuitem", { name: "Comentário" }).click();
     const tab = page.getByTestId("commentary-tab");
     await expect(tab).toBeVisible();
-    await expect(tab).toContainText("Toque num versículo para ver o comentário");
-    await page.screenshot({ path: "docs/previews/commentary-john-1-no-verse.png" });
+    await expect(tab).toContainText("Comentário de João 1");
+    await expect(tab.getByTestId("commentary-body")).toBeVisible();
+    // Sem versículo selecionado: nenhum trecho com data-on="true"
+    await expect(tab.locator('[data-on="true"]')).toHaveCount(0);
 
-    // 2. João 1:1 (JFB e Tyndale)
-    const num1 = page.locator('[data-verse="1"]').getByRole("button", { name: /^Versículo João 1:1$/ });
-    await num1.click();
-    await expect(tab).toContainText("João 1:1");
-    // JFB
-    await tab.getByRole("button", { name: "JFB" }).click();
-    await expect(tab.getByTestId("commentary-body")).toHaveAttribute("data-source", "jfb");
-    await expect(tab).toContainText("Domínio público");
-    await page.screenshot({ path: "docs/previews/commentary-john-1-1-jfb.png" });
-    // Tyndale
+    // 2. Selecionar versículo 3 de João 1
+    const num3 = page.locator('[data-verse="3"]').getByRole("button", { name: /^Versículo João 1:3$/ });
+    await num3.click();
+    // Confere que a barra de seleção tem o botão "Original" (requisito 4)
+    await expect(page.getByTestId("selection-bar").getByRole("button", { name: "Original" })).toBeVisible();
+    // Confere que o trecho do versículo 3 foi marcado
+    const activeChunk = tab.locator('[data-on="true"]');
+    await expect(activeChunk).toBeVisible();
+    await expect(activeChunk).toHaveAttribute("data-start", "3");
+
+    // Screenshot João 1 com v3 selecionado em tema claro
+    await page.screenshot({ path: "docs/previews/commentary-john-1-v3-light.png" });
+
+    // 3. Alternar para tema escuro usando o botão sol/lua na barra da Bíblia (requisito 2)
+    const themeBtn = page.getByRole("button", { name: "Alternar tema" }).first();
+    await themeBtn.click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    // Screenshot João 1 com v3 selecionado em tema escuro
+    await page.screenshot({ path: "docs/previews/commentary-john-1-v3-dark.png" });
+
+    // Voltar para tema claro
+    await themeBtn.click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
+    // 4. Testar Tyndale
     await tab.getByRole("button", { name: "Tyndale" }).click();
     await expect(tab.getByTestId("commentary-body")).toHaveAttribute("data-source", "tyndale");
     await expect(tab).toContainText("CC BY-SA 4.0");
-    await page.screenshot({ path: "docs/previews/commentary-john-1-1-tyndale.png" });
-
-    // 3. João 3:16
-    await page.goto("/study/bible/JHN/3");
-    const tab3 = page.getByTestId("commentary-tab");
-    if (await tab3.isHidden()) {
-      const newTabBtn3 = page.getByRole("button", { name: "Nova aba" });
-      if (await newTabBtn3.isHidden()) {
-        await page.getByRole("button", { name: "Notas", exact: true }).first().click();
-      }
-      await page.getByRole("button", { name: "Nova aba" }).click();
-      await page.getByRole("menuitem", { name: "Comentário" }).click();
-    }
-    const num16 = page.locator('[data-verse="16"]').getByRole("button", { name: /^Versículo João 3:16$/ });
-    await num16.click();
-    await expect(tab3).toBeVisible();
-    await expect(tab3).toContainText("João 3:16");
-    await expect(tab3.getByTestId("commentary-body")).toBeVisible();
-    await page.screenshot({ path: "docs/previews/commentary-john-3-16.png" });
+    // Tyndale também destaca o trecho cobrindo o versículo 3
+    const activeTyn = tab.locator('[data-on="true"]');
+    await expect(activeTyn).toBeVisible();
+    await expect(activeTyn).toContainText("1.3");
   });
 
   test("captura prints da aba Palavra para logos, theos e en", async ({ page }) => {

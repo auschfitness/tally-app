@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { headingCase, jfbBlock, jfbBlocks, pickCommentary, tyndaleSegments, type CmtRow } from "./commentary";
+import { chapterCommentary, headingCase, jfbBlock, jfbBlocks, pickCommentary, tyndaleSegments, type CmtRow } from "./commentary";
 
 describe("headingCase", () => {
   it("tira da CAIXA ALTA e mantém nomes próprios", () => {
@@ -73,3 +73,41 @@ describe("pickCommentary", () => {
     expect(v7?.blocks.filter((b) => b.type === "label").map((b) => b.type === "label" && b.text)).toEqual(["Jo 1.1-18", "Jo 1.6-9"]);
   });
 });
+
+describe("chapterCommentary", () => {
+  const rows: CmtRow[] = [
+    { id: "jfb-1-2", source: "jfb", verse_start: 2, verse_end: 2, kind: "verse", text_pt: "O mesmo: y\n\nOutro parágrafo do v2." },
+    { id: "jfb-1-i", source: "jfb", verse_start: 1, verse_end: 1, kind: "intro", text_pt: "A PALAVRA FEITA CARNE. (Jo 1.1-14)\n\nNo princípio: x" },
+    { id: "tyn-1-6", source: "tyndale", verse_start: 6, verse_end: 6, kind: "verse", text_pt: "1.6-9 Sobre o Batista." },
+    { id: "tyn-1-1", source: "tyndale", verse_start: 1, verse_end: 1, kind: "verse", text_pt: "1.1-18 Panorama.\n1.1 Sobre o v1. • Mais sobre o v1." },
+  ];
+
+  it("JFB: intro vem primeiro, depois versículos ordenados por verse_start; primeiro bloco de cada trecho leva anchor", () => {
+    const { blocks } = chapterCommentary(rows, "jfb", 1);
+    expect(blocks).toHaveLength(4);
+    // 1º bloco da intro: heading com anchor { start: 1, end: 1 }
+    expect(blocks[0]!).toMatchObject({ type: "heading", anchor: { start: 1, end: 1 } });
+    // 2º bloco da intro: para sem anchor
+    expect(blocks[1]!).toMatchObject({ type: "para", lead: "No princípio" });
+    expect(blocks[1]!.anchor).toBeUndefined();
+    // 1º bloco do v2: para com anchor { start: 2, end: 2 }
+    expect(blocks[2]!).toMatchObject({ type: "para", lead: "O mesmo", anchor: { start: 2, end: 2 } });
+    // 2º bloco do v2: para sem anchor
+    expect(blocks[3]!).toMatchObject({ type: "para", text: "Outro parágrafo do v2." });
+    expect(blocks[3]!.anchor).toBeUndefined();
+  });
+
+  it("Tyndale: segmentos na ordem do capítulo; primeiro bloco de cada trecho leva anchor", () => {
+    const { blocks } = chapterCommentary(rows, "tyndale", 1);
+    expect(blocks).toHaveLength(4);
+    // Segmento 1.1-18
+    expect(blocks[0]!).toMatchObject({ type: "para", text: "Panorama.", anchor: { start: 1, end: 18 } });
+    // Segmento 1.1 (primeiro parágrafo leva anchor, segundo não)
+    expect(blocks[1]!).toMatchObject({ type: "para", text: "Sobre o v1.", anchor: { start: 1, end: 1 } });
+    expect(blocks[2]!).toMatchObject({ type: "para", text: "Mais sobre o v1." });
+    expect(blocks[2]!.anchor).toBeUndefined();
+    // Segmento 1.6-9
+    expect(blocks[3]!).toMatchObject({ type: "para", text: "Sobre o Batista.", anchor: { start: 6, end: 9 } });
+  });
+});
+

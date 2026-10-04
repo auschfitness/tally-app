@@ -110,6 +110,71 @@ export function tyndaleSegments(text: string, chapter: number): TynSegment[] {
   return out;
 }
 
+export type CmtChapterBlock = CmtBlock & { anchor?: { start: number; end: number } };
+
+/** Devolve todos os blocos da fonte no capítulo, na ordem; o primeiro bloco de cada trecho leva anchor. */
+export function chapterCommentary(
+  rows: CmtRow[],
+  source: CmtSource,
+  chapter: number,
+): { blocks: CmtChapterBlock[] } {
+  const seen = new Set<string>();
+  const mine = rows.filter((r) => r.source === source && !seen.has(r.id) && seen.add(r.id));
+  const blocks: CmtChapterBlock[] = [];
+
+  if (source === "jfb") {
+    const intros = mine.filter((r) => r.kind === "intro");
+    const verses = mine
+      .filter((r) => r.kind !== "intro")
+      .sort((a, b) => a.verse_start - b.verse_start || a.verse_end - b.verse_end);
+    const ordered = [...intros, ...verses];
+
+    for (const r of ordered) {
+      const bList = jfbBlocks(r.text_pt);
+      const first = bList[0];
+      if (!first) continue;
+      blocks.push({
+        ...first,
+        anchor: { start: r.verse_start, end: r.verse_end },
+      });
+      for (let i = 1; i < bList.length; i++) {
+        const b = bList[i];
+        if (b) blocks.push(b);
+      }
+    }
+    return { blocks };
+  }
+
+  // Tyndale: cada segmento de tyndaleSegments na ordem
+  const ordered = mine.slice().sort((a, b) => a.verse_start - b.verse_start || a.verse_end - b.verse_end);
+  for (const r of ordered) {
+    const segs = tyndaleSegments(r.text_pt, chapter);
+    for (const s of segs) {
+      const firstPara = s.paras[0];
+      if (!firstPara) continue;
+      const start = s.start ?? r.verse_start;
+      const end = s.end ?? r.verse_end;
+      blocks.push({
+        type: "para",
+        lead: null,
+        text: firstPara,
+        anchor: { start, end },
+      });
+      for (let i = 1; i < s.paras.length; i++) {
+        const p = s.paras[i];
+        if (p) {
+          blocks.push({
+            type: "para",
+            lead: null,
+            text: p,
+          });
+        }
+      }
+    }
+  }
+  return { blocks };
+}
+
 /** O que a aba mostra para uma fonte e um versículo (null = capítulo, só introdução). */
 export function pickCommentary(rows: CmtRow[], source: CmtSource, verse: number | null, chapter: number): CmtView | null {
   const seen = new Set<string>();

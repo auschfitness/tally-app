@@ -1,6 +1,6 @@
 "use client";
 
-// Barra de ação da seleção de versículos (spec 08): cores, Anotar, Estudar, Copiar.
+// Barra de ação da seleção de versículos (spec 08): cores, Anotar, Original, Copiar.
 // No desktop flutua ancorada no ponto tocado (dentro do texto); no celular vira gaveta
 // embaixo. Esc ou o X limpam a seleção; toda ação limpa depois de agir.
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
@@ -85,7 +85,7 @@ export function SelectionBar({
       </span>
       <span className={styles.selActions}>
         <button type="button" className={styles.selAction} onClick={onNote}>Anotar</button>
-        <button type="button" className={styles.selAction} onClick={onStudy}>Estudar</button>
+        <button type="button" className={styles.selAction} onClick={onStudy}>Original</button>
         <button type="button" className={styles.selAction} onClick={copy} disabled={copied}>{copied ? "Copiado" : "Copiar"}</button>
       </span>
       <button type="button" className={styles.selClose} aria-label="Fechar seleção" onClick={onClose}>×</button>
