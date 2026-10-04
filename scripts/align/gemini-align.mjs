@@ -88,7 +88,9 @@ async function askOpenRouter(verses) {
 let keyIdx = 0;
 async function ask(verses) {
   const r = await askGemini(verses);
-  if (r.wait && OR_KEY && OR_MODELS.length) return (await askOpenRouter(verses)) ?? r;
+  // No AT, falha temporária do Gemini deve ser repetida no mesmo provedor.
+  // O fallback pode consumir dois timeouts antes de cada nova tentativa.
+  if (r.wait && (!WORD_TAG_MODE || r.reason === "Gemini HTTP 429") && OR_KEY && OR_MODELS.length) return (await askOpenRouter(verses)) ?? r;
   return r;
 }
 
