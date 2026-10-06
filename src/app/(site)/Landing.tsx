@@ -18,7 +18,7 @@ const T = {
   pt: {
     login: "Entrar",
     lang: "English",
-    langHref: "/en",
+    langHref: "/",
     eyebrow: "Church OS",
     h1: "Um sistema só para a sua igreja, do estudo da Palavra ao cuidado com as pessoas.",
     lead: "Um gerente vê os 99%. Um pastor vê o um. O Tally reúne estudo bíblico, pessoas, grupos, presença, doações e comunicação num lugar só, para que ninguém passe despercebido.",
@@ -45,7 +45,7 @@ const T = {
   en: {
     login: "Sign in",
     lang: "Português",
-    langHref: "/",
+    langHref: "/pt",
     eyebrow: "Church OS",
     h1: "One system for your church, from Bible study to caring for people.",
     lead: "A manager sees the 99%. A pastor sees the one. Tally brings Bible study, people, groups, attendance, giving and communication into one place, so nobody goes unnoticed.",
@@ -75,7 +75,7 @@ export function SiteNav({ lang }: { lang: Lang }) {
   const t = T[lang];
   return (
     <nav className={s.nav}>
-      <Link href={lang === "pt" ? "/" : "/en"} className={s.brand}>
+      <Link href={lang === "pt" ? "/pt" : "/"} className={s.brand}>
         <LogoMark size={24} />
         Tally
       </Link>

@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
 import { studyOnlyRedirect } from "@/config/nav";
 
 // Rotas públicas (sem sessão): login e callbacks de auth.
-const PUBLIC_PREFIXES = ["/login", "/auth", "/esqueci-senha", "/redefinir-senha", "/site", "/en", "/termos", "/privacidade"];
+const PUBLIC_PREFIXES = ["/login", "/auth", "/esqueci-senha", "/redefinir-senha", "/site", "/pt", "/termos", "/privacidade"];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));

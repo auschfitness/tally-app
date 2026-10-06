@@ -3,9 +3,9 @@ import { Landing } from "../Landing";
 
 export const metadata: Metadata = {
   title: "Tally · Church OS",
-  description: "Um sistema só para a sua igreja: estudo bíblico, pessoas, grupos, presença, doações e comunicação.",
+  description: "One system for your church: Bible study, people, groups, attendance, giving and communication.",
 };
 
-export default function SitePage() {
-  return <Landing lang="pt" />;
+export default function RootPage() {
+  return <Landing lang="en" />;
 }
