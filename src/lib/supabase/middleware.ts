@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
 import { studyOnlyRedirect } from "@/config/nav";
 
 // Rotas públicas (sem sessão): login e callbacks de auth.
-const PUBLIC_PREFIXES = ["/login", "/auth", "/esqueci-senha", "/redefinir-senha"];
+const PUBLIC_PREFIXES = ["/login", "/auth", "/esqueci-senha", "/redefinir-senha", "/site", "/en", "/termos", "/privacidade"];
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
@@ -41,6 +41,13 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  // Sem sessão, a raiz mostra a página pública do produto (URL continua "/").
+  if (!user && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/site";
+    return NextResponse.rewrite(url);
+  }
 
   if (!user && !isPublic(pathname)) {
     const url = request.nextUrl.clone();
