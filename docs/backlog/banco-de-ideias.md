@@ -32,3 +32,7 @@ Pedido do dono: cada igreja deixa a Mercy com a cara dela.
 
 A decidir quando entrar: paleta é por igreja (todos os membros veem) ou por pessoa; quem pode trocar (cargo com permissão de Ajustes); se a palavra "mercy" continua junto do ícone da igreja.
 Liga com: catálogo de planos em código (`tally-planos-fase1`), trava de recurso por plano.
+
+## Arrastar da borda para fechar a nota no celular, anotada em 2026-10-07
+
+Na revisão de movimento (skill emil-design-eng) da tarefa 9: a nota aberta no celular entra pela direita mas só fecha pelo botão "Notas". O gesto esperado no iPhone é arrastar da borda esquerda: a tela segue o dedo 1:1, fecha se passar da metade ou se o movimento for rápido (velocidade > ~0,11 px/ms), senão volta com mola. Precisa testar em aparelho de verdade. Arquivo: `src/features/study/components/NotesLibrary.tsx`.

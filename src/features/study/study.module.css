@@ -944,10 +944,13 @@
   color: var(--text);
 }
 .primary:active,
-.secondary:active,
+.secondary:active {
+  transform: scale(.97);
+}
+/* superfície larga afunda menos: 3% de uma linha cheia parece a página pulando */
 .srm:active,
 .cont:active {
-  transform: scale(.97);
+  transform: scale(.99);
 }
 @media (hover: hover) and (pointer: fine) {
   .primary:hover {
@@ -1271,7 +1274,7 @@
   background: var(--surface-2);
 }
 .nRow:active {
-  transform: scale(.97);
+  transform: scale(.98);
 }
 .nRow:focus-visible {
   outline: none;
