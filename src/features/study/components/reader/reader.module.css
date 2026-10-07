@@ -33,6 +33,11 @@
 .themeBtn:active {
   transform: scale(.97);
 }
+/* No computador o tema já está no menu da conta (menu lateral); a lua só aparece no
+   celular, onde o menu lateral some (mesmo corte de 55rem do globals.css). */
+@media (min-width: 55.0625rem) {
+  .themeBtn { display: none; }
+}
 @media (hover: hover) and (pointer: fine) {
   .themeBtn:hover {
     background: color-mix(in srgb, var(--text) 6%, transparent);
