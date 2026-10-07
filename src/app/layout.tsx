@@ -34,9 +34,13 @@ export const viewport: Viewport = {
 
 // Tema lido do cookie NO SERVIDOR → sem flash e sem erro de hidratação.
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const theme = (await cookies()).get("tally-theme")?.value === "dark" ? "dark" : "light";
+  const jar = await cookies();
+  const theme = jar.get("tally-theme")?.value === "dark" ? "dark" : "light";
+  // Preferências de leitura (menu "Aa" do Estudo); valor fora da lista = padrão.
+  const readSize = ["m", "l"].find((v) => v === jar.get("mercy-read-size")?.value);
+  const readTone = jar.get("mercy-read-tone")?.value === "sepia" ? "sepia" : undefined;
   return (
-    <html lang="pt-BR" data-theme={theme} className={`${figtree.variable} ${literata.variable}`}>
+    <html lang="pt-BR" data-theme={theme} data-read-size={readSize} data-read-tone={readTone} className={`${figtree.variable} ${literata.variable}`}>
       <body>{children}</body>
     </html>
   );

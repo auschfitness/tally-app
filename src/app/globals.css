@@ -512,3 +512,27 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
   option:hover, option:focus-visible { background: var(--surface-2); outline: none; }
   option:disabled { opacity: .5; cursor: not-allowed; }
 }
+
+/* ============================================================
+   Superfície de leitura (Bíblia, comentário, área de trabalho). Menos contraste que a
+   interface (~12:1 em vez de 16:1) e fundo de "papel" sem brilho de tela: confortável
+   para horas. Quem aplica é .reader (reader.module.css). Tamanho e tom vêm do menu "Aa",
+   gravados em cookie e lidos no servidor (app/layout.tsx), então não piscam ao abrir.
+   ============================================================ */
+:root {
+  --paper: #F6F7F3; --paper-2: #EFF1EC; --ink: #2A2E29;
+  --read-text-2: #61665F; --read-surface: var(--paper-2); --read-surface-2: #E7EAE4; --read-border: #E1E5DE;
+  --read-accent: var(--blue);
+  --read-size: 17px;
+}
+:root[data-theme="dark"] {
+  --paper: #111210; --paper-2: #171816; --ink: #D2D6D0;
+  --read-text-2: #A3A9A1; --read-surface: #181917; --read-surface-2: #222421; --read-border: #2A2D29;
+}
+:root[data-read-tone="sepia"]:not([data-theme="dark"]) {
+  --paper: #F4ECD8; --paper-2: #EDE3CB; --ink: #3D3328;
+  --read-text-2: #6F6352; --read-surface: #EFE6D0; --read-surface-2: #E5D9BE; --read-border: #E0D3B6;
+  --read-accent: #21672F;
+}
+:root[data-read-size="m"] { --read-size: 19px; }
+:root[data-read-size="l"] { --read-size: 21px; }

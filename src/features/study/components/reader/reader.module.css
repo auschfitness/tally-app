@@ -1,4 +1,4 @@
-.reader { --reader-top: 10rem; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100dvh - var(--reader-top)); }
+.reader { --main: var(--paper); --bg: var(--paper-2); --text: var(--ink); --text-2: var(--read-text-2); --surface: var(--read-surface); --surface-2: var(--read-surface-2); --border: var(--read-border); --blue: var(--read-accent); background: var(--paper); color: var(--ink); --reader-top: 10rem; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: calc(100dvh - var(--reader-top)); }
 @media (max-width: 55rem) { .reader { height: calc(100dvh - var(--reader-top) - 3.75rem - env(safe-area-inset-bottom)); } }
 .withPane { grid-template-columns: minmax(0, 1fr) 0.5625rem var(--pane-w, minmax(22.5rem, 42%)); }
 .col { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
@@ -21,6 +21,9 @@
   .bar .sep { display: none; }
   .barBtn span { display: none; }
   .toggle { gap: var(--s-1); }
+  .arrow { width: 1.75rem; }
+  .bar > .toggle { display: none; }
+  .aaBtn { margin-left: auto; }
   .barBtn { padding: 0; width: var(--control-h); justify-content: center; height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; border-radius: var(--r-6); gap: var(--s-2); }
 }
 .toggle { margin-left: auto; display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--t-13); font-weight: 500; color: var(--text); cursor: pointer; }
@@ -52,7 +55,7 @@
 .pickGrid button { height: var(--control-h); border: 0; background: var(--surface); border-radius: var(--r-6); color: var(--text); font: var(--t-13)/1 var(--font-ui); font-variant-numeric: tabular-nums; cursor: pointer; transition: transform 120ms var(--ease-press), background 100ms ease; min-height: var(--control-h); padding: 0 var(--control-px); font-size: var(--t-13); font-weight: 500; }
 .pickGrid button:active { transform: scale(.97); }
 .pickRecent { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; margin-top: var(--s-3); padding-top: var(--s-3); border-top: 0; font: var(--t-11)/1.4 var(--font-ui); color: var(--text-2); }
-.text { max-width: 36rem; margin: 0 auto; padding: var(--s-6) var(--s-4); font-family: var(--font-read), Georgia, "Times New Roman", serif; font-optical-sizing: auto; font-size: var(--t-17); line-height: 1.8; color: var(--text); }
+.text { max-width: 36rem; margin: 0 auto; padding: var(--s-6) var(--s-4); font-family: var(--font-read), Georgia, "Times New Roman", serif; font-optical-sizing: auto; font-size: var(--read-size); line-height: 1.8; color: var(--text); }
 .eyebrow { font: 500 var(--t-11)/1.4 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: var(--s-5); }
 .para { margin: 0; }
 .para + .para { margin-top: 0.9em; }
@@ -71,7 +74,7 @@
 .ilw { display: flex; flex-direction: column; align-items: center; gap: var(--s-1); padding: var(--s-1) var(--s-2); border-radius: var(--r-6); border: 0; background: none; cursor: pointer; color: var(--text); }
 .ilw.hit { box-shadow: none; border-color: var(--blue); }
 @media (hover: hover) and (pointer: fine) { .ilw:hover { background: var(--surface-2); } }
-.ilSurface { font-family: var(--font-read), Georgia, "Times New Roman", serif; font-size: var(--t-17); }
+.ilSurface { font-family: var(--font-read), Georgia, "Times New Roman", serif; font-size: var(--read-size); }
 .ilTr { font: var(--t-11)/1.2 var(--font-ui); color: var(--text-2); }
 .ilGloss { font: var(--t-13)/1.2 var(--font-ui); color: var(--text-2); }
 .split { position: relative; cursor: col-resize; touch-action: none; }
@@ -211,7 +214,7 @@
 @media (max-width: 47.9375rem) {
   .withPane { grid-template-columns: minmax(0, 1fr); }
   .split { display: none; }
-  .text { padding-top: var(--s-6); font-size: var(--t-17); padding: var(--s-6) var(--s-4); }
+  .text { padding-top: var(--s-6); font-size: var(--read-size); padding: var(--s-6) var(--s-4); }
   .pane { position: fixed; left: 0; right: 0; bottom: 0; top: auto; height: 55dvh; z-index: 55; border-top: 0; border-radius: var(--r-10); box-shadow: var(--e-2); animation-name: sheetIn; transition: height var(--dur-panel) var(--ease); }
   .paneOut { animation-name: sheetOut; }
   .full { height: 92dvh; }
@@ -223,7 +226,7 @@
   .body { padding: var(--s-4); }
   .wSurface { font-size: var(--t-22); }
 }
-.text { --hl-a: 30%; padding: var(--s-6) var(--s-4); font-size: var(--t-17); }
+.text { --hl-a: 30%; padding: var(--s-6) var(--s-4); font-size: var(--read-size); }
 :global([data-theme="dark"]) .text { --hl-a: 24%; }
 .hl { border-radius: var(--r-6); -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0.06em 0; transition: background 100ms ease; }
 .hl_yellow { background-color: color-mix(in srgb, var(--highlight-yellow) var(--hl-a), transparent); }
@@ -290,7 +293,7 @@
   max-width: 62ch;
   font-family: var(--font-read), Georgia, "Times New Roman", serif;
   font-optical-sizing: auto;
-  font-size: var(--t-17);
+  font-size: var(--read-size);
   line-height: 1.8;
   color: var(--text);
 }
@@ -362,3 +365,40 @@
 :global([data-theme="dark"]) .commentaryHit {
   background-color: color-mix(in srgb, var(--blue) 16%, transparent);
 }
+
+/* Menu "Aa" (ReadingMenu). Popover nativo ancorado no botão; onde não há anchor
+   positioning (Firefox), o navegador centraliza, o que também serve. Entra com 150ms
+   ease-out a partir do canto do botão; sai mais rápido (100ms). */
+.aaBtn { anchor-name: --reading-aa; padding: 0; width: var(--control-h); justify-content: center; }
+.aaMenu {
+  position-anchor: --reading-aa; position-area: bottom span-left; position-try-fallbacks: flip-block;
+  margin: var(--s-1) 0 0; width: 15rem; padding: var(--s-3); border: 0; border-radius: var(--r-10);
+  background: var(--surface); color: var(--text); box-shadow: var(--e-2); font-family: var(--font-ui);
+  transform-origin: top right; opacity: 1; transform: none;
+  transition: opacity 100ms var(--ease), transform 100ms var(--ease), overlay 100ms allow-discrete, display 100ms allow-discrete;
+}
+.aaMenu:popover-open { transition-duration: 150ms; }
+@starting-style { .aaMenu:popover-open { opacity: 0; transform: scale(.97); } }
+.aaMenu:not(:popover-open) { opacity: 0; transform: scale(.97); }
+.aaLabel { font-size: var(--t-11); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); margin: 0 0 var(--s-2); }
+.aaRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-1); margin-bottom: var(--s-3); }
+.aaRow:last-child { margin-bottom: 0; }
+.aaOpt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-1); min-height: 2.75rem; padding: var(--s-2) 0; border: 0; border-radius: var(--r-6); background: var(--surface-2); color: var(--text); font: 500 var(--t-11)/1.2 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press), box-shadow 100ms ease; }
+.aaOpt:active { transform: scale(.97); }
+.aaOpt[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--blue); }
+.aaOpt:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.aaGlyph { font-family: var(--font-read), Georgia, serif; font-weight: 500; line-height: 1; }
+/* Amostras com as cores reais de cada fundo (fixas: mostram o destino, não o tema atual). */
+.aaSwatch { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: var(--r-pill); font: 500 var(--t-11)/1 var(--font-read), Georgia, serif; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent); }
+.aaSwatch[data-tone="light"] { background: #F6F7F3; color: #2A2E29; }
+.aaSwatch[data-tone="sepia"] { background: #F4ECD8; color: #3D3328; }
+.aaSwatch[data-tone="dark"] { background: #111210; color: #D2D6D0; }
+.aaName { color: var(--text-2); }
+@media (prefers-reduced-motion: reduce) {
+  .aaMenu, .aaMenu:not(:popover-open) { transform: none; }
+  @starting-style { .aaMenu:popover-open { transform: none; } }
+}
+/* Interlinear dentro do "Aa": só no celular (no computador está na barra). */
+.aaInter { display: none; align-items: center; justify-content: space-between; margin: 0 0 var(--s-3); font: 500 var(--t-13)/1 var(--font-ui); color: var(--text); cursor: pointer; }
+.aaInter .toggle { margin-left: 0; }
+@media (max-width: 35rem) { .aaInter { display: flex; } }

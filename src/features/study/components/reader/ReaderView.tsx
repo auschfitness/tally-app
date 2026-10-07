@@ -33,6 +33,7 @@ import {
 import { usfmToOsis } from "@/lib/bible/osis";
 import { setHighlightAction } from "../../actions";
 import { ChapterPicker } from "./ChapterPicker";
+import { ReadingMenu } from "./ReadingMenu";
 import { SelectionBar } from "./SelectionBar";
 import { selectHit, useWorkspace, type EditorData } from "./ReaderWorkspace";
 import { Icon } from "./WorkspacePane";
@@ -326,6 +327,7 @@ export function ReaderView({
             <span className={styles.sw} aria-hidden />
           </label>
         ) : <span className={styles.barGrow} aria-hidden />}
+        <ReadingMenu interlinear={tagged && mode === "bible" ? { on: interlinear, toggle: toggleInterlinear } : undefined} />
         <span className={styles.sep} aria-hidden />
         {/* Atalhos da área de trabalho na barra (antes só no + escondido da área). */}
         <button type="button" className={styles.barBtn} aria-label="Sermão" onClick={() => open({ kind: "sermon" })}><Icon name="sermon" /><span>Sermão</span></button>
