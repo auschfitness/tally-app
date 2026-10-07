@@ -101,11 +101,11 @@ function FiscalForm({
 
       <div className={styles.fiscalSection}>Endereço fiscal</div>
       <div className="mrow">
-        <div className="field" style={{ flex: 3 }}>
+        <div className={`field ${styles.fieldWide}`}>
           <label>{country === "BR" ? "Logradouro" : "Street"}</label>
           <input name="addrStreet" defaultValue={profile.address.street} disabled={ro} />
         </div>
-        <div className="field" style={{ flex: 1 }}>
+        <div className={`field ${styles.fieldNarrow}`}>
           <label>{country === "BR" ? "Número" : "Number"}</label>
           <input name="addrNumber" defaultValue={profile.address.number} disabled={ro} />
         </div>
@@ -181,7 +181,7 @@ function FiscalForm({
       {errorMsg ? <div className="gerr">{errorMsg}</div> : null}
 
       {canManage ? (
-        <div style={{ marginTop: "var(--s-4)", display: "flex", alignItems: "center", gap: "var(--s-3)" }}>
+        <div className={styles.saveRow}>
           <button className="btn" type="submit" disabled={pending}>{pending ? "Salvando…" : "Salvar"}</button>
           {justSaved && !pending ? <span className="muted">Salvo.</span> : null}
         </div>

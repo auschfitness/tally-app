@@ -11,6 +11,8 @@ import { addCampusAction, renameCampusAction, removeCampusAction, setCampusActiv
 import type { CampusRow } from "../types";
 import { type ActionResult } from "@/lib/errors";
 import styles from "../settings.module.css";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { Plus } from "lucide-react";
 
 const INITIAL: ActionResult = { success: true, data: undefined };
 
@@ -74,7 +76,7 @@ export function CampusManager({ campuses }: { campuses: CampusRow[] }) {
                     {c.active ? (
                       <>
                         <button className="link" type="button" onClick={() => setEditing(c.id)}>Renomear</button>
-                        <form action={activeAction} style={{ display: "inline" }}>
+                        <form action={activeAction} className={styles.inlineForm}>
                           <input type="hidden" name="id" value={c.id} />
                           <input type="hidden" name="active" value="0" />
                           <button className="link" type="submit">Desativar</button>
@@ -82,12 +84,12 @@ export function CampusManager({ campuses }: { campuses: CampusRow[] }) {
                       </>
                     ) : (
                       <>
-                        <form action={activeAction} style={{ display: "inline" }}>
+                        <form action={activeAction} className={styles.inlineForm}>
                           <input type="hidden" name="id" value={c.id} />
                           <input type="hidden" name="active" value="1" />
                           <button className="link" type="submit">Reativar</button>
                         </form>
-                        <form action={rmAction} style={{ display: "inline" }}>
+                        <form action={rmAction} className={styles.inlineForm}>
                           <input type="hidden" name="id" value={c.id} />
                           <button className="link" type="submit" aria-label={`Remover ${c.name}`}>Remover</button>
                         </form>
@@ -104,7 +106,7 @@ export function CampusManager({ campuses }: { campuses: CampusRow[] }) {
 
       <form action={addAction} ref={addRef} className={styles.addRow}>
         <input name="name" placeholder="Novo campus (ex.: Zona Sul)" />
-        <button className="btn ghost sm" type="submit" disabled={addPending}>{addPending ? "…" : "+ Adicionar"}</button>
+        <button className="btn ghost sm" type="submit" disabled={addPending}>{addPending ? "…" : <><UiIcon icon={Plus} />Adicionar</>}</button>
       </form>
       {!addState.success && addState.message ? <div className="gerr">{addState.message}</div> : null}
     </div>

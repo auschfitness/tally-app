@@ -17,6 +17,7 @@ import type { SettingsData } from "../types";
 import type { AdminTabKey } from "../domain";
 import type { InviteView } from "@/features/invites/types";
 import type { Dictionary } from "@/lib/i18n";
+import styles from "../settings.module.css";
 
 export function SettingsView({
   data,
@@ -58,7 +59,7 @@ export function SettingsView({
     <>
       <h1 className="page">{t.title}</h1>
       <p className="sub">{t.subtitle}</p>
-      <div className="tabs">
+      <div className={`tabs ${styles.setTabs}`}>
         {visibleTabs.map((key) => (
           <button key={key} className={`tab${tab === key ? " on" : ""}`} onClick={() => selectTab(key)}>
             {label[key]}

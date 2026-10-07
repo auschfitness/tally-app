@@ -16,6 +16,8 @@
 .lbl small {
   display: block;
   font-weight: 400;
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
   color: var(--text-2);
   margin-top: var(--s-1);
 }
@@ -124,3 +126,22 @@
 @media (max-width: 40rem) { .setrow { flex-direction: column; gap: var(--s-2); } .lbl { flex-basis: auto; } .ctrl { width: 100%; min-width: 0; } .campusActions { flex-wrap: wrap; } }
 
 .ctrl input { height: var(--control-h); padding: 0 var(--control-px); background: var(--surface-2); color: var(--text); border: 0; border-radius: var(--r-6); font: 400 var(--t-13)/var(--lh-13) var(--font-ui); }
+
+.inlineForm { display: inline; }
+.fieldWide { flex: 3; }
+.fieldNarrow { flex: 1; }
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+.setTabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  padding: var(--s-1) 0;
+}
+.setTabs::-webkit-scrollbar { display: none; }
