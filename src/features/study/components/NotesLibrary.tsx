@@ -31,7 +31,8 @@ export function NotesLibrary({ items }: { items: NoteItem[] }) {
 
       {items.length === 0 ? (
         <div className={styles.libEmpty}>
-          <p>Suas notas da leitura e as que você escrever aqui aparecem juntas.</p>
+          <p>Suas notas ficam aqui. Abra a Bíblia e toque em Notas para criar a primeira.</p>
+          <Link href="/study/bible" className={styles.primary}>Abrir a Bíblia</Link>
         </div>
       ) : (
         <>

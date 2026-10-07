@@ -14,7 +14,7 @@ export default async function StudyTrashPage() {
       <div className={styles.headerRow}>
         <div>
           <h1 className="page">Lixeira</h1>
-          <p className="sub" style={{ margin: 0 }}>Sermões e notas excluídos ficam aqui por {TRASH_DAYS} dias. Depois disso somem de vez.</p>
+          <p className={`sub ${styles.subTight}`}>Sermões e notas excluídos ficam aqui por {TRASH_DAYS} dias. Depois disso somem de vez.</p>
         </div>
       </div>
       {items.length === 0 ? (

@@ -1281,7 +1281,8 @@
 @keyframes toastUp { from { opacity: 0; transform: translateY(0.375rem); } }
 @media (prefers-reduced-motion: reduce) { .addedToast { animation: toastFade 200ms ease; } }
 @keyframes toastFade { from { opacity: 0; } }
-.trashList { list-style: none; margin: var(--s-2) 0 0; padding: 0; max-width: 47.5rem; }
+.trashList { list-style: none; margin: var(--s-2) 0 0; padding: 0; max-width: 48rem; }
+.subTight { margin: 0; }
 .trashRow { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
 .trashText { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; flex: 1; }
 .trashTitle { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
