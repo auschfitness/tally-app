@@ -256,7 +256,7 @@ Bloco F. Ajustes (`src/features/settings/**`, `settings.module.css`)
 
 Verificação (obrigatória, nesta ordem): `grep -rn "style={{" src/features/study/components src/features/settings "src/app/(dashboard)/study" | grep -v "STATUS_COLOR\|--level"` tem que voltar vazio (exceção: cores vindas de dados como `STATUS_COLOR`, que podem ficar via variável CSS). Depois `npm run verify` COM o dev server desligado. Depois subir `npx next dev -p 3010` e tirar as mesmas 32 prévias do passo 1 (mesmas rotas, 1280/390, claro/escuro, cookie `tally-theme`) em `docs/previews/8-depois-*.png`, com uma spec temporária e um config temporário sem `webServer`, apagando os dois no fim e parando o servidor. Não publicar: prévias vão para o dono aprovar.
 
-### 9. Sermões e Notas repensados (aprovado pelo dono em 2026-10-07; prévia aprovada no chat)
+### 9. Sermões e Notas repensados (FEITA na branch em 2026-10-07, AGUARDANDO APROVAÇÃO do dono)
 
 Norte: skills emil-design-eng e apple-design. Régua 4d e decisões da tarefa 8 continuam valendo (botão de texto em pílula, `--r-6` controles, `--r-10` painéis, sem borda em repouso, 5 tamanhos de texto, Lucide 16/1.75, verde só em ação primária/link/seleção). Não mexer no editor de sermão (`SermonEditor.tsx`), na página da série (`series/[id]`), na leitura (`reader/**`) nem em `scripts/align/**`. Sem migration: só tela e as actions que já existem.
 
