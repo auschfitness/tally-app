@@ -205,12 +205,56 @@ leitor e apagar a função temporária. Não marcar feita antes dessas etapas.
 - Só o dono tem acesso ao painel: Supabase → Authentication → Email Templates → Reset Password → colar assunto e corpo → Save. Dar o passo a passo em 3 linhas.
 - Opcional na mesma leva, se o dono quiser: Confirm signup, Invite, Magic Link no mesmo visual.
 
-### 8. Telas fora da leitura com a régua 4d
-- Alvo: `/study` (Sermões, `SermonLibrary.tsx`), `/study/sermon/[id]` (`SermonEditor.tsx`), `/study/series` e `/study/series/[id]` (`SeriesControls/SeriesModal`), `/study/map` (`ScriptureMap.tsx`), `/study/notes` (`NotesLibrary.tsx`), `/study/trash`, `/settings` (`src/features/settings/*`, `settings.module.css`), `/admin`. Login e leitura já estão prontos; não mexer.
-- Passo 1 (auditoria, Opus): subir `npx next dev -p 3010`, logar com o usuário de teste via Playwright, tirar screenshot de cada tela em claro/escuro e 1280/390 em `docs/previews/8-antes-*.png`; listar desvios da régua (tamanhos fora dos 5, raios fora de 6/10, bordas em repouso, controles ≠ 32px, botões/links sublinhados, ícones SVG soltos, `<select>` cru, texto em inglês).
-- Passo 2 (Fable, modelo da sessão): transformar a lista em spec com valores exatos por arquivo.
-- Passo 3 (subagente Opus 5.5, esforço médio): aplicar só visual, sem mudar fluxo; um commit por tela; `npm run verify` com o dev server desligado; screenshots `docs/previews/8-depois-*.png`.
-- Passo 4: prévias pro dono; publicar após "aprovado".
+### 8. Telas fora da leitura com a régua 4d (passo 1 FEITO em 2026-10-07: 32 prévias em docs/previews/8-antes-*.png; passo 3 em execução)
+
+Decisões do Fable sobre o que a auditoria levantou (NÃO reabrir):
+- Tokens `--r-6: 8px`, `--r-10: 14px` e a fonte Figtree vêm do manual da marca Mercy (commit 9ceafde). Ficam como estão.
+- O manual pede **botões em pílula**. Regra nova, uma só: TODO botão de texto (`.btn`, `.btn.sm`, `.btn.ghost`, `.btn.danger`, `.primary`, `.secondary`, botões de modal e do toast) usa `border-radius: var(--r-pill)`. Botão só de ícone (`.iconbtn`, 32x32) continua `--r-6`. Input, chip, aba, item de menu, célula continuam `--r-6`. Atualizar `docs/design-tokens.md` (linha "--r-pill: avatar e interruptor" vira "avatar, interruptor e botões de texto").
+- Azul (`--blue`, hoje verde Pasto) só em ação primária, link e seleção bíblica. Chip de status, célula de livro e avatar não levam `--blue`.
+- Nada de `style={{...}}` inline para espaçamento/layout: vira classe no CSS module da feature.
+
+**Passo 3 (subagente Opus 5.5, esforço médio): aplicar só visual, sem mudar fluxo nem dados. Um commit por bloco abaixo, mensagem `style(<área>): ...`. Sem push.**
+
+Bloco A. `src/app/globals.css` + `docs/design-tokens.md`
+- `.btn` já é pílula; garantir `.btn.sm` também (`--r-pill`), e que todos os `.btn*` tenham `height: var(--control-h)`.
+- `.link`: acrescentar `text-decoration: none` (e `a.link`, `.link:hover` idem).
+- `.hb`, `.av.c`, `.chip.*` (linhas ~181-202): trocar `rgba(...)` cru por `color-mix(in srgb, var(--coral|--warn|--blue|--text-2) 18%, transparent)`; chip `leader` perde o roxo e usa `var(--surface-2)` + `var(--text-2)`.
+- `.field input` (linha ~246) e a correção da linha ~442: fundir numa regra só: `height: var(--control-h); padding: 0 var(--control-px); background: var(--surface-2); border: 0; border-radius: var(--r-6)`.
+
+Bloco B. Sermões, Por livro, Por série (`src/features/study/components/{SermonLibrary,ScriptureMap,SeriesModal}.tsx`, `src/features/study/study.module.css`)
+- `study.module.css` ~927-941: apagar o bloco morto `.primary, .secondary` com `height: 2.25rem`; a regra que fica usa `height: var(--control-h); padding: 0 var(--control-px); border-radius: var(--r-pill)`.
+- `SermonLibrary.tsx` 66-72: quando a lista está vazia, o botão "Novo sermão" do cabeçalho não aparece (fica só o do corpo). Estados vazios da tela (`.empty` global e `.libEmpty`) passam a usar `.libEmpty` (alinhado à esquerda, `--t-15`, `--text-2`).
+- `ScriptureMap.tsx` 35-69: tirar todos os `style=` inline. Célula do livro: classe `.smapCell` com `height: var(--control-h); border-radius: var(--r-6)`; intensidade por `data-level="0..4"` em CSS com `background: color-mix(in srgb, var(--text) N%, var(--surface-2))` (N = 0, 8, 16, 28, 40) e `color: var(--text)`; selecionada = `background: var(--surface-2); color: var(--text); font-weight: 500; box-shadow: inset 0 0 0 2px var(--text-2)`, sem azul, sem `outline` inline. Subtítulo com `margin-top: var(--s-3)` acima e `margin-bottom: var(--s-4)`.
+- `SeriesModal.tsx` 68-70: botões continuam `.btn` (já pílula); nada mais.
+
+Bloco C. Editor de sermão (`SermonEditor.tsx`, `study.module.css`)
+- 305 "‹ Sermões" → `<UiIcon icon={ChevronLeft} />` + "Sermões"; 311 "···" → `UiIcon` `MoreHorizontal`; 339/366/370 "✓" → `UiIcon` `Check`; 397 "+ Esboço" → `UiIcon` `Plus` + "Esboço"; 307 `<span style={{flex:1}}>` → classe `.spacer { flex: 1 }`.
+- `.title` (~123-133): tirar `height: 32px`; usar `min-height: 40px; padding: var(--s-1) var(--s-2); border-radius: var(--r-6)` para o texto 22/28 não cortar e o anel de foco ter raio. Sem foco automático no título ao abrir um sermão EXISTENTE (manter autofocus só em `/study/sermon/new`).
+- `.addbtn:hover` (~182-185): hover = `background: var(--surface-2)`, sem mudar `border-color` nem pintar de azul.
+- `.addedToast button` (~1262): `border-radius: var(--r-pill); height: var(--control-h); padding: 0 var(--control-px)`.
+
+Bloco D. Série aberta (`src/app/(dashboard)/study/series/[id]/page.tsx`, `SeriesControls.tsx`, `study.module.css`)
+- A página passa a usar o mesmo contêiner da biblioteca (`.lib`, `max-width: 48rem`) em vez de `.panel/.row2/.field` globais.
+- 37 "← Voltar à biblioteca" → `Link` com classe `.back` (`--t-13`, 500, `--text-2`, sem sublinhado) + `UiIcon` `ChevronLeft`; texto "Sermões".
+- 69 título do sermão no cronograma: `Link` com classe `.srmTitle`-like, peso 500, sem sublinhado, sem `<b>`.
+- 38/55/47-49/62: todo `style=` inline vira classe no módulo com `--s-2`/`--s-3`/`--s-4`/`--s-5`.
+- 56 chip de status: `background: var(--surface-2); color: var(--text-2)`, sem azul.
+- 67 `.av` com data: trocar por `<span className={styles.srmDate}>` (texto, sem círculo); sem data = "sem data" em `--text-2`, nunca "—".
+- 79 "remover": classe `.linkQuiet` (`--t-13`, 500, `--text-2`, sem sublinhado), hover `--text`.
+- `SeriesControls.tsx` 16/25/28: sem `style` inline; botão `btn ghost` (pílula); estado vazio: texto "Nenhum sermão nesta série ainda." + `Link` para `/study/sermon/new` com texto "Novo sermão" (classe `.primary`). Apagar a frase "Crie um novo em Estudo".
+
+Bloco E. Notas e Lixeira (`NotesLibrary.tsx`, `src/app/(dashboard)/study/trash/page.tsx`, `study.module.css`)
+- `NotesLibrary.tsx` 32-35: estado vazio em `.libEmpty` com a frase "Suas notas ficam aqui. Abra a Bíblia e toque em Notas para criar a primeira." + `Link` "Abrir a Bíblia" (`.primary`) para `/study/bible`.
+- `trash/page.tsx` 17: sem `style` inline (classe). `.trashList` (~1267) `max-width: 48rem`, igual a `.lib`.
+
+Bloco F. Ajustes (`src/features/settings/**`, `settings.module.css`)
+- `.lbl small` (16-21): `font-size: var(--t-13); color: var(--text-2)`.
+- `AccountPanel.tsx` 65 `chip leader`: já resolvido no Bloco A pelo global.
+- `CampusManager.tsx` 77/85/90/107 e `FiscalPanel.tsx` 104/108/184: tirar `style` inline (classes em `settings.module.css`); "+ Adicionar" → `UiIcon` `Plus` + "Adicionar".
+- `SettingsView.tsx` ~61: barra de abas em uma linha com `overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; white-space: nowrap` (sem quebrar em 390px).
+- Conferir no escuro as abas Conta e Jurídico: nenhum `<select>`/input com fundo branco.
+
+Verificação (obrigatória, nesta ordem): `grep -rn "style={{" src/features/study/components src/features/settings "src/app/(dashboard)/study" | grep -v "STATUS_COLOR\|--level"` tem que voltar vazio (exceção: cores vindas de dados como `STATUS_COLOR`, que podem ficar via variável CSS). Depois `npm run verify` COM o dev server desligado. Depois subir `npx next dev -p 3010` e tirar as mesmas 32 prévias do passo 1 (mesmas rotas, 1280/390, claro/escuro, cookie `tally-theme`) em `docs/previews/8-depois-*.png`, com uma spec temporária e um config temporário sem `webServer`, apagando os dois no fim e parando o servidor. Não publicar: prévias vão para o dono aprovar.
 
 ## Já feito (não refazer)
 
