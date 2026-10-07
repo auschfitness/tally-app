@@ -332,7 +332,7 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 .sb-iconbtn:active { transform: scale(.97); }
 .sb-search { display: flex; align-items: center; gap: var(--s-2); height: var(--control-h); margin: 0 0 var(--s-3); padding: 0 var(--control-px); border-radius: var(--r-6); background: var(--surface-2); color: var(--text-2); transition: background 100ms ease, box-shadow 120ms ease; }
 .sb-search:focus-within { background: var(--surface-2); box-shadow: 0 0 0 2px var(--blue); }
-.sb-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--on-blue); font: var(--t-13)/1 var(--font-ui); height: var(--control-h); }
+.sb-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); font: var(--t-13)/1 var(--font-ui); height: var(--control-h); }
 .sb-search input::placeholder { color: var(--text-2); }
 .sb-search kbd { font: 500 var(--t-11)/1 var(--font-ui); color: var(--text-2); border: 0; border-radius: var(--r-6); padding: var(--s-1) var(--s-1); }
 .sb-hint { margin: calc(-1 * var(--s-1)) var(--s-2) var(--s-2); font-size: var(--t-13); color: var(--text-2); }
@@ -351,10 +351,11 @@ input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
 .sb-avatar { display: grid; place-items: center; flex: none; width: 1.75rem; height: 1.75rem; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text); font: 500 var(--t-13)/1 var(--font-ui); }
 .sb-who { display: flex; flex-direction: column; gap: 0; min-width: 0; }
 .sb-who b, .sb-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sb-who b { color: var(--on-blue); font-size: var(--t-13); font-weight: 500; line-height: var(--s-4); }
+.sb-who b { color: var(--text); font-size: var(--t-13); font-weight: 500; line-height: var(--s-4); }
 .sb-who span { color: var(--text-2); font-size: var(--t-11); font-weight: 400; line-height: var(--lh-11); }
 .sb-menu { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--s-1)); z-index: 30; padding: var(--s-1); background: var(--surface); border: 0; border-radius: var(--r-10); box-shadow: var(--e-1); transform-origin: bottom left; animation: sbMenuIn 150ms cubic-bezier(0.23, 1, 0.32, 1); }
-.sb.mini .sb-menu { right: auto; width: 12.5rem; }
+/* Recolhido: o menu sai da barra (fixed escapa do overflow da .side, que cortava). */
+.sb.mini .sb-menu { position: fixed; left: 4.25rem; right: auto; bottom: var(--s-3); width: 12.5rem; box-shadow: var(--e-2); }
 .sb-menuitem { display: flex; align-items: center; gap: var(--s-2); width: 100%; padding: 0 var(--control-px); border: 0; border-radius: var(--r-6); background: none; color: var(--text); font: 500 var(--t-13)/1.2 var(--font-ui); text-align: left; cursor: pointer; height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; }
 .sb-menuitem svg { flex: none; width: var(--s-4); height: var(--s-4); color: var(--text-2); }
 @keyframes sbMenuIn { from { opacity: 0; transform: translateY(0.25rem) scale(0.97); } }
