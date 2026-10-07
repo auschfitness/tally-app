@@ -199,13 +199,13 @@ ficam prontos automaticamente após geração, medição e montagem aprovadas. C
 espaço, pedir aprovação da carga, executar SQL pelo dono, carregar, conferir no
 leitor e apagar a função temporária. Não marcar feita antes dessas etapas.
 
-### 7. E-mail de recuperação de senha em português
+### 7. E-mail de recuperação de senha em português (FEITA em 2026-10-07: template em supabase/templates, SMTP próprio pelo Hostinger configurado pelo dono)
 - Hoje o Supabase envia o template padrão em inglês. O app já chama `resetPasswordForEmail` com `redirectTo=/auth/callback?next=/redefinir-senha` (`src/app/(auth)/esqueci-senha/actions.ts`).
 - Entregar `supabase/templates/recovery.html` (HTML simples, fonte do sistema, botão verde `#2A7E3B`, wordmark "mercy" em minúsculo, texto curto: "Recebemos um pedido para redefinir sua senha. Se não foi você, ignore este e-mail. O link vale por 1 hora.", botão "Redefinir senha" → `{{ .ConfirmationURL }}`, rodapé "Mercy · joinmercy.com"). Assunto: "Redefinir sua senha na Mercy".
 - Só o dono tem acesso ao painel: Supabase → Authentication → Email Templates → Reset Password → colar assunto e corpo → Save. Dar o passo a passo em 3 linhas.
 - Opcional na mesma leva, se o dono quiser: Confirm signup, Invite, Magic Link no mesmo visual.
 
-### 8. Telas fora da leitura com a régua 4d (passo 1 FEITO em 2026-10-07: 32 prévias em docs/previews/8-antes-*.png; passo 3 em execução)
+### 8. Telas fora da leitura com a régua 4d (FEITA na branch em 2026-10-07, commits 7405a61..c12686a, verify verde; prévias 8-antes/8-depois em docs/previews; AGUARDANDO APROVAÇÃO do dono para publicar na main)
 
 Decisões do Fable sobre o que a auditoria levantou (NÃO reabrir):
 - Tokens `--r-6: 8px`, `--r-10: 14px` e a fonte Figtree vêm do manual da marca Mercy (commit 9ceafde). Ficam como estão.
