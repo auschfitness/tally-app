@@ -119,24 +119,6 @@ export function sortSermonsByDate(sermons: Sermon[], dir: "asc" | "desc" = "desc
   });
 }
 
-// --- Mapa de Escrituras (slice 2): cobertura dos 66 livros por uso real. ---
-export interface Coverage {
-  count: Record<string, number>; // code → nº de sermões distintos que usam o livro
-  max: number;
-}
-export function coverage(scriptures: Scripture[]): Coverage {
-  const by: Record<string, Set<string>> = {};
-  for (const x of scriptures) (by[x.book] ?? (by[x.book] = new Set())).add(x.sermon_id);
-  const count: Record<string, number> = {};
-  let max = 0;
-  for (const code of Object.keys(by)) {
-    const n = by[code]!.size;
-    count[code] = n;
-    if (n > max) max = n;
-  }
-  return { count, max };
-}
-
 // Sermões (ids) que já usaram um livro+capítulo, exceto o sermão atual. Só dado real.
 export function sermonIdsUsing(scriptures: Scripture[], book: string, chapter: number, exceptSermonId: string | null): string[] {
   const ids = new Set<string>();

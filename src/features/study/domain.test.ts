@@ -17,7 +17,6 @@ import {
   seriesPeriod,
   editedAgo,
   libraryGroups,
-  coverage,
   sermonIdsUsing,
   DEFAULT_SECTION,
   appendBlock,
@@ -134,7 +133,7 @@ describe("STATUS_BAND", () => {
   });
 });
 
-describe("coverage / sermonIdsUsing (Mapa de Escrituras)", () => {
+describe("sermonIdsUsing", () => {
   const scr = (o: Partial<Scripture>): Scripture => ({
     id: o.id ?? Math.random().toString(36).slice(2),
     sermon_id: o.sermon_id ?? "s1",
@@ -143,18 +142,6 @@ describe("coverage / sermonIdsUsing (Mapa de Escrituras)", () => {
     verse_start: o.verse_start ?? null,
     verse_end: o.verse_end ?? null,
     reference: o.reference ?? "João 10",
-  });
-  it("conta sermões DISTINTOS por livro (não dupla contagem)", () => {
-    const list = [
-      scr({ sermon_id: "s1", book: "JHN" }),
-      scr({ sermon_id: "s1", book: "JHN", chapter: 3 }), // mesmo sermão, mesmo livro → 1
-      scr({ sermon_id: "s2", book: "JHN" }),
-      scr({ sermon_id: "s1", book: "ROM" }),
-    ];
-    const cov = coverage(list);
-    expect(cov.count.JHN).toBe(2); // s1, s2
-    expect(cov.count.ROM).toBe(1);
-    expect(cov.max).toBe(2);
   });
   it("sermonIdsUsing exclui o sermão atual", () => {
     const list = [scr({ sermon_id: "s1", book: "JHN", chapter: 10 }), scr({ sermon_id: "s2", book: "JHN", chapter: 10 })];
