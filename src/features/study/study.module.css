@@ -1848,3 +1848,103 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Série aberta (/study/series/[id]) no contêiner da biblioteca. */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: var(--control-h);
+  font-size: var(--t-13);
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+}
+.serHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin: var(--s-2) 0 var(--s-4);
+}
+.serTheme { margin: 0; }
+.serSecHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-6) 0 var(--s-2);
+}
+.serSecHead .libSec { margin: 0; }
+.serCount {
+  margin-left: auto;
+  font-size: var(--t-13);
+  color: var(--text-2);
+}
+.serDesc { margin: 0 0 var(--s-3); }
+.serFact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-bottom: var(--s-3);
+}
+.serFactLbl {
+  font-size: var(--t-13);
+  font-weight: 500;
+  color: var(--text-2);
+}
+.serChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.serChip {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.serRow {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  column-gap: var(--s-3);
+  align-items: baseline;
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+.serRowMain { min-width: 0; }
+.serRowTitle {
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.serRowRef {
+  font-size: var(--t-13);
+  color: var(--text-2);
+}
+.serRowEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.inlineForm { display: inline; }
+.linkQuiet {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: var(--t-13);
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  cursor: pointer;
+}
+.serAdd { margin-top: var(--s-3); }
+.serAddBtn {
+  display: flex;
+  align-items: flex-end;
+}
+@media (hover: hover) and (pointer: fine) {
+  .back:hover,
+  .linkQuiet:hover,
+  .serRowTitle:hover {
+    color: var(--text);
+  }
+}

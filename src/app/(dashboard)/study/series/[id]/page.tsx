@@ -6,6 +6,9 @@ import { SERIES_BAND, SERIES_LBL, STATUS_BAND, STATUS_LBL, sortSermonsByDate } f
 import { AddSermonToSeries, EditSeriesButton } from "@/features/study/components/SeriesControls";
 import { setSermonSeriesAction } from "@/features/study/actions";
 import { brDate } from "@/lib/utils/date";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { ChevronLeft } from "lucide-react";
+import styles from "@/features/study/study.module.css";
 
 // Workspace da série: visão/tema, escrituras-chave (das passagens reais dos sermões),
 // período e cronograma. Vincular/desvincular sermões.
@@ -33,60 +36,66 @@ export default async function SeriesWorkspacePage({ params }: { params: Promise<
   const period = se.start_date || se.end_date ? (brDate(se.start_date) || "…") + " — " + (brDate(se.end_date) || "…") : "sem período definido";
 
   return (
-    <>
-      <Link href="/study" className="link">← Voltar à biblioteca</Link>
-      <div style={{ display: "flex", alignItems: "flex-start", margin: "10px 0 18px" }}>
+    <div className={styles.lib}>
+      <Link href="/study" className={styles.back}><UiIcon icon={ChevronLeft} />Sermões</Link>
+      <div className={styles.serHead}>
         <div>
           <h1 className="page">{se.title || "(sem título)"}</h1>
-          <p className="sub" style={{ margin: 0 }}>{se.theme || "Série de ensino"}</p>
+          <p className={`sub ${styles.serTheme}`}>{se.theme || "Série de ensino"}</p>
         </div>
         <EditSeriesButton series={se} />
       </div>
 
-      <div className="row2">
-        <div className="panel">
-          <div className="ph"><h3>Visão</h3><span className={`hb ${SERIES_BAND[se.status] || "attention"}`} style={{ marginLeft: "auto" }}>{SERIES_LBL[se.status] || se.status}</span></div>
-          {se.description ? <p style={{ margin: "0 0 12px" }}>{se.description}</p> : <p className="muted" style={{ margin: "0 0 12px" }}>Sem descrição da visão ainda.</p>}
-          <div className="field"><label>Período</label><div>{period}</div></div>
-          <div className="field">
-            <label>Escrituras-chave</label>
-            {keyScr.length ? (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {keyScr.map((p) => <span key={p} className="chip" style={{ background: "color-mix(in srgb, var(--blue) 10%, transparent)", color: "var(--blue)" }}>{p}</span>)}
-              </div>
-            ) : (
-              <div className="muted">As escrituras-chave aparecem conforme você define a passagem de cada sermão.</div>
-            )}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="ph"><h3>Cronograma</h3><span className="muted" style={{ marginLeft: "auto" }}>{mine.length} {mine.length === 1 ? "sermão" : "sermões"}</span></div>
-          {mine.length === 0 ? (
-            <div className="empty">Sem sermões ainda. Vincule um sermão a esta série abaixo — ou defina a série no editor do sermão.</div>
-          ) : (
-            mine.map((s) => (
-              <div className="li" key={s.id}>
-                <Link href={`/study/sermon/${s.id}`} className="av">{s.sermon_date ? brDate(s.sermon_date).slice(0, 5) : "—"}</Link>
-                <div style={{ flex: 1 }}>
-                  <div><Link href={`/study/sermon/${s.id}`}><b>{s.title || "(sem título)"}</b></Link></div>
-                  {s.main_passage ? <div className="meta">{s.main_passage}</div> : null}
-                </div>
-                <div className="right">
-                  <span className={`hb ${STATUS_BAND[s.status] || "attention"}`}>{STATUS_LBL[s.status] || s.status}</span>
-                  <form action={setSermonSeriesAction} style={{ display: "inline" }}>
-                    <input type="hidden" name="sermonId" value={s.id} />
-                    <input type="hidden" name="seriesId" value="" />
-                    <input type="hidden" name="backTo" value={`/study/series/${id}`} />
-                    <button className="link" type="submit">remover</button>
-                  </form>
-                </div>
-              </div>
-            ))
-          )}
-          <AddSermonToSeries seriesId={id} options={addable} />
-        </div>
+      <div className={styles.serSecHead}>
+        <h2 className={styles.libSec}>Visão</h2>
+        <span className={`hb ${SERIES_BAND[se.status] || "attention"}`}>{SERIES_LBL[se.status] || se.status}</span>
       </div>
-    </>
+      {se.description ? <p className={styles.serDesc}>{se.description}</p> : <p className={`muted ${styles.serDesc}`}>Sem descrição da visão ainda.</p>}
+      <div className={styles.serFact}>
+        <span className={styles.serFactLbl}>Período</span>
+        <span>{period}</span>
+      </div>
+      <div className={styles.serFact}>
+        <span className={styles.serFactLbl}>Escrituras-chave</span>
+        {keyScr.length ? (
+          <div className={styles.serChips}>
+            {keyScr.map((p) => <span key={p} className={`chip ${styles.serChip}`}>{p}</span>)}
+          </div>
+        ) : (
+          <span className="muted">As escrituras-chave aparecem conforme você define a passagem de cada sermão.</span>
+        )}
+      </div>
+
+      <div className={styles.serSecHead}>
+        <h2 className={styles.libSec}>Cronograma</h2>
+        <span className={styles.serCount}>{mine.length} {mine.length === 1 ? "sermão" : "sermões"}</span>
+      </div>
+      {mine.length === 0 ? (
+        <div className={styles.libEmpty}>
+          <p>Nenhum sermão nesta série ainda.</p>
+          <Link href="/study/sermon/new" className={styles.primary}>Novo sermão</Link>
+        </div>
+      ) : (
+        mine.map((s) => (
+          <div className={styles.serRow} key={s.id}>
+            <span className={styles.srmDate}>{s.sermon_date ? brDate(s.sermon_date).slice(0, 5) : "sem data"}</span>
+            <div className={styles.serRowMain}>
+              <Link href={`/study/sermon/${s.id}`} className={styles.serRowTitle}>{s.title || "(sem título)"}</Link>
+              {s.main_passage ? <div className={styles.serRowRef}>{s.main_passage}</div> : null}
+            </div>
+            <div className={styles.serRowEnd}>
+              <span className={`hb ${STATUS_BAND[s.status] || "attention"}`}>{STATUS_LBL[s.status] || s.status}</span>
+              <form action={setSermonSeriesAction} className={styles.inlineForm}>
+                <input type="hidden" name="sermonId" value={s.id} />
+                <input type="hidden" name="seriesId" value="" />
+                <input type="hidden" name="backTo" value={`/study/series/${id}`} />
+                <button className={styles.linkQuiet} type="submit">remover</button>
+              </form>
+            </div>
+          </div>
+        ))
+      )}
+      {mine.length === 0 && addable.length === 0 ? null : <AddSermonToSeries seriesId={id} options={addable} />}
+    </div>
   );
 }
