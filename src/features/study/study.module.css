@@ -1315,7 +1315,7 @@
   top: 0;
   min-width: 0;
 }
-.nBack {
+.nPane .nBack {
   display: none;
   padding: 0;
   border: 0;
@@ -1418,8 +1418,11 @@
     visibility: visible;
     transition: transform 260ms cubic-bezier(.32, .72, 0, 1), visibility 0s;
   }
-  .nBack {
+  .nPane .nBack {
     display: inline-flex;
+  }
+  .nRow[aria-current="true"] {
+    background: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

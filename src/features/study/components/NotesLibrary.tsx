@@ -15,6 +15,7 @@ import { usfmToOsis } from "@/lib/bible/osis";
 import { buildReference, parseRefs } from "@/lib/bible/parse";
 import { deleteNoteAction, deleteTextNoteAction, saveLooseNoteAction, saveTextNoteAction } from "../actions";
 import { READER_TRANSLATION } from "../reader-queries";
+import { curlyQuotes } from "../reader";
 import { groupNotesByDate, joinNote, noteDate, searchNotes, splitNote, type NoteItem } from "../domain";
 import { Chip, MenuChip, MenuItem } from "./FilterChips";
 import { Popover } from "./Popover";
@@ -302,7 +303,13 @@ function useVerseText(n: NoteItem): string {
       .order("verse")
       .then(({ data }) => {
         if (!alive || !data) return;
-        setText(data.map((r) => (r.spans as [string, string | null][]).map((s) => s[0]).join("").trim()).join(" "));
+        const verses = data.map((r) =>
+          curlyQuotes((r.spans as [string, string | null][]).map(([text, strong]) => ({ text, strong })))
+            .map((s) => s.text)
+            .join("")
+            .trim(),
+        );
+        setText(verses.join(" "));
       });
     return () => {
       alive = false;
@@ -352,10 +359,16 @@ function NotePane({
     if (focus) area.current?.focus();
   }, [focus]);
 
-  const save = useCallback(async () => {
-    window.clearTimeout(timer.current);
+  // Um salvamento por vez (blur e debounce juntos não podem inserir duas vezes); cada um
+  // lê o estado mais recente.
+  const latest = useRef({ title, body, passage, n, onSaved });
+  latest.current = { title, body, passage, n, onSaved };
+  const chain = useRef<Promise<void>>(Promise.resolve());
+
+  const doSave = useCallback(async () => {
+    const { title, body, passage, n, onSaved } = latest.current;
     const ref = kindRef.current === "loose" && passage.trim() ? parseRefs(passage)[0] : null;
-    if (kindRef.current === "loose" && passage.trim() && !ref) return setErr("Não reconheci a passagem. Tente assim: João 3:16.");
+    if (kindRef.current === "loose" && passage.trim() && !ref) return void setErr("Não reconheci a passagem. Tente assim: João 3:16.");
     setErr("");
     const text = kindRef.current === "loose" ? joinNote(title, body) : body.trim();
     if (!text.trim() || (text === last.current && !ref)) return;
@@ -365,7 +378,7 @@ function NotePane({
       const osis = usfmToOsis(ref.book);
       if (!osis) return;
       const r = await saveTextNoteAction({ book: osis, chapter: ref.chapter, verse_start: ref.verse_start, verse_end: ref.verse_end, body: text });
-      if (!r.success) return setErr(r.message || "Não consegui guardar a nota.");
+      if (!r.success) return void setErr(r.message || "Não consegui guardar a nota.");
       if (idRef.current) {
         const f = new FormData();
         f.set("id", idRef.current);
@@ -380,12 +393,12 @@ function NotePane({
     } else if (kindRef.current === "text") {
       const osis = n.book ? usfmToOsis(n.book) : null;
       const r = await saveTextNoteAction({ id: idRef.current, book: osis ?? "", chapter: n.chapter ?? 0, verse_start: n.verse, verse_end: n.verseEnd, body: text });
-      if (!r.success) return setErr(r.message || "Não consegui guardar a nota.");
+      if (!r.success) return void setErr(r.message || "Não consegui guardar a nota.");
       last.current = text;
       onSaved({ body: text, text, at });
     } else {
       const r = await saveLooseNoteAction({ id: idRef.current || null, text });
-      if (!r.success) return setErr(r.message || "Não consegui guardar a nota.");
+      if (!r.success) return void setErr(r.message || "Não consegui guardar a nota.");
       idRef.current = r.data.id;
       last.current = text;
       const s = splitNote(text);
@@ -394,13 +407,19 @@ function NotePane({
     setSaved(true);
     window.clearTimeout(savedTimer.current);
     savedTimer.current = window.setTimeout(() => setSaved(false), 1500);
-  }, [title, body, passage, n.book, n.chapter, n.verse, n.verseEnd, onSaved]);
+  }, []);
+
+  const save = useCallback(() => {
+    window.clearTimeout(timer.current);
+    chain.current = chain.current.then(doSave, doSave);
+    return chain.current;
+  }, [doSave]);
 
   // Debounce: 800ms depois da última tecla.
   useEffect(() => {
     timer.current = window.setTimeout(() => void save(), SAVE_MS);
     return () => window.clearTimeout(timer.current);
-  }, [save]);
+  }, [save, title, body, passage]);
 
   useEffect(() => () => window.clearTimeout(savedTimer.current), []);
 
