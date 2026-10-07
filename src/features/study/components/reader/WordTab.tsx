@@ -7,7 +7,7 @@
 // Com verbete no dicionário UBS (spec 09), a Definição mostra o sentido deste versículo
 // (glosas, definição, comentário, domínios, versículo citado) e os outros sentidos; sem
 // verbete, cai no léxico STEPBible.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { morphPt } from "../../morph";
 import { usfmToOsis } from "@/lib/bible/osis";
@@ -257,7 +257,7 @@ export function WordTab({
               <button type="button" className={styles.occBook} aria-expanded={byChapter || openBook === b.book} onClick={() => setOpenBook((o) => (o === b.book ? "" : b.book))}>
                 <UiIcon icon={ChevronRight} className={styles.occChev} />
                 <span className={styles.occName}>{b.name}</span>
-                <span className={styles.occBar} aria-hidden><i style={{ transform: `scaleX(${b.total / maxBook})` }} /></span>
+                <span className={styles.occBar} aria-hidden><i style={{ "--level": b.total / maxBook } as CSSProperties} /></span>
                 <span className={styles.occN}>{b.total}</span>
               </button>
               {byChapter || openBook === b.book ? (

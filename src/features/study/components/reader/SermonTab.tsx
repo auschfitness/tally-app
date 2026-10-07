@@ -45,7 +45,7 @@ export function SermonTab({
     return (
       <div data-testid="sermon-picker">
         <button type="button" className="btn" onClick={() => { setChoosing(false); setPick({ id: null, slot: Date.now() }); }}>Novo sermão</button>
-        <p className={styles.senseTag} style={{ margin: "20px 0 8px" }}>Em andamento</p>
+        <p className={`${styles.senseTag} ${styles.senseTagGap}`}>Em andamento</p>
         {inProgress.length === 0 ? <p className={styles.muted}>Nenhum sermão em andamento.</p> : (
           <ul className={styles.sermonList}>
             {inProgress.map((s) => (
@@ -58,7 +58,7 @@ export function SermonTab({
             ))}
           </ul>
         )}
-        {pick ? <button type="button" className="link" style={{ marginTop: 12 }} onClick={() => setChoosing(false)}>Voltar ao sermão</button> : null}
+        {pick ? <button type="button" className={`link ${styles.mtS3}`} onClick={() => setChoosing(false)}>Voltar ao sermão</button> : null}
       </div>
     );
   }

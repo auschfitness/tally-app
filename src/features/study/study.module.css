@@ -833,8 +833,18 @@
 
 .cmpCols {
   display: grid;
+  grid-template-columns: repeat(var(--level, 1), 1fr);
   gap: var(--s-3);
 }
+.cmpVn { color: var(--text-2); margin-right: var(--s-1); }
+.cmpNum { width: 3.875rem; }
+.cmpNarrow { max-width: 23.75rem; }
+.cmpCap { font-size: var(--t-11); line-height: var(--lh-11); margin-bottom: var(--s-2); }
+.mlAuto { margin-left: auto; }
+.mtS3 { margin-top: var(--s-3); }
+.mtS4 { margin-top: var(--s-4); }
+.mbS3 { margin-bottom: var(--s-3); }
+.pyS3 { padding: var(--s-3) 0; }
 .cmpCol {
   border: 0;
   border-radius: var(--r-6);

@@ -11,7 +11,7 @@
 //
 // Persistência de preferência do pastor (favoritos + histórico) fica em localStorage
 // por aparelho (cross-device fica p/ depois). Diff de versões é calculado no cliente.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Select } from "@/components/shared/Select";
 import { createClient } from "@/lib/supabase/client";
 import { BOOKS, bookName } from "@/lib/bible/books";
@@ -772,7 +772,7 @@ export function BibleCompare({
     const commonSet = common.get(v.n);
     return (
       <span key={v.n}>
-        <sup style={{ color: "var(--text-2)", marginRight: 3 }}>{v.n}</sup>
+        <sup className={styles.cmpVn}>{v.n}</sup>
         {!commonSet
           ? v.text + " "
           : v.text.split(/(\s+)/).map((seg, i) => {
@@ -802,7 +802,7 @@ export function BibleCompare({
             <h2 className={styles.stRef}>{refLabel}</h2>
           </div>
           {embedded ? null : (
-            <button className="iconbtn" type="button" aria-label="Fechar" style={{ marginLeft: "auto" }} onClick={onClose}>
+            <button className={`iconbtn ${styles.mlAuto}`} type="button" aria-label="Fechar" onClick={onClose}>
               ×
             </button>
           )}
@@ -813,9 +813,9 @@ export function BibleCompare({
           <Select value={ref.book} compact onChange={(e) => setRef((r) => ({ ...r, book: e.target.value }))}>
             {BOOKS.map((b) => <option key={b.code} value={b.code}>{b.pt}</option>)}
           </Select>
-          <input type="number" min={1} placeholder="cap" value={chapStr} onChange={(e) => setChapStr(e.target.value)} style={{ width: 62 }} />
-          <input type="number" min={1} placeholder="v. ini" value={vsStr} onChange={(e) => setVsStr(e.target.value)} style={{ width: 62 }} />
-          <input type="number" min={1} placeholder="v. fim" value={veStr} onChange={(e) => setVeStr(e.target.value)} style={{ width: 62 }} />
+          <input type="number" min={1} placeholder="cap" value={chapStr} onChange={(e) => setChapStr(e.target.value)} className={styles.cmpNum} />
+          <input type="number" min={1} placeholder="v. ini" value={vsStr} onChange={(e) => setVsStr(e.target.value)} className={styles.cmpNum} />
+          <input type="number" min={1} placeholder="v. fim" value={veStr} onChange={(e) => setVeStr(e.target.value)} className={styles.cmpNum} />
           <button className="btn" type="button" onClick={openNow}>Ver passagem</button>
           <button className="link" type="button" onClick={wholeChapter}>Capítulo inteiro</button>
         </div>
@@ -855,7 +855,7 @@ export function BibleCompare({
             ) : !context.data ? (
               <div className={styles.stPh}>
                 <div className={styles.stPhTitle}>Contexto em breve</div>
-                <div className="muted" style={{ maxWidth: 380 }}>Ainda não temos o contexto de <b>{bookName(ref.book)}</b>.</div>
+                <div className={`muted ${styles.cmpNarrow}`}>Ainda não temos o contexto de <b>{bookName(ref.book)}</b>.</div>
               </div>
             ) : (
               <>
@@ -871,7 +871,7 @@ export function BibleCompare({
                   </dl>
                 ) : null}
                 {onAddToSermon ? (
-                  <div style={{ marginTop: 16 }}>
+                  <div className={styles.mtS4}>
                     <AddToSermon getBlock={contextBlock} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
                   </div>
                 ) : null}
@@ -887,13 +887,13 @@ export function BibleCompare({
             ) : keywords.length === 0 ? (
               <div className={styles.stPh}>
                 <div className={styles.stPhTitle}>Palavras-chave em breve</div>
-                <div className="muted" style={{ maxWidth: 380 }}>
+                <div className={`muted ${styles.cmpNarrow}`}>
                   Sem palavras de conteúdo para <b>{refLabel}</b> ainda. Elas vêm do texto original (grego/hebraico) — aparecem assim que a base for carregada.
                 </div>
               </div>
             ) : (
               <>
-                <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                <div className={`muted ${styles.mbS3}`}>
                   Palavras de conteúdo de <b>{refLabel}</b> · as mais <b>raras</b> no cânone primeiro
                 </div>
                 <ul className={styles.stKwList}>
@@ -912,7 +912,7 @@ export function BibleCompare({
                         {on ? (
                           <div className={styles.stKwOcc}>
                             {onAddToSermon ? (
-                              <div style={{ marginBottom: 10 }}>
+                              <div className={styles.mbS3}>
                                 <AddToSermon getBlock={() => keywordBlock(k)} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
                               </div>
                             ) : null}
@@ -924,7 +924,7 @@ export function BibleCompare({
                               <span className="muted">Sem outras ocorrências no texto disponível.</span>
                             ) : (
                               <>
-                                <div className="muted" style={{ fontSize: 11.5, marginBottom: 6 }}>Onde mais aparece (Strong {k.strong})</div>
+                                <div className={`muted ${styles.cmpCap}`}>Onde mais aparece (Strong {k.strong})</div>
                                 <div className={styles.stRelChips}>
                                   {occ.refs.map((rr) => (
                                     <button key={rr.label} type="button" className={styles.stRelChip} onClick={() => openRelated(rr)}>{rr.label}</button>
@@ -951,13 +951,13 @@ export function BibleCompare({
             ) : original.tokens.length === 0 ? (
               <div className={styles.stPh}>
                 <div className={styles.stPhTitle}>Texto original em breve</div>
-                <div className="muted" style={{ maxWidth: 380 }}>
+                <div className={`muted ${styles.cmpNarrow}`}>
                   Ainda não temos o grego/hebraico de <b>{refLabel}</b>. Assim que a base do original for carregada, esta aba mostra a passagem palavra a palavra, com Strong e morfologia.
                 </div>
               </div>
             ) : (
               <>
-                <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                <div className={`muted ${styles.mbS3}`}>
                   {original.lang === "hbo" ? "Hebraico" : "Grego"} · toque numa palavra para ver Strong, lema e morfologia
                 </div>
                 <div className={styles.stOrigText} dir={original.lang === "hbo" ? "rtl" : "ltr"} lang={original.lang === "hbo" ? "he" : "el"}>
@@ -1001,7 +1001,7 @@ export function BibleCompare({
                         {morph ? (<><dt>Morfologia</dt><dd>{morph}{morph !== (t.morph || "") ? <span className="muted"> · {t.morph}</span> : null}</dd></>) : null}
                       </dl>
                       {onAddToSermon ? (
-                        <div style={{ marginTop: 12 }}>
+                        <div className={styles.mtS3}>
                           <AddToSermon getBlock={() => originalBlock(t)} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
                         </div>
                       ) : null}
@@ -1021,13 +1021,13 @@ export function BibleCompare({
             ) : related.items.length === 0 ? (
               <div className={styles.stPh}>
                 <div className={styles.stPhTitle}>Nenhum texto relacionado</div>
-                <div className="muted" style={{ maxWidth: 380 }}>
+                <div className={`muted ${styles.cmpNarrow}`}>
                   Não encontramos referências cruzadas para <b>{refLabel}</b>. Tente abrir um versículo específico do capítulo.
                 </div>
               </div>
             ) : (
               <>
-                <div className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
+                <div className={`muted ${styles.mbS3}`}>
                   Passagens que conversam com <b>{refLabel}</b>
                 </div>
                 <div className={styles.stRelChips}>
@@ -1038,7 +1038,7 @@ export function BibleCompare({
                   ))}
                 </div>
                 {onAddToSermon ? (
-                  <div style={{ marginTop: 12 }}>
+                  <div className={styles.mtS3}>
                     <AddToSermon getBlock={relatedBlock} onAdd={onAddToSermon} label="→ Adicionar ao sermão" />
                   </div>
                 ) : null}
@@ -1054,7 +1054,7 @@ export function BibleCompare({
             {notes.status === "noauth" ? (
               <div className={styles.stPh}>
                 <div className={styles.stPhTitle}>Entre para guardar notas</div>
-                <div className="muted" style={{ maxWidth: 380 }}>Faça login para escrever e ver suas anotações de estudo desta passagem.</div>
+                <div className={`muted ${styles.cmpNarrow}`}>Faça login para escrever e ver suas anotações de estudo desta passagem.</div>
               </div>
             ) : (
               <>
@@ -1066,7 +1066,7 @@ export function BibleCompare({
                     onChange={(e) => setDraft(e.target.value)}
                   />
                   <div className={styles.stNoteFoot}>
-                    <span className="muted" style={{ fontSize: 12 }}>Só você vê suas notas.</span>
+                    <span className="muted">Só você vê suas notas.</span>
                     <button className="btn sm" type="button" disabled={!draft.trim() || noteBusy} onClick={saveNote}>
                       {noteBusy ? "Guardando…" : "Guardar nota"}
                     </button>
@@ -1078,7 +1078,7 @@ export function BibleCompare({
                 ) : notes.status === "error" ? (
                   <div className="muted">Não foi possível carregar as notas agora.</div>
                 ) : notes.items.length === 0 ? (
-                  <div className="muted" style={{ padding: "10px 0" }}>Nenhuma nota para esta passagem ainda.</div>
+                  <div className={`muted ${styles.pyS3}`}>Nenhuma nota para esta passagem ainda.</div>
                 ) : (
                   <ul className={styles.stNoteList}>
                     {notes.items.map((n) => (
@@ -1097,7 +1097,7 @@ export function BibleCompare({
                               <span className={styles.stNoteRef}>{noteRefLabel(n)}</span>
                               {confirmDel === n.id ? (
                                 <span className={styles.stNoteActions}>
-                                  <span className="muted" style={{ fontSize: 12.5 }}>Excluir?</span>
+                                  <span className="muted">Excluir?</span>
                                   <button className="link" type="button" onClick={() => delNote(n)}>Sim</button>
                                   <button className="link" type="button" onClick={() => setConfirmDel("")}>Não</button>
                                 </span>
@@ -1171,7 +1171,7 @@ export function BibleCompare({
             {picks.length === 0 ? (
               <div className="empty">Escolha ao menos uma versão.</div>
             ) : (
-              <div className={styles.cmpCols} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+              <div className={styles.cmpCols} style={{ "--level": cols } as CSSProperties}>
                 {picks.map((id) => {
                   const res = results[id];
                   return (

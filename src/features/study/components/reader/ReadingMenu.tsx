@@ -4,7 +4,7 @@
 // de livros. Popover nativo (fecha com Esc e clique fora sem JS). Tamanho e tom vão para
 // cookie e para o <html> na hora; o layout raiz lê os cookies no servidor (sem piscar).
 // O tema claro/escuro é o mesmo do app inteiro (setThemeAction).
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { ALargeSmall } from "lucide-react";
 import { UiIcon } from "@/components/shared/UiIcon";
 import { setThemeAction } from "@/app/(dashboard)/actions";
@@ -82,7 +82,7 @@ export function ReadingMenu({ interlinear }: { interlinear?: { on: boolean; togg
         <div className={styles.aaRow} role="group" aria-label="Tamanho da letra">
           {SIZES.map((o, i) => (
             <button key={o.v} type="button" className={styles.aaOpt} aria-pressed={size === o.v} aria-label={o.label} onClick={() => pickSize(o.v)}>
-              <span className={styles.aaGlyph} style={{ fontSize: `${15 + i * 3}px` }}>A</span>
+              <span className={styles.aaGlyph} style={{ "--level": i } as CSSProperties}>A</span>
             </button>
           ))}
         </div>
