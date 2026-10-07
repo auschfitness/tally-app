@@ -1,13 +1,14 @@
-// Baixa os comentários de João (Frente C, spec 09) da API helloao e grava um JSON enxuto por capítulo.
-// Uso: node scripts/comments/fetch.mjs            (21 capítulos x 2 fontes)
-// Saída: scripts/comments/work/<fonte>/JHN-<cap>.json  (pasta ignorada pelo git)
+// Baixa comentários da API helloao e grava um JSON enxuto por capítulo.
+// Uso: node scripts/comments/fetch.mjs                 (só João, como na Frente C)
+//      node scripts/comments/fetch.mjs ROM 1CO         (livros escolhidos, código USFM)
+//      node scripts/comments/fetch.mjs nt | ot         (Novo ou Antigo Testamento inteiro)
+// Saída: scripts/comments/work/<fonte>/<LIVRO>-<cap>.json  (pasta ignorada pelo git)
 // Formato: { source, chapter, blocks: [{ verse, kind: "intro"|"verse", text }] }
 //   "intro" = texto que a API devolve como introdução do capítulo (no JFB cobre João 1.1 em diante).
 import fs from "node:fs";
 import path from "node:path";
 
 const SOURCES = ["jamieson-fausset-brown", "tyndale"];
-const CHAPTERS = 21;
 const OUT = path.join("scripts", "comments", "work");
 
 function clean(parts) {
@@ -32,25 +33,40 @@ async function get(url) {
   throw new Error("falhou: " + url);
 }
 
+const NT = "MAT MRK LUK JHN ACT ROM 1CO 2CO GAL EPH PHP COL 1TH 2TH 1TI 2TI TIT PHM HEB JAS 1PE 2PE 1JN 2JN 3JN JUD REV".split(" ");
+const args = process.argv.slice(2);
+let wanted = args.length ? args : ["JHN"];
+const totals = {};
+
 for (const source of SOURCES) {
   fs.mkdirSync(path.join(OUT, source), { recursive: true });
+  const index = await get(`https://bible.helloao.org/api/c/${source}/books.json`);
+  const avail = new Map((index?.books ?? []).map((b) => [b.id, b.numberOfChapters]));
+  const books = wanted.flatMap((w) => (w === "nt" ? NT : w === "ot" ? [...avail.keys()].filter((id) => !NT.includes(id)) : [w]));
   let chars = 0;
-  for (let ch = 1; ch <= CHAPTERS; ch++) {
-    const json = await get(`https://bible.helloao.org/api/c/${source}/JHN/${ch}.json`);
-    const blocks = [];
-    if (json) {
-      const intro = clean([json.chapter?.introduction ?? ""]);
-      if (intro) blocks.push({ verse: 1, kind: "intro", text: intro });
-      for (const item of json.chapter?.content ?? []) {
-        if (item.type !== "verse") continue;
-        const text = clean(item.content ?? []);
-        if (text) blocks.push({ verse: item.number, kind: "verse", text });
+  for (const book of books) {
+    const chapters = avail.get(book) ?? 0;
+    let bookChars = 0;
+    for (let ch = 1; ch <= chapters; ch++) {
+      const json = await get(`https://bible.helloao.org/api/c/${source}/${book}/${ch}.json`);
+      const blocks = [];
+      if (json) {
+        const intro = clean([json.chapter?.introduction ?? ""]);
+        if (intro) blocks.push({ verse: 1, kind: "intro", text: intro });
+        for (const item of json.chapter?.content ?? []) {
+          if (item.type !== "verse") continue;
+          const text = clean(item.content ?? []);
+          if (text) blocks.push({ verse: item.number, kind: "verse", text });
+        }
       }
+      fs.writeFileSync(path.join(OUT, source, `${book}-${ch}.json`), JSON.stringify({ source, book, chapter: ch, blocks }, null, 1));
+      bookChars += blocks.reduce((s, b) => s + b.text.length, 0);
     }
-    fs.writeFileSync(path.join(OUT, source, `JHN-${ch}.json`), JSON.stringify({ source, chapter: ch, blocks }, null, 1));
-    const n = blocks.reduce((s, b) => s + b.text.length, 0);
-    chars += n;
-    console.log(`${source} JHN ${ch}: ${blocks.length} blocos, ${n} caracteres`);
+    chars += bookChars;
+    console.log(`${source} ${book}: ${chapters} capítulos, ${bookChars} caracteres`);
   }
-  console.log(`== ${source}: ${chars} caracteres no total\n`);
+  totals[source] = chars;
+  console.log(`== ${source}: ${chars} caracteres no total
+`);
 }
+console.log(JSON.stringify(totals));
