@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   swipeCloses,
+  pulpitSections,
+  formatElapsed,
   filterSermons,
   booksWithSermons,
   type SermonFilter,
@@ -422,4 +424,24 @@ describe("swipeCloses", () => {
   it("fecha com peteleco curto", () => expect(swipeCloses(40, 0.5, 390)).toBe(true));
   it("fica com arrasto curto e lento", () => expect(swipeCloses(80, 0.05, 390)).toBe(false));
   it("não fecha arrastando para a esquerda", () => expect(swipeCloses(-50, 0.9, 390)).toBe(false));
+});
+
+describe("pulpitSections", () => {
+  it("segue a ordem de pregar, pula vazias e só o corpo vai sem rótulo", () => {
+    const out = pulpitSections({ notes: "Corpo um\n\nCorpo dois", outline: "1. Ponto", application: "  ", prayer_response: "Ore" });
+    expect(out.map((s) => s.key)).toEqual(["outline", "notes", "prayer_response"]);
+    expect(out[0]!.label).toBe("Esboço");
+    expect(out[1]!.label).toBeNull();
+    expect(out[1]!.paragraphs).toEqual(["Corpo um", "Corpo dois"]);
+  });
+  it("sermão vazio não tem seção", () => expect(pulpitSections({})).toEqual([]));
+});
+
+describe("formatElapsed", () => {
+  it("minutos e segundos", () => expect(formatElapsed(725_000)).toBe("12:05"));
+  it("zero e negativo", () => {
+    expect(formatElapsed(0)).toBe("0:00");
+    expect(formatElapsed(-5)).toBe("0:00");
+  });
+  it("passa de uma hora", () => expect(formatElapsed(3_723_000)).toBe("1:02:03"));
 });

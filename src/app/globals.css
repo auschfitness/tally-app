@@ -435,6 +435,7 @@ h1.page { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
 @media print {
+  html, body { background: #fff; }
   .side, .sb-tabbar { display: none !important; }
   .content { padding: var(--s-4); }
 }

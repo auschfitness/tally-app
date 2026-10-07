@@ -9,13 +9,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, MoreHorizontal, SquarePen } from "lucide-react";
 import { UiIcon } from "@/components/shared/UiIcon";
-import { createClient } from "@/lib/supabase/client";
 import { BOOKS, bookName } from "@/lib/bible/books";
 import { usfmToOsis } from "@/lib/bible/osis";
 import { buildReference, parseRefs } from "@/lib/bible/parse";
 import { deleteNoteAction, deleteTextNoteAction, saveLooseNoteAction, saveTextNoteAction } from "../actions";
-import { READER_TRANSLATION } from "../reader-queries";
-import { curlyQuotes } from "../reader";
+import { loadVerses } from "../verse-text";
 import { groupNotesByDate, joinNote, noteDate, searchNotes, splitNote, swipeCloses, type NoteItem } from "../domain";
 import { Chip, MenuChip, MenuItem } from "./FilterChips";
 import { Popover } from "./Popover";
@@ -288,32 +286,15 @@ export function NotesLibrary({ items: initialItems, initialKey }: { items: NoteI
   );
 }
 
-// Texto do versículo citado, do mesmo banco que a leitura usa (bible_tagged_verses).
+// Texto do versículo citado, do mesmo banco que a leitura usa.
 function useVerseText(n: NoteItem): string {
   const [text, setText] = useState("");
   useEffect(() => {
-    const osis = n.book ? usfmToOsis(n.book) : null;
-    if (n.kind !== "text" || !osis || !n.chapter || !n.verse) return;
+    if (n.kind !== "text" || !n.book || !n.chapter || !n.verse) return;
     let alive = true;
-    void createClient()
-      .from("bible_tagged_verses")
-      .select("verse, spans")
-      .eq("translation", READER_TRANSLATION)
-      .eq("book", osis)
-      .eq("chapter", n.chapter)
-      .gte("verse", n.verse)
-      .lte("verse", n.verseEnd ?? n.verse)
-      .order("verse")
-      .then(({ data }) => {
-        if (!alive || !data) return;
-        const verses = data.map((r) =>
-          curlyQuotes((r.spans as [string, string | null][]).map(([text, strong]) => ({ text, strong })))
-            .map((s) => s.text)
-            .join("")
-            .trim(),
-        );
-        setText(verses.join(" "));
-      });
+    void loadVerses(n.book, n.chapter, n.verse, n.verseEnd ?? n.verse).then((vs) => {
+      if (alive) setText(vs.map((v) => v.text).join(" "));
+    });
     return () => {
       alive = false;
     };

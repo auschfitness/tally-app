@@ -1,0 +1,182 @@
+/* Modo púlpito. Papel e tinta da leitura (--paper/--ink, Literata), letra em 4 passos
+   pelo data-size, barra translúcida que o texto atravessa por baixo. Sem animação. */
+.root {
+  --p-size: 1.625rem;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+}
+.root[data-size="0"] { --p-size: 1.375rem; }
+.root[data-size="1"] { --p-size: 1.625rem; }
+.root[data-size="2"] { --p-size: 1.875rem; }
+.root[data-size="3"] { --p-size: 2.25rem; }
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: 3rem;
+  padding: 0 var(--s-4);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bar { background: var(--paper); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+.spacer { flex: 1; }
+.barBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: var(--control-h);
+  padding: 0 var(--s-2);
+  border-radius: var(--r-6);
+  color: var(--text-2);
+  font: 500 var(--t-13)/var(--lh-13) var(--font-ui);
+  text-decoration: none;
+}
+.clock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+.clockBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 500 var(--t-15)/1 var(--font-ui);
+  cursor: pointer;
+  transition: transform 120ms var(--ease-press);
+}
+.clockBtn:active { transform: scale(.97); }
+.time { font-variant-numeric: tabular-nums; min-width: 3.5em; text-align: left; }
+@media (hover: hover) and (pointer: fine) {
+  .barBtn:hover { background: var(--surface-2); color: var(--text); }
+}
+
+.page {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-4) 40vh;
+  font-family: var(--font-read);
+  font-size: var(--p-size);
+  line-height: 1.5;
+}
+.title {
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-ui);
+  font-size: 1.4em;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.passage {
+  margin: 0;
+  color: var(--read-text-2);
+  font-family: var(--font-ui);
+  font-size: .7em;
+  font-weight: 500;
+}
+.idea {
+  margin: var(--s-4) 0 0;
+  font-style: italic;
+  color: var(--read-text-2);
+}
+.quote {
+  margin: var(--s-6) 0;
+  padding-left: var(--s-4);
+  border-left: 2px solid var(--read-border);
+  border-radius: 0;
+  color: var(--read-text-2);
+  font-size: .9em;
+}
+.para .quote { margin: var(--s-3) 0 var(--s-5); }
+.quoteRef {
+  display: block;
+  margin-bottom: var(--s-1);
+  font-family: var(--font-ui);
+  font-size: .55em;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.vn {
+  margin-right: .15em;
+  font-family: var(--font-ui);
+  font-size: .5em;
+  color: var(--read-text-2);
+}
+.section { margin-top: var(--s-8); }
+.label {
+  margin: 0 0 var(--s-3);
+  font-family: var(--font-ui);
+  font-size: .55em;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--read-text-2);
+}
+.para p {
+  margin: 0 0 var(--s-5);
+  white-space: pre-wrap;
+  text-wrap: pretty;
+}
+.refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: calc(var(--s-3) * -1) 0 var(--s-5);
+}
+.ref {
+  display: inline-flex;
+  align-items: center;
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--read-surface);
+  color: var(--read-accent);
+  font: 500 var(--t-15)/1 var(--font-ui);
+  cursor: pointer;
+  transition: background 100ms ease, transform 120ms var(--ease-press);
+}
+.ref[aria-expanded="true"] { background: var(--read-surface-2); color: var(--ink); }
+.ref:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .ref:hover { background: var(--read-surface-2); }
+}
+.empty {
+  margin-top: var(--s-8);
+  color: var(--read-text-2);
+  font-family: var(--font-ui);
+  font-size: var(--t-15);
+}
+@media (prefers-reduced-motion: reduce) {
+  .clockBtn:active, .ref:active { transform: none; }
+}
+
+/* Impressão: folha limpa, preto no branco, sem barra nem botões; versículos citados
+   que estavam abertos saem junto. Tamanho fixo de folha, independente do da tela. */
+@media print {
+  .root { background: #fff; color: #000; min-height: 0; }
+  .bar, .refs { display: none; }
+  .page { max-width: none; padding: 0; font-size: 12pt; line-height: 1.45; }
+  .title { font-size: 20pt; }
+  .passage, .idea, .quote, .label, .vn { color: #333; }
+  .quote { border-left-color: #999; break-inside: avoid; }
+  .section { margin-top: 18pt; break-inside: auto; }
+  .label { break-after: avoid; }
+  .para p { orphans: 3; widows: 3; }
+}

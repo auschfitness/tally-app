@@ -464,3 +464,29 @@ export function swipeCloses(dx: number, velocity: number, width: number): boolea
   if (dx <= 0) return false;
   return dx > width / 2 || velocity > SWIPE_FLICK;
 }
+
+// Modo púlpito: as seções com texto, na ordem de pregar. O corpo aberto (`notes`) vai
+// sem rótulo; as outras levam o nome da seção como cabeçalho.
+export interface PulpitSection {
+  key: SectionKey;
+  label: string | null;
+  paragraphs: string[];
+}
+const PULPIT_ORDER: SectionKey[] = ["outline", "notes", "illustrations", "application", "prayer_response"];
+export function pulpitSections(content: Record<string, unknown>): PulpitSection[] {
+  return PULPIT_ORDER.flatMap((key) => {
+    const text = String(content[key] ?? "").trim();
+    if (!text) return [];
+    const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    return [{ key, label: key === "notes" ? null : SECTIONS.find((s) => s.key === key)!.label, paragraphs }];
+  });
+}
+
+// Relógio do púlpito: "0:00", "12:05", "1:02:03".
+export function formatElapsed(ms: number): string {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = String(t % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}

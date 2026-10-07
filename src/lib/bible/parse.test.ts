@@ -50,3 +50,15 @@ describe("parseRefs", () => {
     expect(parseRefs("")).toEqual([]);
   });
 });
+
+describe("parseRefs: livros que começam com I", () => {
+  it("Isaías não vira 'I' + 'saías'", () => {
+    expect(parseRefs("Veja também Isaías 55:1-2.").map((r) => r.reference)).toEqual(["Isaías 55:1-2"]);
+  });
+  it("numeral romano com espaço continua valendo", () => {
+    expect(parseRefs("II Coríntios 5:17 e I Pedro 2:9").map((r) => r.book)).toEqual(["2CO", "1PE"]);
+  });
+  it("número colado continua valendo", () => {
+    expect(parseRefs("1Co 13:4").map((r) => r.book)).toEqual(["1CO"]);
+  });
+});

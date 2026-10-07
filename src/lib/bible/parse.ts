@@ -13,8 +13,9 @@ export interface ScriptureRef {
   reference: string;
 }
 
-// nº opcional (1/2/3 ou I/II/III) + palavra do livro + capítulo + (:versículo(-versículo))?
-const RE = /(?<![\wÀ-ÿ])((?:[123]|I{1,3})\s*)?([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]+)\.?\s*(\d{1,3})(?:\s*[:.]\s*(\d{1,3})(?:\s*[-–—]\s*(\d{1,3}))?)?/g;
+// nº opcional (1/2/3 colado ou não; I/II/III só com espaço depois, senão "Isaías" vira
+// "I" + "saías" e some) + palavra do livro + capítulo + (:versículo(-versículo))?
+const RE = /(?<![\wÀ-ÿ])((?:[123]\s*)|(?:I{1,3}\s+))?([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]+)\.?\s*(\d{1,3})(?:\s*[:.]\s*(\d{1,3})(?:\s*[-–—]\s*(\d{1,3}))?)?/g;
 
 // "III" → "3" (romano simples), senão o dígito.
 function romanish(p: string | undefined): string {

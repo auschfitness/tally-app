@@ -231,6 +231,14 @@ export function SermonEditor({
     scheduleSave();
   }
 
+  // Pregar / Imprimir: grava o que estiver pendente antes de sair para o púlpito.
+  async function goPulpit(print = false) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    if (dirtyRef.current && meta.title.trim()) await doSave();
+    if (idRef.current) router.push(`/pregar/${idRef.current}${print ? "?imprimir=1" : ""}`);
+  }
+
   async function backToLibrary() {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
@@ -307,12 +315,20 @@ export function SermonEditor({
         {embedded ? null : <button className="link" onClick={backToLibrary}><UiIcon icon={ChevronLeft} />Sermões</button>}
         <span className={styles.status}>{status}</span>
         <span className={styles.spacer} />
+        {hasId ? (
+          <button type="button" className={styles.secondary} data-testid="sermon-preach" onClick={() => void goPulpit()}>
+            Pregar
+          </button>
+        ) : null}
         <button type="button" className={styles.secondary} aria-expanded={passagesOpen} aria-controls="passages-panel" onClick={() => setPassagesOpen((o) => !o)}>
           Passagens <span className={styles.cnt}>{detected.length}</span>
         </button>
         <Popover trigger={<UiIcon icon={MoreHorizontal} />} triggerClass={styles.edIcon} label="Mais opções" align="right">
           {(close) => (
             <>
+              <button type="button" role="menuitem" className={styles.mi} disabled={!hasId} onClick={() => { close(); void goPulpit(true); }}>
+                Imprimir ou salvar PDF
+              </button>
               <button type="button" role="menuitem" className={styles.mi} onClick={() => { close(); setField("status", archived ? "draft" : "archived"); }}>
                 {archived ? "Desarquivar" : "Arquivar"}
               </button>
