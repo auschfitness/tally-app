@@ -128,8 +128,12 @@
   font: 600 var(--t-22)/var(--lh-22) var(--font-ui);
   letter-spacing: -0.01em;
   color: inherit;
-  padding: var(--s-1) 0;
-  height: var(--control-h);
+  min-height: calc(var(--s-8) + var(--s-2));
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-6);
+}
+.spacer {
+  flex: 1;
 }
 .doc {
   width: 100%;
@@ -167,9 +171,13 @@
   margin-top: var(--s-5);
 }
 .addbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
   border: 0;
   background: transparent;
   color: var(--text-2);
+  transition: background 100ms ease;
   border-radius: var(--r-6);
   padding: 0 var(--control-px);
   font-size: var(--t-13);
@@ -180,8 +188,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
 .addbtn:hover {
-  border-color: var(--blue);
-  color: var(--blue);
+  background: var(--surface-2);
 }
 }
 .smap {
@@ -1269,7 +1276,7 @@
 }
 .cmpEmbedded { display: block; width: 100%; }
 .addedToast { position: sticky; bottom: var(--s-3); z-index: 46; display: flex; align-items: center; gap: var(--s-3); width: fit-content; margin: var(--s-4) auto 0; padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); border-radius: var(--r-10); background: var(--text); color: var(--bg); font: 500 var(--t-13)/1 var(--font-ui); box-shadow: none; animation: toastUp 200ms cubic-bezier(0.23, 1, 0.32, 1); }
-.addedToast button { border: 0; border-radius: var(--r-10); padding: var(--s-1) var(--s-2); background: color-mix(in srgb, var(--bg) 16%, transparent); color: inherit; font: 500 var(--t-13)/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press); }
+.addedToast button { border: 0; border-radius: var(--r-pill); height: var(--control-h); padding: 0 var(--control-px); background: color-mix(in srgb, var(--bg) 16%, transparent); color: inherit; font: 500 var(--t-13)/1 var(--font-ui); cursor: pointer; transition: transform 120ms var(--ease-press); }
 .addedToast button:active { transform: scale(.97); }
 @keyframes toastUp { from { opacity: 0; transform: translateY(0.375rem); } }
 @media (prefers-reduced-motion: reduce) { .addedToast { animation: toastFade 200ms ease; } }

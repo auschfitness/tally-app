@@ -15,6 +15,8 @@ import type { Series } from "../types";
 import { parseRefs, refKey, type ScriptureRef } from "@/lib/bible/parse";
 import { PassagesPanel } from "./PassagesPanel";
 import { Popover } from "./Popover";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { Check, ChevronLeft, MoreHorizontal, Plus } from "lucide-react";
 import styles from "../study.module.css";
 
 interface SectionValues {
@@ -302,13 +304,13 @@ export function SermonEditor({
   return (
     <div>
       <div className={styles.bar}>
-        {embedded ? null : <button className="link" onClick={backToLibrary}>‹ Sermões</button>}
+        {embedded ? null : <button className="link" onClick={backToLibrary}><UiIcon icon={ChevronLeft} />Sermões</button>}
         <span className={styles.status}>{status}</span>
-        <span style={{ flex: 1 }} />
+        <span className={styles.spacer} />
         <button type="button" className={styles.secondary} aria-expanded={passagesOpen} aria-controls="passages-panel" onClick={() => setPassagesOpen((o) => !o)}>
           Passagens <span className={styles.cnt}>{detected.length}</span>
         </button>
-        <Popover trigger="···" triggerClass={styles.edIcon} label="Mais opções" align="right">
+        <Popover trigger={<UiIcon icon={MoreHorizontal} />} triggerClass={styles.edIcon} label="Mais opções" align="right">
           {(close) => (
             <>
               <button type="button" role="menuitem" className={styles.mi} onClick={() => { close(); setField("status", archived ? "draft" : "archived"); }}>
@@ -336,7 +338,7 @@ export function SermonEditor({
               <button key={k} type="button" role="menuitemradio" aria-checked={shownStatus === k} className={styles.mi} onClick={() => { close(); setField("status", k); }}>
                 <i className={styles.dot} style={{ background: STATUS_COLOR[k] }} />
                 <span>{STATUS_LBL[k]}</span>
-                <span className={styles.miCk} aria-hidden>✓</span>
+                <span className={styles.miCk} aria-hidden><UiIcon icon={Check} /></span>
               </button>
             ))}
           </Popover>
@@ -363,11 +365,11 @@ export function SermonEditor({
             {(close) => (
               <div className={styles.popList}>
                 <button type="button" role="menuitemradio" aria-checked={!meta.series_id} className={styles.mi} onClick={() => { close(); setField("series_id", ""); }}>
-                  <span>Sem série</span><span className={styles.miCk} aria-hidden>✓</span>
+                  <span>Sem série</span><span className={styles.miCk} aria-hidden><UiIcon icon={Check} /></span>
                 </button>
                 {series.map((se) => (
                   <button key={se.id} type="button" role="menuitemradio" aria-checked={meta.series_id === se.id} className={styles.mi} onClick={() => { close(); setField("series_id", se.id); }}>
-                    <span>{se.title || "(sem título)"}</span><span className={styles.miCk} aria-hidden>✓</span>
+                    <span>{se.title || "(sem título)"}</span><span className={styles.miCk} aria-hidden><UiIcon icon={Check} /></span>
                   </button>
                 ))}
               </div>
@@ -394,7 +396,7 @@ export function SermonEditor({
         {addable.length ? (
           <div className={styles.addsec}>
             {addable.map((sec) => (
-              <button key={sec.key} className={styles.addbtn} onClick={() => addSection(sec.key)}>+ {sec.label}</button>
+              <button key={sec.key} className={styles.addbtn} onClick={() => addSection(sec.key)}><UiIcon icon={Plus} />{sec.label}</button>
             ))}
           </div>
         ) : null}
