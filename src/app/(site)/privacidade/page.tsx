@@ -7,8 +7,8 @@ export const metadata: Metadata = { title: "Privacidade · Mercy" };
 export default function PrivacidadePage() {
   return (
     <div className={s.page}>
+      <SiteNav lang="pt" />
       <div className={s.wrap}>
-        <SiteNav lang="pt" />
         <article className={s.doc}>
           <h1>Política de privacidade</h1>
           <p className={s.meta}>Última atualização: 6 de outubro de 2026</p>

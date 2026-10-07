@@ -7,8 +7,8 @@ export const metadata: Metadata = { title: "Termos de uso · Mercy" };
 export default function TermosPage() {
   return (
     <div className={s.page}>
+      <SiteNav lang="pt" />
       <div className={s.wrap}>
-        <SiteNav lang="pt" />
         <article className={s.doc}>
           <h1>Termos de uso</h1>
           <p className={s.meta}>Última atualização: 6 de outubro de 2026</p>

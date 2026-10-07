@@ -2,9 +2,10 @@ import Link from "next/link";
 import { BookOpen, Users, CalendarCheck, HandCoins, Landmark, MessagesSquare, HeartHandshake } from "lucide-react";
 import { LogoMark } from "@/components/shared/LogoMark";
 import { UiIcon } from "@/components/shared/UiIcon";
+import { BibleDemo } from "./BibleDemo";
 import s from "./site.module.css";
 
-// Página pública do produto, em PT ("/") e EN ("/en"). Um componente, dois textos.
+// Página pública do produto, em EN ("/") e PT ("/pt"). Um componente, dois textos.
 export const SITE = {
   company: "Mercy",
   city: "Blumenau, Brazil",
@@ -20,11 +21,12 @@ const T = {
     lang: "English",
     langHref: "/",
     eyebrow: "Church OS",
-    h1: "Um sistema só para a sua igreja, do estudo da Palavra ao cuidado com as pessoas.",
+    h1: "Estude a Palavra. Cuide das pessoas.",
+    h2: "Um sistema só para a sua igreja, do estudo da Palavra ao cuidado com as pessoas.",
     lead: "Um gerente vê os 99%. Um pastor vê o um. A Mercy reúne estudo bíblico, pessoas, grupos, presença, doações e comunicação num lugar só, para que ninguém passe despercebido.",
     cta: "Entrar na Mercy",
     contact: "Falar com a gente",
-    shotAlt: "Tela da Mercy: Evangelho de João com a palavra ligada ao grego e o comentário ao lado",
+    demoCaption: "A Mercy de verdade: João 1.1 com cada palavra ligada ao grego.",
     features: [
       { icon: BookOpen, title: "Estudo", text: "Bíblia em português com cada palavra ligada ao grego e ao hebraico, dicionários UBS, comentários e editor de sermão." },
       { icon: Users, title: "Pessoas", text: "Uma ficha por pessoa, com família, jornada, marcos e a memória de tudo o que aconteceu." },
@@ -47,11 +49,12 @@ const T = {
     lang: "Português",
     langHref: "/pt",
     eyebrow: "Church OS",
-    h1: "One system for your church, from Bible study to caring for people.",
+    h1: "Study the Word. Care for people.",
+    h2: "One system for your church, from Bible study to caring for people.",
     lead: "A manager sees the 99%. A pastor sees the one. Mercy brings Bible study, people, groups, attendance, giving and communication into one place, so nobody goes unnoticed.",
     cta: "Sign in to Mercy",
     contact: "Talk to us",
-    shotAlt: "Mercy screen: the Gospel of John with each word linked to the Greek and the commentary beside it",
+    demoCaption: "The real Mercy: John 1:1 with every word linked to the Greek.",
     features: [
       { icon: BookOpen, title: "Study", text: "The Bible with every word linked to the original Greek and Hebrew, UBS dictionaries, commentaries and a sermon editor." },
       { icon: Users, title: "People", text: "One record per person, with household, journey, milestones and a timeline of everything that happened." },
@@ -74,16 +77,18 @@ const T = {
 export function SiteNav({ lang }: { lang: Lang }) {
   const t = T[lang];
   return (
-    <nav className={s.nav}>
-      <Link href={lang === "pt" ? "/pt" : "/"} className={s.brand}>
-        <LogoMark size={24} />
-        <span className="wordmark">mercy</span>
-      </Link>
-      <div className={s.navLinks}>
-        <Link href={t.langHref} className={s.navLink}>{t.lang}</Link>
-        <Link href="/login" className={s.cta}>{t.login}</Link>
-      </div>
-    </nav>
+    <header className={s.navBar}>
+      <nav className={s.nav}>
+        <Link href={lang === "pt" ? "/pt" : "/"} className={s.brand}>
+          <LogoMark size={24} />
+          <span className="wordmark">mercy</span>
+        </Link>
+        <div className={s.navLinks}>
+          <Link href={t.langHref} className={s.navLink}>{t.lang}</Link>
+          <Link href="/login" className={s.cta}>{t.login}</Link>
+        </div>
+      </nav>
+    </header>
   );
 }
 
@@ -103,48 +108,46 @@ export function Landing({ lang }: { lang: Lang }) {
   const t = T[lang];
   return (
     <div className={s.page}>
-      <div className={s.wrap}>
-        <SiteNav lang={lang} />
+      <SiteNav lang={lang} />
+      <main className={s.wrap}>
         <section className={s.hero}>
           <p className={s.eyebrow}>{t.eyebrow}</p>
           <h1 className={s.h1}>{t.h1}</h1>
           <p className={s.lead}>{t.lead}</p>
           <div className={s.heroActions}>
             <Link href="/login" className={`${s.cta} ${s.ctaLg}`}>{t.cta}</Link>
-            <a href={`mailto:${SITE.email}`} className={`${s.navLink} ${s.ctaLg}`}>{t.contact}</a>
+            <a href={`mailto:${SITE.email}`} className={`${s.ghost} ${s.ctaLg}`}>{t.contact}</a>
           </div>
         </section>
-        <figure className={s.shot}>
-          <picture>
-            <source srcSet="/screens/biblia-dark.png" media="(prefers-color-scheme: dark)" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/screens/biblia-light.png" alt={t.shotAlt} width={1280} height={800} />
-          </picture>
+        <figure className={s.demoFig}>
+          <BibleDemo lang={lang} />
+          <figcaption className={s.caption}>{t.demoCaption}</figcaption>
         </figure>
-        <section className={s.grid}>
-          {t.features.map((f) => (
-            <div key={f.title} className={s.feat}>
-              <h3>
-                <UiIcon icon={f.icon} />
-                {f.title}
-                {"soon" in f && f.soon ? <span className={s.soon}>{f.soon}</span> : null}
-              </h3>
-              <p>{f.text}</p>
-            </div>
-          ))}
-        </section>
-        <section className={s.band}>
-          <div>
-            <h2>{t.bandTitle}</h2>
-            <p>{t.bandText}</p>
+        <section className={s.section}>
+          <h2 className={s.h2}>{t.h2}</h2>
+          <div className={s.grid}>
+            {t.features.map((f) => (
+              <div key={f.title} className={s.feat}>
+                <span className={s.featIcon}><UiIcon icon={f.icon} /></span>
+                <h3>
+                  {f.title}
+                  {"soon" in f && f.soon ? <span className={s.soon}>{f.soon}</span> : null}
+                </h3>
+                <p>{f.text}</p>
+              </div>
+            ))}
           </div>
+        </section>
+        <section className={`${s.section} ${s.band}`}>
+          <h2 className={s.h2}>{t.bandTitle}</h2>
+          <p className={s.bandText}>{t.bandText}</p>
           <blockquote className={s.verse}>
             {t.verse}
             <cite>{t.verseRef}</cite>
           </blockquote>
         </section>
         <SiteFooter lang={lang} />
-      </div>
+      </main>
     </div>
   );
 }
