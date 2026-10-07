@@ -199,6 +199,19 @@ ficam prontos automaticamente após geração, medição e montagem aprovadas. C
 espaço, pedir aprovação da carga, executar SQL pelo dono, carregar, conferir no
 leitor e apagar a função temporária. Não marcar feita antes dessas etapas.
 
+### 7. E-mail de recuperação de senha em português
+- Hoje o Supabase envia o template padrão em inglês. O app já chama `resetPasswordForEmail` com `redirectTo=/auth/callback?next=/redefinir-senha` (`src/app/(auth)/esqueci-senha/actions.ts`).
+- Entregar `supabase/templates/recovery.html` (HTML simples, fonte do sistema, botão verde `#2A7E3B`, wordmark "mercy" em minúsculo, texto curto: "Recebemos um pedido para redefinir sua senha. Se não foi você, ignore este e-mail. O link vale por 1 hora.", botão "Redefinir senha" → `{{ .ConfirmationURL }}`, rodapé "Mercy · joinmercy.com"). Assunto: "Redefinir sua senha na Mercy".
+- Só o dono tem acesso ao painel: Supabase → Authentication → Email Templates → Reset Password → colar assunto e corpo → Save. Dar o passo a passo em 3 linhas.
+- Opcional na mesma leva, se o dono quiser: Confirm signup, Invite, Magic Link no mesmo visual.
+
+### 8. Telas fora da leitura com a régua 4d
+- Alvo: `/study` (Sermões, `SermonLibrary.tsx`), `/study/sermon/[id]` (`SermonEditor.tsx`), `/study/series` e `/study/series/[id]` (`SeriesControls/SeriesModal`), `/study/map` (`ScriptureMap.tsx`), `/study/notes` (`NotesLibrary.tsx`), `/study/trash`, `/settings` (`src/features/settings/*`, `settings.module.css`), `/admin`. Login e leitura já estão prontos; não mexer.
+- Passo 1 (auditoria, Opus): subir `npx next dev -p 3010`, logar com o usuário de teste via Playwright, tirar screenshot de cada tela em claro/escuro e 1280/390 em `docs/previews/8-antes-*.png`; listar desvios da régua (tamanhos fora dos 5, raios fora de 6/10, bordas em repouso, controles ≠ 32px, botões/links sublinhados, ícones SVG soltos, `<select>` cru, texto em inglês).
+- Passo 2 (Fable, modelo da sessão): transformar a lista em spec com valores exatos por arquivo.
+- Passo 3 (subagente Opus 5.5, esforço médio): aplicar só visual, sem mudar fluxo; um commit por tela; `npm run verify` com o dev server desligado; screenshots `docs/previews/8-depois-*.png`.
+- Passo 4: prévias pro dono; publicar após "aprovado".
+
 ## Já feito (não refazer)
 
 - Frente B: sublinhado completo do NT inteiro carregado em bible_tagged_verses (7.957 versículos, 2026-10-03).
