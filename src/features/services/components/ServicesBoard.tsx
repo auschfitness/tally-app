@@ -29,7 +29,7 @@ export function ServicesBoard({
         <div>
           <h1 className="page">Cultos</h1>
           <p className="sub" style={{ margin: 0 }}>
-            Os encontros recorrentes da igreja. Cada culto gera presença real e alimenta o resto do Tally.
+            Os encontros recorrentes da igreja. Cada culto gera presença real e alimenta o resto da Mercy.
           </p>
         </div>
         <button className="btn" style={{ marginLeft: "auto" }} onClick={() => setOpen(true)}>+ Novo culto</button>

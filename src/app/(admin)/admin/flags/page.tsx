@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/session";
 import { isPlatformAdmin, loadAdminFlags, loadAdminOrgs } from "@/features/admin/queries";
 import { FlagsPanel } from "@/features/admin/components/FlagsPanel";
 
-export const metadata: Metadata = { title: "Flags · Tally" };
+export const metadata: Metadata = { title: "Flags · Mercy" };
 
 // Aba de feature flags do painel da plataforma. Re-checa o gate (defesa em profundidade,
 // além do layout). A escrita continua gated por is_platform_admin() dentro das RPCs.

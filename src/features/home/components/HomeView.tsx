@@ -44,9 +44,9 @@ export function HomeView({
         <span className="sub" style={{ margin: "0 0 0 12px" }}>{activeCampus}{activeCampus ? " · " : ""}últimas 8 semanas</span>
       </div>
 
-      {/* Hoje no Tally */}
+      {/* Hoje na Mercy */}
       <div className={`panel ${styles.strip}`}>
-        <div className="mi-k">Hoje no Tally</div>
+        <div className="mi-k">Hoje na Mercy</div>
         <div className={styles.stripItem} data-tone="care"><b>{today.care}</b> <span className="muted">precisam de follow-up</span></div>
         <div className={styles.stripItem} data-tone="groups"><b>{today.groupsAtt}</b> <span className="muted">grupos em atenção</span></div>
         <div className={styles.stripItem} data-tone="comm"><b>{today.noComm}</b> <span className="muted">sem comunidade</span></div>

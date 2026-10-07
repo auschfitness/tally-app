@@ -1,4 +1,4 @@
-// Catálogo de planos do Tally — FONTE DA VERDADE (em código, sem tabela nova). O único
+// Catálogo de planos da Mercy — FONTE DA VERDADE (em código, sem tabela nova). O único
 // estado no banco é organizations.plan (text, default 'free'). Aqui vive o que cada plano
 // libera, os rótulos e o gancho de preço (pronto p/ apontar ao Stripe numa fase futura).
 // Diferenciação é SÓ por recurso (feature-gating), não por tamanho. Ver
@@ -56,7 +56,7 @@ export const PLANS: Record<PlanCode, Plan> = {
   free: {
     code: "free",
     name: "Comunidade",
-    tagline: "O coração pastoral do Tally — de graça para pastorear.",
+    tagline: "O coração pastoral da Mercy — de graça para pastorear.",
     priceHint: "Grátis",
     features: [],
   },

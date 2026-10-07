@@ -13,7 +13,7 @@ const literata = Literata({
 });
 
 export const metadata: Metadata = {
-  title: "Tally · Church OS",
+  title: "Mercy · Church OS",
   description: "Church OS com uma camada de inteligência pastoral — ninguém passa despercebido.",
 };
 

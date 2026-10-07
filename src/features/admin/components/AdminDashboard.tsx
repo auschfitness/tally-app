@@ -94,7 +94,7 @@ export function AdminDashboard({ stats, orgs }: { stats: PlatformStats; orgs: Ad
       <div>
         <h1 className="page">Plataforma</h1>
         <p className="sub" style={{ margin: 0 }}>
-          Todas as igrejas no Tally. Visão do administrador da plataforma.
+          Todas as igrejas na Mercy. Visão do administrador da plataforma.
         </p>
       </div>
 
@@ -114,7 +114,7 @@ export function AdminDashboard({ stats, orgs }: { stats: PlatformStats; orgs: Ad
           <div className="empty" style={{ lineHeight: 1.6 }}>
             Nenhuma igreja ainda.
             <br />
-            <span className="muted">As igrejas aparecem aqui assim que forem criadas no Tally.</span>
+            <span className="muted">As igrejas aparecem aqui assim que forem criadas na Mercy.</span>
           </div>
         </div>
       ) : (

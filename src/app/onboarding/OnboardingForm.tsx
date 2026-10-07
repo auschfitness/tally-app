@@ -23,7 +23,7 @@ export function OnboardingForm() {
   return (
     <form action={formAction}>
       <div className="gtitle">Sua igreja</div>
-      <div className="gsub">Vamos criar a sua igreja no Tally.</div>
+      <div className="gsub">Vamos criar a sua igreja na Mercy.</div>
 
       <div className="gfield">
         <input name="name" placeholder="Nome da igreja" required />

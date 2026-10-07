@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/session";
 import { logoutAction } from "@/app/(dashboard)/actions";
 import { LogoMark } from "@/components/shared/LogoMark";
 
-export const metadata: Metadata = { title: "Conta suspensa · Tally" };
+export const metadata: Metadata = { title: "Conta suspensa · Mercy" };
 
 // Tela de bloqueio para igrejas suspensas. Roda SÓ com requireUser (nunca requireOrg, que
 // é justamente quem redireciona para cá — evita loop). Confere o status de verdade: quem
@@ -30,7 +30,7 @@ export default async function SuspendedPage() {
           Esta conta está suspensa
         </h1>
         <p className="sub" style={{ margin: "0 auto 20px", maxWidth: 380, lineHeight: 1.6 }}>
-          O acesso da sua igreja ao Tally está temporariamente suspenso. Fale com o Tally para reativar a conta.
+          O acesso da sua igreja à Mercy está temporariamente suspenso. Fale com a Mercy para reativar a conta.
         </p>
         <form action={logoutAction}>
           <button className="btn ghost" type="submit">

@@ -11,7 +11,7 @@ import { isFlagKey, parseRollout } from "@/features/flags/catalog";
 import { isPlatformAdmin } from "./queries";
 import { isUuid, parseOrgStatus, parseOrgPlan } from "./schema";
 
-const DENIED = "Acesso restrito ao Tally.";
+const DENIED = "Acesso restrito à Mercy.";
 
 // Aplica um novo status ('active' | 'suspended') a uma igreja.
 export async function setOrgStatusAction(orgId: string, status: string): Promise<ActionResult> {

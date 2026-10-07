@@ -38,7 +38,7 @@ export function PlansComparison({ currentPlan }: { currentPlan: string }) {
         })}
       </div>
       <p className={styles.coreNote}>
-        Todos os planos incluem o núcleo pastoral do Tally: Pessoas (Sticks), Grupos, Cultos e presença,
+        Todos os planos incluem o núcleo pastoral da Mercy: Pessoas (Sticks), Grupos, Cultos e presença,
         Oração, Journey, Trilhas, Agenda, Care e a inteligência de Signals. O plano Igreja acrescenta as
         ferramentas de operação acima.
       </p>

@@ -20,14 +20,14 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     <div className="gate">
       <div className="gcard">
         <LogoMark />
-        <div className="gtitle">Convite para o Tally</div>
+        <div className="gtitle">Convite para a Mercy</div>
 
         {user ? (
           <AcceptInvite token={token} userEmail={user.email ?? "sua conta"} />
         ) : (
           <>
             <div className="gsub">
-              Você foi convidado para participar de uma igreja no Tally. Entre ou crie sua conta para aceitar.
+              Você foi convidado para participar de uma igreja na Mercy. Entre ou crie sua conta para aceitar.
             </div>
             <Link className="gbtn" href={loginHref} style={{ display: "block", textDecoration: "none" }}>
               Entrar ou criar conta

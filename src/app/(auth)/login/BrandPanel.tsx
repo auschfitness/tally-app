@@ -6,7 +6,7 @@ export function BrandPanel() {
     <aside className={s.brand}>
       <div className={s.wordmark}>
         <LogoMark size={32} />
-        Tally
+        Mercy
       </div>
       <blockquote className={s.verse}>
         Lâmpada para os meus pés é a tua palavra e luz para o meu caminho.

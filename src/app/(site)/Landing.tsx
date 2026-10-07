@@ -6,10 +6,10 @@ import s from "./site.module.css";
 
 // Página pública do produto, em PT ("/") e EN ("/en"). Um componente, dois textos.
 export const SITE = {
-  company: "Tally",
+  company: "Mercy",
   city: "Blumenau, Brazil",
   founded: "2026",
-  email: "contato@tally.app.br", // trocar quando o domínio final existir
+  email: "contact@joinmercy.com",
 };
 
 type Lang = "pt" | "en";
@@ -21,10 +21,10 @@ const T = {
     langHref: "/",
     eyebrow: "Church OS",
     h1: "Um sistema só para a sua igreja, do estudo da Palavra ao cuidado com as pessoas.",
-    lead: "Um gerente vê os 99%. Um pastor vê o um. O Tally reúne estudo bíblico, pessoas, grupos, presença, doações e comunicação num lugar só, para que ninguém passe despercebido.",
-    cta: "Entrar no Tally",
+    lead: "Um gerente vê os 99%. Um pastor vê o um. A Mercy reúne estudo bíblico, pessoas, grupos, presença, doações e comunicação num lugar só, para que ninguém passe despercebido.",
+    cta: "Entrar na Mercy",
     contact: "Falar com a gente",
-    shotAlt: "Tela do Tally: Evangelho de João com a palavra ligada ao grego e o comentário ao lado",
+    shotAlt: "Tela da Mercy: Evangelho de João com a palavra ligada ao grego e o comentário ao lado",
     features: [
       { icon: BookOpen, title: "Estudo", text: "Bíblia em português com cada palavra ligada ao grego e ao hebraico, dicionários UBS, comentários e editor de sermão." },
       { icon: Users, title: "Pessoas", text: "Uma ficha por pessoa, com família, jornada, marcos e a memória de tudo o que aconteceu." },
@@ -48,10 +48,10 @@ const T = {
     langHref: "/pt",
     eyebrow: "Church OS",
     h1: "One system for your church, from Bible study to caring for people.",
-    lead: "A manager sees the 99%. A pastor sees the one. Tally brings Bible study, people, groups, attendance, giving and communication into one place, so nobody goes unnoticed.",
-    cta: "Sign in to Tally",
+    lead: "A manager sees the 99%. A pastor sees the one. Mercy brings Bible study, people, groups, attendance, giving and communication into one place, so nobody goes unnoticed.",
+    cta: "Sign in to Mercy",
     contact: "Talk to us",
-    shotAlt: "Tally screen: the Gospel of John with each word linked to the Greek and the commentary beside it",
+    shotAlt: "Mercy screen: the Gospel of John with each word linked to the Greek and the commentary beside it",
     features: [
       { icon: BookOpen, title: "Study", text: "The Bible with every word linked to the original Greek and Hebrew, UBS dictionaries, commentaries and a sermon editor." },
       { icon: Users, title: "People", text: "One record per person, with household, journey, milestones and a timeline of everything that happened." },
@@ -77,7 +77,7 @@ export function SiteNav({ lang }: { lang: Lang }) {
     <nav className={s.nav}>
       <Link href={lang === "pt" ? "/pt" : "/"} className={s.brand}>
         <LogoMark size={24} />
-        Tally
+        Mercy
       </Link>
       <div className={s.navLinks}>
         <Link href={t.langHref} className={s.navLink}>{t.lang}</Link>
