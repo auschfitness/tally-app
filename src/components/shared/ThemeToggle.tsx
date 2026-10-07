@@ -7,7 +7,8 @@ import { Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { setThemeAction } from "@/app/(dashboard)/actions";
 
-// `row`: versão de linha de menu (menu do perfil), com o nome do tema para onde vai.
+// `row`: versão com o nome do tema para onde vai. Sem className = item do menu do perfil;
+// com className = botão comum (Ajustes → Conta, que é o caminho no celular).
 export function ThemeToggle({ row = false, className }: { row?: boolean; className?: string }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
@@ -25,7 +26,7 @@ export function ThemeToggle({ row = false, className }: { row?: boolean; classNa
 
   if (row) {
     return (
-      <button type="button" role="menuitem" className={className ?? "sb-menuitem"} onClick={toggle}>
+      <button type="button" role={className ? undefined : "menuitem"} className={className ?? "sb-menuitem"} onClick={toggle}>
         <UiIcon icon={theme === "dark" ? Sun : Moon} />
         {theme === "dark" ? "Tema claro" : "Tema escuro"}
       </button>

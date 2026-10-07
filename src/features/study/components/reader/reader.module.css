@@ -16,40 +16,12 @@
 .barBtn .ico { color: var(--text-2); }
 .barBtn:active { transform: scale(.97); }
 @media (hover: hover) and (pointer: fine) { .barBtn:hover { background: color-mix(in srgb, var(--text) 6%, transparent); } }
-.themeBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--control-h);
-  height: var(--control-h);
-  border: 0;
-  border-radius: var(--r-6);
-  background: none;
-  color: var(--text-2);
-  cursor: pointer;
-  padding: 0;
-  min-height: var(--control-h);
-}
-.themeBtn:active {
-  transform: scale(.97);
-}
-/* No computador o tema já está no menu da conta (menu lateral); a lua só aparece no
-   celular, onde o menu lateral some (mesmo corte de 55rem do globals.css). */
-@media (min-width: 55.0625rem) {
-  .themeBtn { display: none; }
-}
-@media (hover: hover) and (pointer: fine) {
-  .themeBtn:hover {
-    background: color-mix(in srgb, var(--text) 6%, transparent);
-    color: var(--text);
-  }
-}
 @media (max-width: 35rem) {
-  .bar { gap: var(--s-1); padding-left: var(--s-2); padding-right: var(--s-2); height: var(--bar-h); min-height: var(--bar-h); padding: var(--s-2) var(--s-4); }
+  .bar { gap: var(--s-1); height: var(--bar-h); min-height: var(--bar-h); padding: var(--s-2); }
   .bar .sep { display: none; }
   .barBtn span { display: none; }
-  .barBtn { padding: 0 var(--control-px); height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; border-radius: var(--r-6); gap: var(--s-2); }
-  .toggleText { position: absolute; width: 0.0625rem; height: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .toggle { gap: var(--s-1); }
+  .barBtn { padding: 0; width: var(--control-h); justify-content: center; height: var(--control-h); min-height: var(--control-h); font-size: var(--t-13); font-weight: 500; border-radius: var(--r-6); gap: var(--s-2); }
 }
 .toggle { margin-left: auto; display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--t-13); font-weight: 500; color: var(--text); cursor: pointer; }
 .toggle { position: relative; user-select: none; -webkit-tap-highlight-color: transparent; }

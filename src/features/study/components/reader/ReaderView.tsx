@@ -38,7 +38,6 @@ import { selectHit, useWorkspace, type EditorData } from "./ReaderWorkspace";
 import { Icon } from "./WorkspacePane";
 import { UiIcon } from "@/components/shared/UiIcon";
 import { ChevronLeft, ChevronRight, SquarePen } from "lucide-react";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import styles from "./reader.module.css";
 
 type Mode = "bible" | "original";
@@ -327,7 +326,6 @@ export function ReaderView({
             <span className={styles.sw} aria-hidden />
           </label>
         ) : <span className={styles.barGrow} aria-hidden />}
-        <ThemeToggle className={styles.themeBtn} />
         <span className={styles.sep} aria-hidden />
         {/* Atalhos da área de trabalho na barra (antes só no + escondido da área). */}
         <button type="button" className={styles.barBtn} aria-label="Sermão" onClick={() => open({ kind: "sermon" })}><Icon name="sermon" /><span>Sermão</span></button>

@@ -17,7 +17,6 @@ export const en: Dictionary = {
     languageHint: "Applies to you only",
     timezone: "Time zone",
     theme: "Theme",
-    themeHint: "Switch light/dark using the button at the top of the screen.",
     role: "Role",
     roleOwner: "Account owner",
     roleMember: "Team member",

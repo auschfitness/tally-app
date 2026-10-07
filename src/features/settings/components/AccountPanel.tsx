@@ -2,8 +2,9 @@
 
 // Aba Conta (Client — Server Action). Seu nome (profiles.full_name) + fuso (blob).
 // Idioma = profiles.locale via <LocaleSelect> (persiste na hora, separado do form).
-// Tema fica no menu do perfil, no menu lateral (ThemeToggle). Cargo é só leitura. Strings do dicionário i18n.
+// Tema: botão aqui (único caminho no celular) e também no menu do perfil, no menu lateral. Cargo é só leitura. Strings do dicionário i18n.
 import { Select } from "@/components/shared/Select";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TIMEZONES } from "../domain";
@@ -57,7 +58,7 @@ export function AccountPanel({
       </div>
       <div className={styles.setrow}>
         <div className={styles.lbl}>{t.theme}</div>
-        <div className={styles.ctrl}><span className="muted">{t.themeHint}</span></div>
+        <div className={styles.ctrl}><div><ThemeToggle row className="btn ghost" /></div></div>
       </div>
       <div className={styles.setrow}>
         <div className={styles.lbl}>{t.role}</div>

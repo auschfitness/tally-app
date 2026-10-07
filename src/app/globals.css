@@ -200,7 +200,7 @@ tr[data-stick]:hover td, tr.rowlink:hover td { background: var(--surface-2); }
 .chip.visitor { background: color-mix(in srgb, var(--blue) 15%, transparent); color: var(--blue); }
 .chip.leader { background: rgba(107, 79, 214, .18); color: var(--blue); }
 .chip.care { background: rgba(234, 91, 76, .16); color: var(--coral); }
-.tabs { display: flex; gap: var(--s-2); margin-bottom: var(--s-4); border-bottom: 0; overflow-x: auto; }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-bottom: var(--s-4); border-bottom: 0; }
 .tab { padding: 0 var(--control-px); margin-bottom: 0; border: none; background: none; color: var(--text-2); font-weight: 500; font-size: var(--t-13); border-bottom: 0; transition: color var(--dur-micro) var(--ease), border-color var(--dur-micro) var(--ease); height: var(--control-h); min-height: var(--control-h); border-radius: var(--r-6); white-space: nowrap; flex-shrink: 0; }
 .tab.on { color: var(--text); border-bottom-color: var(--blue); background: var(--surface-2); font-weight: 500; border-color: transparent; box-shadow: none; }
 .tabs2 { display: flex; gap: var(--s-4); border-bottom: 0; margin-bottom: var(--s-4); }
@@ -455,3 +455,60 @@ button.link { height: var(--control-h); }
 
 /* Wordmark da Mercy: sempre minúsculo, Figtree Black, tracking −5% (manual de marca). */
 :root .wordmark { font-weight: 900; letter-spacing: -.05em; line-height: .95; text-transform: lowercase; }
+
+/* ============================================================
+   Nada com cara de Windows/SO: tudo que o navegador desenharia sozinho ganha o visual Mercy.
+   ============================================================ */
+/* Partes nativas que sobrarem (calendário do <input type="date">, preenchimento automático)
+   seguem o tema; radio/range/progress usam o verde. */
+:root { color-scheme: light; accent-color: var(--blue); }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+::selection { background: color-mix(in srgb, var(--blue) 22%, transparent); }
+
+/* Barra de rolagem fina, sem setas, arredondada e da cor do texto bem clara. */
+::-webkit-scrollbar { width: .625rem; height: .625rem; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-button { display: none; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text) 18%, transparent); border: .1875rem solid transparent; border-radius: var(--r-pill); background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--text) 32%, transparent); }
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent; }
+}
+
+/* Campo de busca sem o "x" do SO; número sem as setinhas. */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Preenchimento automático do navegador sem o fundo azul/amarelo. */
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 100rem var(--surface-2) inset;
+  caret-color: var(--text);
+  transition: background-color 9999s;
+}
+
+/* Lista aberta do <select>: onde o navegador deixa (Chrome/Edge 135+), sai a lista do
+   Windows e entra um menu Mercy. Os outros navegadores ficam com a lista nativa. */
+@supports (appearance: base-select) {
+  select { appearance: base-select; }
+  select::picker-icon { display: none; }
+  ::picker(select) {
+    appearance: base-select;
+    border: 0; border-radius: var(--r-10); padding: var(--s-1);
+    background: var(--surface); color: var(--text);
+    box-shadow: var(--e-2);
+    max-height: 20rem;
+    opacity: 1; transform: none;
+    transition: opacity 150ms var(--ease), transform 150ms var(--ease), overlay 150ms allow-discrete, display 150ms allow-discrete;
+  }
+  @starting-style { ::picker(select):popover-open { opacity: 0; transform: scale(.97); } }
+  option { display: flex; align-items: center; gap: var(--s-2); min-height: var(--control-h); padding: 0 var(--control-px); border-radius: var(--r-6); font: 500 var(--t-13)/var(--lh-13) var(--font-ui); color: var(--text); cursor: pointer; }
+  option::checkmark { display: none; }
+  option:checked { color: var(--blue); font-weight: 600; }
+  option:hover, option:focus-visible { background: var(--surface-2); outline: none; }
+  option:disabled { opacity: .5; cursor: not-allowed; }
+}

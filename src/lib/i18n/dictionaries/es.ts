@@ -17,7 +17,6 @@ export const es: Dictionary = {
     languageHint: "Solo se aplica a ti",
     timezone: "Zona horaria",
     theme: "Tema",
-    themeHint: "Cambia claro/oscuro con el botón en la parte superior de la pantalla.",
     role: "Rol",
     roleOwner: "Dueño de la cuenta",
     roleMember: "Miembro del equipo",

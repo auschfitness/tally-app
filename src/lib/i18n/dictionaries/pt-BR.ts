@@ -18,7 +18,6 @@ export const ptBR = {
     languageHint: "Vale só para você",
     timezone: "Fuso horário",
     theme: "Tema",
-    themeHint: "Ajuste o tema (claro/escuro) pelo botão no topo da tela.",
     role: "Cargo",
     roleOwner: "Dono da conta",
     roleMember: "Membro da equipe",
