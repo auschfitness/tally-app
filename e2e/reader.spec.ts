@@ -151,7 +151,7 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     expect((await v6.innerText()).trim()).not.toMatch(/\)$/);
   });
 
-  test("aba Comentário em texto corrido segue versículo, sol/lua alterna tema e barra tem Original", async ({ page }) => {
+  test("aba Comentário em texto corrido segue versículo, tema alterna pelo perfil e barra tem Original", async ({ page }) => {
     await login(page);
 
     // 1. João 1 sem versículo
@@ -182,15 +182,18 @@ test.describe("Estudo → Bíblia (leitura)", () => {
     // Screenshot João 1 com v3 selecionado em tema claro
     await page.screenshot({ path: "docs/previews/commentary-john-1-v3-light.png" });
 
-    // 3. Alternar para tema escuro usando o botão sol/lua na barra da Bíblia (requisito 2)
-    const themeBtn = page.getByRole("button", { name: "Alternar tema" }).first();
-    await themeBtn.click();
+    // 3. Alternar para tema escuro pelo menu do perfil (o sol/lua saiu da barra da Bíblia no computador)
+    await page.getByTestId("profile-menu").click();
+    await page.getByRole("menuitem", { name: "Tema escuro" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     // Screenshot João 1 com v3 selecionado em tema escuro
     await page.screenshot({ path: "docs/previews/commentary-john-1-v3-dark.png" });
 
     // Voltar para tema claro
-    await themeBtn.click();
+    // O menu do perfil pode ter ficado aberto depois da primeira troca.
+    const lightItem = page.getByRole("menuitem", { name: "Tema claro" });
+    if (!(await lightItem.isVisible())) await page.getByTestId("profile-menu").click();
+    await lightItem.click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 
     // 4. Testar Tyndale
