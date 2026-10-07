@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { groupNotesByBook, groupNotesByDate, noteDate, searchNotes, type NoteItem } from "../domain";
 import { NoteSheet } from "./NoteSheet";
-import { TrashLink } from "./SermonLibrary";
 import styles from "../study.module.css";
 
 type View = "data" | "livro";
@@ -78,7 +77,6 @@ export function NotesLibrary({ items }: { items: NoteItem[] }) {
           )}
         </>
       )}
-      <TrashLink />
       {sheet !== undefined ? <NoteSheet note={sheet} onClose={() => setSheet(undefined)} /> : null}
     </div>
   );

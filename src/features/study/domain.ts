@@ -4,7 +4,7 @@
 import type { Scripture, Sermon, SermonStatus, SermonVisibility, SeriesStatus, StudyNote, TextNote } from "./types";
 import { BOOKS, bookName } from "@/lib/bible/books";
 import { osisToUsfm } from "@/lib/bible/osis";
-import { buildReference } from "@/lib/bible/parse";
+import { buildReference, parseRefs } from "@/lib/bible/parse";
 
 // Spec 10: na interface só existem 3 estados escolhíveis. O banco guarda 5 valores:
 // `preparing` aparece como Rascunho e `archived` não é um estado, é a ação "Arquivar".
@@ -77,20 +77,35 @@ export const SECTIONS: SectionDef[] = [
 // Seções opcionais (todas menos o corpo aberto `notes`).
 export const OPTIONAL_SECTIONS: SectionDef[] = SECTIONS.filter((s) => s.key !== "notes");
 
+// Filtros da biblioteca (spec 9): status exclusivo (Todos | Em preparo | Pregados) que
+// soma com série e livro. O livro sai da passagem principal do sermão.
+export type SermonStatusFilter = "preparo" | "pregados" | null;
 export interface SermonFilter {
-  status: SermonStatus | null;
-  campus: string | null;
-  series: string | null; // id | "__none__" | null
+  status: SermonStatusFilter;
+  seriesId: string | null;
+  book: string | null; // USFM
 }
 
-// Filtra a biblioteca por status/campus/série (série "__none__" = sem série).
+// Livros (USFM, sem repetir) citados na passagem principal.
+export function sermonBooks(s: Sermon): string[] {
+  return [...new Set(parseRefs(s.main_passage).map((r) => r.book))];
+}
+
 export function filterSermons(sermons: Sermon[], f: SermonFilter): Sermon[] {
   return sermons.filter(
     (s) =>
-      (!f.status || s.status === f.status) &&
-      (!f.campus || s.campus === f.campus) &&
-      (!f.series || (f.series === "__none__" ? !s.series_id : s.series_id === f.series)),
+      (f.status !== "preparo" || OPEN.has(s.status)) &&
+      (f.status !== "pregados" || s.status === "preached") &&
+      (!f.seriesId || s.series_id === f.seriesId) &&
+      (!f.book || sermonBooks(s).includes(f.book)),
   );
+}
+
+// Só os livros que têm sermão, na ordem da Bíblia, com nº de sermões.
+export function booksWithSermons(sermons: Sermon[]): { code: string; name: string; count: number }[] {
+  const n = new Map<string, number>();
+  for (const s of sermons) for (const b of sermonBooks(s)) n.set(b, (n.get(b) ?? 0) + 1);
+  return BOOKS.filter((b) => n.has(b.code)).map((b) => ({ code: b.code, name: b.pt, count: n.get(b.code)! }));
 }
 
 // Ordena sermões por data (desc) do jeito do hydrate legado (sem data ao fim).

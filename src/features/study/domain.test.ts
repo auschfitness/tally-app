@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   filterSermons,
+  booksWithSermons,
+  type SermonFilter,
   trashDaysLeft,
   trashCutoff,
   sortSermonsByDate,
@@ -69,21 +71,45 @@ describe("SECTIONS (glossário PT-BR fixado)", () => {
 
 describe("filterSermons", () => {
   const list = [
-    sermon({ id: "a", status: "draft", campus: "Sede", series_id: "x" }),
-    sermon({ id: "b", status: "ready", campus: "Sede", series_id: null }),
-    sermon({ id: "c", status: "ready", campus: "Zona Sul", series_id: "y" }),
+    sermon({ id: "a", status: "draft", series_id: "x", main_passage: "João 10:1-18" }),
+    sermon({ id: "b", status: "preached", series_id: null, main_passage: "Romanos 8:28" }),
+    sermon({ id: "c", status: "ready", series_id: "y", main_passage: "João 3:16; Rm 5:8" }),
+    sermon({ id: "d", status: "archived", series_id: "x", main_passage: "" }),
   ];
-  it("filtra por status e campus", () => {
-    expect(filterSermons(list, { status: "ready", campus: "Sede", series: null }).map((s) => s.id)).toEqual(["b"]);
-  });
-  it("série '__none__' pega sem série", () => {
-    expect(filterSermons(list, { status: null, campus: null, series: "__none__" }).map((s) => s.id)).toEqual(["b"]);
-  });
-  it("série por id", () => {
-    expect(filterSermons(list, { status: null, campus: null, series: "x" }).map((s) => s.id)).toEqual(["a"]);
-  });
+  const f = (o: Partial<SermonFilter>) => filterSermons(list, { status: null, seriesId: null, book: null, ...o }).map((s) => s.id);
   it("sem filtros devolve tudo", () => {
-    expect(filterSermons(list, { status: null, campus: null, series: null })).toHaveLength(3);
+    expect(f({})).toEqual(["a", "b", "c", "d"]);
+  });
+  it("Em preparo = rascunho/pronto (sem pregado nem arquivado)", () => {
+    expect(f({ status: "preparo" })).toEqual(["a", "c"]);
+  });
+  it("Pregados = só pregado", () => {
+    expect(f({ status: "pregados" })).toEqual(["b"]);
+  });
+  it("série e livro somam com o status", () => {
+    expect(f({ seriesId: "x" })).toEqual(["a", "d"]);
+    expect(f({ book: "JHN" })).toEqual(["a", "c"]);
+    expect(f({ book: "ROM", status: "preparo" })).toEqual(["c"]);
+    expect(f({ seriesId: "x", status: "preparo", book: "JHN" })).toEqual(["a"]);
+  });
+});
+
+describe("booksWithSermons", () => {
+  it("só livros com sermão, ordem canônica, contagem por sermão", () => {
+    const list = [
+      sermon({ id: "a", main_passage: "Romanos 8:28" }),
+      sermon({ id: "b", main_passage: "João 3:16; João 1:1" }),
+      sermon({ id: "c", main_passage: "Gênesis 1; Rm 5" }),
+      sermon({ id: "d", main_passage: "" }),
+    ];
+    expect(booksWithSermons(list)).toEqual([
+      { code: "GEN", name: "Gênesis", count: 1 },
+      { code: "JHN", name: "João", count: 1 },
+      { code: "ROM", name: "Romanos", count: 2 },
+    ]);
+  });
+  it("vazio quando nenhum sermão tem passagem", () => {
+    expect(booksWithSermons([sermon({ id: "a", main_passage: "" })])).toEqual([]);
   });
 });
 
