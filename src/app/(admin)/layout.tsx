@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className={styles.top}>
         <div className={styles.brand}>
           <LogoMark size={26} />
-          <span className={styles.wm}>Mercy</span>
+          <span className={`${styles.wm} wordmark`}>mercy</span>
           <span className={styles.badge}>Admin</span>
         </div>
         <nav className={styles.topnav}>

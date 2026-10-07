@@ -16,7 +16,7 @@
 .lgGroup { background: var(--blue); }
 
 .pray { background: var(--surface); border: 0; border-radius: var(--r-6); padding: var(--s-4); margin-bottom: var(--s-3); }
-.prayAnswered { border-color: rgba(31, 169, 122, .5); background: rgba(31, 169, 122, .06); }
+.prayAnswered { border-color: color-mix(in srgb, var(--green) 50%, transparent); background: color-mix(in srgb, var(--green) 6%, transparent); }
 .ph2 { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-2); }
 .who { font-weight: 500; color: var(--text); }
 .pv { font-size: var(--t-11); font-weight: 500; text-transform: uppercase; letter-spacing: .03em; color: var(--text-2); background: var(--surface-2); padding: var(--s-1) var(--s-2); border-radius: var(--r-6); }

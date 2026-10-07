@@ -60,5 +60,5 @@ export function countByCategory(all: Signal[], overrides: OverridesMap): Record<
 export function levelColor(level: SignalLevel): { fg: string; bg: string } {
   if (level === "celebration") return { fg: "#8b74e8", bg: "rgba(139,116,232,.16)" };
   if (level === "attention") return { fg: "var(--coral)", bg: "rgba(234,91,76,.16)" };
-  return { fg: "var(--blue)", bg: "rgba(43,92,230,.13)" };
+  return { fg: "var(--blue)", bg: "color-mix(in srgb, var(--blue) 13%, transparent)" };
 }

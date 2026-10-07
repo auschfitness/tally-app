@@ -8,7 +8,7 @@ import type { Person } from "@/features/sticks/types";
 import { NewGroupModal } from "./NewGroupModal";
 import styles from "../groups.module.css";
 
-const BAND_COLOR: Record<Band, string> = { healthy: "#1FA97A", attention: "#E8833A", risk: "#EA5B4C" };
+const BAND_COLOR: Record<Band, string> = { healthy: "#46A758", attention: "#E8833A", risk: "#EA5B4C" };
 
 export function GroupsBoard({
   people,

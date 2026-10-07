@@ -28,7 +28,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--blue);
-  background: rgba(43, 92, 230, 0.12);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
   padding: var(--s-1) var(--s-2);
   border-radius: var(--r-6);
 }

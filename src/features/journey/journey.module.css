@@ -1,7 +1,7 @@
 .jmapRow { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-radius: var(--r-6); padding: var(--s-2); margin-bottom: var(--s-1); cursor: pointer; font-family: inherit; transition: background 100ms ease, border-color var(--dur-micro) var(--ease); }
 @media (hover: hover) and (pointer: fine) {
 .jmapRow:hover { background: var(--surface-2); } }
-.jmapOn { border-color: var(--blue); background: rgba(43, 92, 230, .07); }
+.jmapOn { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 7%, transparent); }
 .jmapHead { display: flex; align-items: baseline; margin-bottom: var(--s-1); }
 .jmapName { font-size: var(--t-13); font-weight: 500; color: var(--text); }
 .jmapCount { margin-left: auto; font-size: var(--t-15); font-weight: 500; color: var(--text); }

@@ -24,7 +24,7 @@ export function FrequencyChart({ points }: { points: WeekPoint[] }) {
         const y = H - pad - h;
         return (
           <g key={p.label}>
-            <rect x={x + 3} y={y} width={bw - 6} height={h} rx={3} fill="var(--blue, #2B5CE6)" opacity={i === n - 1 ? 1 : 0.55} />
+            <rect x={x + 3} y={y} width={bw - 6} height={h} rx={3} fill="var(--blue, #2A7E3B)" opacity={i === n - 1 ? 1 : 0.55} />
             {p.count > 0 ? (
               <text x={x + bw / 2} y={y - 3} textAnchor="middle" fontSize={9} fill="var(--text-2, #6b7280)">
                 {p.count}

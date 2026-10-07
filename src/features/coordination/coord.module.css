@@ -10,5 +10,5 @@
 .tDone .tx { text-decoration: line-through; color: var(--text-2); }
 .cbx { width: 1.0625rem; height: 1.0625rem; border-radius: var(--r-6); border: 0; flex-shrink: 0; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: var(--on-blue); font-size: var(--t-11); cursor: pointer; padding: 0; }
 .cbxDone { background: var(--green); border-color: var(--green); }
-.who { margin-left: auto; font-size: var(--t-11); color: var(--blue); background: rgba(43, 92, 230, .12); padding: var(--s-1) var(--s-2); border-radius: var(--r-6); }
+.who { margin-left: auto; font-size: var(--t-11); color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, transparent); padding: var(--s-1) var(--s-2); border-radius: var(--r-6); }
 .del { color: var(--text-2); border: none; background: none; font-size: var(--t-15); line-height: 1; cursor: pointer; }

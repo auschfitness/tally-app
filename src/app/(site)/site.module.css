@@ -9,7 +9,7 @@
 .navLinks { display: flex; align-items: center; gap: var(--s-2); }
 .navLink { height: var(--control-h, 2rem); padding: 0 var(--s-3); display: inline-flex; align-items: center; border-radius: var(--r-6); color: var(--text-2); text-decoration: none; font-size: var(--t-13); font-weight: 500; transition: background 100ms ease, color 100ms ease; }
 @media (hover: hover) and (pointer: fine) { .navLink:hover { background: var(--surface-2); color: var(--text); } }
-.cta { height: var(--control-h, 2rem); padding: 0 var(--s-4); display: inline-flex; align-items: center; border-radius: var(--r-6); background: var(--blue); color: #fff; text-decoration: none; font-size: var(--t-13); font-weight: 600; transition: transform 120ms cubic-bezier(.23, 1, .32, 1), background 100ms ease; }
+.cta { height: var(--control-h, 2rem); padding: 0 var(--s-4); display: inline-flex; align-items: center; border-radius: var(--r-pill); background: var(--blue); color: var(--on-blue); text-decoration: none; font-size: var(--t-13); font-weight: 600; transition: transform 120ms cubic-bezier(.23, 1, .32, 1), background 100ms ease; }
 @media (hover: hover) and (pointer: fine) { .cta:hover { background: var(--blue-deep); } }
 .cta:active { transform: scale(.97); }
 

@@ -77,7 +77,7 @@ export function SiteNav({ lang }: { lang: Lang }) {
     <nav className={s.nav}>
       <Link href={lang === "pt" ? "/pt" : "/"} className={s.brand}>
         <LogoMark size={24} />
-        Mercy
+        <span className="wordmark">mercy</span>
       </Link>
       <div className={s.navLinks}>
         <Link href={t.langHref} className={s.navLink}>{t.lang}</Link>

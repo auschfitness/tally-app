@@ -195,7 +195,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
 .rowLink:hover td {
-  background: var(--surface-2, rgba(43, 92, 230, 0.05));
+  background: var(--surface-2, color-mix(in srgb, var(--blue) 5%, transparent));
 }
 }
 .groupHd td {
@@ -221,7 +221,7 @@
   color: var(--blue);
 }
 .badge.posted {
-  background: rgba(31, 169, 122, 0.16);
+  background: color-mix(in srgb, var(--green) 16%, transparent);
   color: var(--green);
 }
 .badge.void {

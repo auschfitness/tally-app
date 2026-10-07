@@ -20,7 +20,7 @@ import { today } from "@/lib/utils/date";
 import type { DevStage } from "@/features/teams/types";
 import styles from "@/features/teams/teams.module.css";
 
-const DOT: Record<HealthBand, string> = { risk: "#EA5B4C", attention: "#E8833A", healthy: "#1FA97A", muted: "var(--text-2)" };
+const DOT: Record<HealthBand, string> = { risk: "#EA5B4C", attention: "#E8833A", healthy: "#46A758", muted: "var(--text-2)" };
 const LADDER: DevStage[] = ["serving", "apprentice", "co_leader", "leader"];
 
 export default async function TeamDetailPage({
@@ -92,7 +92,7 @@ export default async function TeamDetailPage({
           <div className="ph"><h3>Papéis de serviço</h3></div>
           {roleList.length ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {roleList.map((r) => <span key={r} className="chip" style={{ background: "rgba(43,92,230,.10)", color: "var(--blue)" }}>{r}</span>)}
+              {roleList.map((r) => <span key={r} className="chip" style={{ background: "color-mix(in srgb, var(--blue) 10%, transparent)", color: "var(--blue)" }}>{r}</span>)}
             </div>
           ) : (
             <div className="muted">Sem papéis definidos. Defina em “Editar time” (ex.: Vocal, Guitarra, Mesa).</div>

@@ -157,10 +157,10 @@ export function SticksBoard({
           </div>
           <div className="leg">
             <span style={{ cursor: "pointer" }} onClick={() => update({ rel: rel === "visitor" ? "" : "visitor" })}>
-              <i style={{ background: "#2B5CE6" }} />Visitantes · {composition.visitors}
+              <i style={{ background: "#2A7E3B" }} />Visitantes · {composition.visitors}
             </span>
             <span style={{ cursor: "pointer" }} onClick={() => update({ rel: rel === "member" ? "" : "member" })}>
-              <i style={{ background: "#1FA97A" }} />Membros · {composition.members}
+              <i style={{ background: "#46A758" }} />Membros · {composition.members}
             </span>
             <span style={{ cursor: "pointer" }} onClick={() => update({ rel: rel === "inactive" ? "" : "inactive" })}>
               <i style={{ background: "#8A96AE" }} />Inativos · {composition.inactive}

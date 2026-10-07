@@ -180,7 +180,7 @@ export function Sidebar({
         <div className="sb-head">
           <Link href={STUDY_ONLY ? "/study/bible" : "/"} className="sb-brand" aria-label="Mercy, início">
             <LogoMark size={26} />
-            <span className="sb-label">Mercy</span>
+            <span className="sb-label wordmark">mercy</span>
           </Link>
           <button type="button" className="sb-iconbtn" onClick={toggleMini} aria-label={mini ? "Expandir menu" : "Recolher menu"} title={`${mini ? "Expandir" : "Recolher"} menu (Ctrl+\\)`}>
             <Icon name="panel" />

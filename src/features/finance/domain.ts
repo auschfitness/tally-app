@@ -15,7 +15,7 @@ export interface FinanceEntry {
 }
 
 // Paleta das despesas (mesma do app legado).
-export const FINPAL = ["#2B5CE6", "#1FA97A", "#E8833A", "#EA5B4C", "#8b74e8", "#3E9AB0", "#B0663E", "#6B7688"];
+export const FINPAL = ["#2A7E3B", "#46A758", "#E8833A", "#EA5B4C", "#8b74e8", "#3E9AB0", "#B0663E", "#6B7688"];
 
 const MONTHS_PT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 

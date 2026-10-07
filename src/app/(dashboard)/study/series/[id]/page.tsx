@@ -52,7 +52,7 @@ export default async function SeriesWorkspacePage({ params }: { params: Promise<
             <label>Escrituras-chave</label>
             {keyScr.length ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {keyScr.map((p) => <span key={p} className="chip" style={{ background: "rgba(43,92,230,.10)", color: "var(--blue)" }}>{p}</span>)}
+                {keyScr.map((p) => <span key={p} className="chip" style={{ background: "color-mix(in srgb, var(--blue) 10%, transparent)", color: "var(--blue)" }}>{p}</span>)}
               </div>
             ) : (
               <div className="muted">As escrituras-chave aparecem conforme você define a passagem de cada sermão.</div>

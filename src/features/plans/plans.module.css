@@ -94,7 +94,7 @@
   font-weight: 500;
   padding: var(--s-1) var(--s-2);
   border-radius: var(--r-6);
-  background: rgba(43, 92, 230, 0.15);
+  background: color-mix(in srgb, var(--blue) 15%, transparent);
   color: var(--blue);
 }
 .coreNote {
