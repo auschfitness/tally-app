@@ -270,7 +270,7 @@ export async function deleteNoteAction(fd: FormData): Promise<void> {
 
 // Folha "Nova nota"/edição da página Notas (spec 10): um texto só; título = 1ª linha. Na
 // edição mexe só em título/conteúdo: escopo, tópico, sermão, série e tags ficam como estão.
-export async function saveLooseNoteAction(input: { id?: string | null; text: string }): Promise<ActionResult> {
+export async function saveLooseNoteAction(input: { id?: string | null; text: string }): Promise<ActionResult<{ id: string }>> {
   try {
     const { title, content } = splitNote(input.text ?? "");
     if (!title && !content) return fail("Escreva algo para guardar.");
@@ -280,12 +280,17 @@ export async function saveLooseNoteAction(input: { id?: string | null; text: str
       if (!UUID.test(input.id)) return fail("Nota inválida.");
       const { error } = await supabase.from("study_notes").update({ title: title || null, content: content || null, updated_at }).eq("id", input.id);
       if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
-    } else {
-      const { error } = await supabase.from("study_notes").insert({ org_id: orgId, title: title || null, content: content || null, scope: "personal", updated_at });
-      if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
+      revalidatePath("/study/notes");
+      return ok({ id: input.id });
     }
+    const { data, error } = await supabase
+      .from("study_notes")
+      .insert({ org_id: orgId, title: title || null, content: content || null, scope: "personal", updated_at })
+      .select("id")
+      .single();
+    if (error) return fail(toMessage(error, "Não consegui salvar a nota."));
     revalidatePath("/study/notes");
-    return ok(undefined);
+    return ok({ id: data.id as string });
   } catch (e) {
     return fail(toMessage(e));
   }

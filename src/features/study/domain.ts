@@ -358,6 +358,7 @@ export interface NoteItem {
   book: string | null; // USFM; só nota do texto
   chapter: number | null;
   verse: number | null;
+  verseEnd: number | null;
   text: string; // texto inteiro da nota solta, para reabrir na folha
 }
 
@@ -390,6 +391,7 @@ export function mergeNotes(textNotes: TextNote[], loose: StudyNote[]): NoteItem[
       book,
       chapter: n.chapter || null,
       verse: n.verse_start,
+      verseEnd: n.verse_end,
       text: n.body,
     });
   }
@@ -405,6 +407,7 @@ export function mergeNotes(textNotes: TextNote[], loose: StudyNote[]): NoteItem[
       book: null,
       chapter: null,
       verse: null,
+      verseEnd: null,
       text: joinNote(n.title, n.content),
     });
   }

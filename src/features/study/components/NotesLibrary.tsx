@@ -1,41 +1,217 @@
 "use client";
 
-// Página Notas (spec 10 §5): as notas do texto bíblico e as soltas juntas. Busca +
-// segmentado "Por data | Por livro"; com texto na busca vira uma lista única.
-import { useMemo, useState } from "react";
+// Notas (spec 9): lista à esquerda e a nota aberta à direita (>= 900px); no celular só a
+// lista, e a nota entra em tela cheia pela direita. A seleção vive em ?n=<key>
+// (replaceState no computador, pushState no celular para o voltar do aparelho fechar).
+// Salva sozinho 800ms depois de parar de digitar e ao sair do campo.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { groupNotesByBook, groupNotesByDate, noteDate, searchNotes, type NoteItem } from "../domain";
-import { NoteSheet } from "./NoteSheet";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, MoreHorizontal, SquarePen } from "lucide-react";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { createClient } from "@/lib/supabase/client";
+import { BOOKS, bookName } from "@/lib/bible/books";
+import { usfmToOsis } from "@/lib/bible/osis";
+import { buildReference, parseRefs } from "@/lib/bible/parse";
+import { deleteNoteAction, deleteTextNoteAction, saveLooseNoteAction, saveTextNoteAction } from "../actions";
+import { READER_TRANSLATION } from "../reader-queries";
+import { groupNotesByDate, joinNote, noteDate, searchNotes, splitNote, type NoteItem } from "../domain";
+import { Chip, MenuChip, MenuItem } from "./FilterChips";
+import { Popover } from "./Popover";
 import styles from "../study.module.css";
 
-type View = "data" | "livro";
-const VIEWS: [View, string][] = [["data", "Por data"], ["livro", "Por livro"]];
+type Kind = "text" | "loose" | null;
+const SAVE_MS = 800;
+const urlKey = (n: NoteItem) => (n.id ? n.key : null);
 
-export function NotesLibrary({ items }: { items: NoteItem[] }) {
-  const [view, setView] = useState<View>("data");
+function setUrl(key: string | null, push = false) {
+  const url = key ? `/study/notes?n=${encodeURIComponent(key)}` : "/study/notes";
+  if (push) window.history.pushState({ note: key }, "", url);
+  else window.history.replaceState(null, "", url);
+}
+
+export function NotesLibrary({ items: initialItems, initialKey }: { items: NoteItem[]; initialKey: string | null }) {
+  const [items, setItems] = useState(initialItems);
+  const [sel, setSel] = useState<string | null>(() =>
+    initialKey && initialItems.some((n) => n.key === initialKey) ? initialKey : initialItems[0]?.key ?? null,
+  );
+  const [mobileOpen, setMobileOpen] = useState(() => !!initialKey && initialItems.some((n) => n.key === initialKey));
+  const [fresh, setFresh] = useState<Set<string>>(() => new Set());
+  const [focusBody, setFocusBody] = useState(0);
+  const [kind, setKind] = useState<Kind>(null);
+  const [book, setBook] = useState<string | null>(null);
   const [q, setQ] = useState("");
-  // undefined = fechada; null = nova nota; NoteItem = edição de nota solta.
-  const [sheet, setSheet] = useState<NoteItem | null | undefined>(undefined);
+  const pushed = useRef(false);
+  const live = useRef<Record<string, string>>({});
+  const listRef = useRef<HTMLDivElement>(null);
   const now = useMemo(() => new Date(), []);
+
+  const isMobile = () => window.matchMedia("(max-width: 56.1875rem)").matches;
+
+  const books = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const it of items) if (it.book) n.set(it.book, (n.get(it.book) ?? 0) + 1);
+    return BOOKS.filter((b) => n.has(b.code)).map((b) => ({ code: b.code, name: b.pt, count: n.get(b.code)! }));
+  }, [items]);
+  const filtered = useMemo(
+    () => items.filter((n) => (!kind || n.kind === kind) && (!book || n.book === book)),
+    [items, kind, book],
+  );
   const searching = q.trim().length > 0;
-  const results = searching ? searchNotes(items, q) : [];
-  const row = (n: NoteItem) => <NoteRow key={n.key} n={n} now={now} onOpen={() => setSheet(n)} />;
+  const results = searching ? searchNotes(filtered, q) : [];
+  const groups = searching ? [] : groupNotesByDate(filtered, now);
+  const visible = searching ? results : groups.flatMap((g) => g.items);
+  const current = items.find((n) => n.key === sel) ?? null;
+
+  // Nota solta nova e vazia ao sair = descartada.
+  const leave = useCallback(
+    (key: string | null) => {
+      if (!key || !fresh.has(key)) return;
+      const n = items.find((x) => x.key === key);
+      if (!n || n.kind !== "loose" || (live.current[key] ?? n.text).trim()) return;
+      setItems((list) => list.filter((x) => x.key !== key));
+      if (n.id) {
+        const f = new FormData();
+        f.set("id", n.id);
+        void deleteNoteAction(f);
+      }
+    },
+    [fresh, items],
+  );
+
+  function open(key: string) {
+    if (key !== sel) leave(sel);
+    setSel(key);
+    const n = items.find((x) => x.key === key);
+    const k = n ? urlKey(n) : null;
+    if (isMobile()) {
+      setMobileOpen(true);
+      setUrl(k, true);
+      pushed.current = true;
+    } else setUrl(k);
+  }
+
+  function closeMobile() {
+    if (pushed.current) {
+      pushed.current = false;
+      window.history.back();
+    } else {
+      setMobileOpen(false);
+      setUrl(null);
+    }
+  }
+
+  useEffect(() => {
+    function onPop() {
+      pushed.current = false;
+      setMobileOpen(false);
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const newNote = useCallback(() => {
+    const key = "new-" + Date.now();
+    const n: NoteItem = { key, kind: "loose", id: "", label: "Nova nota", body: "", at: new Date().toISOString(), book: null, chapter: null, verse: null, verseEnd: null, text: "" };
+    leave(sel);
+    setItems((list) => [n, ...list]);
+    setFresh((s) => new Set(s).add(key));
+    setKind(null);
+    setBook(null);
+    setQ("");
+    setSel(key);
+    setFocusBody((x) => x + 1);
+    if (isMobile()) {
+      setMobileOpen(true);
+      setUrl(null, true);
+      pushed.current = true;
+    } else setUrl(null);
+  }, [leave, sel]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.altKey && e.code === "KeyN") {
+        e.preventDefault();
+        newNote();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [newNote]);
+
+  function onListKey(e: React.KeyboardEvent) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const at = visible.findIndex((n) => n.key === sel);
+    const next = visible[at < 0 ? 0 : Math.min(visible.length - 1, Math.max(0, at + (e.key === "ArrowDown" ? 1 : -1)))];
+    if (!next) return;
+    e.preventDefault();
+    leave(sel);
+    setSel(next.key);
+    setUrl(urlKey(next));
+    listRef.current?.querySelector<HTMLElement>(`[data-key="${CSS.escape(next.key)}"]`)?.focus();
+  }
+
+  function onSaved(key: string, patch: Partial<NoteItem>) {
+    setItems((list) => list.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+    if (patch.id && key === sel) {
+      const n = items.find((x) => x.key === key);
+      if (n && !isMobile()) setUrl((patch.kind ?? n.kind) === "text" ? "t" + patch.id : "l" + patch.id);
+    }
+  }
+
+  async function trash(n: NoteItem) {
+    if (n.id) {
+      if (n.kind === "text") await deleteTextNoteAction(n.id);
+      else {
+        const f = new FormData();
+        f.set("id", n.id);
+        await deleteNoteAction(f);
+      }
+    }
+    const rest = items.filter((x) => x.key !== n.key);
+    setItems(rest);
+    const next = rest[0] ?? null;
+    setSel(next?.key ?? null);
+    if (isMobile()) closeMobile();
+    else setUrl(next ? urlKey(next) : null);
+  }
+
+  const row = (n: NoteItem) => (
+    <button
+      key={n.key}
+      type="button"
+      data-key={n.key}
+      className={styles.nRow}
+      aria-current={n.key === sel ? "true" : undefined}
+      onClick={() => open(n.key)}
+    >
+      <span className={styles.nRef}>{n.label}</span>
+      <span className={styles.nDate}>{noteDate(n.at, now)}</span>
+      <span className={styles.nText}>{n.body.split("\n")[0] || " "}</span>
+    </button>
+  );
+
+  const emptyState = (
+    <div className={styles.libEmpty}>
+      <p>Suas notas ficam aqui. Abra a Bíblia e toque em Notas para criar a primeira.</p>
+      <Link href="/study/bible" className={styles.primary}>Abrir a Bíblia</Link>
+    </div>
+  );
 
   return (
-    <div className={styles.lib}>
-      <div className={styles.libHead}>
-        <h1 className="page">Notas</h1>
-        <button type="button" className={styles.primary} onClick={() => setSheet(null)}>Nova nota</button>
-      </div>
-
-      {items.length === 0 ? (
-        <div className={styles.libEmpty}>
-          <p>Suas notas ficam aqui. Abra a Bíblia e toque em Notas para criar a primeira.</p>
-          <Link href="/study/bible" className={styles.primary}>Abrir a Bíblia</Link>
+    <div className={styles.nWrap}>
+      <div className={styles.nList}>
+        <div className={styles.nHead}>
+          <h1 className="page">Notas</h1>
+          <button type="button" className="iconbtn" aria-label="Nova nota" title="Nova nota (Ctrl+Alt+N)" onClick={newNote}>
+            <UiIcon icon={SquarePen} />
+          </button>
         </div>
-      ) : (
-        <>
-          <div className={styles.libBar}>
+
+        {items.length === 0 ? (
+          <div className={styles.nEmptyList}>{emptyState}</div>
+        ) : (
+          <>
             <input
               className={styles.libSearch}
               type="search"
@@ -44,56 +220,253 @@ export function NotesLibrary({ items }: { items: NoteItem[] }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            {searching ? null : (
-              <div className={styles.segmented} role="group" aria-label="Visão">
-                {VIEWS.map(([v, label]) => (
-                  <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>{label}</button>
-                ))}
-              </div>
-            )}
-          </div>
+            <div className={styles.chipRow} role="group" aria-label="Filtros">
+              <Chip on={!kind} onClick={() => setKind(null)}>Todas</Chip>
+              <Chip on={kind === "text"} onClick={() => setKind("text")}>Do texto</Chip>
+              <Chip on={kind === "loose"} onClick={() => setKind("loose")}>Soltas</Chip>
+              <MenuChip label="Livro" value={book ? bookName(book) : null} onClear={() => setBook(null)}>
+                {(close) =>
+                  books.length === 0 ? (
+                    <p className={styles.miEmpty}>Nenhuma nota com passagem ainda.</p>
+                  ) : (
+                    <div className={styles.popList}>
+                      {books.map((b) => (
+                        <MenuItem key={b.code} on={book === b.code} count={b.count} onClick={() => { setBook(b.code); close(); }}>
+                          {b.name}
+                        </MenuItem>
+                      ))}
+                    </div>
+                  )
+                }
+              </MenuChip>
+            </div>
 
-          {searching ? (
-            <>
-              <div className={styles.libCount}>{results.length} {results.length === 1 ? "resultado" : "resultados"}</div>
-              {results.length === 0 ? <div className="empty">Nada encontrado para “{q.trim()}”.</div> : results.map(row)}
-            </>
-          ) : view === "data" ? (
-            groupNotesByDate(items, now).map((g) => (
-              <section key={g.label}>
-                <h2 className={styles.libSec}>{g.label}</h2>
-                {g.items.map(row)}
-              </section>
-            ))
-          ) : (
-            groupNotesByBook(items).map((g) => (
-              <section key={g.code ?? "none"}>
-                <h2 className={styles.libSec}>
-                  {g.label} <span className={styles.nCount}>{g.items.length} {g.items.length === 1 ? "nota" : "notas"}</span>
-                </h2>
-                {g.items.map(row)}
-              </section>
-            ))
-          )}
-        </>
-      )}
-      {sheet !== undefined ? <NoteSheet note={sheet} onClose={() => setSheet(undefined)} /> : null}
+            <div ref={listRef} className={styles.nRows} onKeyDown={onListKey}>
+              {searching ? (
+                <>
+                  <div className={styles.libCount}>{results.length} {results.length === 1 ? "resultado" : "resultados"}</div>
+                  {results.length === 0 ? <div className={styles.libEmpty}>Nada encontrado para “{q.trim()}”.</div> : results.map(row)}
+                </>
+              ) : visible.length === 0 ? (
+                <div className={styles.libEmpty}>Nenhuma nota com esses filtros.</div>
+              ) : (
+                groups.map((g) => (
+                  <section key={g.label}>
+                    <h2 className={styles.libSec}>{g.label}</h2>
+                    {g.items.map(row)}
+                  </section>
+                ))
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className={`${styles.nPane}${mobileOpen ? " " + styles.nPaneOpen : ""}`}>
+        <button type="button" className={`${styles.back} ${styles.nBack}`} onClick={closeMobile}>
+          <UiIcon icon={ChevronLeft} />
+          Notas
+        </button>
+        {current ? (
+          <NotePane
+            key={current.key}
+            n={current}
+            focus={fresh.has(current.key) ? focusBody : 0}
+            onType={(t) => (live.current[current.key] = t)}
+            onSaved={(p) => onSaved(current.key, p)}
+            onTrash={() => trash(current)}
+          />
+        ) : items.length === 0 ? (
+          emptyState
+        ) : null}
+      </div>
     </div>
   );
 }
 
-// Nota do texto: link para o capítulo. Nota solta: abre a folha de edição.
-function NoteRow({ n, now, onOpen }: { n: NoteItem; now: Date; onOpen: () => void }) {
-  const inner = (
-    <>
-      <span className={styles.nRef}>{n.label}</span>
-      <span className={styles.nDate}>{noteDate(n.at, now)}</span>
-      {n.body.trim() ? <span className={styles.nText}>{n.body}</span> : null}
-    </>
-  );
-  return n.kind === "text" && n.book ? (
-    <Link href={`/study/bible/${n.book}/${n.chapter ?? 1}`} className={styles.nRow}>{inner}</Link>
-  ) : (
-    <button type="button" className={styles.nRow} onClick={onOpen}>{inner}</button>
+// Texto do versículo citado, do mesmo banco que a leitura usa (bible_tagged_verses).
+function useVerseText(n: NoteItem): string {
+  const [text, setText] = useState("");
+  useEffect(() => {
+    const osis = n.book ? usfmToOsis(n.book) : null;
+    if (n.kind !== "text" || !osis || !n.chapter || !n.verse) return;
+    let alive = true;
+    void createClient()
+      .from("bible_tagged_verses")
+      .select("verse, spans")
+      .eq("translation", READER_TRANSLATION)
+      .eq("book", osis)
+      .eq("chapter", n.chapter)
+      .gte("verse", n.verse)
+      .lte("verse", n.verseEnd ?? n.verse)
+      .order("verse")
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        setText(data.map((r) => (r.spans as [string, string | null][]).map((s) => s[0]).join("").trim()).join(" "));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [n.kind, n.book, n.chapter, n.verse, n.verseEnd]);
+  return text;
+}
+
+function NotePane({
+  n,
+  focus,
+  onType,
+  onSaved,
+  onTrash,
+}: {
+  n: NoteItem;
+  focus: number;
+  onType: (text: string) => void;
+  onSaved: (p: Partial<NoteItem>) => void;
+  onTrash: () => void;
+}) {
+  const router = useRouter();
+  const loose = n.kind === "loose";
+  const sp = loose ? splitNote(n.text) : null;
+  const [title, setTitle] = useState(sp?.title ?? "");
+  const [body, setBody] = useState(loose ? sp!.content : n.body);
+  const [passage, setPassage] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [err, setErr] = useState("");
+  const area = useRef<HTMLTextAreaElement>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const savedTimer = useRef<number | undefined>(undefined);
+  const last = useRef(loose ? joinNote(title, body) : body.trim());
+  const idRef = useRef(n.id);
+  const kindRef = useRef(n.kind);
+  const verse = useVerseText(n);
+
+  // Textarea que cresce com o texto.
+  useEffect(() => {
+    const el = area.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [body]);
+
+  useEffect(() => {
+    if (focus) area.current?.focus();
+  }, [focus]);
+
+  const save = useCallback(async () => {
+    window.clearTimeout(timer.current);
+    const ref = kindRef.current === "loose" && passage.trim() ? parseRefs(passage)[0] : null;
+    if (kindRef.current === "loose" && passage.trim() && !ref) return setErr("Não reconheci a passagem. Tente assim: João 3:16.");
+    setErr("");
+    const text = kindRef.current === "loose" ? joinNote(title, body) : body.trim();
+    if (!text.trim() || (text === last.current && !ref)) return;
+    const at = new Date().toISOString();
+    if (ref) {
+      // Com passagem válida a nota solta vira nota do texto (mesma regra da antiga folha).
+      const osis = usfmToOsis(ref.book);
+      if (!osis) return;
+      const r = await saveTextNoteAction({ book: osis, chapter: ref.chapter, verse_start: ref.verse_start, verse_end: ref.verse_end, body: text });
+      if (!r.success) return setErr(r.message || "Não consegui guardar a nota.");
+      if (idRef.current) {
+        const f = new FormData();
+        f.set("id", idRef.current);
+        void deleteNoteAction(f);
+      }
+      idRef.current = r.data.id;
+      kindRef.current = "text";
+      last.current = text;
+      setTitle("");
+      setBody(text);
+      onSaved({ kind: "text", id: r.data.id, label: buildReference(ref.book, ref.chapter, ref.verse_start, ref.verse_end), body: text, text, at, book: ref.book, chapter: ref.chapter, verse: ref.verse_start, verseEnd: ref.verse_end });
+    } else if (kindRef.current === "text") {
+      const osis = n.book ? usfmToOsis(n.book) : null;
+      const r = await saveTextNoteAction({ id: idRef.current, book: osis ?? "", chapter: n.chapter ?? 0, verse_start: n.verse, verse_end: n.verseEnd, body: text });
+      if (!r.success) return setErr(r.message || "Não consegui guardar a nota.");
+      last.current = text;
+      onSaved({ body: text, text, at });
+    } else {
+      const r = await saveLooseNoteAction({ id: idRef.current || null, text });
+      if (!r.success) return setErr(r.message || "Não consegui guardar a nota.");
+      idRef.current = r.data.id;
+      last.current = text;
+      const s = splitNote(text);
+      onSaved({ id: r.data.id, label: s.title || "(sem título)", body: s.content, text, at });
+    }
+    setSaved(true);
+    window.clearTimeout(savedTimer.current);
+    savedTimer.current = window.setTimeout(() => setSaved(false), 1500);
+  }, [title, body, passage, n.book, n.chapter, n.verse, n.verseEnd, onSaved]);
+
+  // Debounce: 800ms depois da última tecla.
+  useEffect(() => {
+    timer.current = window.setTimeout(() => void save(), SAVE_MS);
+    return () => window.clearTimeout(timer.current);
+  }, [save]);
+
+  useEffect(() => () => window.clearTimeout(savedTimer.current), []);
+
+  const isText = kindRef.current === "text" && n.book;
+  const bibleHref = n.book ? `/study/bible/${n.book}/${n.chapter ?? 1}` : "";
+
+  return (
+    <article className={styles.np}>
+      <div className={styles.npMeta}>
+        <span suppressHydrationWarning>{new Date(n.at).toLocaleString("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+        {isText ? <Link href={bibleHref} className="link">Abrir na Bíblia</Link> : null}
+        <span className={`${styles.npSaved}${saved ? " " + styles.npSavedOn : ""}`} aria-live="polite">{saved ? "Salvo" : ""}</span>
+        <Popover trigger={<UiIcon icon={MoreHorizontal} />} triggerClass="iconbtn" label="Mais ações da nota" align="right">
+          {(close) => (
+            <>
+              {isText ? (
+                <button type="button" role="menuitem" className={styles.mi} onClick={() => { close(); router.push(bibleHref); }}>Abrir na Bíblia</button>
+              ) : null}
+              <button type="button" role="menuitem" className={`${styles.mi} ${styles.miDanger}`} onClick={() => { close(); onTrash(); }}>Mover para a lixeira</button>
+            </>
+          )}
+        </Popover>
+      </div>
+
+      {kindRef.current === "loose" && !n.book ? (
+        <>
+          <input
+            className={styles.npPassage}
+            placeholder="Passagem (opcional), ex.: João 3:16"
+            aria-label="Passagem (opcional)"
+            value={passage}
+            onChange={(e) => setPassage(e.target.value)}
+            onBlur={() => void save()}
+          />
+          <input
+            className={styles.npTitle}
+            placeholder="Título"
+            aria-label="Título"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              onType(joinNote(e.target.value, body));
+            }}
+            onBlur={() => void save()}
+          />
+        </>
+      ) : (
+        <h2 className={styles.npTitle}>{n.label}</h2>
+      )}
+
+      {isText && verse ? <blockquote className={styles.npVerse}>{verse}</blockquote> : null}
+
+      <textarea
+        ref={area}
+        className={styles.npBody}
+        placeholder="Escreva sua nota…"
+        aria-label="Texto da nota"
+        rows={4}
+        value={body}
+        onChange={(e) => {
+          setBody(e.target.value);
+          onType(kindRef.current === "loose" ? joinNote(title, e.target.value) : e.target.value);
+        }}
+        onBlur={() => void save()}
+      />
+      {err ? <p className={styles.npErr} role="alert">{err}</p> : null}
+    </article>
   );
 }
