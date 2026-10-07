@@ -87,6 +87,18 @@ export function ReaderView({
     setCommentaryVerse(null);
   }, [refNow.book, refNow.chapter, setCommentaryVerse]);
 
+  // ?v=N (vindo da busca): rola até o versículo e marca por um instante.
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get("v");
+    if (!v) return;
+    const el = document.querySelector<HTMLElement>(`[data-testid="reader-text"] [data-verse="${CSS.escape(v)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center" });
+    el.dataset.target = "true";
+    const id = window.setTimeout(() => delete el.dataset.target, 2400);
+    return () => window.clearTimeout(id);
+  }, [refNow.book, refNow.chapter]);
+
   function select(n: number, at: { x: number; y: number }, how: "toggle" | "add"): void {
     setSel((cur) => {
       const next = cur.includes(n) ? (how === "add" ? cur : cur.filter((v) => v !== n)) : [...cur, n].sort((a, b) => a - b);

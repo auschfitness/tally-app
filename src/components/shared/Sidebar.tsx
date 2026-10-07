@@ -1,7 +1,7 @@
 "use client";
 
 // Menu lateral (redesign 2026-10-01, estilo "source list" do macOS). No desktop: marca,
-// "Ir para passagem" (Ctrl+K), destinos, capítulos recentes e, embaixo, Ajustes e o
+// "Buscar ou ir para" (Ctrl+K: referência abre o capítulo, palavra abre a busca), destinos, capítulos recentes e, embaixo, Ajustes e o
 // perfil (tema, sair). Recolhe para só ícones (Ctrl+\), lembrado neste aparelho. No
 // celular o menu some e vira barra de abas embaixo, ao alcance do polegar.
 // Modo só Estudo (STUDY_ONLY): destinos = Bíblia, Sermões, Notas. Fora dele, os grupos
@@ -63,7 +63,6 @@ export function Sidebar({
   const router = useRouter();
   const [mini, setMini] = useState(false);
   const [menu, setMenu] = useState(false);
-  const [notFound, setNotFound] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -122,20 +121,18 @@ export function Sidebar({
   }, [menu]);
   useEffect(() => setMenu(false), [path]);
 
+  // Referência vai direto ao capítulo; qualquer outro texto vira busca por palavra.
   function goToPassage(e: FormEvent<HTMLFormElement>): void {
     e.preventDefault();
     const input = searchRef.current;
-    const ref = parseRefs(input?.value ?? "")[0];
-    if (!ref) {
-      setNotFound(true);
-      return;
-    }
-    setNotFound(false);
+    const text = (input?.value ?? "").trim();
+    if (!text) return;
+    const ref = parseRefs(text)[0];
     if (input) {
       input.value = "";
       input.blur();
     }
-    router.push(`/study/bible/${ref.book}/${ref.chapter}`);
+    router.push(ref ? `/study/bible/${ref.book}/${ref.chapter}` : `/study/busca?q=${encodeURIComponent(text)}`);
   }
 
   const countOf = (c?: "inbox" | "people" | "tasks"): number | undefined => (c ? counts[c] || undefined : undefined);
@@ -172,7 +169,7 @@ export function Sidebar({
   };
 
   const initial = (userLabel.trim()[0] ?? "?").toUpperCase();
-  const tabs = STUDY_ONLY ? [...STUDY_ITEMS, { key: "settings", label: "Ajustes", href: SETTINGS_ITEM.href, icon: "settings" as const, match: plain(SETTINGS_ITEM.href) }] : [];
+  const tabs = STUDY_ONLY ? [...STUDY_ITEMS, { key: "search", label: "Buscar", href: "/study/busca", icon: "search" as const, match: plain("/study/busca") }, { key: "settings", label: "Ajustes", href: SETTINGS_ITEM.href, icon: "settings" as const, match: plain(SETTINGS_ITEM.href) }] : [];
 
   return (
     <>
@@ -188,17 +185,16 @@ export function Sidebar({
         </div>
 
         {mini ? (
-          <button type="button" className="sb-item" onClick={() => { toggleMini(); requestAnimationFrame(() => searchRef.current?.focus()); }} title="Ir para passagem (Ctrl+K)" aria-label="Ir para passagem">
+          <button type="button" className="sb-item" onClick={() => { toggleMini(); requestAnimationFrame(() => searchRef.current?.focus()); }} title="Buscar ou ir para passagem (Ctrl+K)" aria-label="Buscar ou ir para passagem">
             <Icon name="search" />
           </button>
         ) : (
           <form className="sb-search" onSubmit={goToPassage} role="search">
             <Icon name="search" />
-            <input ref={searchRef} placeholder="Ir para… João 3:16" aria-label="Ir para passagem" onChange={() => notFound && setNotFound(false)} />
+            <input ref={searchRef} placeholder="Buscar ou ir para…" aria-label="Buscar na Bíblia ou ir para uma passagem" />
             <kbd>Ctrl K</kbd>
           </form>
         )}
-        {notFound && !mini ? <p className="sb-hint" role="status">Não achei essa passagem.</p> : null}
 
         <nav className="sb-nav">
           {dests.map(item)}

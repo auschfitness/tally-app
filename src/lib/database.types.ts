@@ -4259,6 +4259,10 @@ export type Database = {
       org_flags: { Args: { p_org: string }; Returns: string[] }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
       post_journal_entry: { Args: { p_entry: string }; Returns: undefined }
+      search_bible: {
+        Args: { lim?: number; off?: number; p_books?: string[] | null; q: string }
+        Returns: { book: string; chapter: number; spans: Json; total: number; verse: number }[]
+      }
       seed_default_chart_of_accounts: {
         Args: { p_org: string }
         Returns: undefined

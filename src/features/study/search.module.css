@@ -1,0 +1,128 @@
+/* Busca na Bíblia: mesma largura e ritmo da biblioteca de Sermões; texto do versículo
+   em Literata (é Bíblia), resto na fonte da interface. */
+.wrap {
+  max-width: 48rem;
+}
+.form {
+  display: flex;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 var(--s-3);
+}
+.input {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-h);
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 400 var(--t-15)/1 var(--font-ui);
+}
+.input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--blue); }
+.go {
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  color: var(--on-blue);
+  font: 500 var(--t-13)/1 var(--font-ui);
+  cursor: pointer;
+  transition: background 100ms ease, transform 120ms var(--ease-press);
+}
+.go:active { transform: scale(.97); }
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: 500 var(--t-13)/1 var(--font-ui);
+  text-decoration: none;
+  transition: background 100ms ease, color 100ms ease, transform 120ms var(--ease-press);
+}
+.chip[aria-current="true"] { background: var(--text); color: var(--bg); }
+.chip:active { transform: scale(.97); }
+.hint {
+  margin-top: var(--s-4);
+  color: var(--text-2);
+  font-size: var(--t-15);
+  line-height: var(--lh-15);
+}
+.hint p { margin: 0 0 var(--s-3); }
+.count {
+  margin: var(--s-5) 0 var(--s-2);
+  color: var(--text-2);
+  font-size: var(--t-13);
+}
+.book {
+  margin: var(--s-6) 0 var(--s-1);
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+  font-weight: 600;
+  color: var(--text);
+}
+.row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-2);
+  margin: 0 calc(var(--s-2) * -1);
+  border-radius: var(--r-6);
+  color: var(--text);
+  text-decoration: none;
+  transition: background 100ms ease, transform 120ms var(--ease-press);
+}
+.row { position: relative; }
+/* Fio entre resultados, reto e recuado (a linha não pode herdar o canto arredondado). */
+.row + .row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--s-2);
+  right: var(--s-2);
+  height: 1px;
+  background: color-mix(in srgb, var(--border) 60%, transparent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .row:hover::before, .row:hover + .row::before { opacity: 0; }
+}
+.row:active { transform: scale(.99); }
+.ref {
+  padding-top: .15em;
+  color: var(--text-2);
+  font: 500 var(--t-13)/var(--lh-13) var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+.text {
+  font-family: var(--font-read);
+  font-size: var(--t-15);
+  line-height: 1.55;
+}
+.text mark {
+  background: color-mix(in srgb, var(--blue) 18%, transparent);
+  color: inherit;
+  border-radius: var(--r-6);
+  padding: 0 .1em;
+}
+.pager {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--s-6);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:not([aria-current="true"]):hover { color: var(--text); }
+  .row:hover { background: var(--surface-2); }
+  .go:hover { background: var(--blue-deep); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .go:active, .chip:active, .row:active { transform: none; }
+}

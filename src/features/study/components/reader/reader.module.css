@@ -366,6 +366,17 @@
   background-color: color-mix(in srgb, var(--blue) 16%, transparent);
 }
 
+/* Versículo pedido no endereço (?v=, vindo da busca): acende e apaga devagar. Raro e
+   chegando de outra tela, então pode ter um respiro maior que a régua de 300ms. */
+.verses [data-target="true"] {
+  border-radius: var(--r-6);
+  animation: verseTarget 2400ms ease-out;
+}
+@keyframes verseTarget {
+  0%, 35% { background-color: color-mix(in srgb, var(--blue) 22%, transparent); }
+  100% { background-color: transparent; }
+}
+
 /* Menu "Aa" (ReadingMenu). Popover nativo ancorado no botão; onde não há anchor
    positioning (Firefox), o navegador centraliza, o que também serve. Entra com 150ms
    ease-out a partir do canto do botão; sai mais rápido (100ms). */
