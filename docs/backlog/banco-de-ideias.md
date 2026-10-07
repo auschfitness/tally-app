@@ -23,3 +23,12 @@ Custo de banco: ~31 mil versículos em 256 dimensões com pgvector ≈ 30-40 MB 
 Gerar os vetores dos versículos é de graça, uma vez, no PC (mesmo esquema do alinhamento do AT).
 
 Próximo passo quando voltar: escolher o recurso (sugestão: busca por tema na Bíblia) e escrever a spec.
+
+## Paletas e ícone da congregação, anotada em 2026-10-07
+
+Pedido do dono: cada igreja deixa a Mercy com a cara dela.
+1. **Galeria de ~50 paletas** prontas, cobrindo uma faixa larga de identidades (sóbrias, quentes, frias, terrosas, vibrantes, pastéis), cada uma com versão clara e escura já testada em contraste. A igreja escolhe uma em Ajustes e o app inteiro troca de cor (hoje já é tudo token em `globals.css`, então é trocar os valores de `--blue`, `--blue-deep`, neutros por paleta).
+2. **Ícone da congregação** no lugar do selo do cordeiro (menu lateral, aba do navegador, e-mails). Só a partir de um plano pago, a definir ("plano X").
+
+A decidir quando entrar: paleta é por igreja (todos os membros veem) ou por pessoa; quem pode trocar (cargo com permissão de Ajustes); se a palavra "mercy" continua junto do ícone da igreja.
+Liga com: catálogo de planos em código (`tally-planos-fase1`), trava de recurso por plano.
