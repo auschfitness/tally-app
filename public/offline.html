@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2A7E3B">
+<title>Sem internet · Mercy</title>
+<style>
+  :root { --bg:#F8FAF8; --text:#1D211C; --text-2:#60655F; --surface-2:#EEF1ED; --blue:#2A7E3B; }
+  :root[data-theme="dark"] { --bg:#111210; --text:#EEEFEE; --text-2:#AFB5AD; --surface-2:#222421; --blue:#46A758; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100dvh; background:var(--bg); color:var(--text);
+    font:15px/22px -apple-system, "Segoe UI Variable", system-ui, sans-serif; }
+  main { max-width:32rem; margin:0 auto; padding:48px 16px; }
+  .mark { font-weight:900; font-size:22px; letter-spacing:-.02em; color:var(--blue); }
+  h1 { font-size:22px; line-height:28px; font-weight:600; margin:24px 0 8px; }
+  p { color:var(--text-2); margin:0 0 24px; }
+  ul { list-style:none; margin:0; padding:0; }
+  a.ch { display:flex; align-items:center; height:44px; padding:0 12px; margin:0 -12px; border-radius:6px;
+    color:var(--text); text-decoration:none; font-weight:500; }
+  a.ch:active { background:var(--surface-2); }
+  button { height:32px; padding:0 14px; border:0; border-radius:999px; background:var(--blue); color:#fff;
+    font:500 13px/1 inherit; cursor:pointer; margin-top:24px; }
+</style>
+<script>
+  try {
+    var t = (document.cookie.match(/(?:^|; )tally-theme=([^;]+)/) || [])[1];
+    if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.dataset.theme = "dark";
+  } catch (e) {}
+</script>
+</head>
+<body>
+<main>
+  <div class="mark">mercy</div>
+  <h1>Sem internet</h1>
+  <p id="lead">Os capítulos que você leu por último continuam aqui.</p>
+  <ul id="list"></ul>
+  <button type="button" onclick="location.reload()">Tentar de novo</button>
+</main>
+<script>
+  var BOOKS = {"GEN":"Gênesis","EXO":"Êxodo","LEV":"Levítico","NUM":"Números","DEU":"Deuteronômio","JOS":"Josué","JDG":"Juízes","RUT":"Rute","1SA":"1 Samuel","2SA":"2 Samuel","1KI":"1 Reis","2KI":"2 Reis","1CH":"1 Crônicas","2CH":"2 Crônicas","EZR":"Esdras","NEH":"Neemias","EST":"Ester","JOB":"Jó","PSA":"Salmos","PRO":"Provérbios","ECC":"Eclesiastes","SNG":"Cânticos","ISA":"Isaías","JER":"Jeremias","LAM":"Lamentações","EZK":"Ezequiel","DAN":"Daniel","HOS":"Oseias","JOL":"Joel","AMO":"Amós","OBA":"Obadias","JON":"Jonas","MIC":"Miqueias","NAM":"Naum","HAB":"Habacuque","ZEP":"Sofonias","HAG":"Ageu","ZEC":"Zacarias","MAL":"Malaquias","MAT":"Mateus","MRK":"Marcos","LUK":"Lucas","JHN":"João","ACT":"Atos","ROM":"Romanos","1CO":"1 Coríntios","2CO":"2 Coríntios","GAL":"Gálatas","EPH":"Efésios","PHP":"Filipenses","COL":"Colossenses","1TH":"1 Tessalonicenses","2TH":"2 Tessalonicenses","1TI":"1 Timóteo","2TI":"2 Timóteo","TIT":"Tito","PHM":"Filemom","HEB":"Hebreus","JAS":"Tiago","1PE":"1 Pedro","2PE":"2 Pedro","1JN":"1 João","2JN":"2 João","3JN":"3 João","JUD":"Judas","REV":"Apocalipse"};
+  (async function () {
+    var list = document.getElementById("list");
+    var keys = [];
+    try {
+      var cache = await caches.open("mercy-pages-v1");
+      keys = (await cache.keys()).map(function (r) { return new URL(r.url).pathname; });
+    } catch (e) {}
+    var seen = {};
+    keys.reverse().forEach(function (path) {
+      var m = path.match(/^\/study\/bible\/([0-9A-Z]{3})\/(\d+)$/);
+      if (!m || seen[path]) return;
+      seen[path] = 1;
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.className = "ch"; a.href = path;
+      a.textContent = (BOOKS[m[1]] || m[1]) + " " + m[2];
+      li.appendChild(a); list.appendChild(li);
+    });
+    if (!list.children.length) document.getElementById("lead").textContent = "Ainda não há capítulos guardados neste aparelho. Abra a Bíblia com internet uma vez e eles ficam disponíveis.";
+  })();
+</script>
+</body>
+</html>

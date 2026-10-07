@@ -87,6 +87,11 @@ export function ReaderView({
     setCommentaryVerse(null);
   }, [refNow.book, refNow.chapter, setCommentaryVerse]);
 
+  // Guarda o capítulo no aparelho para ler sem internet (service worker, só no site publicado).
+  useEffect(() => {
+    navigator.serviceWorker?.controller?.postMessage({ type: "keep-chapter", path: `/study/bible/${refNow.book}/${refNow.chapter}` });
+  }, [refNow.book, refNow.chapter]);
+
   // ?v=N (vindo da busca): rola até o versículo e marca por um instante.
   useEffect(() => {
     const v = new URLSearchParams(window.location.search).get("v");

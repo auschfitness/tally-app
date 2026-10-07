@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Figtree, Literata } from "next/font/google";
 import "./globals.css";
+import { ServiceWorker } from "@/components/shared/ServiceWorker";
 
 // Figtree: a família da marca Mercy (manual de identidade), do wordmark (900) à interface.
 const figtree = Figtree({
@@ -23,6 +24,8 @@ const literata = Literata({
 export const metadata: Metadata = {
   metadataBase: new URL("https://joinmercy.com"),
   title: "Mercy · Church OS",
+  applicationName: "Mercy",
+  appleWebApp: { capable: true, title: "Mercy", statusBarStyle: "default" },
   description: "Church OS com uma camada de inteligência pastoral — ninguém passa despercebido.",
 };
 
@@ -41,7 +44,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const readTone = jar.get("mercy-read-tone")?.value === "sepia" ? "sepia" : undefined;
   return (
     <html lang="pt-BR" data-theme={theme} data-read-size={readSize} data-read-tone={readTone} className={`${figtree.variable} ${literata.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }
