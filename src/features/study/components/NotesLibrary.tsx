@@ -4,7 +4,7 @@
 // lista, e a nota entra em tela cheia pela direita. A seleção vive em ?n=<key>
 // (replaceState no computador, pushState no celular para o voltar do aparelho fechar).
 // Salva sozinho 800ms depois de parar de digitar e ao sair do campo.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, MoreHorizontal, SquarePen } from "lucide-react";
@@ -16,7 +16,7 @@ import { buildReference, parseRefs } from "@/lib/bible/parse";
 import { deleteNoteAction, deleteTextNoteAction, saveLooseNoteAction, saveTextNoteAction } from "../actions";
 import { READER_TRANSLATION } from "../reader-queries";
 import { curlyQuotes } from "../reader";
-import { groupNotesByDate, joinNote, noteDate, searchNotes, splitNote, type NoteItem } from "../domain";
+import { groupNotesByDate, joinNote, noteDate, searchNotes, splitNote, swipeCloses, type NoteItem } from "../domain";
 import { Chip, MenuChip, MenuItem } from "./FilterChips";
 import { Popover } from "./Popover";
 import styles from "../study.module.css";
@@ -45,6 +45,7 @@ export function NotesLibrary({ items: initialItems, initialKey }: { items: NoteI
   const pushed = useRef(false);
   const live = useRef<Record<string, string>>({});
   const listRef = useRef<HTMLDivElement>(null);
+  const paneRef = useRef<HTMLDivElement>(null);
   const now = useMemo(() => new Date(), []);
 
   const isMobile = () => window.matchMedia("(max-width: 56.1875rem)").matches;
@@ -101,6 +102,8 @@ export function NotesLibrary({ items: initialItems, initialKey }: { items: NoteI
       setUrl(null);
     }
   }
+
+  useSwipeToClose(paneRef, mobileOpen, () => closeMobile());
 
   useEffect(() => {
     function onPop() {
@@ -263,7 +266,7 @@ export function NotesLibrary({ items: initialItems, initialKey }: { items: NoteI
         )}
       </div>
 
-      <div className={`${styles.nPane}${mobileOpen ? " " + styles.nPaneOpen : ""}`}>
+      <div ref={paneRef} className={`${styles.nPane}${mobileOpen ? " " + styles.nPaneOpen : ""}`}>
         <button type="button" className={`${styles.back} ${styles.nBack}`} onClick={closeMobile}>
           <UiIcon icon={ChevronLeft} />
           Notas
@@ -488,4 +491,83 @@ function NotePane({
       {err ? <p className={styles.npErr} role="alert">{err}</p> : null}
     </article>
   );
+}
+
+// Celular: arrastar a nota aberta para a direita fecha (segue o dedo 1:1, fecha por
+// distância ou por velocidade, senão volta). Ignora a faixa da borda, que é do sistema
+// (voltar do iOS/Android já fecha via popstate), e campos de texto, onde arrastar seleciona.
+function useSwipeToClose(ref: RefObject<HTMLDivElement | null>, enabled: boolean, onClose: () => void) {
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !enabled) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const EDGE = 24;
+    const SLOP = 10;
+    let id: number | null = null;
+    let x0 = 0, y0 = 0, dx = 0, mode: "?" | "x" | "no" = "?";
+    let hist: { x: number; t: number }[] = [];
+
+    const reset = () => {
+      el.style.transition = "";
+      el.style.transform = "";
+    };
+    function down(e: PointerEvent) {
+      if (e.pointerType !== "touch" || id !== null) return;
+      if (e.clientX < EDGE) return;
+      if ((e.target as HTMLElement).closest("input, textarea, select, [contenteditable], button, a")) return;
+      id = e.pointerId;
+      x0 = e.clientX; y0 = e.clientY; dx = 0; mode = "?";
+      hist = [{ x: e.clientX, t: e.timeStamp }];
+    }
+    function move(e: PointerEvent) {
+      if (e.pointerId !== id) return;
+      const mx = e.clientX - x0, my = e.clientY - y0;
+      if (mode === "?") {
+        if (Math.hypot(mx, my) < SLOP) return;
+        mode = mx > 0 && Math.abs(mx) > Math.abs(my) * 1.2 ? "x" : "no";
+        if (mode === "x") {
+          el!.setPointerCapture(e.pointerId);
+          el!.style.transition = "none";
+        }
+      }
+      if (mode !== "x") return;
+      dx = Math.max(0, mx);
+      el!.style.transform = `translateX(${dx}px)`;
+      hist.push({ x: e.clientX, t: e.timeStamp });
+      if (hist.length > 5) hist.shift();
+    }
+    function up(e: PointerEvent) {
+      if (e.pointerId !== id) return;
+      id = null;
+      if (mode !== "x") return;
+      const a = hist[0], b = hist[hist.length - 1];
+      const v = b && a && b.t > a.t ? (b.x - a.x) / (b.t - a.t) : 0;
+      if (e.type !== "pointercancel" && swipeCloses(dx, v, el!.clientWidth)) {
+        el!.style.transition = "transform 200ms cubic-bezier(.32, .72, 0, 1)";
+        el!.style.transform = "translateX(100%)";
+        window.setTimeout(() => {
+          close.current();
+          // O CSS de fechado assume daqui; limpar depois do frame evita piscar.
+          requestAnimationFrame(reset);
+        }, 200);
+      } else {
+        el!.style.transition = "transform 260ms cubic-bezier(.32, .72, 0, 1)";
+        el!.style.transform = "translateX(0)";
+        window.setTimeout(reset, 260);
+      }
+    }
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+      reset();
+    };
+  }, [ref, enabled]);
 }

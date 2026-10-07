@@ -1414,6 +1414,7 @@
     background: var(--main);
     transform: translateX(100%);
     visibility: hidden;
+    touch-action: pan-y; /* arrasto lateral fica para o gesto de fechar */
     transition: transform 200ms cubic-bezier(.32, .72, 0, 1), visibility 0s linear 200ms;
   }
   .nPaneOpen {

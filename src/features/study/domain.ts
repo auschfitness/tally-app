@@ -456,3 +456,11 @@ export function noteDate(iso: string, now: Date = new Date()): string {
   const base = `${d.getDate()} ${MES[d.getMonth()]}`;
   return d.getFullYear() === now.getFullYear() ? base : `${base} ${d.getFullYear()}`;
 }
+
+// Arrastar a nota aberta no celular para a direita: fecha se passou da metade da tela
+// ou se o dedo saiu rápido para a direita (um "peteleco" basta, sem exigir distância).
+export const SWIPE_FLICK = 0.11; // px/ms
+export function swipeCloses(dx: number, velocity: number, width: number): boolean {
+  if (dx <= 0) return false;
+  return dx > width / 2 || velocity > SWIPE_FLICK;
+}

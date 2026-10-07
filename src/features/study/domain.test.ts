@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  swipeCloses,
   filterSermons,
   booksWithSermons,
   type SermonFilter,
@@ -414,4 +415,11 @@ describe("editor: data longa e notas da passagem (spec 10)", () => {
     expect(noteOverlapsPassage({ verse_start: null, verse_end: null }, p)).toBe(true);
     expect(noteOverlapsPassage({ verse_start: 3, verse_end: 3 }, { verse_start: null, verse_end: null })).toBe(true);
   });
+});
+
+describe("swipeCloses", () => {
+  it("fecha ao passar da metade", () => expect(swipeCloses(200, 0, 390)).toBe(true));
+  it("fecha com peteleco curto", () => expect(swipeCloses(40, 0.5, 390)).toBe(true));
+  it("fica com arrasto curto e lento", () => expect(swipeCloses(80, 0.05, 390)).toBe(false));
+  it("não fecha arrastando para a esquerda", () => expect(swipeCloses(-50, 0.9, 390)).toBe(false));
 });
