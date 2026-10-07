@@ -32,13 +32,13 @@ export function ScriptureMap({ scriptures, sermons }: { scriptures: Scripture[];
       .map(([id, refs]) => ({ s: sermonById.get(id), refs }))
       .filter((x): x is { s: SermonLite; refs: string[] } => !!x.s);
     detail = (
-      <div className="panel" style={{ marginTop: 16 }}>
-        <div className="ph"><h3>{bookName(book)}</h3><span className="muted" style={{ marginLeft: "auto" }}>{items.length} {items.length === 1 ? "sermão" : "sermões"}</span></div>
+      <div className={`panel ${styles.smapDetail}`}>
+        <div className="ph"><h3>{bookName(book)}</h3><span className={`muted ${styles.smapCount}`}>{items.length} {items.length === 1 ? "sermão" : "sermões"}</span></div>
         {items.length === 0 ? (
-          <div className="empty">Nenhum sermão usou este livro ainda.</div>
+          <div className={styles.libEmpty}>Nenhum sermão usou este livro ainda.</div>
         ) : (
           items.map(({ s, refs }) => (
-            <Link key={s.id} href={`/study/sermon/${s.id}`} className="li" style={{ display: "block" }}>
+            <Link key={s.id} href={`/study/sermon/${s.id}`} className={`li ${styles.smapItem}`}>
               <div><b>{s.title || "(sem título)"}</b>{s.sermon_date ? <span className="muted"> · {brDate(s.sermon_date)}</span> : null}</div>
               <div className="meta">{refs.join(" · ")}</div>
             </Link>
@@ -50,23 +50,22 @@ export function ScriptureMap({ scriptures, sermons }: { scriptures: Scripture[];
 
   return (
     <>
-      <p className="sub" style={{ margin: "0 0 16px" }}>Quais livros já foram pregados e com que intensidade. Dados reais dos sermões.</p>
+      <p className={`sub ${styles.smapSub}`}>Quais livros já foram pregados e com que intensidade. Dados reais dos sermões.</p>
 
       {total === 0 ? (
-        <div className="empty">Nenhuma passagem registrada ainda. O mapa se preenche conforme você escreve sermões com referências.</div>
+        <div className={styles.libEmpty}>Nenhuma passagem registrada ainda. O mapa se preenche conforme você escreve sermões com referências.</div>
       ) : (
         <>
           <div className={styles.smap}>
             {BOOKS.map((b) => {
               const n = cov.count[b.code] ?? 0;
-              const alpha = n ? 0.14 + 0.66 * (n / (cov.max || 1)) : 0;
-              const bg = n ? `rgba(43,92,230,${alpha.toFixed(2)})` : "var(--surface-2, #f1f3f8)";
-              const col = n && alpha > 0.5 ? "#fff" : "var(--text)";
+              const level = n ? Math.min(4, Math.max(1, Math.ceil((4 * n) / (cov.max || 1)))) : 0;
               return (
                 <button
                   key={b.code}
                   className={styles.smapCell}
-                  style={{ background: bg, color: col, ...(book === b.code ? { outline: "2px solid var(--blue)" } : {}) }}
+                  data-level={level}
+                  aria-pressed={book === b.code}
                   title={`${b.pt}${n ? ` · ${n} ${n === 1 ? "sermão" : "sermões"}` : " · sem uso"}`}
                   onClick={() => setBook(book === b.code ? null : b.code)}
                 >

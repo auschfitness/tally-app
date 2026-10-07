@@ -54,14 +54,15 @@ export function SermonLibrary({
     window.history.replaceState(null, "", v === "data" ? "/study" : `/study?ver=${v}`);
   }
 
+  const empty = sermons.length === 0 && series.length === 0;
   const header = (
     <div className={styles.libHead}>
       <h1 className="page">Sermões</h1>
-      <Link href="/study/sermon/new" className={styles.primary}>Novo sermão</Link>
+      {empty ? null : <Link href="/study/sermon/new" className={styles.primary}>Novo sermão</Link>}
     </div>
   );
 
-  if (sermons.length === 0 && series.length === 0) {
+  if (empty) {
     return (
       <div className={styles.lib}>
         {header}
@@ -104,7 +105,7 @@ export function SermonLibrary({
       {searching ? (
         <>
           <div className={styles.libCount}>{results.length} {results.length === 1 ? "resultado" : "resultados"}</div>
-          {results.length === 0 ? <div className="empty">Nada encontrado para “{q.trim()}”.</div> : results.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
+          {results.length === 0 ? <div className={styles.libEmpty}>Nada encontrado para “{q.trim()}”.</div> : results.map((s) => <Row key={s.id} s={s} titles={seriesTitleById} />)}
         </>
       ) : view === "data" ? (
         <>
@@ -160,7 +161,7 @@ export function SermonLibrary({
             <h2 className={styles.libSec}>Suas séries</h2>
             <button type="button" className={styles.secondary} onClick={() => setNewSeries(true)}>Nova série</button>
           </div>
-          {series.length === 0 ? <div className="empty">Nenhuma série ainda. Agrupe sermões numa jornada de ensino em “Nova série”.</div> : null}
+          {series.length === 0 ? <div className={styles.libEmpty}>Nenhuma série ainda. Agrupe sermões numa jornada de ensino em “Nova série”.</div> : null}
           {series.map((se) => {
             const n = countBySeries.get(se.id) ?? 0;
             const info = [`${n} ${n === 1 ? "sermão" : "sermões"}`, seriesPeriod(se.start_date, se.end_date)].filter(Boolean).join(" · ");
