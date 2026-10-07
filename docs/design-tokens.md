@@ -23,7 +23,7 @@ Números usam `font-variant-numeric: tabular-nums`.
 
 - `--r-6`: controles, chips e abas.
 - `--r-10`: cards, painéis, menus e folhas.
-- `--r-pill`: avatar e interruptor.
+- `--r-pill`: avatar, interruptor e botões de texto.
 - `--control-h`: 32px. `--control-px`: 10px de padding horizontal.
 - `--bar-h`: 48px, para a barra da Bíblia.
 - `--s-1`, `--s-2`, `--s-3`, `--s-4`, `--s-5`, `--s-6`, `--s-8`: 4, 8, 12, 16, 20, 24, 32px.
