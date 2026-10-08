@@ -21,7 +21,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
     );
   }
   const { aba } = await searchParams;
-  const tab: FinanceTab = aba === "dizimos" ? "dizimos" : "movimentacoes";
+  const tab: FinanceTab = aba === "dizimos" || aba === "fechamento" ? aba : "movimentacoes";
   const [ledger, donations, receipts] = await Promise.all([
     loadLedger(ctx.supabase, ctx.orgId),
     tab === "dizimos" ? listDonations(ctx.supabase, ctx.orgId) : Promise.resolve([]),

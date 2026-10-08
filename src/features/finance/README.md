@@ -7,7 +7,8 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 ## Arquivos-chave
 - `domain.ts` — puro: `toMovement` (2 partidas → in/out/transfer, resto → other),
   `accountBalances` (saldo das contas finais de caixa/banco, com data de corte),
-  `groupByDay`, `leafAccounts`, `nextChildCode`, `isGivingCategory`, `friendlyFinanceError`.
+  `groupByDay`, `monthClose`/`monthBounds` (fechamento: inicial + entradas − saídas +
+  outros = final), `leafAccounts`, `nextChildCode`, `isGivingCategory`, `friendlyFinanceError`.
 - `queries.ts` — `loadLedger`: plano de contas, lançamentos postados/anulados, partidas,
   doador ligado, fundos, pessoas e moeda numa ida.
 - `schema.ts` + `actions.ts` — `recordTransactionAction` (RPC `record_transaction`),
@@ -18,6 +19,8 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `components/MovementsTab.tsx` — saldo, contas (filtro), extrato por dia.
 - `components/TithesTab.tsx` — dízimos por pessoa, recibo e declaração anual
   (reusa `features/giving`).
+- `components/ClosingTab.tsx` — fechamento do mês (abre no mês passado), imprimir/PDF
+  pelo navegador (`@media print` esconde cabeçalho e abas).
 - `components/Panel.tsx` — painel lateral (desktop) / folha arrastável (celular).
 - `components/TransactionForm.tsx` — Novo lançamento; "De quem?" em dízimo/oferta vira
   doação ligada (`donations.journal_entry_id`).
@@ -29,4 +32,4 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.
 
 ## Rota
-- `/finance` e `/finance?aba=dizimos` (só `finance.manage`); recibo em `/finance/recibo/[id]`. Escondida pelo `STUDY_ONLY` até a fase 5 da spec.
+- `/finance`, `?aba=dizimos`, `?aba=fechamento` (só `finance.manage`); recibo em `/finance/recibo/[id]`. Escondida pelo `STUDY_ONLY` até a fase 5 da spec.

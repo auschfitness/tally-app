@@ -118,3 +118,32 @@
 
 /* Abas são links (a aba vive na URL): sem o sublinhado padrão de <a>. */
 .tabLink { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* --- Fechamento do mês (relatório para imprimir) --- */
+.monthNav { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-5); }
+.monthName { font-size: var(--t-15); font-weight: 500; color: var(--text); min-width: 11rem; text-align: center; }
+.monthName::first-letter { text-transform: uppercase; }
+.report { max-width: 40rem; }
+.reportHead { margin-bottom: var(--s-5); }
+.reportHead h2 { font-size: var(--t-22); line-height: var(--lh-22); font-weight: 600; color: var(--text); }
+.reportOrg { font-size: var(--t-13); color: var(--text-2); }
+.reportBlock { margin-bottom: var(--s-6); }
+.reportBlock h3 { font-size: var(--t-13); line-height: var(--lh-13); font-weight: 500; color: var(--text-2); margin-bottom: var(--s-1); }
+.reportRow { display: flex; align-items: baseline; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); font-size: var(--t-15); color: var(--text); }
+.reportRow span { flex: 1; }
+.reportRow b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.reportRow small { font-size: var(--t-11); color: var(--text-2); font-weight: 400; margin-left: var(--s-1); }
+.reportRow .in { color: var(--green); }
+.reportStrong { font-weight: 600; border-bottom: none; }
+.reportStrong b { font-weight: 600; }
+.reportCols span:not(:first-child), .reportCols b { flex: 0 0 8rem; text-align: right; }
+.reportCols span:not(:first-child) { font-size: var(--t-11); color: var(--text-2); }
+.reportFoot { margin-top: var(--s-8); font-size: var(--t-11); color: var(--text-2); }
+.signatures { display: flex; gap: var(--s-8); margin-bottom: var(--s-6); }
+.signatures div { flex: 1; border-top: 1px solid var(--text-2); padding-top: var(--s-2); margin-top: var(--s-8); text-align: center; }
+
+@media print {
+  .noprint, .head { display: none !important; }
+  .report { max-width: none; padding: 1.5cm; }
+  .reportRow .in { color: inherit; }
+}

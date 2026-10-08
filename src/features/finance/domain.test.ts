@@ -4,6 +4,8 @@ import {
   groupByDay,
   isGivingCategory,
   leafAccounts,
+  monthBounds,
+  monthClose,
   nextChildCode,
   toMovement,
   type LedgerAccount,
@@ -120,5 +122,38 @@ describe("isGivingCategory", () => {
     expect(isGivingCategory("Ofertas")).toBe(true);
     expect(isGivingCategory("Doações")).toBe(true);
     expect(isGivingCategory("Aluguel")).toBe(false);
+  });
+});
+
+describe("monthBounds", () => {
+  it("dia anterior ao mês e último dia, inclusive fevereiro e virada de ano", () => {
+    expect(monthBounds("2026-10")).toEqual({ before: "2026-09-30", last: "2026-10-31" });
+    expect(monthBounds("2028-02")).toEqual({ before: "2028-01-31", last: "2028-02-29" });
+    expect(monthBounds("2027-01")).toEqual({ before: "2026-12-31", last: "2027-01-31" });
+  });
+});
+
+describe("monthClose", () => {
+  it("inicial + entradas − saídas + outros = final, por categoria e por conta", () => {
+    const entries = [entry("a", "2026-09-20"), entry("b", "2026-10-02"), entry("c", "2026-10-05"), entry("d", "2026-10-06"), entry("e", "2026-10-07")];
+    const lines = [
+      ...pair("a", "banco", "dizimos", 500),
+      ...pair("b", "banco", "dizimos", 100),
+      ...pair("c", "luz", "banco", 40),
+      ...pair("d", "caixa", "banco", 60),
+      // ajuste manual do contador: tira 10 do caixa contra uma conta de receita, com 3 partidas
+      { entryId: "e", accountId: "outras", debit: 10, credit: 0 },
+      { entryId: "e", accountId: "caixa", debit: 0, credit: 6 },
+      { entryId: "e", accountId: "caixa", debit: 0, credit: 4 },
+    ];
+    const movements = entries.map((e) => toMovement(e, lines.filter((l) => l.entryId === e.id), typeOf));
+    const r = monthClose("2026-10", ACCOUNTS, entries, lines, movements);
+    expect(r).toMatchObject({ opening: 500, income: 100, expense: 40, other: -10, closing: 550 });
+    expect(r.incomeByCategory).toEqual([{ id: "dizimos", total: 100 }]);
+    expect(r.expenseByCategory).toEqual([{ id: "luz", total: 40 }]);
+    expect(r.accounts).toEqual([
+      { id: "caixa", name: "caixa", opening: 0, closing: 50 },
+      { id: "banco", name: "banco", opening: 500, closing: 500 },
+    ]);
   });
 });

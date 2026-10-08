@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PeriodFilter } from "@/components/shared/PeriodFilter";
 import { resolvePeriod, type PeriodRange, type PeriodValue } from "@/lib/utils/period";
+import { isoDate, today } from "@/lib/utils/date";
 import type { Donation, ReceiptListItem } from "@/features/giving/types";
 import { voidTransactionAction } from "../actions";
 import { accountBalances, isGivingCategory, leafAccounts, type TxKind } from "../domain";
@@ -17,15 +18,17 @@ import { TransactionForm } from "./TransactionForm";
 import { MovementDetail } from "./MovementDetail";
 import { MovementsTab } from "./MovementsTab";
 import { TithesTab } from "./TithesTab";
+import { ClosingTab, shiftMonth } from "./ClosingTab";
 import styles from "../finance.module.css";
 
 const TOAST_MS = 6000;
 const SHORT_TOAST_MS = 2500;
 
-export type FinanceTab = "movimentacoes" | "dizimos";
+export type FinanceTab = "movimentacoes" | "dizimos" | "fechamento";
 const TABS: { key: FinanceTab; label: string; href: string }[] = [
   { key: "movimentacoes", label: "Movimentações", href: "/finance" },
   { key: "dizimos", label: "Dízimos", href: "/finance?aba=dizimos" },
+  { key: "fechamento", label: "Fechamento", href: "/finance?aba=fechamento" },
 ];
 
 type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | null;
@@ -55,6 +58,8 @@ export function FinanceBoard({
   const [panel, setPanelState] = useState<PanelState>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [freshId, setFreshId] = useState<string | null>(null);
+  // Fechamento abre no mês passado: é o que o tesoureiro fecha no começo do mês.
+  const [closingMonth, setClosingMonth] = useState(() => shiftMonth(isoDate(today()).slice(0, 7), -1));
   const toastTimer = useRef<number | undefined>(undefined);
 
   // Abrir um painel tira o aviso da frente (no celular ele cobriria o botão Salvar).
@@ -121,13 +126,21 @@ export function FinanceBoard({
     <>
       <div className={styles.head}>
         <h1 className="page">Finanças</h1>
-        <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="finance.period" align="right" />
-        <button type="button" className={`btn ${styles.press}`} onClick={openNew} title="Atalho: N">
-          {tab === "dizimos" ? "Registrar dízimo" : "Novo lançamento"}
-        </button>
+        {tab === "fechamento" ? (
+          <button type="button" className={`btn ${styles.press}`} onClick={() => window.print()}>
+            Imprimir / PDF
+          </button>
+        ) : (
+          <>
+            <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="finance.period" align="right" />
+            <button type="button" className={`btn ${styles.press}`} onClick={openNew} title="Atalho: N">
+              {tab === "dizimos" ? "Registrar dízimo" : "Novo lançamento"}
+            </button>
+          </>
+        )}
       </div>
 
-      <nav className="tabs" aria-label="Seções de Finanças">
+      <nav className={`tabs ${styles.noprint}`} aria-label="Seções de Finanças">
         {TABS.map((t) => (
           <Link key={t.key} href={t.href} className={`tab ${styles.tabLink}${tab === t.key ? " on" : ""}`} aria-current={tab === t.key ? "page" : undefined}>
             {t.label}
@@ -135,7 +148,19 @@ export function FinanceBoard({
         ))}
       </nav>
 
-      {tab === "dizimos" ? (
+      {tab === "fechamento" ? (
+        <ClosingTab
+          month={closingMonth}
+          onMonth={setClosingMonth}
+          orgName={ledger.orgName}
+          accounts={accounts}
+          entries={entries}
+          lines={lines}
+          movements={movements}
+          currency={currency}
+          nameOf={nameOf}
+        />
+      ) : tab === "dizimos" ? (
         <TithesTab donations={donations} receipts={receipts} range={range} currency={currency} onRegister={openNew} />
       ) : (
         <MovementsTab

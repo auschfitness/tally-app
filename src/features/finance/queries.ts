@@ -14,6 +14,7 @@ export interface FinanceLedger {
   funds: { id: string; name: string }[];
   people: { id: string; name: string }[];
   currency: string;
+  orgName: string;
 }
 
 export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLedger> {
@@ -30,7 +31,7 @@ export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLe
     supabase.from("donations").select("journal_entry_id, donor_name").eq("org_id", orgId).not("journal_entry_id", "is", null),
     supabase.from("funds").select("id, name").eq("org_id", orgId).order("name"),
     supabase.from("sticks").select("id, full_name").eq("org_id", orgId).order("full_name"),
-    supabase.from("organizations").select("currency, country").eq("id", orgId).maybeSingle(),
+    supabase.from("organizations").select("name, currency, country").eq("id", orgId).maybeSingle(),
   ]);
   if (accRes.error) throw new Error(accRes.error.message);
   if (entRes.error) throw new Error(entRes.error.message);
@@ -72,5 +73,6 @@ export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLe
     funds: (fundRes.data ?? []).map((f) => ({ id: f.id, name: f.name })),
     people: (stickRes.data ?? []).map((s) => ({ id: s.id, name: s.full_name })),
     currency: orgRes.data?.currency ?? (orgRes.data?.country === "US" ? "USD" : "BRL"),
+    orgName: orgRes.data?.name ?? "",
   };
 }

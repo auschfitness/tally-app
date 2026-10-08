@@ -139,3 +139,74 @@ export function friendlyFinanceError(raw: string): string {
   if (m.includes("postado pode ser anulado")) return "Esse lançamento já foi anulado.";
   return raw;
 }
+
+export interface CategoryTotal {
+  id: string;
+  total: number;
+}
+
+export interface MonthClose {
+  month: string; // aaaa-mm
+  opening: number;
+  income: number;
+  expense: number;
+  other: number; // lançamentos do contador que mexeram no caixa fora de entrada/saída
+  closing: number;
+  incomeByCategory: CategoryTotal[];
+  expenseByCategory: CategoryTotal[];
+  accounts: { id: string; name: string; opening: number; closing: number }[];
+}
+
+// Último dia do mês anterior e último dia do mês ("2026-10" → "2026-09-30", "2026-10-31").
+export function monthBounds(month: string): { before: string; last: string } {
+  const [y, m] = month.split("-").map(Number);
+  const iso = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { before: iso(new Date(y ?? 0, (m ?? 1) - 1, 0)), last: iso(new Date(y ?? 0, m ?? 1, 0)) };
+}
+
+function totalsBy(movements: Movement[]): CategoryTotal[] {
+  const m = new Map<string, number>();
+  for (const mv of movements) if (mv.counterId) m.set(mv.counterId, (m.get(mv.counterId) ?? 0) + mv.amount);
+  return [...m.entries()].map(([id, total]) => ({ id, total: round2(total) })).sort((a, b) => b.total - a.total);
+}
+
+// Fechamento do mês em linguagem de tesoureiro. Saldos vêm do livro (exatos); entradas e
+// saídas vêm dos movimentos do mês. O que sobra (ajuste manual do contador no caixa)
+// aparece como "outros" para a conta fechar: inicial + entradas − saídas + outros = final.
+export function monthClose(
+  month: string,
+  accounts: LedgerAccount[],
+  entries: LedgerEntry[],
+  lines: LedgerLine[],
+  movements: Movement[],
+): MonthClose {
+  const { before, last } = monthBounds(month);
+  const openingByAcc = accountBalances(accounts, entries, lines, before);
+  const closingByAcc = accountBalances(accounts, entries, lines, last);
+  const inMonth = movements.filter((m) => m.status === "posted" && m.date.slice(0, 7) === month);
+  const ins = inMonth.filter((m) => m.kind === "in");
+  const outs = inMonth.filter((m) => m.kind === "out");
+
+  const opening = round2(openingByAcc.reduce((s, a) => s + a.balance, 0));
+  const closing = round2(closingByAcc.reduce((s, a) => s + a.balance, 0));
+  const income = round2(ins.reduce((s, m) => s + m.amount, 0));
+  const expense = round2(outs.reduce((s, m) => s + m.amount, 0));
+
+  return {
+    month,
+    opening,
+    income,
+    expense,
+    other: round2(closing - opening - income + expense),
+    closing,
+    incomeByCategory: totalsBy(ins),
+    expenseByCategory: totalsBy(outs),
+    accounts: closingByAcc.map((a) => ({
+      id: a.id,
+      name: a.name,
+      opening: openingByAcc.find((o) => o.id === a.id)?.balance ?? 0,
+      closing: a.balance,
+    })),
+  };
+}
