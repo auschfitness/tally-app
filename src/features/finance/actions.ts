@@ -65,6 +65,8 @@ export async function voidTransactionAction(entryId: string): Promise<ActionResu
   if (error) return fail(friendlyFinanceError(toMessage(error, "Não consegui anular o lançamento.")));
   // Linha do extrato que tinha virado este lançamento volta para "a classificar".
   await ctx.supabase.from("bank_transactions").update({ status: "pending", journal_entry_id: null }).eq("org_id", ctx.orgId).eq("journal_entry_id", entryId);
+  // Conta a pagar que tinha virado este lançamento volta a ficar aberta (spec 12).
+  await ctx.supabase.from("finance_bills").update({ status: "open", paid_on: null, paid_amount: null, journal_entry_id: null }).eq("org_id", ctx.orgId).eq("journal_entry_id", entryId);
   revalidateFinance();
   return ok(undefined);
 }

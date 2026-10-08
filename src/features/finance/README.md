@@ -39,14 +39,19 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `components/TransactionForm.tsx` — Novo lançamento; "De quem?" em dízimo/oferta vira
   doação ligada (`donations.journal_entry_id`).
 - `components/MovementDetail.tsx` — detalhe + anular (segundo toque, sem diálogo).
+- Contas a pagar e a receber (spec 12): `bills.ts` (datas, ocorrências, alcance, grupos;
+  testes em `bills.test.ts`), `bill-actions.ts` (salvar/excluir com alcance, pagar, desfazer),
+  `queries.ts#loadBills` (completa as séries até 12 meses ao abrir a aba),
+  `components/BillsTab.tsx`, `BillForm.tsx`, `BillDetail.tsx`, `ScopeMenu.tsx`. Anular um
+  lançamento que veio de conta paga reabre a conta.
 
 ## Banco
-- m48 (livro), m49 (plano padrão), m63 (`bank_imports`, `bank_transactions`,
+- m64 (`finance_bills`, `finance_bill_series`, `pay_bill`, `unpay_bill`), m48 (livro), m49 (plano padrão), m63 (`bank_imports`, `bank_transactions`,
   `category_rules`, `statement_acct_id`), m62 (contas: `bank_code`, `is_default`, saldo inicial,
   correção do `trial_balance` que somava anulados), m61 (`record_transaction`, `donations.journal_entry_id`,
   acentos no plano padrão).
 - `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.
 
 ## Rota
-- `/finance`, `?aba=dizimos`, `?aba=fechamento`; contador em `/finance/contador/*`
-  (componentes de `features/accounting`; `/accounting/*` redireciona) (só `finance.manage`); recibo em `/finance/recibo/[id]`. As 5 fases da spec estão prontas; o módulo segue escondido pelo `STUDY_ONLY` até o dono liberar.
+- `/finance`, `?aba=contas`, `?aba=dizimos`, `?aba=fechamento`; contador em `/finance/contador/*`
+  (componentes de `features/accounting`; `/accounting/*` redireciona) (só `finance.manage`); recibo em `/finance/recibo/[id]`. As 5 fases da spec estão prontas; Finanças está liberada no menu (`STUDY_ONLY_KEEPS`).

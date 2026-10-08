@@ -210,3 +210,49 @@
 .rulesLink { display: block; margin-left: auto; margin-bottom: var(--s-2); }
 .tabsRow { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .tabsRow::-webkit-scrollbar { display: none; }
+
+/* ── Contas a pagar e a receber (spec 12) ───────────────────────────────── */
+.billFilter { max-width: 22rem; margin-bottom: var(--s-4); }
+.billGroupHead { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.late { color: var(--coral); }
+/* Círculo de status: vazio = aberta; cheio = paga. Enche por escala a partir de .6 (nunca de 0). */
+.billDot { position: relative; flex: none; width: 0.875rem; height: 0.875rem; border-radius: var(--r-pill); border: 1.5px solid var(--text-2); }
+.billDot::after { content: ""; position: absolute; inset: 1.5px; border-radius: inherit; background: var(--text); opacity: 0; transform: scale(.6); transition: opacity var(--dur-micro) var(--ease), transform var(--dur-micro) var(--ease); }
+.billDot.in { border-color: var(--green); }
+.billDot.in::after { background: var(--green); }
+.billDotPaid { border-color: var(--text); }
+.billDotPaid::after { opacity: 1; transform: scale(1); }
+.billRight { text-align: right; flex: none; }
+.billDue { font-size: var(--t-11); line-height: var(--lh-11); color: var(--text-2); margin-top: 2px; }
+.billHead { margin-bottom: var(--s-5); }
+.billHead .detailAmount { margin-bottom: var(--s-2); }
+.billHead .rowTitle, .billHead .rowSub { white-space: normal; }
+.billNotes { font-size: var(--t-13); line-height: var(--lh-13); color: var(--text-2); white-space: pre-wrap; margin: var(--s-3) 0 0; overflow-wrap: anywhere; }
+.billPaid { display: flex; align-items: center; gap: var(--s-2); font-size: var(--t-13); padding: var(--s-3); border-radius: var(--r-6); background: var(--surface-2); }
+.billPay { padding-top: var(--s-4); border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.billLinks { margin-top: var(--s-5); }
+.billPayBtn { font-size: var(--t-15); }
+
+/* Menu de alcance: nasce do botão que o chamou (origem embaixo à direita). */
+.scopeAnchor { position: relative; display: inline-flex; flex: 1; }
+.scopeAnchor > :global(.btn) { flex: 1; }
+.billLinks .scopeAnchor { flex: none; }
+.scopeMenu {
+  position: absolute; right: 0; bottom: calc(100% + var(--s-2)); z-index: 5; min-width: 13rem;
+  background: var(--surface); border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: var(--r-10); box-shadow: var(--e-2); padding: var(--s-1);
+  transform-origin: bottom right;
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+}
+@starting-style { .scopeMenu { opacity: 0; transform: scale(.96); } }
+.billLinks .scopeMenu { left: 0; right: auto; transform-origin: bottom left; }
+.scopeTitle { font-size: var(--t-11); line-height: var(--lh-11); color: var(--text-2); padding: var(--s-2) var(--s-2) var(--s-1); }
+.scopeItem { display: block; width: 100%; text-align: left; border: none; background: none; color: var(--text); font-size: var(--t-13); min-height: var(--control-h); padding: 0 var(--s-2); border-radius: var(--r-6); }
+.scopeItem:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) {
+  .scopeItem:hover { background: var(--surface-2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  @starting-style { .scopeMenu { transform: none; } }
+  .billDot::after { transform: none; }
+}

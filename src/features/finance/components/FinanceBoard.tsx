@@ -21,6 +21,10 @@ import { ImportPanel } from "./ImportPanel";
 import { ClassifyPanel } from "./ClassifyPanel";
 import { TithesTab } from "./TithesTab";
 import { FinanceTabs, type FinanceTabKey } from "./FinanceTabs";
+import { BillsTab } from "./BillsTab";
+import { BillForm } from "./BillForm";
+import { BillDetail } from "./BillDetail";
+import type { Bill, BillSeries } from "../bills";
 import { ClosingTab, shiftMonth } from "./ClosingTab";
 import styles from "../finance.module.css";
 
@@ -29,7 +33,7 @@ const SHORT_TOAST_MS = 2500;
 
 export type FinanceTab = Exclude<FinanceTabKey, "contador">;
 
-type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | { mode: "import" } | { mode: "classify" } | null;
+type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | { mode: "import" } | { mode: "classify" } | { mode: "bill-new" } | { mode: "bill"; id: string } | { mode: "bill-edit"; id: string } | null;
 interface ToastState {
   message: string;
   undoEntryId?: string;
@@ -44,11 +48,15 @@ export function FinanceBoard({
   tab,
   donations,
   receipts,
+  bills,
+  series,
 }: {
   ledger: FinanceLedger;
   tab: FinanceTab;
   donations: Donation[];
   receipts: ReceiptListItem[];
+  bills: Bill[];
+  series: BillSeries[];
 }) {
   const router = useRouter();
   const { accounts, entries, lines, movements, currency } = ledger;
@@ -79,7 +87,10 @@ export function FinanceBoard({
   );
 
   const openNew = useCallback(
-    () => setPanel(tab === "dizimos" ? { mode: "new", kind: "in", counterId: titheCategoryId } : { mode: "new" }),
+    () =>
+      setPanel(
+        tab === "contas" ? { mode: "bill-new" } : tab === "dizimos" ? { mode: "new", kind: "in", counterId: titheCategoryId } : { mode: "new" },
+      ),
     [setPanel, tab, titheCategoryId],
   );
 
@@ -119,6 +130,12 @@ export function FinanceBoard({
   };
 
   const viewing = panel?.mode === "view" ? movements.find((m) => m.id === panel.id) : undefined;
+  const billOpen = panel?.mode === "bill" || panel?.mode === "bill-edit" ? bills.find((b) => b.id === panel.id) : undefined;
+  const onBillDone = (message: string, close: () => void): void => {
+    close();
+    router.refresh();
+    showToast({ message }, SHORT_TOAST_MS);
+  };
 
   return (
     <>
@@ -130,9 +147,9 @@ export function FinanceBoard({
           </button>
         ) : (
           <>
-            <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="finance.period" align="right" />
+            {tab === "contas" ? null : <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="finance.period" align="right" />}
             <button type="button" className={`btn ${styles.press}`} onClick={openNew} title="Atalho: N">
-              {tab === "dizimos" ? "Registrar dízimo" : "Novo lançamento"}
+              {tab === "contas" ? "Nova conta" : tab === "dizimos" ? "Registrar dízimo" : "Novo lançamento"}
             </button>
           </>
         )}
@@ -152,6 +169,8 @@ export function FinanceBoard({
           currency={currency}
           nameOf={nameOf}
         />
+      ) : tab === "contas" ? (
+        <BillsTab bills={bills} series={series} currency={currency} nameOf={nameOf} onOpen={(id) => setPanel({ mode: "bill", id })} onNew={openNew} />
       ) : tab === "dizimos" ? (
         <TithesTab donations={donations} receipts={receipts} range={range} currency={currency} onRegister={openNew} />
       ) : (
@@ -205,6 +224,38 @@ export function FinanceBoard({
       {panel?.mode === "classify" ? (
         <Panel title="Classificar extrato" onClose={() => setPanel(null)}>
           {(close) => <ClassifyPanel accounts={accounts} movements={movements} currency={currency} onClose={close} />}
+        </Panel>
+      ) : null}
+
+      {panel?.mode === "bill-new" || (panel?.mode === "bill-edit" && billOpen) ? (
+        <Panel title={billOpen ? "Editar conta" : "Nova conta"} onClose={() => setPanel(null)}>
+          {(close) => (
+            <BillForm
+              bill={billOpen}
+              bills={bills}
+              accounts={accounts}
+              currency={currency}
+              onSaved={(_id, message) => onBillDone(message, close)}
+              onCancel={close}
+            />
+          )}
+        </Panel>
+      ) : null}
+
+      {panel?.mode === "bill" && billOpen ? (
+        <Panel title={billOpen.kind === "in" ? "A receber" : "A pagar"} onClose={() => setPanel(null)}>
+          {(close) => (
+            <BillDetail
+              bill={billOpen}
+              bills={bills}
+              series={series}
+              accounts={accounts}
+              currency={currency}
+              nameOf={nameOf}
+              onEdit={() => setPanelState({ mode: "bill-edit", id: billOpen.id })}
+              onDone={(message) => onBillDone(message, close)}
+            />
+          )}
         </Panel>
       ) : null}
 

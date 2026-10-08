@@ -1324,6 +1324,105 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_bill_series: {
+        Row: {
+          anchor_date: string
+          created_at: string
+          created_by: string | null
+          ends_on: string | null
+          frequency: string
+          id: string
+          next_seq: number
+          org_id: string
+        }
+        Insert: {
+          anchor_date: string
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          frequency: string
+          id?: string
+          next_seq?: number
+          org_id: string
+        }
+        Update: {
+          anchor_date?: string
+          created_at?: string
+          created_by?: string | null
+          ends_on?: string | null
+          frequency?: string
+          id?: string
+          next_seq?: number
+          org_id?: string
+        }
+        Relationships: []
+      }
+      finance_bills: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string
+          id: string
+          journal_entry_id: string | null
+          kind: string
+          notes: string | null
+          org_id: string
+          paid_amount: number | null
+          paid_on: string | null
+          payee: string | null
+          seq: number | null
+          series_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date: string
+          id?: string
+          journal_entry_id?: string | null
+          kind: string
+          notes?: string | null
+          org_id: string
+          paid_amount?: number | null
+          paid_on?: string | null
+          payee?: string | null
+          seq?: number | null
+          series_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string
+          id?: string
+          journal_entry_id?: string | null
+          kind?: string
+          notes?: string | null
+          org_id?: string
+          paid_amount?: number | null
+          paid_on?: string | null
+          payee?: string | null
+          seq?: number | null
+          series_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_categories: {
         Row: {
           created_at: string
@@ -4441,6 +4540,14 @@ export type Database = {
       org_flags: { Args: { p_org: string }; Returns: string[] }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
       post_journal_entry: { Args: { p_entry: string }; Returns: undefined }
+      pay_bill: {
+        Args: { p_account: string; p_amount: number; p_bill: string; p_date: string }
+        Returns: string
+      }
+      unpay_bill: {
+        Args: { p_bill: string }
+        Returns: undefined
+      }
       set_default_account: {
         Args: { p_account?: string; p_org: string }
         Returns: undefined

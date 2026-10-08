@@ -3,10 +3,11 @@
 import Link from "next/link";
 import styles from "../finance.module.css";
 
-export type FinanceTabKey = "movimentacoes" | "dizimos" | "fechamento" | "contador";
+export type FinanceTabKey = "movimentacoes" | "contas" | "dizimos" | "fechamento" | "contador";
 
 const TABS: { key: FinanceTabKey; label: string; href: string }[] = [
   { key: "movimentacoes", label: "Movimentações", href: "/finance" },
+  { key: "contas", label: "A pagar e receber", href: "/finance?aba=contas" },
   { key: "dizimos", label: "Dízimos", href: "/finance?aba=dizimos" },
   { key: "fechamento", label: "Fechamento", href: "/finance?aba=fechamento" },
   { key: "contador", label: "Contador", href: "/finance/contador" },
