@@ -178,26 +178,12 @@ Carga e publicação concluídas pelo Claude; função temporária apagada.
 
 Mesmo esquema da frente A (NT, já no ar: `scripts/ubs/`). Fonte: github.com/ubsicap/ubs-open-license (dicionário hebraico, CC BY-SA). Só depois da tarefa 1. Cuidado com o limite de 500 MB do banco.
 
-### 6. Completar o sublinhado do Antigo Testamento (EM EXECUÇÃO em 2026-10-04)
+### 6. Completar o sublinhado do Antigo Testamento (FEITA em 2026-10-08: 23.145 versículos carregados em bible_tagged_verses, banco 243 MB)
 
-Pedido do dono: completar as ligações das palavras, além da carga estatística já presente.
-Fluxo retomável: definir `GEMINI_ALIGN_MODEL=gemini-3.1-flash-lite` no ambiente e
-rodar `node --env-file=.env.local scripts/align/run-complete-ot.mjs`.
-Não iniciar outra execução se esse processo já estiver ativo. Progresso e resultados
-em `scripts/align/work/gem-ot/`; piloto atual em
-`work/gem-ot-word-pilot-gemini-3.1-flash-lite/` (gitignored).
-Piloto por palavras numeradas: 167 versículos, 3.887 palavras, 100% de cobertura,
-96,06% de acordo com os gabaritos nas palavras comparáveis. O modelo inicial
-Gemini 3.5 Flash Lite marcou 94,39% e atingiu a cota diária; a troca de modelo
-passou por um novo piloto antes de retomar a geração. Os 12 gabaritos manuais
-ficam preservados na carga final. O modelo escolhe Strong por posição; o texto é
-recomposto da fonte local. Documentação: `scripts/align/README-OT-COMPLETE.md`.
-Trechos já ligados pelo estatístico também são preservados; só suas lacunas são
-preenchidas pelo candidato. A qualidade é medida antes dessa combinação.
-Só montar a carga após todos os 929 capítulos e cobertura final >=95%. SQL e dados
-ficam prontos automaticamente após geração, medição e montagem aprovadas. Conferir
-espaço, pedir aprovação da carga, executar SQL pelo dono, carregar, conferir no
-leitor e apagar a função temporária. Não marcar feita antes dessas etapas.
+Concluído em 2026-10-08: todos os 929 capítulos do Antigo Testamento (23.145 versículos)
+com sublinhado completo no banco. Cobertura final de 99,64% e 90,49% de acordo com a
+base estatística/gabaritos. Todos os 12 gabaritos manuais preservados. Testes de integração
+e E2E do leitor validados com sucesso. Banco de dados após carga: 243 MB (limite 500 MB).
 
 ### 7. E-mail de recuperação de senha em português (FEITA em 2026-10-07: template em supabase/templates, SMTP próprio pelo Hostinger configurado pelo dono)
 - Hoje o Supabase envia o template padrão em inglês. O app já chama `resetPasswordForEmail` com `redirectTo=/auth/callback?next=/redefinir-senha` (`src/app/(auth)/esqueci-senha/actions.ts`).

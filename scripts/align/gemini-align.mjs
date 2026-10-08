@@ -12,13 +12,22 @@ import { createHash } from "node:crypto";
 import { fixEdges, attachOrphans, checkVerse, compareSpans, restoreSourceText, indexedWords, spansFromWordTags, verseBatches } from "./alignment-quality.mjs";
 export { fixEdges, attachOrphans, checkVerse } from "./alignment-quality.mjs";
 
-const KEYS = (process.env.GEMINI_API_KEY || "").split(/[,\s]+/).map((k) => k.trim()).filter(Boolean);
+const envPaths = [".env.local", "../../.env.local", "../.env.local"];
+const envFile = envPaths.find((p) => fs.existsSync(p));
+const envLines = envFile ? fs.readFileSync(envFile, "utf8").split(/\r?\n/) : [];
+const envKeyLine = envLines.find((l) => l.startsWith("GEMINI_API_KEY="));
+const envFileKey = envKeyLine ? envKeyLine.slice("GEMINI_API_KEY=".length) : "";
+const rawKeys = `${envFileKey},${process.env.GEMINI_API_KEY || ""}`;
+const KEYS = Array.from(new Set(rawKeys.split(/[,\s]+/).map((k) => k.trim()).filter(Boolean)));
 const OR_KEY = process.env.OPENROUTER_API_KEY || "";
 const OR_MODELS = (process.env.OPENROUTER_MODELS || "").split(/[,\s]+/).filter(Boolean);
 const [book, range, model = "gemini-3.5-flash-lite"] = process.argv.slice(2);
 const [a, b] = (range ?? "").split("-").map(Number);
 const OT = fs.existsSync(`work/ot/${book}-01.json`);
 const WORD_TAG_MODE = OT && process.env.ALIGN_WORD_TAGS !== "0";
+const COMPACT_TAGS = WORD_TAG_MODE && process.env.ALIGN_TAG_FORMAT === "compact";
+const thinkingLevel = process.env.ALIGN_THINKING_LEVEL;
+if (thinkingLevel && !["minimal", "low", "medium", "high"].includes(thinkingLevel)) throw new Error("Nível de raciocínio inválido");
 const OUT_DIR = process.env.ALIGN_OUT_DIR || (OT ? "work/gem-ot" : "work/gem");
 if (!(KEYS.length || (OR_KEY && OR_MODELS.length)) || !book || !Number.isInteger(a)) {
   console.error("Uso: GEMINI_API_KEY=... node gemini-align.mjs <LIVRO> <A-B> [modelo]");
@@ -27,7 +36,7 @@ if (!(KEYS.length || (OR_KEY && OR_MODELS.length)) || !book || !Number.isInteger
 const pad = (n) => String(n).padStart(2, "0");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const CHUNK = 12;
+const CHUNK = COMPACT_TAGS ? 24 : 12;
 
 const TEXT_RULES = `Você liga um texto bíblico em português (Bíblia Livre) às palavras do original (grego no NT, hebraico/aramaico no AT).
 Recebe [{ verse, pt, greek: [{ p, w, s, g }] }] (greek = palavras do original, mesmo no AT; s = número Strong, g = glosa inglesa).
@@ -42,8 +51,8 @@ Regras:
 
 const RULES = WORD_TAG_MODE ? `Você liga as palavras portuguesas da Bíblia Livre às palavras hebraicas/aramaicas do próprio versículo.
 Entrada: [{verse, pt, words:[{p,w}], greek:[{p,w,s,g}]}]. words são as palavras portuguesas numeradas; greek são as palavras hebraicas/aramaicas com Strong s e glosa g.
-Saída SOMENTE um array JSON [{verse, tags:[{p,s}]}], em ordem. Devolva exatamente UMA tag para CADA posição p de words, sem pular nenhuma nem criar posições.
-O s de cada tag é exatamente um Strong da lista greek DO MESMO versículo. Nenhuma tag tem s null. Não devolva texto nem spans.
+${COMPACT_TAGS ? 'Saída SOMENTE um array JSON [{verse, strongs:["H0001",...]}], em ordem. strongs tem exatamente o mesmo tamanho que words: o elemento 0 corresponde a p=1, o elemento 1 a p=2 e assim por diante. Sem omitir nem acrescentar palavras. Devolva apenas strings Strong, sem objetos p/s.' : 'Saída SOMENTE um array JSON [{verse, tags:[{p,s}]}], em ordem. Devolva exatamente UMA tag para CADA posição p de words, sem pular nenhuma nem criar posições.'}
+Cada Strong é exatamente um s da lista greek DO MESMO versículo. Nenhum Strong é null. Não devolva texto nem spans.
 Use o significado e a gramática, não apenas a proximidade. Artigos, preposições e pronomes possessivos acompanham o Strong do substantivo/verbo a que se referem. No hebraico frequentemente são prefixos/sufixos.
 Palavras acrescentadas pela tradução acompanham a palavra de conteúdo a que se referem. Negações e pronomes com correspondente explícito recebem seu próprio Strong.
 Todos os elementos de uma expressão portuguesa que traduz a mesma palavra hebraica recebem o mesmo Strong. Não use a marca de objeto את H0853 para um conteúdo português sem correspondente.` : TEXT_RULES;
@@ -102,7 +111,7 @@ async function askGemini(verses) {
     keyIdx++;
     attempts++;
     // Dois processos: até 30 pedidos/minuto, mesmo quando a API responde rápido.
-    if (WORD_TAG_MODE) await sleep(4000);
+    if (WORD_TAG_MODE) await sleep(1500);
     let res;
     try {
       res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
@@ -111,7 +120,9 @@ async function askGemini(verses) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: RULES }] },
           contents: [{ role: "user", parts: [{ text: JSON.stringify(requestInput(verses)) }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: WORD_TAG_MODE ? 8192 : 65536 },
+          generationConfig: { responseMimeType: "application/json", temperature: 0.1, maxOutputTokens: WORD_TAG_MODE ? 8192 : 65536,
+            ...(thinkingLevel ? { thinkingConfig: { thinkingLevel } } : {}),
+          },
         }),
         signal: AbortSignal.timeout(180000),
       });
@@ -127,9 +138,13 @@ async function askGemini(verses) {
       reason = `Gemini HTTP 429${quota ? ` (${quota})` : ""}`;
       continue;
     }
-    if (res.status >= 500) return { wait: 15000, reason: `Gemini HTTP ${res.status}` };
+    if (res.status >= 500) {
+      reason = `Gemini HTTP ${res.status}`;
+      await sleep(2000);
+      continue;
+    }
     const body = await res.json();
-    if (!res.ok) return { error: `HTTP ${res.status}` };
+    if (!res.ok) return { error: `HTTP ${res.status}`, fatal: res.status >= 400 && res.status < 500 };
     try {
       const txt = (body.candidates?.[0]?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? "").join("").trim();
       return { out: JSON.parse(txt.replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/, "$1")) };
@@ -180,17 +195,18 @@ for (let ch = a; ch <= (b || a); ch++) {
   const reasons = new Map();
   const runBatch = async (list, size) => {
     let netFail = 0;
-    for (const part of verseBatches(list, size, WORD_TAG_MODE ? 180 : Infinity)) {
+    for (const part of verseBatches(list, size, WORD_TAG_MODE ? (COMPACT_TAGS ? 450 : 180) : Infinity)) {
       let r = await ask(part);
       let waits = 0;
       while (r.wait) {
         waits++;
-        console.log(`${book} ${ch}: API indisponível (${r.reason || "provedores sem resposta"}), tentativa ${waits}/3`);
-        if (waits > 2) { r = { error: "indisponibilidade persistente da API", blocked: true }; break; }
-        await sleep(r.wait);
+        console.log(`${book} ${ch}: API indisponível (${r.reason || "provedores sem resposta"}), tentativa ${waits}/5`);
+        if (waits > 4) { r = { error: "indisponibilidade persistente da API", blocked: true }; break; }
+        await sleep(Math.min(r.wait * waits, 60000));
         r = await ask(part);
       }
       if (r.error || !Array.isArray(r.out)) {
+        if (r.fatal) throw new Error(`Configuração ou acesso ao provedor: ${r.error}`);
         if (r.blocked) {
           console.log(`${book} ${ch}: API indisponível; progresso parcial preservado`);
           process.exit(2);
@@ -239,6 +255,6 @@ for (let ch = a; ch <= (b || a); ch++) {
     continue;
   }
   fs.writeFileSync(outFile, "[\n" + out.map((v) => JSON.stringify(v)).join(",\n") + "\n]\n");
-  fs.writeFileSync(outFile.replace(".align.json", ".metadata.json"), JSON.stringify({ model, sourceHash, completedAt: new Date().toISOString(), agreement: agr, format: WORD_TAG_MODE ? "word-tags" : "spans" }, null, 2));
+  fs.writeFileSync(outFile.replace(".align.json", ".metadata.json"), JSON.stringify({ model, sourceHash, completedAt: new Date().toISOString(), agreement: agr, format: WORD_TAG_MODE ? (COMPACT_TAGS ? "word-strongs" : "word-tags") : "spans", thinkingLevel: thinkingLevel || "default" }, null, 2));
   console.log(`${book} ${ch}: ${result.size}/${verses.length} versículos, acordo ${Math.round(agr * 100)}%`);
 }

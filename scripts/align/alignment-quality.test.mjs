@@ -56,6 +56,14 @@ test("preenchimento mantém Strong existente mesmo se o candidato discordar", ()
   assert.deepEqual(out[0], baseline[0]);
   assert.deepEqual(out.at(-1), baseline.at(-1));
 });
+test("lista compacta mantém a posição das palavras e rejeita omissões", () => {
+  const source = { verse: 1, pt: "No princípio, criou.", greek: [{ s: "H7225" }, { s: "H1254" }] };
+  const fixed = spansFromWordTags(source, { strongs: ["H7225", "H7225", "H1254"] });
+  assert.equal(checkVerse(source, fixed), "");
+  assert.deepEqual(wordMarks(fixed.spans).map((w) => w.strong), ["H7225", "H7225", "H1254"]);
+  assert.equal(spansFromWordTags(source, { strongs: ["H7225", "H1254"] }), null);
+  assert.match(checkVerse(source, spansFromWordTags(source, { strongs: ["H7225", "H7225", "H9999"] })), /fora do versículo/);
+});
 test("lotes respeitam limite de palavras e mantêm todos os versículos na ordem", () => {
   const verses = [1, 2, 3, 4, 5].map((verse) => ({ verse, pt: "uma duas três" }));
   const batches = verseBatches(verses, 12, 7);

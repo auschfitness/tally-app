@@ -8,6 +8,7 @@ const pilot = JSON.parse(fs.readFileSync(`${process.env.ALIGN_PILOT_DIR || `${ro
 assert(build.ready && build.verses === 23145, "AT ainda não está completo e validado");
 const heldOut = ["GEN-22", "RUT-01", "PSA-51", "PRO-03", "JER-31", "2KI-05"];
 assert(heldOut.every((name) => pilot.chapters.some((ch) => ch.chapter === name)), "Faltam capítulos de medição");
+assert(pilot.complete === true && pilot.failedVerses === 0 && pilot.coverage === 100, "Piloto incompleto ou com versículos falhos");
 assert(pilot.agreement >= 94, "Qualidade abaixo da meta de 94%");
 const verses = new Map();
 for (const line of fs.readFileSync(`${root}/tagged-ot-complete.tsv`, "utf8").split(/\r?\n/).slice(1)) {

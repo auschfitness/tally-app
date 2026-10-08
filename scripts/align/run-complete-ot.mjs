@@ -27,9 +27,10 @@ for (const [stage,args] of [
   console.log(`Etapa: ${stage}`);
   let code=await run(args);
   if (stage === "generation") {
-    for (let attempt=2;(code===1||code===2)&&attempt<=3;attempt++) {
-      console.log(`Nova tentativa dos capítulos pendentes: ${attempt}/3`);
-      if (code===2) await new Promise((resolve)=>setTimeout(resolve,60000));
+    const maxAttempts = Number(process.env.ALIGN_MAX_ATTEMPTS || 50);
+    for (let attempt=2;(code===1||code===2)&&attempt<=maxAttempts;attempt++) {
+      console.log(`Nova tentativa dos capítulos pendentes: ${attempt}/${maxAttempts}`);
+      await new Promise((resolve)=>setTimeout(resolve, code===2 ? 60000 : 30000));
       code=await run(args);
     }
   }

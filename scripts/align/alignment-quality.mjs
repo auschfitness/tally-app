@@ -77,6 +77,7 @@ export function verseBatches(verses, maxCount, maxWords = Infinity) {
 // O modelo escolhe só o Strong por posição; o texto sempre vem da fonte local.
 export function spansFromWordTags(v, got) {
   const source = [...v.pt.matchAll(WORD)];
+  if (Array.isArray(got?.strongs)) got = { ...got, tags: got.strongs.map((s, i) => ({ p: i + 1, s })) };
   if (!Array.isArray(got?.tags) || got.tags.length !== source.length) return null;
   const tags = new Map(got.tags.map((tag) => [tag.p, tag.s]));
   if (tags.size !== source.length || source.some((_, i) => !tags.has(i + 1))) return null;

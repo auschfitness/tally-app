@@ -8,6 +8,8 @@ const dir = path.resolve("scripts/align");
 const input = path.join(dir, "work/ot");
 const pilotMode = process.argv.includes("--pilot");
 const model = process.env.GEMINI_ALIGN_MODEL || "gemini-3.5-flash-lite";
+const workers = Number(process.env.ALIGN_WORKERS || 2);
+if (![1, 2].includes(workers)) throw new Error("ALIGN_WORKERS deve ser 1 ou 2");
 if (pilotMode && !process.env.ALIGN_OUT_DIR) process.env.ALIGN_OUT_DIR = process.env.ALIGN_PILOT_DIR?.replace(/^scripts\/align\//, "") || "work/gem-ot-word-pilot";
 const output = path.join(dir, process.env.ALIGN_OUT_DIR || "work/gem-ot");
 fs.mkdirSync(output, { recursive: true });
@@ -31,7 +33,7 @@ const run = (name) => new Promise((resolve) => {
   child.on("error", (error) => { log(`${name}: processo não iniciou (${error.message})`); resolve(1); });
   child.on("close", (code) => resolve(code));
 });
-await Promise.all(Array.from({ length: 2 }, async () => {
+await Promise.all(Array.from({ length: workers }, async () => {
   for (let name = queue.shift(); name && !stopped; name = queue.shift()) {
     log(`Iniciando ${name}`);
     const code = await run(name);
