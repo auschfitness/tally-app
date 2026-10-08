@@ -115,3 +115,6 @@
   .panel, .panel.closing { transform: none; transition: opacity 160ms ease; }
   .panel.closing { opacity: 0; }
 }
+
+/* Abas são links (a aba vive na URL): sem o sublinhado padrão de <a>. */
+.tabLink { text-decoration: none; display: inline-flex; align-items: center; }

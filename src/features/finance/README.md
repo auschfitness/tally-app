@@ -13,8 +13,11 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `schema.ts` + `actions.ts` — `recordTransactionAction` (RPC `record_transaction`),
   `voidTransactionAction` (RPC `void_journal_entry`), `createLedgerAccountAction` (conta
   ou categoria nova sob 1.1 / 4.1 / 5.1).
-- `components/FinanceBoard.tsx` — saldo, contas (filtro), extrato por dia, atalho N,
-  toast com Desfazer.
+- `components/FinanceBoard.tsx` — casca: período, ação primária, abas por URL
+  (`?aba=dizimos`), painel, atalho N, toast com Desfazer.
+- `components/MovementsTab.tsx` — saldo, contas (filtro), extrato por dia.
+- `components/TithesTab.tsx` — dízimos por pessoa, recibo e declaração anual
+  (reusa `features/giving`).
 - `components/Panel.tsx` — painel lateral (desktop) / folha arrastável (celular).
 - `components/TransactionForm.tsx` — Novo lançamento; "De quem?" em dízimo/oferta vira
   doação ligada (`donations.journal_entry_id`).
@@ -26,4 +29,4 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.
 
 ## Rota
-- `/finance` (só `finance.manage`). Escondida pelo `STUDY_ONLY` até a fase 5 da spec.
+- `/finance` e `/finance?aba=dizimos` (só `finance.manage`); recibo em `/finance/recibo/[id]`. Escondida pelo `STUDY_ONLY` até a fase 5 da spec.

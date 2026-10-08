@@ -37,6 +37,20 @@ export async function recordTransactionAction(_prev: ActionResult<string>, formD
   });
   if (error || !data) return fail(friendlyFinanceError(toMessage(error, "Não consegui salvar o lançamento.")));
 
+  // DNA #4: a contribuição entra na Timeline da pessoa, sem o valor (dado sensível).
+  if (d.donorStickId) {
+    await ctx.supabase.from("timeline_events").insert({
+      org_id: ctx.orgId,
+      stick_id: d.donorStickId,
+      event_type: "donation_recorded",
+      source_module: "finance",
+      source_record_id: data,
+      title: "Contribuição registrada",
+      summary: d.fundId ? "Contribuição designada a um fundo" : "Contribuição registrada",
+      occurred_at: new Date().toISOString(),
+    });
+  }
+
   revalidateFinance();
   return ok(data);
 }

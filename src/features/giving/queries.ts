@@ -5,14 +5,29 @@ import type { DB } from "@/lib/auth/session";
 import { rowToProfile } from "@/features/settings/fiscal";
 import { formatAddress } from "./receipt";
 import { asMethod } from "./domain";
-import type { Country, Donation, Donor, Fund, ReceiptListItem, ReceiptOrgBlock, ReceiptSnapshot } from "./types";
+import type {
+  Country,
+  Donation,
+  Donor,
+  Fund,
+  ReceiptListItem,
+  ReceiptOrgBlock,
+  ReceiptSnapshot,
+} from "./types";
 
 export async function listFunds(supabase: DB, orgId: string): Promise<Fund[]> {
-  const { data } = await supabase.from("funds").select("id, name").eq("org_id", orgId).order("name");
+  const { data } = await supabase
+    .from("funds")
+    .select("id, name")
+    .eq("org_id", orgId)
+    .order("name");
   return (data ?? []).map((f) => ({ id: f.id, name: f.name }));
 }
 
-export async function listDonors(supabase: DB, orgId: string): Promise<Donor[]> {
+export async function listDonors(
+  supabase: DB,
+  orgId: string,
+): Promise<Donor[]> {
   const { data } = await supabase
     .from("sticks")
     .select("id, full_name")
@@ -22,48 +37,68 @@ export async function listDonors(supabase: DB, orgId: string): Promise<Donor[]> 
   return (data ?? []).map((s) => ({ id: s.id, name: s.full_name }));
 }
 
-export async function listDonations(supabase: DB, orgId: string): Promise<Donation[]> {
-  const [donRes, fundsRes, sticksRes] = await Promise.all([
+// Doação cujo lançamento no livro foi anulado (Desfazer/Anular em Finanças) não conta mais.
+export async function listDonations(
+  supabase: DB,
+  orgId: string,
+): Promise<Donation[]> {
+  const [donRes, fundsRes, sticksRes, voidRes] = await Promise.all([
     supabase
       .from("donations")
       .select(
-        "id, stick_id, donor_name, donor_tax_id, fund_id, amount, currency, method, donation_date, note, goods_services_provided, goods_services_description, goods_services_value",
+        "id, stick_id, donor_name, donor_tax_id, fund_id, amount, currency, method, donation_date, note, goods_services_provided, goods_services_description, goods_services_value, journal_entry_id",
       )
       .eq("org_id", orgId)
       .order("donation_date", { ascending: false }),
     supabase.from("funds").select("id, name").eq("org_id", orgId),
     supabase.from("sticks").select("id, full_name").eq("org_id", orgId),
+    supabase
+      .from("journal_entries")
+      .select("id")
+      .eq("org_id", orgId)
+      .eq("status", "void"),
   ]);
 
   if (donRes.error) throw new Error(donRes.error.message);
+  const voided = new Set((voidRes.data ?? []).map((e) => e.id));
 
   const fundById = new Map<string, string>();
   for (const f of fundsRes.data ?? []) fundById.set(f.id, f.name);
   const stickById = new Map<string, string>();
   for (const s of sticksRes.data ?? []) stickById.set(s.id, s.full_name);
 
-  return (donRes.data ?? []).map((r): Donation => ({
-    id: r.id,
-    stickId: r.stick_id,
-    donorName: r.donor_name ?? (r.stick_id ? stickById.get(r.stick_id) ?? "" : ""),
-    donorTaxId: r.donor_tax_id ?? "",
-    fundId: r.fund_id,
-    fundName: (r.fund_id && fundById.get(r.fund_id)) || "",
-    amount: Number(r.amount) || 0,
-    currency: r.currency ?? "BRL",
-    method: asMethod(r.method),
-    date: r.donation_date ?? "",
-    note: r.note ?? "",
-    goods: {
-      provided: Boolean(r.goods_services_provided),
-      description: r.goods_services_description ?? "",
-      value: r.goods_services_value != null ? Number(r.goods_services_value) : null,
-    },
-  }));
+  return (donRes.data ?? [])
+    .filter((r) => !r.journal_entry_id || !voided.has(r.journal_entry_id))
+    .map((r): Donation => ({
+      id: r.id,
+      stickId: r.stick_id,
+      donorName:
+        r.donor_name ?? (r.stick_id ? (stickById.get(r.stick_id) ?? "") : ""),
+      donorTaxId: r.donor_tax_id ?? "",
+      fundId: r.fund_id,
+      fundName: (r.fund_id && fundById.get(r.fund_id)) || "",
+      amount: Number(r.amount) || 0,
+      currency: r.currency ?? "BRL",
+      method: asMethod(r.method),
+      date: r.donation_date ?? "",
+      note: r.note ?? "",
+      goods: {
+        provided: Boolean(r.goods_services_provided),
+        description: r.goods_services_description ?? "",
+        value:
+          r.goods_services_value != null
+            ? Number(r.goods_services_value)
+            : null,
+      },
+    }));
 }
 
 // Uma doação (para emitir recibo por doação), já com fundo/doador resolvidos.
-export async function getDonation(supabase: DB, orgId: string, id: string): Promise<Donation | null> {
+export async function getDonation(
+  supabase: DB,
+  orgId: string,
+  id: string,
+): Promise<Donation | null> {
   const { data: r } = await supabase
     .from("donations")
     .select(
@@ -76,12 +111,20 @@ export async function getDonation(supabase: DB, orgId: string, id: string): Prom
 
   let fundName = "";
   if (r.fund_id) {
-    const f = await supabase.from("funds").select("name").eq("id", r.fund_id).maybeSingle();
+    const f = await supabase
+      .from("funds")
+      .select("name")
+      .eq("id", r.fund_id)
+      .maybeSingle();
     fundName = f.data?.name ?? "";
   }
   let donorName = r.donor_name ?? "";
   if (!donorName && r.stick_id) {
-    const st = await supabase.from("sticks").select("full_name").eq("id", r.stick_id).maybeSingle();
+    const st = await supabase
+      .from("sticks")
+      .select("full_name")
+      .eq("id", r.stick_id)
+      .maybeSingle();
     donorName = st.data?.full_name ?? "";
   }
 
@@ -100,7 +143,8 @@ export async function getDonation(supabase: DB, orgId: string, id: string): Prom
     goods: {
       provided: Boolean(r.goods_services_provided),
       description: r.goods_services_description ?? "",
-      value: r.goods_services_value != null ? Number(r.goods_services_value) : null,
+      value:
+        r.goods_services_value != null ? Number(r.goods_services_value) : null,
     },
   };
 }
@@ -131,10 +175,21 @@ export interface GivingFiscal {
 
 // Bloco fiscal para renderizar recibos: país (dita layout), moeda, e os dados da
 // org (org_fiscal_profiles + organizations.name), já formatados.
-export async function loadGivingFiscal(supabase: DB, orgId: string): Promise<GivingFiscal> {
+export async function loadGivingFiscal(
+  supabase: DB,
+  orgId: string,
+): Promise<GivingFiscal> {
   const [orgRes, profRes] = await Promise.all([
-    supabase.from("organizations").select("name, currency, country").eq("id", orgId).maybeSingle(),
-    supabase.from("org_fiscal_profiles").select("*").eq("org_id", orgId).maybeSingle(),
+    supabase
+      .from("organizations")
+      .select("name, currency, country")
+      .eq("id", orgId)
+      .maybeSingle(),
+    supabase
+      .from("org_fiscal_profiles")
+      .select("*")
+      .eq("org_id", orgId)
+      .maybeSingle(),
   ]);
 
   const country: Country = orgRes.data?.country === "US" ? "US" : "BR";
@@ -148,13 +203,23 @@ export async function loadGivingFiscal(supabase: DB, orgId: string): Promise<Giv
     addressText: formatAddress(profile.address, country),
   };
 
-  return { country, currency: orgRes.data?.currency ?? (country === "US" ? "USD" : "BRL"), orgName: org.name, org };
+  return {
+    country,
+    currency: orgRes.data?.currency ?? (country === "US" ? "USD" : "BRL"),
+    orgName: org.name,
+    org,
+  };
 }
 
-export async function listReceipts(supabase: DB, orgId: string): Promise<ReceiptListItem[]> {
+export async function listReceipts(
+  supabase: DB,
+  orgId: string,
+): Promise<ReceiptListItem[]> {
   const { data } = await supabase
     .from("donation_receipts")
-    .select("id, kind, receipt_no, donation_id, stick_id, period_year, country, total_amount, currency, snapshot, issued_at")
+    .select(
+      "id, kind, receipt_no, donation_id, stick_id, period_year, country, total_amount, currency, snapshot, issued_at",
+    )
     .eq("org_id", orgId)
     .order("issued_at", { ascending: false });
 
@@ -180,7 +245,11 @@ export async function getReceipt(
   supabase: DB,
   orgId: string,
   id: string,
-): Promise<{ snapshot: ReceiptSnapshot; receiptNo: string; issuedAt: string } | null> {
+): Promise<{
+  snapshot: ReceiptSnapshot;
+  receiptNo: string;
+  issuedAt: string;
+} | null> {
   const { data } = await supabase
     .from("donation_receipts")
     .select("receipt_no, issued_at, snapshot")

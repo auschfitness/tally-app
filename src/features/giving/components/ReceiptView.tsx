@@ -86,7 +86,7 @@ export function ReceiptView({ snapshot }: { snapshot: ReceiptSnapshot }) {
   return (
     <div className={styles.receiptWrap}>
       <div className={`${styles.receiptBar} ${styles.noprint}`}>
-        <Link href="/giving" className="link">← Voltar</Link>
+        <Link href="/finance?aba=dizimos" className="link">← Voltar</Link>
         <button className="btn sm" onClick={() => window.print()}>Imprimir / PDF</button>
       </div>
 
