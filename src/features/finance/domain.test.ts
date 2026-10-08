@@ -1,63 +1,124 @@
 import { describe, it, expect } from "vitest";
-import { expenseByCat, financeMonthly, fundBalances, type FinanceEntry } from "./domain";
+import {
+  accountBalances,
+  groupByDay,
+  isGivingCategory,
+  leafAccounts,
+  nextChildCode,
+  toMovement,
+  type LedgerAccount,
+  type LedgerEntry,
+  type LedgerLine,
+} from "./domain";
 
-function e(p: Partial<FinanceEntry>): FinanceEntry {
-  return {
-    id: p.id ?? "1",
-    type: p.type ?? "in",
-    desc: p.desc ?? "",
-    cat: p.cat ?? "",
-    fund: p.fund ?? "Geral",
-    amount: p.amount ?? 0,
-    date: p.date ?? "2026-07-01",
-    campus: p.campus ?? "Sede",
-  };
-}
+const acc = (id: string, code: string, type: LedgerAccount["type"], parentId: string | null = null): LedgerAccount => ({
+  id,
+  code,
+  name: id,
+  type,
+  parentId,
+  isActive: true,
+});
 
-describe("expenseByCat (só saídas, desc)", () => {
-  it("soma saídas por categoria e ordena por valor", () => {
-    const r = expenseByCat([
-      e({ type: "out", cat: "Aluguel", amount: 1000 }),
-      e({ type: "out", cat: "Missões", amount: 300 }),
-      e({ type: "out", cat: "Aluguel", amount: 200 }),
-      e({ type: "in", cat: "Dízimo", amount: 5000 }), // ignorado (entrada)
+const ACCOUNTS: LedgerAccount[] = [
+  acc("grupoCaixa", "1.1", "asset"),
+  acc("caixa", "1.1.01", "asset", "grupoCaixa"),
+  acc("banco", "1.1.02", "asset", "grupoCaixa"),
+  acc("grupoReceita", "4.1", "revenue"),
+  acc("dizimos", "4.1.01", "revenue", "grupoReceita"),
+  acc("outras", "4.1.99", "revenue", "grupoReceita"),
+  acc("luz", "5.1.03", "expense"),
+];
+const typeOf = new Map(ACCOUNTS.map((a) => [a.id, a.type]));
+
+const entry = (id: string, date: string, status: LedgerEntry["status"] = "posted"): LedgerEntry => ({
+  id,
+  date,
+  memo: "",
+  status,
+  fundId: null,
+});
+const pair = (entryId: string, debitId: string, creditId: string, amount: number): LedgerLine[] => [
+  { entryId, accountId: debitId, debit: amount, credit: 0 },
+  { entryId, accountId: creditId, debit: 0, credit: amount },
+];
+
+describe("toMovement", () => {
+  it("reconhece entrada, saída e transferência pelas contas", () => {
+    expect(toMovement(entry("a", "2026-10-01"), pair("a", "banco", "dizimos", 100), typeOf)).toMatchObject({
+      kind: "in",
+      amount: 100,
+      accountId: "banco",
+      counterId: "dizimos",
+    });
+    expect(toMovement(entry("b", "2026-10-01"), pair("b", "luz", "banco", 30.5), typeOf)).toMatchObject({
+      kind: "out",
+      accountId: "banco",
+      counterId: "luz",
+    });
+    expect(toMovement(entry("c", "2026-10-01"), pair("c", "caixa", "banco", 20), typeOf)).toMatchObject({
+      kind: "transfer",
+      accountId: "banco",
+      counterId: "caixa",
+    });
+  });
+
+  it("lançamento manual fora do padrão vira 'other'", () => {
+    const lines = [...pair("d", "banco", "dizimos", 50), { entryId: "d", accountId: "outras", debit: 0, credit: 1 }];
+    expect(toMovement(entry("d", "2026-10-01"), lines, typeOf).kind).toBe("other");
+  });
+});
+
+describe("accountBalances", () => {
+  const entries = [entry("a", "2026-09-30"), entry("b", "2026-10-02"), entry("c", "2026-10-03"), entry("x", "2026-10-03", "void")];
+  const lines = [
+    ...pair("a", "banco", "dizimos", 100),
+    ...pair("b", "luz", "banco", 30.5),
+    ...pair("c", "caixa", "banco", 20),
+    ...pair("x", "banco", "dizimos", 999),
+  ];
+
+  it("soma só postados e lista todas as contas finais de caixa", () => {
+    expect(accountBalances(ACCOUNTS, entries, lines)).toEqual([
+      { id: "caixa", name: "caixa", balance: 20 },
+      { id: "banco", name: "banco", balance: 49.5 },
     ]);
-    expect(r).toEqual([
-      { cat: "Aluguel", val: 1200 },
-      { cat: "Missões", val: 300 },
+  });
+
+  it("respeita a data de corte (saldo inicial do mês)", () => {
+    expect(accountBalances(ACCOUNTS, entries, lines, "2026-09-30").find((b) => b.id === "banco")?.balance).toBe(100);
+  });
+});
+
+describe("leafAccounts / nextChildCode", () => {
+  it("só contas finais do tipo", () => {
+    expect(leafAccounts(ACCOUNTS, "revenue").map((a) => a.id)).toEqual(["dizimos", "outras"]);
+  });
+
+  it("menor código livre com 2 dígitos", () => {
+    expect(nextChildCode(ACCOUNTS, "4.1")).toBe("4.1.02");
+    expect(nextChildCode(ACCOUNTS, "1.1")).toBe("1.1.03");
+    expect(nextChildCode(ACCOUNTS, "2.1")).toBe("2.1.01");
+  });
+});
+
+describe("groupByDay", () => {
+  it("agrupa e ordena do mais recente", () => {
+    const m = (id: string, date: string) => toMovement(entry(id, date), pair(id, "banco", "dizimos", 1), typeOf);
+    const groups = groupByDay([m("a", "2026-10-01"), m("b", "2026-10-03"), m("c", "2026-10-01")]);
+    expect(groups.map((g) => [g.date, g.items.length])).toEqual([
+      ["2026-10-03", 1],
+      ["2026-10-01", 2],
     ]);
   });
 });
 
-describe("fundBalances (entradas − saídas)", () => {
-  it("calcula saldo por fundo, ignora fundo vazio", () => {
-    const r = fundBalances([
-      e({ type: "in", fund: "Geral", amount: 1000 }),
-      e({ type: "out", fund: "Geral", amount: 400 }),
-      e({ type: "in", fund: "Missões", amount: 250 }),
-      e({ type: "in", fund: "", amount: 999 }),
-    ]);
-    expect(r.find((x) => x.fund === "Geral")?.balance).toBe(600);
-    expect(r.find((x) => x.fund === "Missões")?.balance).toBe(250);
-    expect(r.some((x) => x.fund === "")).toBe(false);
-  });
-});
-
-describe("financeMonthly (somas reais, sem fabricação)", () => {
-  it("distribui por mês e deixa zero onde não há lançamento", () => {
-    const now = new Date(2026, 6, 15); // jul/2026
-    const r = financeMonthly(
-      [
-        e({ type: "in", amount: 1000, date: "2026-07-03" }),
-        e({ type: "out", amount: 400, date: "2026-07-10" }),
-        e({ type: "in", amount: 500, date: "2026-06-20" }),
-      ],
-      now,
-    );
-    expect(r.labels).toEqual(["fev", "mar", "abr", "mai", "jun", "jul"]);
-    expect(r.inc[5]).toBe(1000); // jul
-    expect(r.exp[5]).toBe(400);
-    expect(r.inc[4]).toBe(500); // jun
-    expect(r.inc[0]).toBe(0); // fev — sem lançamento, zero real (não inventado)
+describe("isGivingCategory", () => {
+  it("dízimo, oferta e doação, com ou sem acento", () => {
+    expect(isGivingCategory("Dízimos")).toBe(true);
+    expect(isGivingCategory("Dizimos")).toBe(true);
+    expect(isGivingCategory("Ofertas")).toBe(true);
+    expect(isGivingCategory("Doações")).toBe(true);
+    expect(isGivingCategory("Aluguel")).toBe(false);
   });
 });

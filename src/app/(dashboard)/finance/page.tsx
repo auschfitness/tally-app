@@ -1,33 +1,23 @@
-import { requireOrg } from "@/lib/auth/session";
-import { listEntries, listFunds, listCategories } from "@/features/finance/queries";
+import { requireOrg, can } from "@/lib/auth/session";
+import { loadLedger } from "@/features/finance/queries";
 import { FinanceBoard } from "@/features/finance/components/FinanceBoard";
 
-// Finance Lite (Server Component): busca no servidor (RLS por org) e entrega ao board.
-// Uma igreja = um local: o financeiro é da ORGANIZAÇÃO (sem filtro por campus).
-// Mutações via Server Actions.
+// Finanças (spec 10): o livro de partidas dobradas lido em linguagem de tesoureiro.
+// Área sensível: só finance.manage (o RLS m48 é a barreira real).
 export default async function FinancePage() {
-  const { supabase, orgId } = await requireOrg();
-
-  const [entries, funds, categories, orgRes] = await Promise.all([
-    listEntries(supabase, orgId),
-    listFunds(supabase, orgId),
-    listCategories(supabase, orgId),
-    supabase.from("organizations").select("currency").eq("id", orgId).maybeSingle(),
-  ]);
-
-  const currency = orgRes.data?.currency ?? "BRL";
-
-  // Fundos do dropdown: tabela funds ∪ fundos já usados em lançamentos.
-  const fundSet = new Set<string>(funds);
-  for (const e of entries) if (e.fund) fundSet.add(e.fund);
-
-  return (
-    <FinanceBoard
-      entries={entries}
-      currency={currency}
-      catIn={categories.in}
-      catOut={categories.out}
-      funds={[...fundSet]}
-    />
-  );
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) {
+    return (
+      <>
+        <h1 className="page">Finanças</h1>
+        <div className="empty" style={{ lineHeight: 1.6, marginTop: 24 }}>
+          Esta área é do tesoureiro e do dono da conta.
+          <br />
+          <span className="muted">Peça acesso a quem cuida das finanças da igreja.</span>
+        </div>
+      </>
+    );
+  }
+  const ledger = await loadLedger(ctx.supabase, ctx.orgId);
+  return <FinanceBoard ledger={ledger} />;
 }

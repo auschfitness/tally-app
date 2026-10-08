@@ -881,6 +881,7 @@ export type Database = {
           goods_services_provided: boolean
           goods_services_value: number | null
           id: string
+          journal_entry_id: string | null
           method: string
           note: string | null
           org_id: string
@@ -899,6 +900,7 @@ export type Database = {
           goods_services_provided?: boolean
           goods_services_value?: number | null
           id?: string
+          journal_entry_id?: string | null
           method?: string
           note?: string | null
           org_id: string
@@ -917,6 +919,7 @@ export type Database = {
           goods_services_provided?: boolean
           goods_services_value?: number | null
           id?: string
+          journal_entry_id?: string | null
           method?: string
           note?: string | null
           org_id?: string
@@ -4259,6 +4262,22 @@ export type Database = {
       org_flags: { Args: { p_org: string }; Returns: string[] }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
       post_journal_entry: { Args: { p_entry: string }; Returns: undefined }
+      record_transaction: {
+        Args: {
+          p_account: string
+          p_amount: number
+          p_counter: string
+          p_date: string
+          p_donor_name?: string
+          p_donor_stick?: string
+          p_fund?: string
+          p_kind: string
+          p_memo?: string
+          p_method?: string
+          p_org: string
+        }
+        Returns: string
+      }
       search_bible: {
         Args: { lim?: number; off?: number; p_books?: string[] | null; q: string }
         Returns: { book: string; chapter: number; spans: Json; total: number; verse: number }[]

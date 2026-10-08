@@ -1,179 +1,277 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { brDate } from "@/lib/utils/date";
-import { money } from "@/lib/utils/money";
-import { ConicDonut } from "@/components/shared/ConicDonut";
+// Finanças — Movimentações (spec 10). Saldo no topo, saldo por conta, extrato por dia e
+// uma ação primária: Novo lançamento (atalho N). Salvar mostra "Desfazer" por alguns
+// segundos em vez de pedir confirmação.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PeriodFilter } from "@/components/shared/PeriodFilter";
+import { money } from "@/lib/utils/money";
+import { isoDate, today } from "@/lib/utils/date";
 import { inPeriod, resolvePeriod, type PeriodRange, type PeriodValue } from "@/lib/utils/period";
-import { expenseByCat, financeMonthly, fundBalances, FINPAL, type FinanceEntry } from "../domain";
-import { deleteEntryAction } from "../actions";
-import { EntryModal } from "./EntryModal";
+import { voidTransactionAction } from "../actions";
+import { accountBalances, groupByDay, type Movement, type TxKind } from "../domain";
+import type { FinanceLedger } from "../queries";
+import { Panel } from "./Panel";
+import { TransactionForm } from "./TransactionForm";
+import { MovementDetail } from "./MovementDetail";
 import styles from "../finance.module.css";
 
-export function FinanceBoard({
-  entries,
-  currency,
-  catIn,
-  catOut,
-  funds,
-}: {
-  entries: FinanceEntry[];
-  currency: string;
-  catIn: string[];
-  catOut: string[];
-  funds: string[];
-}) {
-  const [finCat, setFinCat] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  // Período (Onda 2, Fatia A): Financeiro abre em "Este mês" (default inteligente) e
-  // persiste a escolha por tela. O intervalo filtra totais, despesas, saldos e lista.
+const TOAST_MS = 6000;
+const SHORT_TOAST_MS = 2500;
+
+type PanelState = { mode: "new"; kind?: TxKind } | { mode: "view"; id: string } | null;
+interface ToastState {
+  message: string;
+  undoEntryId?: string;
+}
+
+function dayLabel(iso: string, todayIso: string, yesterdayIso: string): string {
+  if (iso === todayIso) return "Hoje";
+  if (iso === yesterdayIso) return "Ontem";
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y ?? 0, (m ?? 1) - 1, d ?? 1);
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "long", ...(sameYear ? {} : { year: "numeric" }) });
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+}
+
+export function FinanceBoard({ ledger }: { ledger: FinanceLedger }) {
+  const router = useRouter();
+  const { accounts, entries, lines, movements, currency } = ledger;
   const [range, setRange] = useState<PeriodRange>(() => resolvePeriod("thisMonth", new Date()));
+  const [accountFilter, setAccountFilter] = useState<string | null>(null);
+  const [panel, setPanelState] = useState<PanelState>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [freshId, setFreshId] = useState<string | null>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
+  // Abrir um painel tira o aviso da frente (no celular ele cobriria o botão Salvar).
+  const setPanel = useCallback((next: PanelState) => {
+    if (next) {
+      window.clearTimeout(toastTimer.current);
+      setToast(null);
+    }
+    setPanelState(next);
+  }, []);
+
   const onPeriod = useCallback((v: PeriodValue) => setRange({ from: v.from, to: v.to }), []);
+  const balances = useMemo(() => accountBalances(accounts, entries, lines), [accounts, entries, lines]);
+  const total = balances.reduce((s, b) => s + b.balance, 0);
+  const nameById = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
+  const nameOf = useCallback((id: string | null) => (id && nameById.get(id)) || "", [nameById]);
 
-  const periodE = useMemo(() => entries.filter((e) => inPeriod(e.date, range)), [entries, range]);
-  const income = periodE.filter((e) => e.type === "in").reduce((a, e) => a + e.amount, 0);
-  const expense = periodE.filter((e) => e.type === "out").reduce((a, e) => a + e.amount, 0);
+  const visible = useMemo(
+    () =>
+      movements.filter(
+        (m) =>
+          m.status === "posted" &&
+          inPeriod(m.date, range) &&
+          (!accountFilter || m.accountId === accountFilter || m.counterId === accountFilter),
+      ),
+    [movements, range, accountFilter],
+  );
+  const income = visible.filter((m) => m.kind === "in").reduce((s, m) => s + m.amount, 0);
+  const expense = visible.filter((m) => m.kind === "out").reduce((s, m) => s + m.amount, 0);
+  const days = useMemo(() => groupByDay(visible), [visible]);
 
-  // Tendência: sempre os 6 meses correntes (visão de série, independente do filtro).
-  const now = useMemo(() => new Date(), []);
-  const bars = useMemo(() => financeMonthly(entries, now), [entries, now]);
-  const barMax = Math.max(1, ...bars.inc, ...bars.exp);
-  const hasBars = bars.inc.some((v) => v > 0) || bars.exp.some((v) => v > 0);
+  const showToast = useCallback((t: ToastState, ms: number) => {
+    window.clearTimeout(toastTimer.current);
+    setToast(t);
+    toastTimer.current = window.setTimeout(() => setToast(null), ms);
+  }, []);
+  useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
-  const expenses = useMemo(() => expenseByCat(periodE), [periodE]);
-  const donutSegments = expenses.map((x, i) => ({ value: x.val, color: FINPAL[i % FINPAL.length]! }));
+  // Atalho N: abre na hora, sem animação de espera (ação repetida).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (panel || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        setPanel({ mode: "new" });
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [panel, setPanel]);
 
-  const funds2 = useMemo(() => fundBalances(periodE), [periodE]);
-  const fundMax = Math.max(1, ...funds2.map((x) => Math.abs(x.balance)));
+  const onSaved = (entryId: string, close: () => void): void => {
+    close();
+    setFreshId(entryId);
+    router.refresh();
+    showToast({ message: "Lançamento salvo", undoEntryId: entryId }, TOAST_MS);
+  };
 
-  const rows = periodE
-    .filter((e) => !finCat || e.cat === finCat)
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const undo = async (entryId: string): Promise<void> => {
+    window.clearTimeout(toastTimer.current);
+    setToast(null);
+    const res = await voidTransactionAction(entryId);
+    router.refresh();
+    showToast({ message: res.success ? "Lançamento desfeito" : res.message }, SHORT_TOAST_MS);
+  };
+
+  const viewing = panel?.mode === "view" ? movements.find((m) => m.id === panel.id) : undefined;
+  const todayIso = isoDate(today());
+  const yesterday = today();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayIso = isoDate(yesterday);
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-        <h1 className="page" style={{ marginRight: "auto" }}>Financeiro</h1>
-        <PeriodFilter
-          onChange={onPeriod}
-          defaultPreset="thisMonth"
-          storageKey="finance"
-          align="right"
-        />
+      <div className={styles.head}>
+        <h1 className="page">Finanças</h1>
+        <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="finance.period" align="right" />
+        <button type="button" className={`btn ${styles.press}`} onClick={() => setPanel({ mode: "new" })} title="Atalho: N">
+          Novo lançamento
+        </button>
       </div>
 
-      <div className="ministrip">
-        <div><div className="mi-k">Entradas</div><div className="mi-v pos">{money(income, currency)}</div></div>
-        <div><div className="mi-k">Saídas</div><div className="mi-v neg">{money(expense, currency)}</div></div>
-        <div><div className="mi-k">Saldo</div><div className={`mi-v ${income - expense >= 0 ? "pos" : "neg"}`}>{money(income - expense, currency)}</div></div>
-      </div>
-
-      <div className="row2">
-        <div className="panel">
-          <div className="ph"><h3>Entradas vs Saídas</h3>{hasBars ? <span className="muted" style={{ marginLeft: "auto" }}>6 meses</span> : null}</div>
-          {hasBars ? (
-            <div className={styles.finbars}>
-              {bars.labels.map((lbl, i) => (
-                <div key={lbl + i} className={styles.fincol}>
-                  <div className={styles.finbarwrap}>
-                    <div className={`${styles.finbar} ${styles.finIn}`} style={{ height: `${Math.round((bars.inc[i]! / barMax) * 100)}%` }} title={money(bars.inc[i]!, currency)} />
-                    <div className={`${styles.finbar} ${styles.finOut}`} style={{ height: `${Math.round((bars.exp[i]! / barMax) * 100)}%` }} title={money(bars.exp[i]!, currency)} />
-                  </div>
-                  <span className={styles.finlbl}>{lbl}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty" style={{ padding: "40px 12px", lineHeight: 1.6 }}>
-              Sem lançamentos ainda.<br />
-              <span className="muted">Toque em “+ Lançamento” para registrar a primeira entrada ou saída — a tendência aparece aqui conforme você lança.</span>
-            </div>
-          )}
+      <section className={styles.hero} aria-label="Saldo">
+        <div className={styles.heroLabel}>Saldo em todas as contas</div>
+        <div className={`${styles.heroValue}${total < 0 ? ` ${styles.negative}` : ""}`}>{money(total, currency)}</div>
+        <div className={styles.accounts}>
+          {balances.map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              aria-pressed={accountFilter === b.id}
+              className={`${styles.account} ${styles.press}${accountFilter === b.id ? ` ${styles.on}` : ""}`}
+              onClick={() => setAccountFilter((f) => (f === b.id ? null : b.id))}
+            >
+              {b.name} <b>{money(b.balance, currency)}</b>
+            </button>
+          ))}
         </div>
-
-        <div className="panel">
-          <div className="ph"><h3>Despesas por categoria</h3></div>
-          <div className="donutwrap"><ConicDonut segments={donutSegments} /></div>
-          <div className="leg">
-            {expenses.length ? (
-              expenses.map((x, i) => (
-                <span key={x.cat} style={{ cursor: "pointer" }} onClick={() => setFinCat(finCat === x.cat ? null : x.cat)}>
-                  <i style={{ background: FINPAL[i % FINPAL.length] }} />{x.cat} · {money(x.val, currency)}
-                </span>
-              ))
-            ) : (
-              <span className="muted">Sem saídas</span>
-            )}
+        {visible.length > 0 ? (
+          <div className={styles.periodSummary}>
+            No período: entrou <b>{money(income, currency)}</b> · saiu <b>{money(expense, currency)}</b>
           </div>
-        </div>
-      </div>
+        ) : null}
+      </section>
 
-      <div className="row2">
-        <div className="panel">
-          <div className="ph">
-            <h3>Lançamentos</h3>
-            <span className="muted" style={{ marginLeft: "auto" }}>
-              {finCat ? <>Categoria: {finCat} <button className="link" onClick={() => setFinCat(null)}>limpar</button></> : null}
-            </span>
-            <button className="btn ghost sm" style={{ marginLeft: 10 }} onClick={() => setModalOpen(true)}>+ Lançamento</button>
-          </div>
-          <table style={{ border: "none" }}>
-            <tbody>
-              <tr>
-                <th>Data</th><th>Descrição</th><th>Categoria</th><th>Fundo</th>
-                <th style={{ textAlign: "right" }}>Valor</th><th />
-              </tr>
-              {rows.length === 0 ? (
-                <tr><td colSpan={6} className="empty">Nenhum lançamento.</td></tr>
-              ) : (
-                rows.map((e) => (
-                  <tr key={e.id}>
-                    <td>{brDate(e.date)}</td>
-                    <td><b>{e.desc}</b></td>
-                    <td><span className="muted">{e.cat}</span></td>
-                    <td>{e.fund}</td>
-                    <td style={{ textAlign: "right" }} className={e.type === "in" ? "pos" : "neg"}>
-                      {e.type === "in" ? "+" : "-"}{money(e.amount, currency)}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      <form action={deleteEntryAction} style={{ display: "inline" }}>
-                        <input type="hidden" name="id" value={e.id} />
-                        <button type="submit" title="Excluir" style={{ color: "var(--text-2)", border: "none", background: "none", fontSize: 15, cursor: "pointer" }}>×</button>
-                      </form>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {days.length === 0 ? (
+        <EmptyState hasAny={movements.some((m) => m.status === "posted")} onNew={() => setPanel({ mode: "new" })} />
+      ) : (
+        days.map((day) => (
+          <section key={day.date} className={styles.day}>
+            <div className={styles.dayLabel}>{dayLabel(day.date, todayIso, yesterdayIso)}</div>
+            {day.items.map((m) => (
+              <MovementRow
+                key={m.id}
+                movement={m}
+                nameOf={nameOf}
+                currency={currency}
+                isFresh={m.id === freshId}
+                onOpen={() => setPanel({ mode: "view", id: m.id })}
+              />
+            ))}
+          </section>
+        ))
+      )}
 
-        <div className="panel">
-          <div className="ph"><h3>Saldo por fundo</h3></div>
-          {funds2.length === 0 ? (
-            <div className="empty">Sem fundos.</div>
-          ) : (
-            funds2.map((x) => (
-              <div key={x.fund} className={styles.fundrow}>
-                <div className={styles.fundlbl}>{x.fund}<span className={x.balance >= 0 ? "pos" : "neg"}>{money(x.balance, currency)}</span></div>
-                <div className="gbar"><i className={x.balance >= 0 ? "healthy" : "risk"} style={{ width: `${Math.round((Math.abs(x.balance) / fundMax) * 100)}%` }} /></div>
-              </div>
-            ))
+      {panel?.mode === "new" ? (
+        <Panel title="Novo lançamento" onClose={() => setPanel(null)}>
+          {(close) => (
+            <TransactionForm
+              accounts={accounts}
+              balances={balances}
+              people={ledger.people}
+              funds={ledger.funds}
+              currency={currency}
+              initialKind={panel.kind}
+              onSaved={(id) => onSaved(id, close)}
+              onCancel={close}
+            />
           )}
-        </div>
-      </div>
+        </Panel>
+      ) : null}
 
-      {modalOpen ? (
-        <EntryModal
-          catIn={catIn}
-          catOut={catOut}
-          funds={funds}
-          currency={currency}
-          onClose={() => setModalOpen(false)}
-        />
+      {viewing ? (
+        <Panel title="Lançamento" onClose={() => setPanel(null)}>
+          {(close) => (
+            <MovementDetail
+              movement={viewing}
+              nameOf={nameOf}
+              currency={currency}
+              onClose={close}
+              onVoided={() => {
+                close();
+                router.refresh();
+                showToast({ message: "Lançamento anulado" }, SHORT_TOAST_MS);
+              }}
+            />
+          )}
+        </Panel>
+      ) : null}
+
+      {toast ? (
+        <div className={styles.toast} role="status">
+          <span>{toast.message}</span>
+          {toast.undoEntryId ? (
+            <button type="button" onClick={() => void undo(toast.undoEntryId ?? "")}>
+              Desfazer
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </>
+  );
+}
+
+function MovementRow({
+  movement: m,
+  nameOf,
+  currency,
+  isFresh,
+  onOpen,
+}: {
+  movement: Movement;
+  nameOf: (id: string | null) => string;
+  currency: string;
+  isFresh: boolean;
+  onOpen: () => void;
+}) {
+  const counter = nameOf(m.counterId);
+  const account = nameOf(m.accountId);
+  const title = m.memo || (m.kind === "transfer" ? "Transferência" : counter) || "Lançamento";
+  const parts =
+    m.kind === "transfer"
+      ? [`${account} → ${counter}`]
+      : m.kind === "other"
+        ? ["Lançamento do contador"]
+        : [m.memo ? counter : "", account, m.donor ? `de ${m.donor}` : ""];
+  const sign = m.kind === "in" ? "+" : m.kind === "out" ? "−" : "";
+
+  return (
+    <button type="button" className={`${styles.row}${isFresh ? ` ${styles.fresh}` : ""}`} onClick={onOpen}>
+      <div className={styles.rowMain}>
+        <div className={styles.rowTitle}>{title}</div>
+        <div className={styles.rowSub}>{parts.filter(Boolean).join(" · ")}</div>
+      </div>
+      <div className={`${styles.amount}${m.kind === "in" ? ` ${styles.in}` : ""}`}>
+        {sign}
+        {money(m.amount, currency)}
+      </div>
+    </button>
+  );
+}
+
+function EmptyState({ hasAny, onNew }: { hasAny: boolean; onNew: () => void }) {
+  return (
+    <div className={styles.empty}>
+      <div className={styles.emptyTitle}>{hasAny ? "Nada neste período" : "Lance a primeira entrada ou saída"}</div>
+      <p>
+        {hasAny
+          ? "Troque o período ou a conta no topo para ver outros lançamentos."
+          : "Ofertas do culto, dízimos, contas pagas. O saldo de cada conta aparece aqui em cima."}
+      </p>
+      {hasAny ? null : (
+        <button type="button" className={`btn ${styles.press}`} onClick={onNew}>
+          Novo lançamento
+        </button>
+      )}
+    </div>
   );
 }

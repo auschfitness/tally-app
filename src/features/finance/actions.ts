@@ -1,70 +1,89 @@
 "use server";
 
-// Server Actions de Finance: criar lançamento (com categoria nova opcional) e
-// excluir. Valida → sessão/org no servidor → Supabase (RLS) → revalidate.
+// Server Actions de Finanças. Tudo passa por finance.manage no servidor; o banco
+// (record_transaction / void_journal_entry, RLS m48) é a barreira real.
 import { revalidatePath } from "next/cache";
-import { requireOrg, type DB } from "@/lib/auth/session";
+import { requireOrg, can } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
-import { parseEntryInput } from "./schema";
-import type { EntryType } from "./domain";
+import { friendlyFinanceError, nextChildCode, PARENT_CODE, type LedgerAccount, type TxKind } from "./domain";
+import { parseTransactionInput } from "./schema";
 
-async function ensureCampusId(supabase: DB, orgId: string, name: string): Promise<string | null> {
-  if (!name) return null;
-  const found = await supabase.from("campuses").select("id").eq("org_id", orgId).eq("name", name).maybeSingle();
-  if (found.data) return found.data.id;
-  const created = await supabase.from("campuses").insert({ org_id: orgId, name }).select("id").single();
-  return created.data?.id ?? null;
+const DENIED = "Você não tem permissão para mexer nas finanças.";
+
+function revalidateFinance(): void {
+  revalidatePath("/finance");
 }
 
-// Garante a categoria em finance_categories (para popular o select nas próximas
-// vezes). Idempotente por (org, nome, tipo). O nome também vai denormalizado no
-// lançamento, então isto é só a manutenção da lista.
-async function ensureCategory(supabase: DB, orgId: string, name: string, type: EntryType): Promise<void> {
-  if (!name) return;
-  const found = await supabase
-    .from("finance_categories")
-    .select("id")
-    .eq("org_id", orgId)
-    .eq("name", name)
-    .eq("type", type)
-    .maybeSingle();
-  if (!found.data) await supabase.from("finance_categories").insert({ org_id: orgId, name, type });
-}
-
-export async function createEntryAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
-  const parsed = parseEntryInput(formData);
+export async function recordTransactionAction(_prev: ActionResult<string>, formData: FormData): Promise<ActionResult<string>> {
+  const parsed = parseTransactionInput(formData);
   if (!parsed.ok) return fail("Confira os campos.", parsed.fieldErrors);
 
-  const { supabase, orgId } = await requireOrg();
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const d = parsed.data;
+
+  const { data, error } = await ctx.supabase.rpc("record_transaction", {
+    p_org: ctx.orgId,
+    p_kind: d.kind,
+    p_amount: d.amount,
+    p_date: d.date,
+    p_account: d.accountId,
+    p_counter: d.counterId,
+    p_memo: d.memo,
+    ...(d.fundId ? { p_fund: d.fundId } : {}),
+    ...(d.donorStickId ? { p_donor_stick: d.donorStickId } : {}),
+    ...(d.donorName ? { p_donor_name: d.donorName } : {}),
+    ...(d.method ? { p_method: d.method } : {}),
+  });
+  if (error || !data) return fail(friendlyFinanceError(toMessage(error, "Não consegui salvar o lançamento.")));
+
+  revalidateFinance();
+  return ok(data);
+}
+
+// Desfazer/anular: o lançamento postado não se apaga, se anula (m48). A doação ligada
+// some das listas porque elas ignoram lançamentos anulados.
+export async function voidTransactionAction(entryId: string): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { error } = await ctx.supabase.rpc("void_journal_entry", { p_entry: entryId });
+  if (error) return fail(friendlyFinanceError(toMessage(error, "Não consegui anular o lançamento.")));
+  revalidateFinance();
+  return ok(undefined);
+}
+
+// Conta (kind=transfer → caixa/banco) ou categoria (in/out) nova, criada do próprio
+// painel de lançamento. O código vem do próximo livre no grupo padrão do plano.
+export async function createLedgerAccountAction(kind: TxKind, rawName: string): Promise<ActionResult<{ id: string; name: string }>> {
+  const name = rawName.trim();
+  if (!name) return fail("Dê um nome.");
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { supabase, orgId } = ctx;
+
   try {
-    const campusId = await ensureCampusId(supabase, orgId, parsed.data.campus);
-    if (parsed.data.newCategory) await ensureCategory(supabase, orgId, parsed.data.cat, parsed.data.type);
+    const parentCode = PARENT_CODE[kind];
+    const { data: rows } = await supabase.from("ledger_accounts").select("id, code, name, type, parent_id, is_active").eq("org_id", orgId);
+    const accounts: LedgerAccount[] = (rows ?? []).map((a) => ({
+      id: a.id,
+      code: a.code,
+      name: a.name,
+      type: a.type,
+      parentId: a.parent_id,
+      isActive: a.is_active,
+    }));
+    const parent = accounts.find((a) => a.code === parentCode);
+    if (!parent) return fail("O plano de contas da igreja não tem o grupo padrão. Peça ao contador para criar a conta.");
 
-    const { error } = await supabase.from("finance_entries").insert({
-      org_id: orgId,
-      type: parsed.data.type,
-      description: parsed.data.desc,
-      category_name: parsed.data.cat || null,
-      category_id: null,
-      fund_name: parsed.data.fund || null,
-      fund_id: null,
-      amount: parsed.data.amount,
-      campus_id: campusId,
-      ...(parsed.data.date ? { entry_date: parsed.data.date } : {}),
-    });
-    if (error) return fail(toMessage(error, "Não consegui salvar o lançamento."));
-
-    revalidatePath("/finance");
-    return ok(undefined);
+    const { data, error } = await supabase
+      .from("ledger_accounts")
+      .insert({ org_id: orgId, code: nextChildCode(accounts, parentCode), name, type: parent.type, parent_id: parent.id })
+      .select("id, name")
+      .single();
+    if (error || !data) return fail(toMessage(error, "Não consegui criar."));
+    revalidateFinance();
+    return ok({ id: data.id, name: data.name });
   } catch (e) {
     return fail(toMessage(e));
   }
-}
-
-export async function deleteEntryAction(formData: FormData): Promise<void> {
-  const id = String(formData.get("id") ?? "");
-  if (!id) return;
-  const { supabase } = await requireOrg();
-  await supabase.from("finance_entries").delete().eq("id", id);
-  revalidatePath("/finance");
 }

@@ -15,9 +15,11 @@ export interface MoneyFieldProps {
   defaultValue?: number;
   id?: string;
   autoFocus?: boolean;
+  className?: string;
+  onAmountChange?: (amount: number | null) => void;
 }
 
-export function MoneyField({ name, currency, defaultValue, id, autoFocus }: MoneyFieldProps) {
+export function MoneyField({ name, currency, defaultValue, id, autoFocus, className, onAmountChange }: MoneyFieldProps) {
   const [text, setText] = useState(defaultValue && defaultValue > 0 ? money(defaultValue, currency) : "");
   const amount = parseMoneyInput(text, currency);
   const hidden = amount != null && amount > 0 ? String(amount) : "";
@@ -31,9 +33,13 @@ export function MoneyField({ name, currency, defaultValue, id, autoFocus }: Mone
         inputMode="decimal"
         autoComplete="off"
         autoFocus={autoFocus}
+        className={className}
         placeholder={placeholder}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          onAmountChange?.(parseMoneyInput(e.target.value, currency));
+        }}
         onBlur={() => {
           const a = parseMoneyInput(text, currency);
           setText(a != null && a > 0 ? money(a, currency) : "");

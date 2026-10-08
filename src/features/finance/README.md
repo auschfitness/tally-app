@@ -1,40 +1,29 @@
-# Feature: Finance Lite
+# Feature: Finanças
 
-Entradas/saídas do mês, gráficos (6 meses + despesas por categoria), saldo por
-fundo, lançamentos e novo lançamento. Contra a tabela `finance_entries`.
+Módulo único de dinheiro da igreja (spec `docs/specs/10-financas-unificado.md`). O livro
+de partidas dobradas (m48) é a fonte da verdade; esta feature o lê em linguagem de
+tesoureiro: entrada, saída, transferência, saldo por conta.
 
 ## Arquivos-chave
-- `domain.ts` — interface pública: `FinanceEntry`, `expenseByCat`, `financeMonthly`,
-  `fundBalances`, `FINPAL`. Portados de `derived.js`.
-- `queries.ts` — `listEntries` (finance_entries + campus), `listFunds` (tabela funds),
-  `listCategories` (finance_categories por tipo in/out).
-- `schema.ts` + `actions.ts` — criar lançamento (com categoria nova opcional →
-  finance_categories) e excluir. Valida → sessão/org → Supabase → revalidate.
-- `components/FinanceBoard.tsx` — ministrip, gráficos (barras CSS + donut), tabela,
-  saldo por fundo, filtro por categoria, modal. Filtro de **período** (Onda 2, Fatia A)
-  via `components/shared/PeriodFilter` + `lib/utils/period`: abre em "Este mês" (default
-  inteligente), persiste a escolha por tela (localStorage) e filtra totais/despesas/
-  saldos/lista pelo `{from,to}` sobre `entry_date`. A tendência de 6 meses é uma série
-  fixa e NÃO segue o filtro (colapsaria a um único mês).
-- `components/EntryModal.tsx` — novo lançamento (segmento entrada/saída, categorias
-  por tipo, "+ Nova categoria", fundo, campus).
-- `finance.module.css` — barras de 6 meses e linhas de fundo (estilos da feature).
-- Usa `components/shared/ConicDonut` (donut CSS reutilizável) e `lib/utils/money`.
+- `domain.ts` — puro: `toMovement` (2 partidas → in/out/transfer, resto → other),
+  `accountBalances` (saldo das contas finais de caixa/banco, com data de corte),
+  `groupByDay`, `leafAccounts`, `nextChildCode`, `isGivingCategory`, `friendlyFinanceError`.
+- `queries.ts` — `loadLedger`: plano de contas, lançamentos postados/anulados, partidas,
+  doador ligado, fundos, pessoas e moeda numa ida.
+- `schema.ts` + `actions.ts` — `recordTransactionAction` (RPC `record_transaction`),
+  `voidTransactionAction` (RPC `void_journal_entry`), `createLedgerAccountAction` (conta
+  ou categoria nova sob 1.1 / 4.1 / 5.1).
+- `components/FinanceBoard.tsx` — saldo, contas (filtro), extrato por dia, atalho N,
+  toast com Desfazer.
+- `components/Panel.tsx` — painel lateral (desktop) / folha arrastável (celular).
+- `components/TransactionForm.tsx` — Novo lançamento; "De quem?" em dízimo/oferta vira
+  doação ligada (`donations.journal_entry_id`).
+- `components/MovementDetail.tsx` — detalhe + anular (segundo toque, sem diálogo).
 
-## Tabelas Supabase
-- `finance_entries` (type, description, category_name/id, fund_name/id, amount,
-  entry_date, campus_id). Categoria/fundo seguem denormalizados em texto (category_id/
-  fund_id null — normalização é rodada futura, como no legado).
-- `finance_categories` (name, type) e `funds` (name) — fontes dos selects.
+## Banco
+- m48 (livro), m49 (plano padrão), m61 (`record_transaction`, `donations.journal_entry_id`,
+  acentos no plano padrão).
+- `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.
 
 ## Rota
-- `/finance` (filtro de campus por querystring `campus`).
-
-## Paridade — mudança consciente (alinhada ao DNA #2 "dados antes da UI")
-- **Sem dados ilustrativos**: o app legado PREENCHIA meses sem histórico com números
-  fictícios no gráfico "Entradas vs Saídas" (baseIn/baseEx + fatores). Aqui o gráfico
-  mostra **só somas reais** — meses sem lançamento ficam em zero. É a direção que o
-  próprio CLAUDE.md (#DNA 2) pede ("troque por dados reais"). O restante (saldo por
-  fundo, despesas por categoria) já era real e segue igual.
-- Categoria e fundo continuam denormalizados no lançamento (texto), como no schema atual.
-- "Nova categoria" agora grava em `finance_categories` (antes ia pro blob app_state).
+- `/finance` (só `finance.manage`). Escondida pelo `STUDY_ONLY` até a fase 5 da spec.
