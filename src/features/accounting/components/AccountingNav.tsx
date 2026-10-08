@@ -1,30 +1,34 @@
 "use client";
 
-// Sub-navegação da Contabilidade (abas Visão geral / Plano de contas / Lançamentos /
-// Relatórios). Usa a barra de abas global (.tabs/.tab). O item ativo é decidido pelo
-// pathname atual — não precisa de prop.
+// Navegação da área do contador dentro de Finanças (spec 10): as abas do módulo com
+// "Contador" ativa e, embaixo, as sub-abas da contabilidade. O item ativo vem do pathname.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { FinanceTabs } from "@/features/finance/components/FinanceTabs";
+import financeStyles from "@/features/finance/finance.module.css";
 
+const BASE = "/finance/contador";
 const TABS: { href: string; label: string }[] = [
-  { href: "/accounting", label: "Visão geral" },
-  { href: "/accounting/accounts", label: "Plano de contas" },
-  { href: "/accounting/entries", label: "Lançamentos" },
-  { href: "/accounting/reports", label: "Relatórios" },
+  { href: BASE, label: "Visão geral" },
+  { href: `${BASE}/accounts`, label: "Plano de contas" },
+  { href: `${BASE}/entries`, label: "Lançamentos" },
+  { href: `${BASE}/reports`, label: "Relatórios" },
 ];
 
 export function AccountingNav() {
   const pathname = usePathname();
-  const isActive = (href: string) =>
-    href === "/accounting" ? pathname === "/accounting" : pathname.startsWith(href);
+  const isActive = (href: string): boolean => (href === BASE ? pathname === BASE : pathname.startsWith(href));
 
   return (
-    <nav className="tabs" aria-label="Seções da contabilidade">
-      {TABS.map((t) => (
-        <Link key={t.href} href={t.href} className={`tab${isActive(t.href) ? " on" : ""}`}>
-          {t.label}
-        </Link>
-      ))}
-    </nav>
+    <>
+      <FinanceTabs active="contador" />
+      <nav className="tabs2" aria-label="Seções do contador">
+        {TABS.map((t) => (
+          <Link key={t.href} href={t.href} className={`tab2 ${financeStyles.tabLink}${isActive(t.href) ? " on" : ""}`}>
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+    </>
   );
 }

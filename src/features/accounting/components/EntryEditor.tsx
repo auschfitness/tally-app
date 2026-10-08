@@ -113,7 +113,7 @@ export function EntryEditor({
     setPending("save");
     const id = await save();
     setPending(null);
-    if (id) router.push(`/accounting/entries/${id}`);
+    if (id) router.push(`/finance/contador/entries/${id}`);
   }
 
   async function onPost() {
@@ -128,10 +128,10 @@ export function EntryEditor({
     if (!res.success) {
       setErr(res.message);
       // O rascunho foi salvo; leva para o detalhe para o usuário ajustar e postar de novo.
-      router.push(`/accounting/entries/${id}`);
+      router.push(`/finance/contador/entries/${id}`);
       return;
     }
-    router.push(`/accounting/entries/${id}`);
+    router.push(`/finance/contador/entries/${id}`);
   }
 
   async function onDelete() {
@@ -141,7 +141,7 @@ export function EntryEditor({
     const res = await deleteDraftEntryAction(entry.id);
     setPending(null);
     if (!res.success) setErr(res.message);
-    else router.push("/accounting/entries");
+    else router.push("/finance/contador/entries");
   }
 
   const diffClass = balance.balanced ? styles.diffOk : styles.diffBad;
@@ -290,7 +290,7 @@ export function EntryEditor({
           ) : null}
         </div>
         <div className={styles.footerActions}>
-          <button type="button" className="btn ghost" disabled={pending !== null} onClick={() => router.push("/accounting/entries")}>
+          <button type="button" className="btn ghost" disabled={pending !== null} onClick={() => router.push("/finance/contador/entries")}>
             Cancelar
           </button>
           <button type="button" className="btn ghost" disabled={pending !== null} onClick={onSaveDraft}>

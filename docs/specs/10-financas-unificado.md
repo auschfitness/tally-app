@@ -1,6 +1,6 @@
 # Spec 10 — Finanças unificado
 
-> Aprovado pelo dono em 2026-10-08. Substitui as telas separadas Financeiro (`/finance`),
+> Aprovado pelo dono em 2026-10-08. **Concluído em 2026-10-08** (fases 1 a 5 no ar). Substitui as telas separadas Financeiro (`/finance`),
 > Contabilidade (`/accounting`) e Doações (`/giving`) por um módulo só: **Finanças**.
 
 ## Problema
@@ -47,7 +47,8 @@ O motor de partidas dobradas (m48) vira a **única fonte da verdade**.
 
 Rota única **`/finance`** com abas: **Movimentações · Dízimos · Fechamento · Contador**.
 `/accounting/*` e `/giving` redirecionam para a aba equivalente. Recibo continua em rota própria
-(`/finance/recibo/[id]`, a atual `/giving/receipt/[id]` redireciona).
+(`/finance/recibo/[id]`, a atual `/giving/receipt/[id]` redireciona). A aba Contador é a rota
+`/finance/contador/*`.
 
 ### Movimentações (abre aqui)
 - **Topo:** saldo total grande (número tabular, tracking negativo) e, embaixo, uma linha discreta

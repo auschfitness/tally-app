@@ -19,6 +19,7 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `components/MovementsTab.tsx` — saldo, contas (filtro), extrato por dia.
 - `components/TithesTab.tsx` — dízimos por pessoa, recibo e declaração anual
   (reusa `features/giving`).
+- `components/FinanceTabs.tsx` — abas do módulo (também usadas pela área do contador).
 - `components/ClosingTab.tsx` — fechamento do mês (abre no mês passado), imprimir/PDF
   pelo navegador (`@media print` esconde cabeçalho e abas).
 - `components/Panel.tsx` — painel lateral (desktop) / folha arrastável (celular).
@@ -32,4 +33,5 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.
 
 ## Rota
-- `/finance`, `?aba=dizimos`, `?aba=fechamento` (só `finance.manage`); recibo em `/finance/recibo/[id]`. Escondida pelo `STUDY_ONLY` até a fase 5 da spec.
+- `/finance`, `?aba=dizimos`, `?aba=fechamento`; contador em `/finance/contador/*`
+  (componentes de `features/accounting`; `/accounting/*` redireciona) (só `finance.manage`); recibo em `/finance/recibo/[id]`. As 5 fases da spec estão prontas; o módulo segue escondido pelo `STUDY_ONLY` até o dono liberar.

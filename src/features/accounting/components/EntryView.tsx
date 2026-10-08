@@ -45,7 +45,7 @@ export function EntryView({ entry, currency }: { entry: EntryDetail; currency: s
             {entry.fundName ? ` · fundo: ${entry.fundName}` : ""}
           </div>
         </div>
-        <Link className="btn ghost sm" href="/accounting/entries">
+        <Link className="btn ghost sm" href="/finance/contador/entries">
           ← Lançamentos
         </Link>
       </div>

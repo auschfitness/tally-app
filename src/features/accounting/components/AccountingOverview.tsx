@@ -48,7 +48,7 @@ export function AccountingOverview({
               {postedCount} postado(s) · {draftCount} rascunho(s) · {accountsCount} contas no plano
             </div>
           </div>
-          <Link className="btn sm" href="/accounting/entries/new">
+          <Link className="btn sm" href="/finance/contador/entries/new">
             Novo lançamento
           </Link>
         </div>
@@ -73,7 +73,7 @@ export function AccountingOverview({
                 <tr key={e.id}>
                   <td className="code">{brDate(e.date)}</td>
                   <td>
-                    <Link className="link" href={`/accounting/entries/${e.id}`}>
+                    <Link className="link" href={`/finance/contador/entries/${e.id}`}>
                       {e.memo || "(sem descrição)"}
                     </Link>
                   </td>

@@ -43,7 +43,7 @@ export function EntriesBoard({ entries, currency }: { entries: JournalEntry[]; c
             <option value="void">Anulados</option>
           </Select>
         </div>
-        <Link className="btn sm" href="/accounting/entries/new">
+        <Link className="btn sm" href="/finance/contador/entries/new">
           Novo lançamento
         </Link>
       </div>
@@ -63,7 +63,7 @@ export function EntriesBoard({ entries, currency }: { entries: JournalEntry[]; c
           </thead>
           <tbody>
             {filtered.map((e) => (
-              <tr key={e.id} className={styles.rowLink} onClick={() => router.push(`/accounting/entries/${e.id}`)}>
+              <tr key={e.id} className={styles.rowLink} onClick={() => router.push(`/finance/contador/entries/${e.id}`)}>
                 <td className="code">{brDate(e.date)}</td>
                 <td>{e.memo || <span className="muted">(sem descrição)</span>}</td>
                 <td className="muted" style={{ fontSize: 12 }}>{e.reference || "—"}</td>

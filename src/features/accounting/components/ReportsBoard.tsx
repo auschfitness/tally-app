@@ -51,7 +51,7 @@ export function ReportsBoard({
   const dre = useMemo(() => buildIncomeStatement(rows), [rows]);
 
   function onDate(v: string) {
-    router.push(v ? `/accounting/reports?asOf=${v}` : "/accounting/reports");
+    router.push(v ? `/finance/contador/reports?asOf=${v}` : "/finance/contador/reports");
   }
 
   return (

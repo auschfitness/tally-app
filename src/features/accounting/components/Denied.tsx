@@ -3,7 +3,7 @@
 export function Denied() {
   return (
     <>
-      <h1 className="page">Contabilidade</h1>
+      <h1 className="page">Finanças</h1>
       <div className="panel" style={{ marginTop: 16 }}>
         <div className="empty" style={{ lineHeight: 1.6 }}>
           Esta área é restrita ao tesoureiro e ao dono.

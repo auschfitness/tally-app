@@ -79,9 +79,8 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "financeiro",
     label: "Financeiro",
     items: [
-      { key: "finance", label: "Financeiro", href: "/finance", feature: "finance" },
-      { key: "accounting", label: "Contabilidade", href: "/accounting", feature: "accounting" },
-      { key: "giving", label: "Doações", href: "/giving", feature: "giving" },
+      // Finanças unificado (spec 10): Contabilidade e Doações viraram abas de /finance.
+      { key: "finance", label: "Finanças", href: "/finance", feature: "finance" },
     ],
   },
   {

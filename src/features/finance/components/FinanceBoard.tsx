@@ -4,7 +4,6 @@
 // (Movimentações · Dízimos), o painel de lançamento e o aviso com Desfazer. Salvar
 // nunca pede confirmação: mostra "Desfazer" por alguns segundos.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PeriodFilter } from "@/components/shared/PeriodFilter";
 import { resolvePeriod, type PeriodRange, type PeriodValue } from "@/lib/utils/period";
@@ -18,18 +17,14 @@ import { TransactionForm } from "./TransactionForm";
 import { MovementDetail } from "./MovementDetail";
 import { MovementsTab } from "./MovementsTab";
 import { TithesTab } from "./TithesTab";
+import { FinanceTabs, type FinanceTabKey } from "./FinanceTabs";
 import { ClosingTab, shiftMonth } from "./ClosingTab";
 import styles from "../finance.module.css";
 
 const TOAST_MS = 6000;
 const SHORT_TOAST_MS = 2500;
 
-export type FinanceTab = "movimentacoes" | "dizimos" | "fechamento";
-const TABS: { key: FinanceTab; label: string; href: string }[] = [
-  { key: "movimentacoes", label: "Movimentações", href: "/finance" },
-  { key: "dizimos", label: "Dízimos", href: "/finance?aba=dizimos" },
-  { key: "fechamento", label: "Fechamento", href: "/finance?aba=fechamento" },
-];
+export type FinanceTab = Exclude<FinanceTabKey, "contador">;
 
 type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | null;
 interface ToastState {
@@ -140,13 +135,7 @@ export function FinanceBoard({
         )}
       </div>
 
-      <nav className={`tabs ${styles.noprint}`} aria-label="Seções de Finanças">
-        {TABS.map((t) => (
-          <Link key={t.key} href={t.href} className={`tab ${styles.tabLink}${tab === t.key ? " on" : ""}`} aria-current={tab === t.key ? "page" : undefined}>
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+      <FinanceTabs active={tab} />
 
       {tab === "fechamento" ? (
         <ClosingTab

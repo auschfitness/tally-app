@@ -23,8 +23,7 @@ export default async function AccountingReportsPage({
 
   return (
     <>
-      <h1 className="page">Contabilidade</h1>
-      <p className="muted" style={{ marginBottom: 14 }}>Partidas dobradas — o razão completo da igreja.</p>
+      <h1 className="page">Finanças</h1>
       <AccountingNav />
       <ReportsBoard rows={rows} asOf={asOf} currency={currency} />
     </>

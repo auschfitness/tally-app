@@ -14,10 +14,10 @@ import { accountsWithLines } from "./queries";
 const DENIED = "Você não tem permissão para gerir a contabilidade.";
 
 function revalidateAll() {
-  revalidatePath("/accounting");
-  revalidatePath("/accounting/accounts");
-  revalidatePath("/accounting/entries");
-  revalidatePath("/accounting/reports");
+  revalidatePath("/finance/contador");
+  revalidatePath("/finance/contador/accounts");
+  revalidatePath("/finance/contador/entries");
+  revalidatePath("/finance/contador/reports");
 }
 
 // ---------- Plano de contas ----------
