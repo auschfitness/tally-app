@@ -217,7 +217,6 @@ export function EntryEditor({
                     patch(l.key, { debit: a && a > 0 ? money(a, currency) : "" });
                   }}
                   placeholder={currency === "USD" ? "$0.00" : "R$ 0,00"}
-                  style={{ textAlign: "right" }}
                 />
               </td>
               <td className="num">
@@ -231,7 +230,6 @@ export function EntryEditor({
                     patch(l.key, { credit: a && a > 0 ? money(a, currency) : "" });
                   }}
                   placeholder={currency === "USD" ? "$0.00" : "R$ 0,00"}
-                  style={{ textAlign: "right" }}
                 />
               </td>
               <td className={styles.lineDrop}>

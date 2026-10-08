@@ -69,7 +69,9 @@ export function ReportsBoard({
           <label className="muted" style={{ fontSize: 13 }} htmlFor="asof">
             Até
           </label>
-          <DateField value={asOf ?? ""} onChange={onDate} aria-label="Data de corte" />
+          <div className={`field ${styles.asOfField}`}>
+            <DateField id="asof" value={asOf ?? ""} onChange={onDate} aria-label="Data de corte" />
+          </div>
           {asOf ? (
             <button type="button" className="btn ghost sm" onClick={() => onDate("")}>
               Limpar

@@ -36,3 +36,17 @@ Liga com: catálogo de planos em código (`tally-planos-fase1`), trava de recurs
 ## Arrastar da borda para fechar a nota no celular, anotada em 2026-10-07 (FEITA no mesmo dia: e2e/notes-swipe.spec.ts)
 
 Na revisão de movimento (skill emil-design-eng) da tarefa 9: a nota aberta no celular entra pela direita mas só fecha pelo botão "Notas". O gesto esperado no iPhone é arrastar da borda esquerda: a tela segue o dedo 1:1, fecha se passar da metade ou se o movimento for rápido (velocidade > ~0,11 px/ms), senão volta com mola. Precisa testar em aparelho de verdade. Arquivo: `src/features/study/components/NotesLibrary.tsx`.
+
+## Tutorial guiado e página de tutorial, anotada em 2026-10-08
+
+Pedido do dono ao testar Finanças: ele demorou a achar onde escolher o banco pela logo (fica em
+Finanças > Movimentações > "Gerenciar contas"). Duas peças, ambas importantes:
+1. **Tutorial guiado (primeiro uso)**: passeio curto que destaca os pontos-chave na própria tela
+   (ex.: "Cadastre a conta do banco aqui", "Importe o extrato aqui"), pulável e que não volta a
+   aparecer depois de visto. Um por módulo (Estudo, Finanças...), disparado no primeiro acesso.
+2. **Página fixa de tutorial** ("Como usar a Mercy"), sempre acessível pelo menu/Ajustes, com
+   passo a passo por tarefa (cadastrar conta, importar extrato, classificar, registrar dízimo,
+   fechar o mês, emitir recibo) e prints/vídeos curtos.
+
+A decidir quando entrar: biblioteca de tour ou componente próprio; texto em PT e EN; onde guardar
+"já viu o tutorial" (por pessoa).

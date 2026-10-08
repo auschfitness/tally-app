@@ -87,8 +87,8 @@
   padding: var(--s-1) var(--s-2);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
-.linesTable th.num,
-.linesTable td.num {
+.linesTable th:global(.num),
+.linesTable td:global(.num) {
   text-align: right;
   width: 8.125rem;
 }
@@ -100,6 +100,28 @@
 .linesTable input,
 .linesTable select {
   width: 100%;
+}
+/* Campos da partida no tema do app (o .field global não alcança a tabela). */
+.linesTable input {
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  border: 0;
+  border-radius: var(--r-6);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--t-13);
+}
+.linesTable input::placeholder {
+  color: var(--text-2);
+}
+.linesTable input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--blue);
+}
+.linesTable td:global(.num) input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .lineDrop {
   width: 2.125rem;
@@ -113,7 +135,7 @@
   padding: var(--s-3) var(--s-2) var(--s-1);
   font-variant-numeric: tabular-nums;
 }
-.totals .tk {
+.totals :global(.tk) {
   font-size: var(--t-11);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -121,7 +143,7 @@
   font-weight: 500;
   display: block;
 }
-.totals .tv {
+.totals :global(.tv) {
   font-size: var(--t-17);
   font-weight: 500;
   color: var(--text);
@@ -181,11 +203,11 @@
 .table tr:last-child td {
   border-bottom: none;
 }
-.table .num {
+.table :global(.num) {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.table .code {
+.table :global(.code) {
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
   font-size: var(--t-13);
@@ -233,4 +255,10 @@
   color: var(--coral);
   font-size: var(--t-13);
   margin: var(--s-2) 0 0;
+}
+
+/* Data de corte do relatório: o DateField pega o tema do `.field`; sem a margem dele. */
+.asOfField {
+  margin: 0;
+  width: 10rem;
 }
