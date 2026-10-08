@@ -38,5 +38,14 @@
 - Vincular a lançamento manual existente (mesma conta e valor, até 3 dias) em vez de duplicar.
 - Classificar cria o lançamento via `record_transaction`.
 
+## Sugestão automática (2026-10-08)
+- Ordem: regra da pessoa > histórico do mesmo favorecido (até 10% de diferença = "valor
+  parecido") > empresas conhecidas (energia, água, telefone, tarifa, aluguel, dízimo, oferta).
+- Cada sugestão mostra o porquê. Botão por linha "Sempre" (lembra) / "✓ Sempre" (esquece, a
+  categoria da linha fica). "Regras (N)" no topo da fila lista e esquece. Saiu a tela "Lembrar
+  para as próximas?" do fim.
+
 ## Fora
+CNAB 240/400 (cobrança; entra se a igreja emitir boletos).
+
 Open Finance, cartão de crédito/fatura, QIF.

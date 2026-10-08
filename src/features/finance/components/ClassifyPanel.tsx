@@ -1,26 +1,18 @@
 "use client";
 
-// Classificar o extrato (spec 11, fase C), estilo Controlle: fila das linhas pendentes, mais
-// antigas primeiro, com a categoria sugerida pelas regras. Escolher a categoria marca a
-// linha; classificar em lote cria os lançamentos. Linha que parece já lançada à mão oferece
-// "Vincular" em vez de duplicar. No fim, as escolhas feitas à mão viram oferta de regra.
+// Classificar o extrato (spec 11, fase C), estilo Controlle. Cada linha já vem com a
+// categoria sugerida e o porquê (regra, histórico ou empresa conhecida). Escolheu a
+// categoria de algo novo? Um toque em "Sempre" lembra para as próximas; tocar de novo
+// ("✓ Sempre") esquece. "Regras" lista tudo que foi lembrado, com Esquecer em cada uma.
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import { brDate } from "@/lib/utils/date";
 import { money } from "@/lib/utils/money";
-import { classifyLinesAction, ignoreLinesAction, linkLineAction, listPendingAction, saveRulesAction, type PendingData } from "../import-actions";
-import { findManualMatch, guessRulePattern, leafAccounts, suggestCategory, type BankLine, type LedgerAccount, type Movement } from "../domain";
+import { classifyLinesAction, forgetRuleAction, ignoreLinesAction, linkLineAction, listPendingAction, rememberRuleAction, type PendingData } from "../import-actions";
+import { findManualMatch, leafAccounts, type BankLine, type CategoryRule, type LedgerAccount, type Movement } from "../domain";
+import { suggestFor, type Suggestion } from "../suggest";
 import styles from "../finance.module.css";
-
-const MAX_RULE_OFFERS = 5;
-
-interface RuleOffer {
-  key: string;
-  pattern: string;
-  counterId: string;
-  isEnabled: boolean;
-}
 
 export function ClassifyPanel({
   accounts,
@@ -35,9 +27,9 @@ export function ClassifyPanel({
 }) {
   const router = useRouter();
   const [data, setData] = useState<PendingData | null>(null);
-  const [choice, setChoice] = useState<Record<string, string>>({});
-  const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [offers, setOffers] = useState<RuleOffer[] | null>(null);
+  const [manual, setManual] = useState<Record<string, string>>({}); // escolhas feitas à mão
+  const [toggled, setToggled] = useState<Record<string, boolean>>({}); // marcações feitas à mão
+  const [isShowingRules, setIsShowingRules] = useState(false);
   const [message, setMessage] = useState("");
   const [isSaving, startSaving] = useTransition();
 
@@ -51,15 +43,10 @@ export function ClassifyPanel({
       setMessage(res.message);
       return;
     }
-    const suggested: Record<string, string> = {};
-    for (const line of res.data.lines) {
-      const s = suggestCategory(line, res.data.rules, accounts);
-      if (s) suggested[line.id] = s;
-    }
     setData(res.data);
-    setChoice(suggested);
-    setChecked(new Set(Object.keys(suggested)));
-  }, [accounts]);
+    setManual({});
+    setToggled({});
+  }, []);
 
   useEffect(() => {
     void load();
@@ -67,56 +54,72 @@ export function ClassifyPanel({
 
   const linked = useMemo(() => new Set(data?.linkedEntryIds ?? []), [data]);
   const suggestions = useMemo(() => {
-    const m = new Map<string, string>();
+    const m = new Map<string, Suggestion>();
     for (const line of data?.lines ?? []) {
-      const s = suggestCategory(line, data?.rules ?? [], accounts);
+      const s = suggestFor(line, data?.rules ?? [], data?.history ?? [], accounts);
       if (s) m.set(line.id, s);
     }
     return m;
   }, [data, accounts]);
 
+  const choiceOf = (id: string): string => manual[id] ?? suggestions.get(id)?.accountId ?? "";
+  const isChecked = (id: string): boolean => toggled[id] ?? Boolean(choiceOf(id));
+
   const pick = (line: BankLine, counterId: string): void => {
-    setChoice((c) => ({ ...c, [line.id]: counterId }));
-    setChecked((s) => {
-      const next = new Set(s);
-      if (counterId) next.add(line.id);
-      else next.delete(line.id);
-      return next;
-    });
+    setManual((m) => ({ ...m, [line.id]: counterId }));
+    setToggled((t) => ({ ...t, [line.id]: Boolean(counterId) }));
   };
 
-  const toggle = (id: string): void =>
-    setChecked((s) => {
-      const next = new Set(s);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const setRules = (rules: CategoryRule[]): void => setData((d) => (d ? { ...d, rules } : d));
 
-  const selected = (data?.lines ?? []).filter((l) => checked.has(l.id));
-  const ready = selected.filter((l) => choice[l.id]);
-
-  const classify = (): void => {
+  // "Sempre": a regra vale na hora para as outras linhas iguais da fila (as que a pessoa não
+  // escolheu à mão), porque a sugestão é recalculada a partir das regras.
+  const remember = (line: BankLine, counterId: string): void => {
     setMessage("");
     startSaving(async () => {
-      const res = await classifyLinesAction(ready.map((l) => ({ id: l.id, counterId: choice[l.id] ?? "" })));
+      const res = await rememberRuleAction(line.description, counterId);
       if (!res.success) {
         setMessage(res.message);
         return;
       }
-      setMessage(res.data.failed > 0 ? `${res.data.done} classificados, ${res.data.failed} com problema: ${res.data.lastError}` : "");
-      const manual = ready.filter((l) => choice[l.id] !== suggestions.get(l.id));
-      const seen = new Set<string>();
-      const nextOffers: RuleOffer[] = [];
-      for (const l of manual) {
-        const pattern = guessRulePattern(l.description);
-        if (!pattern || seen.has(pattern) || nextOffers.length >= MAX_RULE_OFFERS) continue;
-        seen.add(pattern);
-        nextOffers.push({ key: l.id, pattern, counterId: choice[l.id] ?? "", isEnabled: true });
+      setRules([...(data?.rules ?? []).filter((r) => r.pattern !== res.data.pattern), res.data]);
+      setManual((m) => {
+        const next = { ...m };
+        delete next[line.id];
+        return next;
+      });
+    });
+  };
+
+  // Esquecer não apaga a escolha da linha tocada: ela só deixa de ser automática.
+  const forget = (ruleId: string, keep?: { lineId: string; counterId: string }): void => {
+    setMessage("");
+    if (keep) setManual((m) => ({ ...m, [keep.lineId]: keep.counterId }));
+    startSaving(async () => {
+      const res = await forgetRuleAction(ruleId);
+      if (!res.success) {
+        setMessage(res.message);
+        return;
       }
+      setRules((data?.rules ?? []).filter((r) => r.id !== ruleId));
+    });
+  };
+
+  const lines = data?.lines ?? [];
+  const selected = lines.filter((l) => isChecked(l.id));
+  const ready = selected.filter((l) => choiceOf(l.id));
+
+  const classify = (): void => {
+    setMessage("");
+    startSaving(async () => {
+      const res = await classifyLinesAction(ready.map((l) => ({ id: l.id, counterId: choiceOf(l.id) })));
+      if (!res.success) {
+        setMessage(res.message);
+        return;
+      }
+      if (res.data.failed > 0) setMessage(`${res.data.done} classificados, ${res.data.failed} com problema: ${res.data.lastError}`);
       router.refresh();
       await load();
-      if (nextOffers.length > 0) setOffers(nextOffers);
     });
   };
 
@@ -138,43 +141,40 @@ export function ClassifyPanel({
     });
   };
 
-  if (offers) {
-    return (
-      <RuleOffers
-        offers={offers}
-        nameOf={nameOf}
-        onChange={setOffers}
-        onSkip={() => setOffers(null)}
-        onSave={() =>
-          startSaving(async () => {
-            const res = await saveRulesAction(offers.filter((o) => o.isEnabled).map((o) => ({ pattern: o.pattern, counterId: o.counterId })));
-            if (!res.success) setMessage(res.message);
-            setOffers(null);
-            await load();
-          })
-        }
-        isSaving={isSaving}
-      />
-    );
+  if (isShowingRules) {
+    return <RulesList rules={data?.rules ?? []} nameOf={nameOf} isSaving={isSaving} onForget={(id) => forget(id)} onBack={() => setIsShowingRules(false)} />;
   }
 
   return (
     <div className={styles.panelForm}>
       <div className={styles.panelBody}>
+        {data && data.rules.length > 0 ? (
+          <button type="button" className={`link ${styles.rulesLink}`} onClick={() => setIsShowingRules(true)}>
+            Regras ({data.rules.length})
+          </button>
+        ) : null}
         {data == null ? <p className="muted">Carregando…</p> : null}
-        {data && data.lines.length === 0 ? (
+        {data && lines.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyTitle}>Tudo classificado</div>
             <p>Quando importar o próximo extrato, as linhas novas aparecem aqui.</p>
           </div>
         ) : null}
-        {data?.lines.map((line) => {
+        {lines.map((line) => {
+          const suggestion = suggestions.get(line.id);
+          const choice = choiceOf(line.id);
+          const ruleOn = suggestion?.source === "rule" && suggestion.accountId === choice ? suggestion : null;
           const match = findManualMatch(line, movements, linked);
-          const options = line.amount > 0 ? revenue : expense;
           return (
             <div key={line.id} className={styles.classifyRow}>
               <div className={styles.classifyTop}>
-                <input type="checkbox" className={styles.check} aria-label={`Selecionar ${line.description}`} checked={checked.has(line.id)} onChange={() => toggle(line.id)} />
+                <input
+                  type="checkbox"
+                  className={styles.check}
+                  aria-label={`Selecionar ${line.description}`}
+                  checked={isChecked(line.id)}
+                  onChange={() => setToggled((t) => ({ ...t, [line.id]: !isChecked(line.id) }))}
+                />
                 <span className={styles.rowTitle}>
                   {brDate(line.date)} · {line.description || "Sem descrição"}
                 </span>
@@ -184,16 +184,30 @@ export function ClassifyPanel({
                 </b>
               </div>
               <div className={styles.classifyPick}>
-                <Select compact aria-label="Categoria" value={choice[line.id] ?? ""} onChange={(e) => pick(line, e.target.value)}>
+                <Select compact aria-label="Categoria" value={choice} onChange={(e) => pick(line, e.target.value)}>
                   <option value="">Escolha a categoria…</option>
-                  {options.map((a) => (
+                  {(line.amount > 0 ? revenue : expense).map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name}
                     </option>
                   ))}
                 </Select>
-                {suggestions.has(line.id) && choice[line.id] === suggestions.get(line.id) ? <span className={styles.hint}>sugerida</span> : null}
+                {choice ? (
+                  <button
+                    type="button"
+                    className={`${styles.always}${ruleOn ? ` ${styles.on}` : ""}`}
+                    aria-pressed={Boolean(ruleOn)}
+                    title={ruleOn ? "Tocar para esquecer" : "Usar sempre esta categoria para este favorecido"}
+                    disabled={isSaving}
+                    onClick={() => (ruleOn?.ruleId ? forget(ruleOn.ruleId, { lineId: line.id, counterId: choice }) : remember(line, choice))}
+                  >
+                    <span key={ruleOn ? "on" : "off"} className={styles.alwaysLabel}>
+                      {ruleOn ? "✓ Sempre" : "Sempre"}
+                    </span>
+                  </button>
+                ) : null}
               </div>
+              {suggestion && suggestion.accountId === choice ? <div className={styles.reason}>{suggestion.reason}</div> : null}
               {match ? (
                 <div className={styles.matchHint}>
                   Parece já lançado: {match.memo || nameOf.get(match.counterId ?? "") || "lançamento"} em {brDate(match.date)}.
@@ -225,44 +239,40 @@ export function ClassifyPanel({
   );
 }
 
-function RuleOffers({
-  offers,
+function RulesList({
+  rules,
   nameOf,
-  onChange,
-  onSkip,
-  onSave,
   isSaving,
+  onForget,
+  onBack,
 }: {
-  offers: RuleOffer[];
+  rules: CategoryRule[];
   nameOf: Map<string, string>;
-  onChange: (offers: RuleOffer[]) => void;
-  onSkip: () => void;
-  onSave: () => void;
   isSaving: boolean;
+  onForget: (ruleId: string) => void;
+  onBack: () => void;
 }) {
-  const update = (key: string, patch: Partial<RuleOffer>): void => onChange(offers.map((o) => (o.key === key ? { ...o, ...patch } : o)));
   return (
     <div className={styles.panelForm}>
       <div className={styles.panelBody}>
-        <div className={styles.emptyTitle}>Lembrar para as próximas?</div>
-        <p className="muted">Da próxima vez que estes textos aparecerem no extrato, a categoria já vem escolhida.</p>
-        {offers.map((o) => (
-          <div key={o.key} className={styles.ruleOffer}>
-            <input type="checkbox" className={styles.check} aria-label="Criar esta regra" checked={o.isEnabled} onChange={(e) => update(o.key, { isEnabled: e.target.checked })} />
-            <span>Sempre que aparecer</span>
-            <input className={styles.ruleInput} aria-label="Texto da regra" value={o.pattern} onChange={(e) => update(o.key, { pattern: e.target.value })} />
-            <span>
-              usar <b>{nameOf.get(o.counterId) ?? ""}</b>
-            </span>
-          </div>
-        ))}
+        <p className="muted">Quando o texto aparece no extrato, a categoria já vem escolhida.</p>
+        {rules.length === 0 ? <p className="muted">Nenhuma regra. Use “Sempre” ao classificar.</p> : null}
+        {[...rules]
+          .sort((a, b) => a.pattern.localeCompare(b.pattern, "pt-BR"))
+          .map((r) => (
+            <div key={r.id} className={styles.reportRow}>
+              <span>
+                <b>{r.pattern}</b> → {nameOf.get(r.accountId) ?? "categoria removida"}
+              </span>
+              <button type="button" className={`link ${styles.dangerLink}`} disabled={isSaving} onClick={() => onForget(r.id)}>
+                Esquecer
+              </button>
+            </div>
+          ))}
       </div>
       <div className={styles.panelFoot}>
-        <button className={`btn ghost ${styles.press}`} type="button" onClick={onSkip}>
-          Agora não
-        </button>
-        <button className={`btn ${styles.press}`} type="button" disabled={isSaving} onClick={onSave}>
-          Salvar regras
+        <button className={`btn ghost ${styles.press}`} type="button" onClick={onBack}>
+          Voltar
         </button>
       </div>
     </div>

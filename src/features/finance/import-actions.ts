@@ -7,7 +7,8 @@ import { revalidatePath } from "next/cache";
 import { requireOrg, can, type DB } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import type { StatementFormat, StatementTransaction } from "./statement";
-import { friendlyFinanceError, normalizeText, type BankLine, type CategoryRule } from "./domain";
+import { friendlyFinanceError, type BankLine, type CategoryRule } from "./domain";
+import { payeeKey, type HistoryLine } from "./suggest";
 
 const DENIED = "Você não tem permissão para mexer nas finanças.";
 const MAX_ROWS = 5000;
@@ -125,8 +126,11 @@ export async function importStatementAction(payload: ImportPayload): Promise<Act
 export interface PendingData {
   lines: BankLine[];
   rules: CategoryRule[];
+  history: HistoryLine[]; // linhas já classificadas: ensinam a sugestão sem a pessoa pedir
   linkedEntryIds: string[]; // lançamentos já ligados a alguma linha do banco
 }
+
+const HISTORY_LIMIT = 2000;
 
 export async function listPendingAction(): Promise<ActionResult<PendingData>> {
   const ctx = await requireOrg();
@@ -135,13 +139,35 @@ export async function listPendingAction(): Promise<ActionResult<PendingData>> {
   const [pendingRes, rulesRes, linkedRes] = await Promise.all([
     supabase.from("bank_transactions").select("id, account_id, posted_at, amount, description").eq("org_id", orgId).eq("status", "pending").order("posted_at").limit(MAX_ROWS),
     supabase.from("category_rules").select("id, pattern, account_id").eq("org_id", orgId),
-    supabase.from("bank_transactions").select("journal_entry_id").eq("org_id", orgId).not("journal_entry_id", "is", null),
+    supabase
+      .from("bank_transactions")
+      .select("account_id, journal_entry_id, posted_at, amount, description")
+      .eq("org_id", orgId)
+      .not("journal_entry_id", "is", null)
+      .order("posted_at", { ascending: false })
+      .limit(HISTORY_LIMIT),
   ]);
   if (pendingRes.error) return fail(toMessage(pendingRes.error));
+
+  // Categoria de cada linha classificada = a outra partida do lançamento (não a conta do banco).
+  const classified = linkedRes.data ?? [];
+  const entryIds = classified.flatMap((r) => (r.journal_entry_id ? [r.journal_entry_id] : []));
+  const counterByEntry = new Map<string, string>();
+  const accountByEntry = new Map(classified.map((r) => [r.journal_entry_id, r.account_id]));
+  for (let i = 0; i < entryIds.length; i += CHUNK) {
+    const { data } = await supabase.from("journal_lines").select("entry_id, account_id").eq("org_id", orgId).in("entry_id", entryIds.slice(i, i + CHUNK));
+    for (const l of data ?? []) if (l.account_id !== accountByEntry.get(l.entry_id)) counterByEntry.set(l.entry_id, l.account_id);
+  }
+  const history: HistoryLine[] = classified.flatMap((r) => {
+    const counterId = r.journal_entry_id ? counterByEntry.get(r.journal_entry_id) : undefined;
+    return counterId ? [{ description: r.description, amount: Number(r.amount), date: r.posted_at, counterId }] : [];
+  });
+
   return ok({
     lines: (pendingRes.data ?? []).map((r) => ({ id: r.id, accountId: r.account_id, date: r.posted_at, amount: Number(r.amount), description: r.description })),
     rules: (rulesRes.data ?? []).map((r) => ({ id: r.id, pattern: r.pattern, accountId: r.account_id })),
-    linkedEntryIds: (linkedRes.data ?? []).flatMap((r) => (r.journal_entry_id ? [r.journal_entry_id] : [])),
+    history,
+    linkedEntryIds: entryIds,
   });
 }
 
@@ -216,15 +242,28 @@ export async function ignoreLinesAction(ids: string[]): Promise<ActionResult> {
   return ok(undefined);
 }
 
-// Regras que aprendem: "sempre que aparecer «cemig», usar Água, luz e internet".
-export async function saveRulesAction(rules: { pattern: string; counterId: string }[]): Promise<ActionResult> {
+// "Sempre": lembra que este favorecido é desta categoria. Devolve a regra para a tela poder
+// mostrar "✓ Sempre" e desfazer no mesmo botão.
+export async function rememberRuleAction(description: string, counterId: string): Promise<ActionResult<CategoryRule>> {
   const ctx = await requireOrg();
   if (!can(ctx, "finance.manage")) return fail(DENIED);
-  const rows = rules
-    .map((r) => ({ org_id: ctx.orgId, pattern: normalizeText(String(r.pattern)).slice(0, 80), account_id: r.counterId }))
-    .filter((r) => r.pattern.length >= 3);
-  if (rows.length === 0) return ok(undefined);
-  const { error } = await ctx.supabase.from("category_rules").upsert(rows, { onConflict: "org_id,pattern" });
-  if (error) return fail(toMessage(error, "Não consegui salvar as regras."));
+  const pattern = payeeKey(String(description)).slice(0, 80);
+  if (pattern.length < 3) return fail("Esse texto é curto demais para lembrar.");
+  const { data: account } = await ctx.supabase.from("ledger_accounts").select("id").eq("org_id", ctx.orgId).eq("id", counterId).in("type", ["revenue", "expense"]).maybeSingle();
+  if (!account) return fail("Escolha uma categoria válida.");
+  const { data, error } = await ctx.supabase
+    .from("category_rules")
+    .upsert({ org_id: ctx.orgId, pattern, account_id: counterId }, { onConflict: "org_id,pattern" })
+    .select("id, pattern, account_id")
+    .single();
+  if (error || !data) return fail(toMessage(error, "Não consegui lembrar."));
+  return ok({ id: data.id, pattern: data.pattern, accountId: data.account_id });
+}
+
+export async function forgetRuleAction(ruleId: string): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { error } = await ctx.supabase.from("category_rules").delete().eq("org_id", ctx.orgId).eq("id", ruleId);
+  if (error) return fail(toMessage(error, "Não consegui esquecer a regra."));
   return ok(undefined);
 }

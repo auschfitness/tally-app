@@ -27,7 +27,10 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
   automáticos, mapeamento manual nos outros), windows-1252, FITID ou hash estável no CSV.
 - `import-actions.ts` — prévia/importação deduplicada por (conta, FITID); classificar em
   lote (`record_transaction`), vincular a lançamento manual, ignorar, regras que aprendem.
-- `components/ImportPanel.tsx` / `ClassifyPanel.tsx` — importar e classificar (estilo Controlle).
+- `suggest.ts` — sugestão de categoria com o porquê: regra da pessoa > histórico do mesmo
+  favorecido (valor parecido pesa mais) > empresas brasileiras conhecidas (Celesc é energia).
+- `components/ImportPanel.tsx` / `ClassifyPanel.tsx` — importar e classificar (estilo Controlle);
+  botão "Sempre" lembra o favorecido e "✓ Sempre" esquece; "Regras" lista e esquece.
 - `components/BankLogo.tsx` — logo num quadrado branco fixo.
 - `components/FinanceTabs.tsx` — abas do módulo (também usadas pela área do contador).
 - `components/ClosingTab.tsx` — fechamento do mês (abre no mês passado), imprimir/PDF

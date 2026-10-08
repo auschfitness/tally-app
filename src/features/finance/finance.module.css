@@ -193,11 +193,18 @@
 .classifyPick { display: flex; align-items: center; gap: var(--s-2); margin: var(--s-2) 0 0 calc(1.125rem + var(--s-2)); }
 .classifyPick select { max-width: 16rem; }
 .matchHint { display: flex; align-items: baseline; gap: var(--s-2); flex-wrap: wrap; margin: var(--s-2) 0 0 calc(1.125rem + var(--s-2)); font-size: var(--t-11); color: var(--warn); }
-.ruleOffer { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: var(--s-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); font-size: var(--t-13); color: var(--text); }
-.ruleInput { width: 9rem; height: var(--control-h); padding: 0 var(--control-px); border: 0; border-radius: var(--r-6); background: var(--surface-2); color: var(--text); font: inherit; }
-.ruleInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--blue); }
 
 /* Caixinha visível nos painéis: a global não tem borda e some sobre --surface; e o ✓ só
    aparece com cor. Escopo local de Finanças. */
 .check:not(:checked) { box-shadow: inset 0 0 0 1.5px var(--text-2); }
 .check:checked::before { box-shadow: inset 1em 1em var(--on-blue); }
+
+/* "Sempre" ⇄ "✓ Sempre": lembrar o favorecido e desfazer no mesmo botão. Largura fixa para
+   nada pular; a troca de texto ganha um desfoque curto para ler como um estado só. */
+.always { min-width: 6.25rem; min-height: var(--control-h); padding: 0 var(--control-px); border: none; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); font: inherit; font-size: var(--t-13); font-weight: 500; transition: background 160ms ease, color 160ms ease, transform 120ms var(--ease-press); }
+.always:active { transform: scale(.97); }
+.always.on { background: var(--action-soft); color: var(--blue); }
+.alwaysLabel { display: inline-block; animation: labelIn 160ms var(--ease) both; }
+@keyframes labelIn { from { opacity: .3; filter: blur(2px); } to { opacity: 1; filter: none; } }
+.reason { margin: var(--s-1) 0 0 calc(1.125rem + var(--s-2)); font-size: var(--t-11); line-height: var(--lh-11); color: var(--text-2); }
+.rulesLink { display: block; margin-left: auto; margin-bottom: var(--s-2); }
