@@ -178,3 +178,27 @@ export function weekSummary(bills: Bill[], todayIso: string, kind: BillKind): We
     overdue: items.filter((b) => b.dueDate < todayIso).length,
   };
 }
+
+// Linha do extrato que parece ser uma conta aberta (spec 12, fase D): mesma direção, valor
+// até 10% diferente do previsto e vencimento a até 5 dias da data do banco. Vence a mais
+// parecida no valor, depois na data. `taken` evita oferecer a mesma conta a duas linhas.
+export const MATCH_AMOUNT_TOLERANCE = 0.1;
+export const MATCH_DAYS = 5;
+
+export function findBillMatch(line: { date: string; amount: number }, bills: Bill[], taken: Set<string> = new Set()): Bill | null {
+  const kind: BillKind = line.amount > 0 ? "in" : "out";
+  const value = Math.abs(line.amount);
+  const score = (b: Bill): [number, number] => [Math.abs(b.amount - value) / b.amount, Math.abs(daysBetween(b.dueDate, line.date))];
+  const candidates = bills.filter((b) => {
+    if (b.status !== "open" || b.kind !== kind || taken.has(b.id)) return false;
+    const [diff, days] = score(b);
+    return diff <= MATCH_AMOUNT_TOLERANCE + 1e-9 && days <= MATCH_DAYS;
+  });
+  return (
+    candidates.sort((a, b) => {
+      const [da, ta] = score(a);
+      const [db, tb] = score(b);
+      return da - db || ta - tb;
+    })[0] ?? null
+  );
+}

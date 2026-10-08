@@ -267,3 +267,24 @@ export async function forgetRuleAction(ruleId: string): Promise<ActionResult> {
   if (error) return fail(toMessage(error, "Não consegui esquecer a regra."));
   return ok(undefined);
 }
+
+// "É a conta de luz de 15/10?" (spec 12, fase D): paga a conta aberta com a data e o valor
+// do extrato (pay_bill) e liga a linha ao lançamento que nasceu. Nada é lançado duas vezes.
+export async function payBillFromLineAction(lineId: string, billId: string): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { supabase, orgId } = ctx;
+  const [{ data: line }, { data: bill }] = await Promise.all([
+    supabase.from("bank_transactions").select("id, account_id, posted_at, amount").eq("org_id", orgId).eq("id", lineId).eq("status", "pending").maybeSingle(),
+    supabase.from("finance_bills").select("id, kind, status").eq("org_id", orgId).eq("id", billId).maybeSingle(),
+  ]);
+  if (!line) return fail("Essa linha já foi classificada.");
+  if (!bill || bill.status !== "open") return fail("Essa conta já foi paga.");
+  const amount = Number(line.amount);
+  if ((amount > 0 ? "in" : "out") !== bill.kind) return fail("A direção do extrato não bate com a conta.");
+  const { data: entryId, error } = await supabase.rpc("pay_bill", { p_bill: billId, p_date: line.posted_at, p_account: line.account_id, p_amount: Math.abs(amount) });
+  if (error || !entryId) return fail(friendlyFinanceError(toMessage(error, "Não consegui registrar o pagamento.")));
+  await supabase.from("bank_transactions").update({ status: "classified", journal_entry_id: entryId }).eq("id", lineId);
+  revalidatePath("/finance");
+  return ok(undefined);
+}

@@ -52,6 +52,10 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
   (arrastar/clicar ou "Fotografar ou escolher", foto reduzida a 2000 px JPEG 0,85, prévia em
   portal, lixeira com segundo toque). Usado em `BillDetail` e `MovementDetail`; 📎 nas listas.
   Pagar a conta liga o anexo também ao lançamento; desfazer/anular solta essa ligação.
+- Extrato → conta (spec 12, fase D): `bills.ts#findBillMatch` (mesma direção, valor até 10%,
+  vencimento a ±5 dias, uma conta por linha) e `import-actions.ts#payBillFromLineAction`
+  (`pay_bill` com data/valor do extrato + liga a linha). No Classificar aparece "É X de dd/mm?
+  Sim, pagar"; a linha vem desmarcada para não ser lançada de novo.
 
 ## Banco
 - m65 (`finance_files`, bucket privado `finance-files` com pasta = org, `pay_bill`/`unpay_bill` levando os anexos),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMonths, billsInScope, dueLabel, endOfWeek, groupOpenBills, needsExtension, occurrenceDate, pendingOccurrences, weekBills, weekSummary, type Bill } from "./bills";
+import { addMonths, billsInScope, findBillMatch, dueLabel, endOfWeek, groupOpenBills, needsExtension, occurrenceDate, pendingOccurrences, weekBills, weekSummary, type Bill } from "./bills";
 
 const bill = (over: Partial<Bill>): Bill => ({
   id: "b",
@@ -115,5 +115,23 @@ describe("esta semana", () => {
     expect(weekBills(bills, "2026-10-08", "out").map((b) => b.id)).toEqual(["late", "sun"]);
     expect(weekSummary(bills, "2026-10-08", "out")).toEqual({ total: 150.1, count: 2, overdue: 1 });
     expect(weekSummary(bills, "2026-10-08", "in")).toEqual({ total: 30, count: 1, overdue: 0 });
+  });
+});
+
+describe("findBillMatch (extrato → conta)", () => {
+  const luz = bill({ id: "luz", amount: 400, dueDate: "2026-10-15" });
+  it("acha a conta com valor até 10% diferente e data a até 5 dias", () => {
+    expect(findBillMatch({ date: "2026-10-18", amount: -432.1 }, [luz])?.id).toBe("luz");
+  });
+  it("recusa valor fora de 10%, data longe, direção errada ou conta paga", () => {
+    expect(findBillMatch({ date: "2026-10-15", amount: -441 }, [luz])).toBeNull();
+    expect(findBillMatch({ date: "2026-10-21", amount: -400 }, [luz])).toBeNull();
+    expect(findBillMatch({ date: "2026-10-15", amount: 400 }, [luz])).toBeNull();
+    expect(findBillMatch({ date: "2026-10-15", amount: -400 }, [{ ...luz, status: "paid" }])).toBeNull();
+  });
+  it("prefere o valor mais parecido e pula as já oferecidas", () => {
+    const agua = bill({ id: "agua", amount: 410, dueDate: "2026-10-15" });
+    expect(findBillMatch({ date: "2026-10-15", amount: -409 }, [luz, agua])?.id).toBe("agua");
+    expect(findBillMatch({ date: "2026-10-15", amount: -409 }, [luz, agua], new Set(["agua"]))?.id).toBe("luz");
   });
 });

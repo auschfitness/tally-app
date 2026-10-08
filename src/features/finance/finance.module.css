@@ -317,3 +317,7 @@
 @media (prefers-reduced-motion: reduce) {
   .preview { transition: none; }
 }
+
+/* --- Extrato → conta (spec 12, fase D) --- */
+.billHint { color: var(--text-2); }
+.billHint span { font-variant-numeric: tabular-nums; }

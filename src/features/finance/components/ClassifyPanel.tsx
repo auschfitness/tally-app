@@ -4,24 +4,28 @@
 // categoria sugerida e o porquê (regra, histórico ou empresa conhecida). Escolheu a
 // categoria de algo novo? Um toque em "Sempre" lembra para as próximas; tocar de novo
 // ("✓ Sempre") esquece. "Regras" lista tudo que foi lembrado, com Esquecer em cada uma.
+// Linha que parece uma conta aberta (spec 12, fase D) oferece pagar a conta com ela.
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import { brDate } from "@/lib/utils/date";
 import { money } from "@/lib/utils/money";
-import { classifyLinesAction, forgetRuleAction, ignoreLinesAction, linkLineAction, listPendingAction, rememberRuleAction, type PendingData } from "../import-actions";
+import { classifyLinesAction, forgetRuleAction, ignoreLinesAction, linkLineAction, listPendingAction, payBillFromLineAction, rememberRuleAction, type PendingData } from "../import-actions";
 import { findManualMatch, leafAccounts, type BankLine, type CategoryRule, type LedgerAccount, type Movement } from "../domain";
+import { findBillMatch, type Bill } from "../bills";
 import { suggestFor, type Suggestion } from "../suggest";
 import styles from "../finance.module.css";
 
 export function ClassifyPanel({
   accounts,
   movements,
+  bills,
   currency,
   onClose,
 }: {
   accounts: LedgerAccount[];
   movements: Movement[];
+  bills: Bill[];
   currency: string;
   onClose: () => void;
 }) {
@@ -62,8 +66,23 @@ export function ClassifyPanel({
     return m;
   }, [data, accounts]);
 
+  // Uma conta é oferecida a uma linha só (a primeira da fila que bate com ela).
+  const billMatches = useMemo(() => {
+    const taken = new Set<string>();
+    const m = new Map<string, Bill>();
+    for (const line of data?.lines ?? []) {
+      const b = findBillMatch(line, bills, taken);
+      if (b) {
+        taken.add(b.id);
+        m.set(line.id, b);
+      }
+    }
+    return m;
+  }, [data, bills]);
+
   const choiceOf = (id: string): string => manual[id] ?? suggestions.get(id)?.accountId ?? "";
-  const isChecked = (id: string): boolean => toggled[id] ?? Boolean(choiceOf(id));
+  // Linha que bate com uma conta vem desmarcada: o caminho é "Sim, pagar", não lançar de novo.
+  const isChecked = (id: string): boolean => toggled[id] ?? (Boolean(choiceOf(id)) && !billMatches.has(id));
 
   const pick = (line: BankLine, counterId: string): void => {
     setManual((m) => ({ ...m, [line.id]: counterId }));
@@ -141,6 +160,15 @@ export function ClassifyPanel({
     });
   };
 
+  const payBill = (lineId: string, billId: string): void => {
+    startSaving(async () => {
+      const res = await payBillFromLineAction(lineId, billId);
+      if (!res.success) setMessage(res.message);
+      router.refresh();
+      await load();
+    });
+  };
+
   if (isShowingRules) {
     return <RulesList rules={data?.rules ?? []} nameOf={nameOf} isSaving={isSaving} onForget={(id) => forget(id)} onBack={() => setIsShowingRules(false)} />;
   }
@@ -164,7 +192,8 @@ export function ClassifyPanel({
           const suggestion = suggestions.get(line.id);
           const choice = choiceOf(line.id);
           const ruleOn = suggestion?.source === "rule" && suggestion.accountId === choice ? suggestion : null;
-          const match = findManualMatch(line, movements, linked);
+          const bill = billMatches.get(line.id);
+          const match = bill ? null : findManualMatch(line, movements, linked);
           return (
             <div key={line.id} className={styles.classifyRow}>
               <div className={styles.classifyTop}>
@@ -208,6 +237,15 @@ export function ClassifyPanel({
                 ) : null}
               </div>
               {suggestion && suggestion.accountId === choice ? <div className={styles.reason}>{suggestion.reason}</div> : null}
+              {bill ? (
+                <div className={`${styles.matchHint} ${styles.billHint}`}>
+                  É {bill.description} de {brDate(bill.dueDate).slice(0, 5)}?
+                  {Math.abs(bill.amount - Math.abs(line.amount)) >= 0.005 ? <span>(previsto {money(bill.amount, currency)})</span> : null}
+                  <button type="button" className="link" disabled={isSaving} onClick={() => payBill(line.id, bill.id)}>
+                    {bill.kind === "in" ? "Sim, receber" : "Sim, pagar"}
+                  </button>
+                </div>
+              ) : null}
               {match ? (
                 <div className={styles.matchHint}>
                   Parece já lançado: {match.memo || nameOf.get(match.counterId ?? "") || "lançamento"} em {brDate(match.date)}.

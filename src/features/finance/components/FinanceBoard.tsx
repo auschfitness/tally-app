@@ -250,7 +250,7 @@ export function FinanceBoard({
 
       {panel?.mode === "classify" ? (
         <Panel title="Classificar extrato" onClose={() => setPanel(null)}>
-          {(close) => <ClassifyPanel accounts={accounts} movements={movements} currency={currency} onClose={close} />}
+          {(close) => <ClassifyPanel accounts={accounts} movements={movements} bills={bills} currency={currency} onClose={close} />}
         </Panel>
       ) : null}
 
