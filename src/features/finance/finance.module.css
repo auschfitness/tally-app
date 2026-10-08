@@ -256,3 +256,31 @@
   @starting-style { .scopeMenu { transform: none; } }
   .billDot::after { transform: none; }
 }
+
+/* ── Esta semana + Resolver (spec 12, fase B) ───────────────────────────── */
+.week { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-bottom: var(--s-8); }
+.weekCard { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto auto; column-gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-10); background: var(--surface-2); }
+.weekCard .heroLabel { grid-column: 1 / -1; }
+.weekValue { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var(--track-tight); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; margin-top: var(--s-1); }
+.weekMeta { grid-column: 1; font-size: var(--t-13); line-height: var(--lh-13); color: var(--text-2); }
+.weekBtn { grid-column: 2; grid-row: 2 / 4; align-self: end; }
+.weekEmpty { grid-column: 1 / -1; margin-top: var(--s-2); font-size: var(--t-13); color: var(--text-2); }
+@media (max-width: 40rem) { .week { grid-template-columns: 1fr; } }
+
+.resolveList { list-style: none; margin: 0 calc(-1 * var(--s-2)); padding: 0; }
+/* Recolher: grid 1fr → 0fr anima a altura sem medir (exceção curta à regra de só transform/opacity). */
+.resolveItem { display: grid; grid-template-rows: 1fr; opacity: 1; transition: grid-template-rows 180ms var(--ease) 140ms, opacity 140ms var(--ease); }
+.resolveGone { grid-template-rows: 0fr; opacity: 0; }
+.resolveInner { overflow: hidden; min-height: 0; }
+.resolveRow { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2); border-radius: var(--r-6); }
+.resolveMain { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; border: none; background: none; padding: 0; color: inherit; }
+.resolveDone .rowTitle, .resolveDone .amount { color: var(--text-2); transition: color var(--dur-micro) var(--ease); }
+.resolvePay { min-width: 4.75rem; }
+.resolveUndo { min-width: 4.75rem; text-align: center; }
+.resolveEnd { text-align: center; padding: var(--s-6) 0 var(--s-2); color: var(--text-2); font-size: var(--t-13); }
+@media (hover: hover) and (pointer: fine) {
+  .resolveRow:hover { background: var(--surface-2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .resolveItem { transition: opacity 140ms ease; }
+}

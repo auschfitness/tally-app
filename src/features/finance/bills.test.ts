@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMonths, billsInScope, dueLabel, endOfWeek, groupOpenBills, needsExtension, occurrenceDate, pendingOccurrences, type Bill } from "./bills";
+import { addMonths, billsInScope, dueLabel, endOfWeek, groupOpenBills, needsExtension, occurrenceDate, pendingOccurrences, weekBills, weekSummary, type Bill } from "./bills";
 
 const bill = (over: Partial<Bill>): Bill => ({
   id: "b",
@@ -100,5 +100,20 @@ describe("rótulos e grupos", () => {
       ["Novembro", ["a"]],
       ["Janeiro de 2027", ["e"]],
     ]);
+  });
+});
+
+describe("esta semana", () => {
+  it("soma vencidas + até domingo, por tipo, sem pagas", () => {
+    const bills = [
+      bill({ id: "late", dueDate: "2026-10-01", amount: 50 }),
+      bill({ id: "sun", dueDate: "2026-10-11", amount: 100.1 }),
+      bill({ id: "mon", dueDate: "2026-10-12", amount: 999 }),
+      bill({ id: "in", kind: "in", dueDate: "2026-10-09", amount: 30 }),
+      bill({ id: "paid", dueDate: "2026-10-09", status: "paid" }),
+    ];
+    expect(weekBills(bills, "2026-10-08", "out").map((b) => b.id)).toEqual(["late", "sun"]);
+    expect(weekSummary(bills, "2026-10-08", "out")).toEqual({ total: 150.1, count: 2, overdue: 1 });
+    expect(weekSummary(bills, "2026-10-08", "in")).toEqual({ total: 30, count: 1, overdue: 0 });
   });
 });

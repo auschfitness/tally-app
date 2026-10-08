@@ -155,3 +155,26 @@ export function groupOpenBills(bills: Bill[], todayIso: string): BillGroup[] {
   }
   return [...groups.values()];
 }
+
+// "Esta semana" (Resolver): abertas vencidas + de hoje até domingo, vencidas primeiro.
+export function weekBills(bills: Bill[], todayIso: string, kind?: BillKind): Bill[] {
+  const sunday = endOfWeek(todayIso);
+  return bills
+    .filter((b) => b.status === "open" && b.dueDate <= sunday && (!kind || b.kind === kind))
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.description.localeCompare(b.description, "pt-BR"));
+}
+
+export interface WeekSummary {
+  total: number;
+  count: number;
+  overdue: number;
+}
+
+export function weekSummary(bills: Bill[], todayIso: string, kind: BillKind): WeekSummary {
+  const items = weekBills(bills, todayIso, kind);
+  return {
+    total: Math.round(items.reduce((s, b) => s + b.amount, 0) * 100) / 100,
+    count: items.length,
+    overdue: items.filter((b) => b.dueDate < todayIso).length,
+  };
+}

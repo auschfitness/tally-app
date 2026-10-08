@@ -1,6 +1,6 @@
 # Spec 12 — Finanças: contas a pagar e a receber, "Resolver" e comprovantes
 
-> Aprovado pelo dono em 2026-10-08. **Fase A no ar em 2026-10-08** (m64). Referência: webinar do Controlle
+> Aprovado pelo dono em 2026-10-08. **Fases A e B no ar em 2026-10-08** (m64). Referência: webinar do Controlle
 > (botão "Resolver", anexos, edição de conta fixa "só este / este e os próximos / todos").
 > Base: spec 10 (livro de partidas dobradas é a fonte da verdade) e spec 11 (contas e extrato).
 > Visual: `docs/design-principles.md` (governa) + régua 4d (`docs/design-tokens.md`) + princípios de movimento Emil Kowalski / Apple
@@ -78,7 +78,8 @@ outro no celular):
 - "Semana" = vencidas + hoje até domingo. Vencidas contam no total e aparecem em vermelho
   (`--red`) só no texto "2 vencidas", nunca no cartão inteiro.
 - Cartão vazio: "Nada vence esta semana" em `--text-2`, sem botão. Não esconder o cartão
-  (lugar fixo = previsível).
+  (lugar fixo = previsível). A faixa inteira só aparece se a igreja já cadastrou alguma conta
+  (quem não usa contas a pagar não vê dois cartões vazios para sempre).
 - Número em `--t-22`, `tabular-nums`, peso 600.
 
 ### 2. Folha "Resolver"

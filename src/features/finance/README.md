@@ -42,7 +42,9 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - Contas a pagar e a receber (spec 12): `bills.ts` (datas, ocorrências, alcance, grupos;
   testes em `bills.test.ts`), `bill-actions.ts` (salvar/excluir com alcance, pagar, desfazer),
   `queries.ts#loadBills` (completa as séries até 12 meses ao abrir a aba),
-  `components/BillsTab.tsx`, `BillForm.tsx`, `BillDetail.tsx`, `ScopeMenu.tsx`. Anular um
+  `components/BillsTab.tsx`, `BillForm.tsx`, `BillDetail.tsx`, `ScopeMenu.tsx`; fase B:
+  `WeekStrip.tsx` ("Esta semana" no topo de Movimentações, só se a igreja já tem contas) e
+  `ResolvePanel.tsx` (Pagar em um toque, "Desfazer" por 5 s, a linha recolhe). Anular um
   lançamento que veio de conta paga reabre a conta.
 
 ## Banco

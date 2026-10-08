@@ -24,7 +24,9 @@ import { FinanceTabs, type FinanceTabKey } from "./FinanceTabs";
 import { BillsTab } from "./BillsTab";
 import { BillForm } from "./BillForm";
 import { BillDetail } from "./BillDetail";
-import type { Bill, BillSeries } from "../bills";
+import { WeekStrip } from "./WeekStrip";
+import { ResolvePanel } from "./ResolvePanel";
+import type { Bill, BillKind, BillSeries } from "../bills";
 import { ClosingTab, shiftMonth } from "./ClosingTab";
 import styles from "../finance.module.css";
 
@@ -33,7 +35,7 @@ const SHORT_TOAST_MS = 2500;
 
 export type FinanceTab = Exclude<FinanceTabKey, "contador">;
 
-type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | { mode: "import" } | { mode: "classify" } | { mode: "bill-new" } | { mode: "bill"; id: string } | { mode: "bill-edit"; id: string } | null;
+type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | { mode: "import" } | { mode: "classify" } | { mode: "bill-new" } | { mode: "bill"; id: string } | { mode: "bill-edit"; id: string } | { mode: "resolve"; kind: BillKind } | null;
 interface ToastState {
   message: string;
   undoEntryId?: string;
@@ -174,22 +176,41 @@ export function FinanceBoard({
       ) : tab === "dizimos" ? (
         <TithesTab donations={donations} receipts={receipts} range={range} currency={currency} onRegister={openNew} />
       ) : (
-        <MovementsTab
-          movements={movements}
-          balances={balances}
-          accounts={accounts}
-          range={range}
-          currency={currency}
-          nameOf={nameOf}
-          freshId={freshId}
-          onOpen={(id) => setPanel({ mode: "view", id })}
-          onNew={openNew}
-          onManageAccounts={() => setPanel({ mode: "accounts" })}
-          onImport={() => setPanel({ mode: "import" })}
-          onClassify={() => setPanel({ mode: "classify" })}
-          pendingCount={ledger.pendingCount}
-        />
+        <>
+          {bills.length > 0 ? <WeekStrip bills={bills} currency={currency} onResolve={(kind) => setPanel({ mode: "resolve", kind })} /> : null}
+          <MovementsTab
+            movements={movements}
+            balances={balances}
+            accounts={accounts}
+            range={range}
+            currency={currency}
+            nameOf={nameOf}
+            freshId={freshId}
+            onOpen={(id) => setPanel({ mode: "view", id })}
+            onNew={openNew}
+            onManageAccounts={() => setPanel({ mode: "accounts" })}
+            onImport={() => setPanel({ mode: "import" })}
+            onClassify={() => setPanel({ mode: "classify" })}
+            pendingCount={ledger.pendingCount}
+          />
+        </>
       )}
+
+      {panel?.mode === "resolve" ? (
+        <Panel title={panel.kind === "in" ? "A receber esta semana" : "A pagar esta semana"} onClose={() => setPanel(null)}>
+          {() => (
+            <ResolvePanel
+              bills={bills}
+              kind={panel.kind}
+              accounts={accounts}
+              currency={currency}
+              nameOf={nameOf}
+              onChanged={() => router.refresh()}
+              onOpenBill={(id) => setPanelState({ mode: "bill", id })}
+            />
+          )}
+        </Panel>
+      ) : null}
 
       {panel?.mode === "new" ? (
         <Panel title={panel.counterId ? "Registrar dízimo" : "Novo lançamento"} onClose={() => setPanel(null)}>

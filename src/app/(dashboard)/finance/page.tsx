@@ -27,7 +27,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
     loadLedger(ctx.supabase, ctx.orgId),
     tab === "dizimos" ? listDonations(ctx.supabase, ctx.orgId) : Promise.resolve([]),
     tab === "dizimos" ? listReceipts(ctx.supabase, ctx.orgId) : Promise.resolve([]),
-    tab === "contas" ? loadBills(ctx.supabase, ctx.orgId, isoDate(today())) : Promise.resolve({ bills: [], series: [] }),
+    tab === "contas" || tab === "movimentacoes" ? loadBills(ctx.supabase, ctx.orgId, isoDate(today())) : Promise.resolve({ bills: [], series: [] }),
   ]);
   return <FinanceBoard ledger={ledger} tab={tab} donations={donations} receipts={receipts} bills={billData.bills} series={billData.series} />;
 }
