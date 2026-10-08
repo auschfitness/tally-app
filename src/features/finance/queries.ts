@@ -17,12 +17,38 @@ export interface FinanceLedger {
   orgName: string;
 }
 
+export const ACCOUNT_COLUMNS = "id, code, name, type, parent_id, is_active, bank_code, is_default";
+
+interface AccountRow {
+  id: string;
+  code: string;
+  name: string;
+  type: LedgerAccount["type"];
+  parent_id: string | null;
+  is_active: boolean;
+  bank_code: string | null;
+  is_default: boolean;
+}
+
+export function toLedgerAccount(a: AccountRow): LedgerAccount {
+  return {
+    id: a.id,
+    code: a.code,
+    name: a.name,
+    type: a.type,
+    parentId: a.parent_id,
+    isActive: a.is_active,
+    bankCode: a.bank_code,
+    isDefault: a.is_default,
+  };
+}
+
 export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLedger> {
   const [accRes, entRes, lineRes, donRes, fundRes, stickRes, orgRes] = await Promise.all([
-    supabase.from("ledger_accounts").select("id, code, name, type, parent_id, is_active").eq("org_id", orgId).order("code"),
+    supabase.from("ledger_accounts").select(ACCOUNT_COLUMNS).eq("org_id", orgId).order("code"),
     supabase
       .from("journal_entries")
-      .select("id, entry_date, memo, status, fund_id")
+      .select("id, entry_date, memo, reference, status, fund_id")
       .eq("org_id", orgId)
       .neq("status", "draft")
       .order("entry_date", { ascending: false })
@@ -37,18 +63,12 @@ export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLe
   if (entRes.error) throw new Error(entRes.error.message);
   if (lineRes.error) throw new Error(lineRes.error.message);
 
-  const accounts: LedgerAccount[] = (accRes.data ?? []).map((a) => ({
-    id: a.id,
-    code: a.code,
-    name: a.name,
-    type: a.type,
-    parentId: a.parent_id,
-    isActive: a.is_active,
-  }));
+  const accounts: LedgerAccount[] = (accRes.data ?? []).map(toLedgerAccount);
   const entries: LedgerEntry[] = (entRes.data ?? []).map((e) => ({
     id: e.id,
     date: e.entry_date,
     memo: e.memo ?? "",
+    reference: e.reference ?? "",
     status: e.status,
     fundId: e.fund_id,
   }));

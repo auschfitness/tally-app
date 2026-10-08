@@ -69,6 +69,7 @@ export function ClosingTab({
 
         <section className={styles.reportBlock}>
           <ReportRow label="Saldo no início do mês" value={fmt(r.opening)} />
+          {r.openingSet !== 0 ? <ReportRow label="Saldo inicial de contas novas" value={fmt(r.openingSet)} /> : null}
           <ReportRow label="Entradas" value={`+${fmt(r.income)}`} tone="in" />
           <ReportRow label="Saídas" value={`−${fmt(r.expense)}`} />
           {r.other !== 0 ? <ReportRow label="Outros lançamentos do contador" value={fmt(r.other)} /> : null}

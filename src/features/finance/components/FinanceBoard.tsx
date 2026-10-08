@@ -16,6 +16,7 @@ import { Panel } from "./Panel";
 import { TransactionForm } from "./TransactionForm";
 import { MovementDetail } from "./MovementDetail";
 import { MovementsTab } from "./MovementsTab";
+import { AccountsManager } from "./AccountsManager";
 import { TithesTab } from "./TithesTab";
 import { FinanceTabs, type FinanceTabKey } from "./FinanceTabs";
 import { ClosingTab, shiftMonth } from "./ClosingTab";
@@ -26,7 +27,7 @@ const SHORT_TOAST_MS = 2500;
 
 export type FinanceTab = Exclude<FinanceTabKey, "contador">;
 
-type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | null;
+type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | null;
 interface ToastState {
   message: string;
   undoEntryId?: string;
@@ -155,12 +156,14 @@ export function FinanceBoard({
         <MovementsTab
           movements={movements}
           balances={balances}
+          accounts={accounts}
           range={range}
           currency={currency}
           nameOf={nameOf}
           freshId={freshId}
           onOpen={(id) => setPanel({ mode: "view", id })}
           onNew={openNew}
+          onManageAccounts={() => setPanel({ mode: "accounts" })}
         />
       )}
 
@@ -179,6 +182,12 @@ export function FinanceBoard({
               onCancel={close}
             />
           )}
+        </Panel>
+      ) : null}
+
+      {panel?.mode === "accounts" ? (
+        <Panel title="Contas" onClose={() => setPanel(null)}>
+          {(close) => <AccountsManager accounts={accounts} balances={balances} movements={movements} currency={currency} onClose={close} />}
         </Panel>
       ) : null}
 

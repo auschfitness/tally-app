@@ -75,8 +75,11 @@ export function TransactionForm(props: TransactionFormProps) {
   }, [props.accounts, created]);
 
   const assets = leafAccounts(accounts, "asset");
-  // Abre na última conta usada (o painel só monta no cliente, então ler storage aqui é seguro).
+  // Abre na conta padrão; sem padrão, na última usada (o painel só monta no cliente, então
+  // ler storage aqui é seguro).
   const [accountId, setAccountId] = useState(() => {
+    const preferred = assets.find((a) => a.isDefault)?.id;
+    if (preferred) return preferred;
     const last = readLastAccount();
     return assets.some((a) => a.id === last) ? last : (assets[0]?.id ?? "");
   });
@@ -243,7 +246,7 @@ function AccountPicker({
         setCreateError(res.message);
         return;
       }
-      onCreated({ id: res.data.id, name: res.data.name, code: "~", type: newType, parentId: null, isActive: true });
+      onCreated({ id: res.data.id, name: res.data.name, code: "~", type: newType, parentId: null, isActive: true, bankCode: null, isDefault: false });
       onChange(res.data.id);
       setIsCreating(false);
       setNewName("");

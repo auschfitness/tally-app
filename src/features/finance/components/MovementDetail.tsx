@@ -13,6 +13,7 @@ const KIND_LABEL: Record<Movement["kind"], string> = {
   in: "Entrada",
   out: "Saída",
   transfer: "Transferência",
+  opening: "Saldo inicial",
   other: "Lançamento do contador",
 };
 
@@ -33,7 +34,7 @@ export function MovementDetail({
   const [error, setError] = useState("");
   const [isVoiding, startVoiding] = useTransition();
   const m = movement;
-  const canVoid = m.status === "posted" && m.kind !== "other";
+  const canVoid = m.status === "posted" && m.kind !== "other" && m.kind !== "opening";
 
   const confirmVoid = (): void => {
     if (!isArmed) {

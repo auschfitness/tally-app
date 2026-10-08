@@ -7,6 +7,7 @@ import { requireOrg, can } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { friendlyFinanceError, nextChildCode, PARENT_CODE, type LedgerAccount, type TxKind } from "./domain";
 import { parseTransactionInput } from "./schema";
+import { ACCOUNT_COLUMNS, toLedgerAccount } from "./queries";
 
 const DENIED = "Você não tem permissão para mexer nas finanças.";
 
@@ -77,15 +78,8 @@ export async function createLedgerAccountAction(kind: TxKind, rawName: string): 
 
   try {
     const parentCode = PARENT_CODE[kind];
-    const { data: rows } = await supabase.from("ledger_accounts").select("id, code, name, type, parent_id, is_active").eq("org_id", orgId);
-    const accounts: LedgerAccount[] = (rows ?? []).map((a) => ({
-      id: a.id,
-      code: a.code,
-      name: a.name,
-      type: a.type,
-      parentId: a.parent_id,
-      isActive: a.is_active,
-    }));
+    const { data: rows } = await supabase.from("ledger_accounts").select(ACCOUNT_COLUMNS).eq("org_id", orgId);
+    const accounts: LedgerAccount[] = (rows ?? []).map(toLedgerAccount);
     const parent = accounts.find((a) => a.code === parentCode);
     if (!parent) return fail("O plano de contas da igreja não tem o grupo padrão. Peça ao contador para criar a conta.");
 
@@ -100,4 +94,87 @@ export async function createLedgerAccountAction(kind: TxKind, rawName: string): 
   } catch (e) {
     return fail(toMessage(e));
   }
+}
+
+export interface BankAccountInput {
+  id: string | null; // null = conta nova
+  bankCode: string | null;
+  name: string;
+  openingBalance: number;
+  openingDate: string;
+  isDefault: boolean;
+}
+
+// Conta bancária (spec 11): nasce sob 1.1 com o banco escolhido; saldo inicial e conta
+// padrão vão pelas RPCs do m62, que garantem uma padrão só e um saldo inicial por conta.
+export async function saveBankAccountAction(input: BankAccountInput): Promise<ActionResult<{ id: string }>> {
+  const name = input.name.trim();
+  if (!name) return fail("Dê um nome para a conta.");
+  if (!Number.isFinite(input.openingBalance)) return fail("Saldo inicial inválido.");
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { supabase, orgId } = ctx;
+
+  try {
+    let id = input.id;
+    if (id) {
+      const { error } = await supabase.from("ledger_accounts").update({ name, bank_code: input.bankCode }).eq("org_id", orgId).eq("id", id).eq("type", "asset");
+      if (error) return fail(toMessage(error, "Não consegui salvar a conta."));
+    } else {
+      const { data: rows } = await supabase.from("ledger_accounts").select(ACCOUNT_COLUMNS).eq("org_id", orgId);
+      const accounts = (rows ?? []).map(toLedgerAccount);
+      const parent = accounts.find((a) => a.code === PARENT_CODE.transfer);
+      if (!parent) return fail("O plano de contas não tem o grupo Caixa e Bancos. Peça ao contador para criar a conta.");
+      const { data, error } = await supabase
+        .from("ledger_accounts")
+        .insert({ org_id: orgId, code: nextChildCode(accounts, parent.code), name, type: "asset", parent_id: parent.id, bank_code: input.bankCode })
+        .select("id")
+        .single();
+      if (error || !data) return fail(toMessage(error, "Não consegui criar a conta."));
+      id = data.id;
+    }
+
+    const opening = await supabase.rpc("set_opening_balance", {
+      p_org: orgId,
+      p_account: id,
+      p_amount: input.openingBalance,
+      p_date: input.openingDate,
+    });
+    if (opening.error) return fail(friendlyFinanceError(toMessage(opening.error, "Não consegui lançar o saldo inicial.")));
+
+    const { data: current } = await supabase.from("ledger_accounts").select("is_default").eq("id", id).maybeSingle();
+    if (input.isDefault !== Boolean(current?.is_default)) {
+      const res = await supabase.rpc("set_default_account", { p_org: orgId, ...(input.isDefault ? { p_account: id } : {}) });
+      if (res.error) return fail(friendlyFinanceError(toMessage(res.error)));
+    }
+
+    revalidateFinance();
+    return ok({ id });
+  } catch (e) {
+    return fail(toMessage(e));
+  }
+}
+
+export async function setDefaultAccountAction(accountId: string | null): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { error } = await ctx.supabase.rpc("set_default_account", { p_org: ctx.orgId, ...(accountId ? { p_account: accountId } : {}) });
+  if (error) return fail(friendlyFinanceError(toMessage(error)));
+  revalidateFinance();
+  return ok(undefined);
+}
+
+// Desativar só com saldo zero: esconder uma conta com dinheiro faria o saldo da igreja mentir.
+export async function deactivateAccountAction(accountId: string): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { data: rows, error } = await ctx.supabase.rpc("trial_balance", { p_org: ctx.orgId });
+  if (error) return fail(toMessage(error));
+  const row = (rows ?? []).find((r) => r.account_id === accountId);
+  if (!row || row.type !== "asset") return fail("Conta não encontrada.");
+  if (Math.abs(Number(row.balance)) >= 0.005) return fail("Zere o saldo antes de desativar (transfira para outra conta).");
+  const res = await ctx.supabase.from("ledger_accounts").update({ is_active: false, is_default: false }).eq("org_id", ctx.orgId).eq("id", accountId);
+  if (res.error) return fail(toMessage(res.error));
+  revalidateFinance();
+  return ok(undefined);
 }

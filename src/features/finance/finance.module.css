@@ -147,3 +147,30 @@
   .report { max-width: none; padding: 1.5cm; }
   .reportRow .in { color: inherit; }
 }
+
+/* --- Contas bancárias (spec 11) --- */
+/* Fundo branco fixo de propósito, nos dois temas: as logos oficiais pressupõem fundo claro. */
+.bankLogo { width: 2.25rem; height: 2.25rem; border-radius: var(--r-6); background: #FFFFFF; box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent); object-fit: contain; flex-shrink: 0; }
+.bankLogoSm { width: 1.25rem; height: 1.25rem; border-radius: var(--r-6); }
+.bankIcon { display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--text-2); box-shadow: none; }
+.bankIcon svg { width: 55%; height: 55%; }
+.bankGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: var(--s-2); margin-top: var(--s-3); }
+.bankTile { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: var(--s-3) var(--s-1); border: none; background: none; border-radius: var(--r-10); color: var(--text); font-size: var(--t-11); line-height: var(--lh-11); text-align: center; }
+@media (hover: hover) and (pointer: fine) {
+  .bankTile { transition: background 100ms ease; }
+  .bankTile:hover { background: var(--surface-2); }
+}
+.bankTile .bankLogo { width: 3rem; height: 3rem; }
+.accountRow { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.accountRow .rowMain { cursor: pointer; }
+.star { border: none; background: none; color: var(--text-2); width: var(--control-h); height: var(--control-h); border-radius: var(--r-pill); display: inline-flex; align-items: center; justify-content: center; }
+.star svg { width: 1.125rem; height: 1.125rem; }
+.star.on { color: var(--warn); }
+.star.on svg { fill: currentColor; }
+.bankHead { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-4); }
+.manageLink { margin-top: var(--s-3); }
+.rowButton { border: none; background: none; padding: 0; text-align: left; color: inherit; min-width: 0; }
+.checkRow { margin-top: var(--s-4); }
+.dangerLink { color: var(--coral); }
+.account { padding-left: var(--s-1); }
+.checkRow input[type="checkbox"] { border-color: var(--text-2); }

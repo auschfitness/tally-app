@@ -6,6 +6,7 @@ import {
   leafAccounts,
   monthBounds,
   monthClose,
+  OPENING_REFERENCE,
   nextChildCode,
   toMovement,
   type LedgerAccount,
@@ -20,6 +21,8 @@ const acc = (id: string, code: string, type: LedgerAccount["type"], parentId: st
   type,
   parentId,
   isActive: true,
+  bankCode: null,
+  isDefault: false,
 });
 
 const ACCOUNTS: LedgerAccount[] = [
@@ -37,6 +40,7 @@ const entry = (id: string, date: string, status: LedgerEntry["status"] = "posted
   id,
   date,
   memo: "",
+  reference: "",
   status,
   fundId: null,
 });
@@ -155,5 +159,23 @@ describe("monthClose", () => {
       { id: "caixa", name: "caixa", opening: 0, closing: 50 },
       { id: "banco", name: "banco", opening: 500, closing: 500 },
     ]);
+  });
+});
+
+describe("saldo inicial (opening)", () => {
+  const opening = (id: string, date: string): LedgerEntry => ({ ...entry(id, date), reference: OPENING_REFERENCE });
+  const equity: LedgerAccount = { ...acc("saldoAcumulado", "3.1.01", "equity") };
+  const types = new Map([...typeOf, [equity.id, equity.type]]);
+
+  it("toMovement reconhece saldo inicial positivo e negativo pela conta de caixa", () => {
+    expect(toMovement(opening("o1", "2026-10-01"), pair("o1", "banco", "saldoAcumulado", 300), types)).toMatchObject({ kind: "opening", amount: 300, accountId: "banco" });
+    expect(toMovement(opening("o2", "2026-10-01"), pair("o2", "saldoAcumulado", "caixa", 50), types)).toMatchObject({ kind: "opening", amount: -50, accountId: "caixa" });
+  });
+
+  it("monthClose separa o saldo inicial lançado no mês de 'outros'", () => {
+    const entries = [opening("o1", "2026-10-01"), entry("b", "2026-10-02")];
+    const lines = [...pair("o1", "banco", "saldoAcumulado", 300), ...pair("b", "banco", "dizimos", 100)];
+    const movements = entries.map((e) => toMovement(e, lines.filter((l) => l.entryId === e.id), types));
+    expect(monthClose("2026-10", [...ACCOUNTS, equity], entries, lines, movements)).toMatchObject({ opening: 0, openingSet: 300, income: 100, other: 0, closing: 400 });
   });
 });

@@ -19,6 +19,11 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `components/MovementsTab.tsx` — saldo, contas (filtro), extrato por dia.
 - `components/TithesTab.tsx` — dízimos por pessoa, recibo e declaração anual
   (reusa `features/giving`).
+- `banks.ts` + `public/banks/<COMPE>.png` — bancos com logo oficial (pacote logos-bancos-br
+  0.8.0, MIT; marcas dos bancos, uso só para identificar). `caixa`/`outro` usam ícone.
+- `components/AccountsManager.tsx` — Gerenciar contas: estrela de padrão, grade de bancos,
+  nome livre, saldo inicial (RPC `set_opening_balance`), desativar só com saldo zero.
+- `components/BankLogo.tsx` — logo num quadrado branco fixo.
 - `components/FinanceTabs.tsx` — abas do módulo (também usadas pela área do contador).
 - `components/ClosingTab.tsx` — fechamento do mês (abre no mês passado), imprimir/PDF
   pelo navegador (`@media print` esconde cabeçalho e abas).
@@ -28,7 +33,8 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `components/MovementDetail.tsx` — detalhe + anular (segundo toque, sem diálogo).
 
 ## Banco
-- m48 (livro), m49 (plano padrão), m61 (`record_transaction`, `donations.journal_entry_id`,
+- m48 (livro), m49 (plano padrão), m62 (contas: `bank_code`, `is_default`, saldo inicial,
+  correção do `trial_balance` que somava anulados), m61 (`record_transaction`, `donations.journal_entry_id`,
   acentos no plano padrão).
 - `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.
 

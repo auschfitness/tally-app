@@ -1692,30 +1692,36 @@ export type Database = {
       }
       ledger_accounts: {
         Row: {
+          bank_code: string | null
           code: string
           created_at: string
           id: string
           is_active: boolean
+          is_default: boolean
           name: string
           org_id: string
           parent_id: string | null
           type: Database["public"]["Enums"]["ledger_account_type"]
         }
         Insert: {
+          bank_code?: string | null
           code: string
           created_at?: string
           id?: string
           is_active?: boolean
+          is_default?: boolean
           name: string
           org_id: string
           parent_id?: string | null
           type: Database["public"]["Enums"]["ledger_account_type"]
         }
         Update: {
+          bank_code?: string | null
           code?: string
           created_at?: string
           id?: string
           is_active?: boolean
+          is_default?: boolean
           name?: string
           org_id?: string
           parent_id?: string | null
@@ -4262,6 +4268,14 @@ export type Database = {
       org_flags: { Args: { p_org: string }; Returns: string[] }
       org_has_no_members: { Args: { p_org: string }; Returns: boolean }
       post_journal_entry: { Args: { p_entry: string }; Returns: undefined }
+      set_default_account: {
+        Args: { p_account?: string; p_org: string }
+        Returns: undefined
+      }
+      set_opening_balance: {
+        Args: { p_account: string; p_amount: number; p_date: string; p_org: string }
+        Returns: undefined
+      }
       record_transaction: {
         Args: {
           p_account: string

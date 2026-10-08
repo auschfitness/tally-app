@@ -4,8 +4,9 @@
 import type { AccountType, EntryStatus } from "@/features/accounting/types";
 
 export type TxKind = "in" | "out" | "transfer";
-// "other" = lançamento manual do contador que não cabe nos três tipos simples.
-export type MovementKind = TxKind | "other";
+// "opening" = saldo inicial de uma conta (spec 11). "other" = lançamento manual do contador
+// que não cabe nos tipos simples.
+export type MovementKind = TxKind | "opening" | "other";
 
 export interface LedgerAccount {
   id: string;
@@ -14,6 +15,8 @@ export interface LedgerAccount {
   type: AccountType;
   parentId: string | null;
   isActive: boolean;
+  bankCode: string | null; // COMPE, "caixa", "outro" ou null (spec 11)
+  isDefault: boolean;
 }
 
 export interface LedgerLine {
@@ -27,6 +30,7 @@ export interface LedgerEntry {
   id: string;
   date: string;
   memo: string;
+  reference: string;
   status: EntryStatus;
   fundId: string | null;
 }
@@ -36,7 +40,7 @@ export interface Movement {
   date: string;
   memo: string;
   kind: MovementKind;
-  amount: number;
+  amount: number; // sempre positivo, exceto saldo inicial negativo (conta começou devendo)
   status: EntryStatus;
   accountId: string | null; // conta (banco/caixa); na transferência, a origem
   counterId: string | null; // categoria; na transferência, o destino
@@ -50,6 +54,9 @@ export interface AccountBalance {
 }
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+// Marca do lançamento de saldo inicial (RPC set_opening_balance, m62).
+export const OPENING_REFERENCE = "saldo_inicial";
 
 // Contas finais (sem filhas) e ativas de um tipo, na ordem do plano.
 export function leafAccounts(accounts: LedgerAccount[], type: AccountType): LedgerAccount[] {
@@ -69,6 +76,8 @@ export function toMovement(entry: LedgerEntry, lines: LedgerLine[], typeOf: Map<
   if (lines.length === 2 && d && c) {
     const dt = typeOf.get(d.accountId);
     const ct = typeOf.get(c.accountId);
+    if (entry.reference === OPENING_REFERENCE && dt === "asset") return { ...base, kind: "opening", amount, accountId: d.accountId, counterId: null };
+    if (entry.reference === OPENING_REFERENCE && ct === "asset") return { ...base, kind: "opening", amount: -amount, accountId: c.accountId, counterId: null };
     if (dt === "asset" && ct === "revenue") return { ...base, kind: "in", amount, accountId: d.accountId, counterId: c.accountId };
     if (dt === "expense" && ct === "asset") return { ...base, kind: "out", amount, accountId: c.accountId, counterId: d.accountId };
     if (dt === "asset" && ct === "asset") return { ...base, kind: "transfer", amount, accountId: c.accountId, counterId: d.accountId };
@@ -150,6 +159,7 @@ export interface MonthClose {
   opening: number;
   income: number;
   expense: number;
+  openingSet: number; // saldos iniciais de contas lançados neste mês
   other: number; // lançamentos do contador que mexeram no caixa fora de entrada/saída
   closing: number;
   incomeByCategory: CategoryTotal[];
@@ -173,7 +183,8 @@ function totalsBy(movements: Movement[]): CategoryTotal[] {
 
 // Fechamento do mês em linguagem de tesoureiro. Saldos vêm do livro (exatos); entradas e
 // saídas vêm dos movimentos do mês. O que sobra (ajuste manual do contador no caixa)
-// aparece como "outros" para a conta fechar: inicial + entradas − saídas + outros = final.
+// aparece como "outros" para a conta fechar: inicial + saldos iniciais lançados + entradas −
+// saídas + outros = final.
 export function monthClose(
   month: string,
   accounts: LedgerAccount[],
@@ -188,6 +199,7 @@ export function monthClose(
   const ins = inMonth.filter((m) => m.kind === "in");
   const outs = inMonth.filter((m) => m.kind === "out");
 
+  const openingSet = round2(inMonth.filter((m) => m.kind === "opening").reduce((s, m) => s + m.amount, 0));
   const opening = round2(openingByAcc.reduce((s, a) => s + a.balance, 0));
   const closing = round2(closingByAcc.reduce((s, a) => s + a.balance, 0));
   const income = round2(ins.reduce((s, m) => s + m.amount, 0));
@@ -198,7 +210,8 @@ export function monthClose(
     opening,
     income,
     expense,
-    other: round2(closing - opening - income + expense),
+    openingSet,
+    other: round2(closing - opening - openingSet - income + expense),
     closing,
     incomeByCategory: totalsBy(ins),
     expenseByCategory: totalsBy(outs),

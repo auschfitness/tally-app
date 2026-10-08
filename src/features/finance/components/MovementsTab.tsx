@@ -5,7 +5,8 @@ import { useMemo, useState } from "react";
 import { money } from "@/lib/utils/money";
 import { isoDate, today } from "@/lib/utils/date";
 import { inPeriod, type PeriodRange } from "@/lib/utils/period";
-import { groupByDay, type AccountBalance, type Movement } from "../domain";
+import { groupByDay, type AccountBalance, type LedgerAccount, type Movement } from "../domain";
+import { BankLogo } from "./BankLogo";
 import styles from "../finance.module.css";
 
 function dayLabel(iso: string, todayIso: string, yesterdayIso: string): string {
@@ -20,24 +21,29 @@ function dayLabel(iso: string, todayIso: string, yesterdayIso: string): string {
 export function MovementsTab({
   movements,
   balances,
+  accounts,
   range,
   currency,
   nameOf,
   freshId,
   onOpen,
   onNew,
+  onManageAccounts,
 }: {
   movements: Movement[];
   balances: AccountBalance[];
+  accounts: LedgerAccount[];
   range: PeriodRange;
   currency: string;
   nameOf: (id: string | null) => string;
   freshId: string | null;
   onOpen: (id: string) => void;
   onNew: () => void;
+  onManageAccounts: () => void;
 }) {
   const [accountFilter, setAccountFilter] = useState<string | null>(null);
   const total = balances.reduce((s, b) => s + b.balance, 0);
+  const bankOf = (id: string): string | null => accounts.find((a) => a.id === id)?.bankCode ?? null;
 
   const visible = useMemo(
     () =>
@@ -72,10 +78,14 @@ export function MovementsTab({
               className={`${styles.account} ${styles.press}${accountFilter === b.id ? ` ${styles.on}` : ""}`}
               onClick={() => setAccountFilter((f) => (f === b.id ? null : b.id))}
             >
+              <BankLogo bankCode={bankOf(b.id)} size="sm" />
               {b.name} <b>{money(b.balance, currency)}</b>
             </button>
           ))}
         </div>
+        <button type="button" className={`link ${styles.manageLink}`} onClick={onManageAccounts}>
+          Gerenciar contas
+        </button>
         {visible.length > 0 ? (
           <div className={styles.periodSummary}>
             No período: entrou <b>{money(income, currency)}</b> · saiu <b>{money(expense, currency)}</b>
@@ -129,14 +139,16 @@ function MovementRow({
 }) {
   const counter = nameOf(m.counterId);
   const account = nameOf(m.accountId);
-  const title = m.memo || (m.kind === "transfer" ? "Transferência" : counter) || "Lançamento";
+  const title = m.kind === "opening" ? "Saldo inicial" : m.memo || (m.kind === "transfer" ? "Transferência" : counter) || "Lançamento";
   const parts =
     m.kind === "transfer"
       ? [`${account} → ${counter}`]
       : m.kind === "other"
         ? ["Lançamento do contador"]
-        : [m.memo ? counter : "", account, m.donor ? `de ${m.donor}` : ""];
-  const sign = m.kind === "in" ? "+" : m.kind === "out" ? "−" : "";
+        : m.kind === "opening"
+          ? [account]
+          : [m.memo ? counter : "", account, m.donor ? `de ${m.donor}` : ""];
+  const sign = m.kind === "in" ? "+" : m.kind === "out" || m.amount < 0 ? "−" : "";
 
   return (
     <button type="button" className={`${styles.row}${isFresh ? ` ${styles.fresh}` : ""}`} onClick={onOpen}>
@@ -146,7 +158,7 @@ function MovementRow({
       </div>
       <div className={`${styles.amount}${m.kind === "in" ? ` ${styles.in}` : ""}`}>
         {sign}
-        {money(m.amount, currency)}
+        {money(Math.abs(m.amount), currency)}
       </div>
     </button>
   );

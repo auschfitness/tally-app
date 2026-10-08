@@ -10,7 +10,7 @@ describe.skipIf(!hasTestFixture)("loadLedger (integração, org de teste)", () =
     expect(Array.isArray(ledger.accounts)).toBe(true);
     expect(ledger.movements).toHaveLength(ledger.entries.length);
     for (const m of ledger.movements) {
-      expect(["in", "out", "transfer", "other"]).toContain(m.kind);
+      expect(["in", "out", "transfer", "opening", "other"]).toContain(m.kind);
       expect(typeof m.amount).toBe("number");
     }
   });
