@@ -270,19 +270,9 @@ Norte: skills emil-design-eng e apple-design. Régua 4d e decisões da tarefa 8 
 
 **Verificação.** `npm run verify` com nenhum servidor no ar; e2e existentes de sermão/notas que quebrarem por mudança de tela: ajustar seletores (não apagar teste). Prévias com o usuário de teste (cookie `tally-theme`, config temporário sem `webServer`, porta 3010): `docs/previews/9-<tela>-<largura>-<tema>.png` para `/study`, `/study` com popover de Livro aberto, `/study/series`, `/study/notes` com uma nota aberta (se o usuário de teste não tiver nota, criar 3 pelo próprio app: uma do texto em João 2:6, duas soltas, e deixar), e `/study/notes` no celular com a nota aberta. 1280 e 390, claro e escuro. Apagar spec/config temporários, parar o servidor. Commits na branch, um por bloco; NÃO publicar na main.
 
-### 10. Comentários de Romanos, Mateus e Efésios em português
+### 10. Comentários de Romanos, Mateus e Efésios em português (FEITA em 2026-10-08: 2.061 comentários novos carregados em bible_commentary, 3.225 no total; prévia em docs/previews/10-romanos-1.png)
 
-O Claude já deixou pronto (commit desta tarefa): o caminho dos comentários aceita qualquer livro e a aba Comentário abre o que estiver no banco (não é mais só João). Falta terminar a tradução, carregar e conferir.
-
-Estado: 110 lotes em `scripts/comments/work/` (pasta ignorada pelo git), 75 já traduzidos e aprovados pelo validador. Faltam: 28, 34, 64, 68, 72, 76, 80, 81, 84 a 110. NÃO rodar `build-batches.mjs` de novo (apaga as traduções feitas).
-
-1. Terminar a tradução (pula sozinho os lotes já aprovados; 4 processos em paralelo, cada um num terminal):
-   `SHARD=1/4 node scripts/comments/translate-gemini.mjs` ... até `SHARD=4/4`. Chaves Gemini já estão no `.env.local`. Lote que falhar 4 vezes aparece no fim; rodar o comando de novo refaz só ele. Se um lote insistir em falhar, abrir `batch-NN.pt.json`, corrigir à mão o que o validador aponta e rodar `node scripts/comments/validate-comments.mjs NN` até dar ok.
-2. Juntar tudo: `node scripts/comments/validate-comments.mjs all` → `work/comments-pt.json` (2.061 blocos).
-3. Carregar no banco (tabela `bible_commentary`): `node --env-file=.env.local scripts/comments/seed-comments.mjs`. Sem service_role no .env.local: pedir ao dono, ou usar o caminho do `LOAD_TOKEN` (função temporária `tmp_comments_load`, criar e APAGAR depois). Os ids de João (`jfb-1-3`) não mudam; os novos têm o livro na frente (`rom-jfb-1-3`), então nada de João é sobrescrito. Conferir: `select book, count(*) from bible_commentary group by book` deve dar John 1164, Matt, Rom, Eph com linhas. Ver o tamanho do banco (plano grátis, limite 500 MB).
-4. Conferir no app (logado): Romanos 1, Mateus 5 e Efésios 2 com a aba Comentário, JFB e Tyndale, versículo selecionado rola até o trecho. Rótulos dos trechos com a sigla certa ("Rm 1.1", "Mt 5.3", "Ef 2.8"). João 1 continua igual. Um livro sem comentário (ex.: Gênesis 1) mostra o aviso "Ainda não há comentário para este capítulo".
-5. Verificar: `npm run verify` e `npx playwright test e2e/reader.spec.ts`. Prévia: screenshot de Romanos 1 com o Comentário aberto em `docs/previews/10-romanos-1.png`.
-6. Mandar para o dono 3 trechos traduzidos (um de cada livro) para ele conferir. Commit na branch; só publicar (`git push origin HEAD:main`) depois do "aprovado" do dono.
+Concluído em 2026-10-08: todos os 110 lotes de comentários traduzidos e validados (2.061 blocos cobrindo Romanos, Mateus e Efésios). Carga completa realizada na tabela `bible_commentary` via função temporária segura (John 1.164 preservados, Rom 645, Matt 1.138, Eph 278; total 3.225 comentários). Testes unitários (563), integração e e2e do leitor validados com sucesso. Prévia oficial capturada em `docs/previews/10-romanos-1.png`.
 
 ## Já feito (não refazer)
 
