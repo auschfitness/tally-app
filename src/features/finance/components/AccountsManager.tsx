@@ -272,7 +272,7 @@ function AccountForm({
         <p className={styles.hint}>Quanto havia na conta nesse dia. Os lançamentos depois dele contam a partir daí.</p>
 
         <div className={`field check ${styles.checkRow}`}>
-          <input id="acc-default" type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} />
+          <input id="acc-default" type="checkbox" className={styles.check} checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} />
           <label htmlFor="acc-default">Usar como conta padrão</label>
         </div>
 

@@ -17,6 +17,8 @@ import { TransactionForm } from "./TransactionForm";
 import { MovementDetail } from "./MovementDetail";
 import { MovementsTab } from "./MovementsTab";
 import { AccountsManager } from "./AccountsManager";
+import { ImportPanel } from "./ImportPanel";
+import { ClassifyPanel } from "./ClassifyPanel";
 import { TithesTab } from "./TithesTab";
 import { FinanceTabs, type FinanceTabKey } from "./FinanceTabs";
 import { ClosingTab, shiftMonth } from "./ClosingTab";
@@ -27,7 +29,7 @@ const SHORT_TOAST_MS = 2500;
 
 export type FinanceTab = Exclude<FinanceTabKey, "contador">;
 
-type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | null;
+type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | { mode: "import" } | { mode: "classify" } | null;
 interface ToastState {
   message: string;
   undoEntryId?: string;
@@ -164,6 +166,9 @@ export function FinanceBoard({
           onOpen={(id) => setPanel({ mode: "view", id })}
           onNew={openNew}
           onManageAccounts={() => setPanel({ mode: "accounts" })}
+          onImport={() => setPanel({ mode: "import" })}
+          onClassify={() => setPanel({ mode: "classify" })}
+          pendingCount={ledger.pendingCount}
         />
       )}
 
@@ -188,6 +193,18 @@ export function FinanceBoard({
       {panel?.mode === "accounts" ? (
         <Panel title="Contas" onClose={() => setPanel(null)}>
           {(close) => <AccountsManager accounts={accounts} balances={balances} movements={movements} currency={currency} onClose={close} />}
+        </Panel>
+      ) : null}
+
+      {panel?.mode === "import" ? (
+        <Panel title="Importar extrato" onClose={() => setPanel(null)}>
+          {(close) => <ImportPanel accounts={accounts} currency={currency} onClose={close} onClassify={() => setPanelState({ mode: "classify" })} />}
+        </Panel>
+      ) : null}
+
+      {panel?.mode === "classify" ? (
+        <Panel title="Classificar extrato" onClose={() => setPanel(null)}>
+          {(close) => <ClassifyPanel accounts={accounts} movements={movements} currency={currency} onClose={close} />}
         </Panel>
       ) : null}
 

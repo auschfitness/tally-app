@@ -15,9 +15,10 @@ export interface FinanceLedger {
   people: { id: string; name: string }[];
   currency: string;
   orgName: string;
+  pendingCount: number; // linhas de extrato esperando classificação
 }
 
-export const ACCOUNT_COLUMNS = "id, code, name, type, parent_id, is_active, bank_code, is_default";
+export const ACCOUNT_COLUMNS = "id, code, name, type, parent_id, is_active, bank_code, is_default, statement_acct_id";
 
 interface AccountRow {
   id: string;
@@ -28,6 +29,7 @@ interface AccountRow {
   is_active: boolean;
   bank_code: string | null;
   is_default: boolean;
+  statement_acct_id: string | null;
 }
 
 export function toLedgerAccount(a: AccountRow): LedgerAccount {
@@ -40,11 +42,12 @@ export function toLedgerAccount(a: AccountRow): LedgerAccount {
     isActive: a.is_active,
     bankCode: a.bank_code,
     isDefault: a.is_default,
+    statementAcctId: a.statement_acct_id,
   };
 }
 
 export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLedger> {
-  const [accRes, entRes, lineRes, donRes, fundRes, stickRes, orgRes] = await Promise.all([
+  const [accRes, entRes, lineRes, donRes, fundRes, stickRes, orgRes, pendingRes] = await Promise.all([
     supabase.from("ledger_accounts").select(ACCOUNT_COLUMNS).eq("org_id", orgId).order("code"),
     supabase
       .from("journal_entries")
@@ -58,6 +61,7 @@ export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLe
     supabase.from("funds").select("id, name").eq("org_id", orgId).order("name"),
     supabase.from("sticks").select("id, full_name").eq("org_id", orgId).order("full_name"),
     supabase.from("organizations").select("name, currency, country").eq("id", orgId).maybeSingle(),
+    supabase.from("bank_transactions").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending"),
   ]);
   if (accRes.error) throw new Error(accRes.error.message);
   if (entRes.error) throw new Error(entRes.error.message);
@@ -94,5 +98,6 @@ export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLe
     people: (stickRes.data ?? []).map((s) => ({ id: s.id, name: s.full_name })),
     currency: orgRes.data?.currency ?? (orgRes.data?.country === "US" ? "USD" : "BRL"),
     orgName: orgRes.data?.name ?? "",
+    pendingCount: pendingRes.count ?? 0,
   };
 }

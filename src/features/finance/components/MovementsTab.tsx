@@ -29,6 +29,9 @@ export function MovementsTab({
   onOpen,
   onNew,
   onManageAccounts,
+  onImport,
+  onClassify,
+  pendingCount,
 }: {
   movements: Movement[];
   balances: AccountBalance[];
@@ -40,6 +43,9 @@ export function MovementsTab({
   onOpen: (id: string) => void;
   onNew: () => void;
   onManageAccounts: () => void;
+  onImport: () => void;
+  onClassify: () => void;
+  pendingCount: number;
 }) {
   const [accountFilter, setAccountFilter] = useState<string | null>(null);
   const total = balances.reduce((s, b) => s + b.balance, 0);
@@ -83,15 +89,31 @@ export function MovementsTab({
             </button>
           ))}
         </div>
-        <button type="button" className={`link ${styles.manageLink}`} onClick={onManageAccounts}>
-          Gerenciar contas
-        </button>
+        <div className={`${styles.links} ${styles.manageLink}`}>
+          <button type="button" className="link" onClick={onManageAccounts}>
+            Gerenciar contas
+          </button>
+          <button type="button" className="link" onClick={onImport}>
+            Importar extrato
+          </button>
+        </div>
         {visible.length > 0 ? (
           <div className={styles.periodSummary}>
             No período: entrou <b>{money(income, currency)}</b> · saiu <b>{money(expense, currency)}</b>
           </div>
         ) : null}
       </section>
+
+      {pendingCount > 0 ? (
+        <div className={styles.pendingBanner} role="status">
+          <span>
+            {pendingCount === 1 ? "1 lançamento do banco esperando categoria" : `${pendingCount} lançamentos do banco esperando categoria`}
+          </span>
+          <button type="button" className={`btn sm ${styles.press}`} onClick={onClassify}>
+            Classificar
+          </button>
+        </div>
+      ) : null}
 
       {days.length === 0 ? (
         <div className={styles.empty}>

@@ -7,6 +7,12 @@ import {
   monthBounds,
   monthClose,
   OPENING_REFERENCE,
+  findManualMatch,
+  guessRulePattern,
+  suggestCategory,
+  type BankLine,
+  type CategoryRule,
+  type Movement,
   nextChildCode,
   toMovement,
   type LedgerAccount,
@@ -23,6 +29,7 @@ const acc = (id: string, code: string, type: LedgerAccount["type"], parentId: st
   isActive: true,
   bankCode: null,
   isDefault: false,
+  statementAcctId: null,
 });
 
 const ACCOUNTS: LedgerAccount[] = [
@@ -177,5 +184,38 @@ describe("saldo inicial (opening)", () => {
     const lines = [...pair("o1", "banco", "saldoAcumulado", 300), ...pair("b", "banco", "dizimos", 100)];
     const movements = entries.map((e) => toMovement(e, lines.filter((l) => l.entryId === e.id), types));
     expect(monthClose("2026-10", [...ACCOUNTS, equity], entries, lines, movements)).toMatchObject({ opening: 0, openingSet: 300, income: 100, other: 0, closing: 400 });
+  });
+});
+
+describe("classificação do extrato", () => {
+  const line = (p: Partial<BankLine>): BankLine => ({ id: "l1", accountId: "banco", date: "2026-10-06", amount: -189.9, description: "PAGAMENTO DE BOLETO - CEMIG 0123", ...p });
+
+  it("suggestCategory: casa sem acento, respeita o sinal e prefere o trecho mais longo", () => {
+    const rules: CategoryRule[] = [
+      { id: "r1", pattern: "cemig", accountId: "luz" },
+      { id: "r2", pattern: "pix", accountId: "dizimos" },
+      { id: "r3", pattern: "pix recebido maria", accountId: "outras" },
+    ];
+    expect(suggestCategory(line({}), rules, ACCOUNTS)).toBe("luz");
+    expect(suggestCategory(line({ amount: 50, description: "Pix recebido MARIA" }), rules, ACCOUNTS)).toBe("outras");
+    expect(suggestCategory(line({ amount: 50, description: "PIX RECEBIDO JOÃO" }), rules, ACCOUNTS)).toBe("dizimos");
+    // saída com regra de receita: não sugere
+    expect(suggestCategory(line({ description: "PIX ENVIADO" }), rules, ACCOUNTS)).toBeNull();
+  });
+
+  it("guessRulePattern tira ruído de banco, números e datas", () => {
+    expect(guessRulePattern("PAGAMENTO DE BOLETO - CEMIG 0123")).toBe("cemig");
+    expect(guessRulePattern("Pix enviado - Supermercado Bom Preço 05/10")).toBe("supermercado bom");
+    expect(guessRulePattern("TARIFA BANCARIA")).toBe("");
+  });
+
+  it("findManualMatch: mesma conta, valor e sentido, até 3 dias, sem vínculo, o mais próximo vence", () => {
+    const mv = (id: string, date: string, amount: number, accountId = "banco"): Movement => ({
+      id, date, memo: "", kind: "out", amount, status: "posted", accountId, counterId: "luz", donor: "",
+    });
+    const movements = [mv("longe", "2026-10-01", 189.9), mv("perto", "2026-10-05", 189.9), mv("outraConta", "2026-10-06", 189.9, "caixa"), mv("outroValor", "2026-10-06", 190)];
+    expect(findManualMatch(line({}), movements, new Set())?.id).toBe("perto");
+    expect(findManualMatch(line({}), movements, new Set(["perto"]))).toBeNull();
+    expect(findManualMatch(line({ amount: 189.9 }), movements, new Set())).toBeNull();
   });
 });

@@ -173,4 +173,31 @@
 .checkRow { margin-top: var(--s-4); }
 .dangerLink { color: var(--coral); }
 .account { padding-left: var(--s-1); }
-.checkRow input[type="checkbox"] { border-color: var(--text-2); }
+
+/* --- Importar extrato (spec 11, fase B) --- */
+.dropZone { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); padding: var(--s-8) var(--s-4); border: 1px dashed var(--border); border-radius: var(--r-10); background: var(--surface-2); cursor: pointer; text-align: center; transition: background 100ms ease, border-color 100ms ease; }
+.dropZone svg { width: 1.75rem; height: 1.75rem; color: var(--text-2); }
+.dropZone.on { border-color: var(--blue); background: var(--action-soft); }
+.dropZone:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.accountSelect { display: flex; align-items: center; gap: var(--s-2); }
+.accountSelect select { flex: 1; }
+.links { display: flex; gap: var(--s-4); flex-wrap: wrap; }
+.pendingBanner { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); margin-bottom: var(--s-5); border-radius: var(--r-10); background: var(--action-soft); color: var(--text); font-size: var(--t-13); }
+.pendingBanner span { flex: 1; }
+
+/* --- Classificar (spec 11, fase C) --- */
+.classifyRow { padding: var(--s-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.classifyTop { display: flex; align-items: center; gap: var(--s-2); }
+.classifyTop .rowTitle { flex: 1; min-width: 0; font-size: var(--t-13); }
+.classifyPick { display: flex; align-items: center; gap: var(--s-2); margin: var(--s-2) 0 0 calc(1.125rem + var(--s-2)); }
+.classifyPick select { max-width: 16rem; }
+.matchHint { display: flex; align-items: baseline; gap: var(--s-2); flex-wrap: wrap; margin: var(--s-2) 0 0 calc(1.125rem + var(--s-2)); font-size: var(--t-11); color: var(--warn); }
+.ruleOffer { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; padding: var(--s-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); font-size: var(--t-13); color: var(--text); }
+.ruleInput { width: 9rem; height: var(--control-h); padding: 0 var(--control-px); border: 0; border-radius: var(--r-6); background: var(--surface-2); color: var(--text); font: inherit; }
+.ruleInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--blue); }
+
+/* Caixinha visível nos painéis: a global não tem borda e some sobre --surface; e o ✓ só
+   aparece com cor. Escopo local de Finanças. */
+.check:not(:checked) { box-shadow: inset 0 0 0 1.5px var(--text-2); }
+.check:checked::before { box-shadow: inset 1em 1em var(--on-blue); }

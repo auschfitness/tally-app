@@ -246,7 +246,7 @@ function AccountPicker({
         setCreateError(res.message);
         return;
       }
-      onCreated({ id: res.data.id, name: res.data.name, code: "~", type: newType, parentId: null, isActive: true, bankCode: null, isDefault: false });
+      onCreated({ id: res.data.id, name: res.data.name, code: "~", type: newType, parentId: null, isActive: true, bankCode: null, isDefault: false, statementAcctId: null });
       onChange(res.data.id);
       setIsCreating(false);
       setNewName("");

@@ -145,6 +145,134 @@ export type Database = {
           },
         ]
       }
+      bank_imports: {
+        Row: {
+          account_id: string
+          created_at: string
+          created_by: string | null
+          filename: string
+          format: string
+          id: string
+          new_rows: number
+          org_id: string
+          period_end: string | null
+          period_start: string | null
+          total_rows: number
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          created_by?: string | null
+          filename: string
+          format: string
+          id?: string
+          new_rows?: number
+          org_id: string
+          period_end?: string | null
+          period_start?: string | null
+          total_rows?: number
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          created_by?: string | null
+          filename?: string
+          format?: string
+          id?: string
+          new_rows?: number
+          org_id?: string
+          period_end?: string | null
+          period_start?: string | null
+          total_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_imports_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_imports_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          description: string
+          fitid: string
+          id: string
+          import_id: string | null
+          journal_entry_id: string | null
+          org_id: string
+          posted_at: string
+          status: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          description?: string
+          fitid: string
+          id?: string
+          import_id?: string | null
+          journal_entry_id?: string | null
+          org_id: string
+          posted_at: string
+          status?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          description?: string
+          fitid?: string
+          id?: string
+          import_id?: string | null
+          journal_entry_id?: string | null
+          org_id?: string
+          posted_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "bank_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bible_book_context: {
         Row: {
           audience: string | null
@@ -578,6 +706,48 @@ export type Database = {
             columns: ["care_item_id"]
             isOneToOne: false
             referencedRelation: "care_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_rules: {
+        Row: {
+          account_id: string
+          created_at: string
+          hits: number
+          id: string
+          org_id: string
+          pattern: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          hits?: number
+          id?: string
+          org_id: string
+          pattern: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          hits?: number
+          id?: string
+          org_id?: string
+          pattern?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_rules_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_rules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1701,6 +1871,7 @@ export type Database = {
           name: string
           org_id: string
           parent_id: string | null
+          statement_acct_id: string | null
           type: Database["public"]["Enums"]["ledger_account_type"]
         }
         Insert: {
@@ -1713,6 +1884,7 @@ export type Database = {
           name: string
           org_id: string
           parent_id?: string | null
+          statement_acct_id?: string | null
           type: Database["public"]["Enums"]["ledger_account_type"]
         }
         Update: {
@@ -1725,6 +1897,7 @@ export type Database = {
           name?: string
           org_id?: string
           parent_id?: string | null
+          statement_acct_id?: string | null
           type?: Database["public"]["Enums"]["ledger_account_type"]
         }
         Relationships: [

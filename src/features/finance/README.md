@@ -23,6 +23,11 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
   0.8.0, MIT; marcas dos bancos, uso só para identificar). `caixa`/`outro` usam ícone.
 - `components/AccountsManager.tsx` — Gerenciar contas: estrela de padrão, grade de bancos,
   nome livre, saldo inicial (RPC `set_opening_balance`), desativar só com saldo zero.
+- `statement.ts` — leitura de extrato no navegador: OFX 1.x/2.x, OFC, CSV (Nubank/Inter
+  automáticos, mapeamento manual nos outros), windows-1252, FITID ou hash estável no CSV.
+- `import-actions.ts` — prévia/importação deduplicada por (conta, FITID); classificar em
+  lote (`record_transaction`), vincular a lançamento manual, ignorar, regras que aprendem.
+- `components/ImportPanel.tsx` / `ClassifyPanel.tsx` — importar e classificar (estilo Controlle).
 - `components/BankLogo.tsx` — logo num quadrado branco fixo.
 - `components/FinanceTabs.tsx` — abas do módulo (também usadas pela área do contador).
 - `components/ClosingTab.tsx` — fechamento do mês (abre no mês passado), imprimir/PDF
@@ -33,7 +38,8 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `components/MovementDetail.tsx` — detalhe + anular (segundo toque, sem diálogo).
 
 ## Banco
-- m48 (livro), m49 (plano padrão), m62 (contas: `bank_code`, `is_default`, saldo inicial,
+- m48 (livro), m49 (plano padrão), m63 (`bank_imports`, `bank_transactions`,
+  `category_rules`, `statement_acct_id`), m62 (contas: `bank_code`, `is_default`, saldo inicial,
   correção do `trial_balance` que somava anulados), m61 (`record_transaction`, `donations.journal_entry_id`,
   acentos no plano padrão).
 - `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.

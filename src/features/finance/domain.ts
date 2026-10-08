@@ -17,6 +17,7 @@ export interface LedgerAccount {
   isActive: boolean;
   bankCode: string | null; // COMPE, "caixa", "outro" ou null (spec 11)
   isDefault: boolean;
+  statementAcctId: string | null; // ACCTID do OFX visto na última importação
 }
 
 export interface LedgerLine {
@@ -222,4 +223,77 @@ export function monthClose(
       closing: a.balance,
     })),
   };
+}
+
+// --- Classificação do extrato (spec 11, fase C) ---------------------------------------
+
+export interface CategoryRule {
+  id: string;
+  pattern: string; // sem acento, minúsculo
+  accountId: string;
+}
+
+export interface BankLine {
+  id: string;
+  accountId: string;
+  date: string;
+  amount: number; // negativo = saída
+  description: string;
+}
+
+export const normalizeText = (s: string): string =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+// Regra que casa com a descrição e cuja categoria combina com o sinal (entrada → receita,
+// saída → despesa). Mais de uma casa → vence o trecho mais longo (mais específico).
+export function suggestCategory(line: BankLine, rules: CategoryRule[], accounts: LedgerAccount[]): string | null {
+  const text = normalizeText(line.description);
+  const wanted: AccountType = line.amount > 0 ? "revenue" : "expense";
+  const typeOf = new Map(accounts.filter((a) => a.isActive).map((a) => [a.id, a.type]));
+  const hit = rules
+    .filter((r) => r.pattern && text.includes(r.pattern) && typeOf.get(r.accountId) === wanted)
+    .sort((a, b) => b.pattern.length - a.pattern.length)[0];
+  return hit?.accountId ?? null;
+}
+
+// Palavras que todo banco põe na descrição e não identificam ninguém.
+const NOISE_WORDS = new Set(
+  (
+    "pix enviado recebido recebida transferencia transf ted doc pagamento pagto pgto de do da dos das para pelo pela com " +
+    "boleto conta compra debito credito cartao tarifa banco bancaria via app internet titulo cobranca deposito saque " +
+    "em no na ref referente ltda eireli"
+  ).split(" "),
+);
+
+// Palpite do trecho para a regra: as duas primeiras palavras que identificam (sem ruído de
+// banco, números e datas). "PAGAMENTO DE BOLETO - CEMIG 0123" → "cemig". O tesoureiro pode
+// editar antes de salvar.
+export function guessRulePattern(description: string): string {
+  const words = normalizeText(description)
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(" ")
+    .filter((w) => w.length >= 3 && !/\d/.test(w) && !NOISE_WORDS.has(w));
+  return words.slice(0, 2).join(" ");
+}
+
+// Lançamento já feito à mão que parece ser esta linha do banco: mesma conta, mesmo valor e
+// sentido, até 3 dias de diferença, ainda sem vínculo. O mais próximo na data vence.
+export function findManualMatch(line: BankLine, movements: Movement[], linkedEntryIds: Set<string>): Movement | null {
+  const day = (iso: string): number => Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10))) / 86_400_000;
+  const kind = line.amount > 0 ? "in" : "out";
+  const candidates = movements.filter(
+    (m) =>
+      m.status === "posted" &&
+      m.kind === kind &&
+      m.accountId === line.accountId &&
+      Math.abs(m.amount - Math.abs(line.amount)) < 0.005 &&
+      Math.abs(day(m.date) - day(line.date)) <= 3 &&
+      !linkedEntryIds.has(m.id),
+  );
+  return candidates.sort((a, b) => Math.abs(day(a.date) - day(line.date)) - Math.abs(day(b.date) - day(line.date)))[0] ?? null;
 }

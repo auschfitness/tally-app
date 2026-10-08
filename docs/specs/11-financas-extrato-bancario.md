@@ -1,6 +1,7 @@
 # Spec 11 — Finanças: contas bancárias e importação de extrato
 
-> Aprovado pelo dono em 2026-10-08. Referência: Controlle. Substitui a spec 01 (escrita para o
+> Aprovado pelo dono em 2026-10-08. **Fases A, B e C no ar em 2026-10-08.** Validar com extratos
+> reais de bancos (só testado com arquivos montados no formato de cada banco). Referência: Controlle. Substitui a spec 01 (escrita para o
 > Financeiro antigo; o parser, a deduplicação por FITID e as regras que aprendem vêm de lá).
 > Base: spec 10 (o livro de partidas dobradas é a fonte da verdade).
 
