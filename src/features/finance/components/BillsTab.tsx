@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { money } from "@/lib/utils/money";
 import { isoDate, today } from "@/lib/utils/date";
 import { dueLabel, FREQUENCY_LABEL, groupOpenBills, type Bill, type BillKind, type BillSeries } from "../bills";
+import { Paperclip } from "lucide-react";
 import styles from "../finance.module.css";
 
 type Filter = "all" | BillKind;
@@ -22,6 +23,7 @@ export function BillsTab({
   nameOf,
   onOpen,
   onNew,
+  clipIds,
 }: {
   bills: Bill[];
   series: BillSeries[];
@@ -29,6 +31,7 @@ export function BillsTab({
   nameOf: (id: string | null) => string;
   onOpen: (id: string) => void;
   onNew: () => void;
+  clipIds: Set<string>;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [isPaidOpen, setIsPaidOpen] = useState(false);
@@ -50,6 +53,7 @@ export function BillsTab({
           <div className={styles.rowTitle}>{b.description}</div>
           <div className={styles.rowSub}>{sub}</div>
         </div>
+        {clipIds.has(b.id) ? <Paperclip size={14} className={styles.clip} aria-label="Tem comprovante" /> : null}
         <div className={styles.billRight}>
           <div className={`${styles.amount}${b.kind === "in" ? ` ${styles.in}` : ""}`}>
             {b.kind === "in" ? "+" : "−"}

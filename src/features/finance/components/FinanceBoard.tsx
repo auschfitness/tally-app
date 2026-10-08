@@ -27,6 +27,7 @@ import { BillDetail } from "./BillDetail";
 import { WeekStrip } from "./WeekStrip";
 import { ResolvePanel } from "./ResolvePanel";
 import type { Bill, BillKind, BillSeries } from "../bills";
+import type { FinanceFile } from "../files";
 import { ClosingTab, shiftMonth } from "./ClosingTab";
 import styles from "../finance.module.css";
 
@@ -52,6 +53,7 @@ export function FinanceBoard({
   receipts,
   bills,
   series,
+  files,
 }: {
   ledger: FinanceLedger;
   tab: FinanceTab;
@@ -59,6 +61,7 @@ export function FinanceBoard({
   receipts: ReceiptListItem[];
   bills: Bill[];
   series: BillSeries[];
+  files: FinanceFile[];
 }) {
   const router = useRouter();
   const { accounts, entries, lines, movements, currency } = ledger;
@@ -83,6 +86,7 @@ export function FinanceBoard({
   const balances = useMemo(() => accountBalances(accounts, entries, lines), [accounts, entries, lines]);
   const nameById = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
   const nameOf = useCallback((id: string | null) => (id && nameById.get(id)) || "", [nameById]);
+  const clipIds = useMemo(() => new Set(files.flatMap((f) => [f.billId, f.entryId]).filter((id): id is string => !!id)), [files]);
   const titheCategoryId = useMemo(
     () => leafAccounts(accounts, "revenue").find((a) => isGivingCategory(a.name))?.id,
     [accounts],
@@ -172,7 +176,7 @@ export function FinanceBoard({
           nameOf={nameOf}
         />
       ) : tab === "contas" ? (
-        <BillsTab bills={bills} series={series} currency={currency} nameOf={nameOf} onOpen={(id) => setPanel({ mode: "bill", id })} onNew={openNew} />
+        <BillsTab bills={bills} series={series} currency={currency} nameOf={nameOf} onOpen={(id) => setPanel({ mode: "bill", id })} onNew={openNew} clipIds={clipIds} />
       ) : tab === "dizimos" ? (
         <TithesTab donations={donations} receipts={receipts} range={range} currency={currency} onRegister={openNew} />
       ) : (
@@ -192,6 +196,7 @@ export function FinanceBoard({
             onImport={() => setPanel({ mode: "import" })}
             onClassify={() => setPanel({ mode: "classify" })}
             pendingCount={ledger.pendingCount}
+            clipIds={clipIds}
           />
         </>
       )}
@@ -207,6 +212,7 @@ export function FinanceBoard({
               nameOf={nameOf}
               onChanged={() => router.refresh()}
               onOpenBill={(id) => setPanelState({ mode: "bill", id })}
+              clipIds={clipIds}
             />
           )}
         </Panel>
@@ -273,6 +279,8 @@ export function FinanceBoard({
               accounts={accounts}
               currency={currency}
               nameOf={nameOf}
+              files={files.filter((f) => f.billId === billOpen.id)}
+              onFilesChanged={() => router.refresh()}
               onEdit={() => setPanelState({ mode: "bill-edit", id: billOpen.id })}
               onDone={(message) => onBillDone(message, close)}
             />
@@ -285,6 +293,8 @@ export function FinanceBoard({
           {(close) => (
             <MovementDetail
               movement={viewing}
+              files={files.filter((f) => f.entryId === viewing.id)}
+              onFilesChanged={() => router.refresh()}
               nameOf={nameOf}
               currency={currency}
               onClose={close}

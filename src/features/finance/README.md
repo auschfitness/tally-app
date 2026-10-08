@@ -46,9 +46,16 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
   `WeekStrip.tsx` ("Esta semana" no topo de Movimentações, só se a igreja já tem contas) e
   `ResolvePanel.tsx` (Pagar em um toque, "Desfazer" por 5 s, a linha recolhe). Anular um
   lançamento que veio de conta paga reabre a conta.
+- Comprovantes (spec 12, fase C): `files.ts` (tipos, limites, `boletoCode` para "Copiar código";
+  testes em `files.test.ts`), `file-actions.ts` (URL assinada de envio emitida pelo servidor,
+  registrar, excluir), `queries.ts#loadFiles` (URLs assinadas de 1 h), `components/Attachments.tsx`
+  (arrastar/clicar ou "Fotografar ou escolher", foto reduzida a 2000 px JPEG 0,85, prévia em
+  portal, lixeira com segundo toque). Usado em `BillDetail` e `MovementDetail`; 📎 nas listas.
+  Pagar a conta liga o anexo também ao lançamento; desfazer/anular solta essa ligação.
 
 ## Banco
-- m64 (`finance_bills`, `finance_bill_series`, `pay_bill`, `unpay_bill`), m48 (livro), m49 (plano padrão), m63 (`bank_imports`, `bank_transactions`,
+- m65 (`finance_files`, bucket privado `finance-files` com pasta = org, `pay_bill`/`unpay_bill` levando os anexos),
+  m64 (`finance_bills`, `finance_bill_series`, `pay_bill`, `unpay_bill`), m48 (livro), m49 (plano padrão), m63 (`bank_imports`, `bank_transactions`,
   `category_rules`, `statement_acct_id`), m62 (contas: `bank_code`, `is_default`, saldo inicial,
   correção do `trial_balance` que somava anulados), m61 (`record_transaction`, `donations.journal_entry_id`,
   acentos no plano padrão).

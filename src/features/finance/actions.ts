@@ -67,6 +67,8 @@ export async function voidTransactionAction(entryId: string): Promise<ActionResu
   await ctx.supabase.from("bank_transactions").update({ status: "pending", journal_entry_id: null }).eq("org_id", ctx.orgId).eq("journal_entry_id", entryId);
   // Conta a pagar que tinha virado este lançamento volta a ficar aberta (spec 12).
   await ctx.supabase.from("finance_bills").update({ status: "open", paid_on: null, paid_amount: null, journal_entry_id: null }).eq("org_id", ctx.orgId).eq("journal_entry_id", entryId);
+  // O comprovante da conta solta o lançamento anulado e fica só com a conta.
+  await ctx.supabase.from("finance_files").update({ journal_entry_id: null }).eq("org_id", ctx.orgId).eq("journal_entry_id", entryId).not("bill_id", "is", null);
   revalidateFinance();
   return ok(undefined);
 }

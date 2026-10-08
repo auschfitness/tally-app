@@ -1,5 +1,5 @@
 import { requireOrg, can } from "@/lib/auth/session";
-import { loadBills, loadLedger } from "@/features/finance/queries";
+import { loadBills, loadFiles, loadLedger } from "@/features/finance/queries";
 import { isoDate, today } from "@/lib/utils/date";
 import { listDonations, listReceipts } from "@/features/giving/queries";
 import { FinanceBoard, type FinanceTab } from "@/features/finance/components/FinanceBoard";
@@ -23,11 +23,13 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
   }
   const { aba } = await searchParams;
   const tab: FinanceTab = aba === "dizimos" || aba === "fechamento" || aba === "contas" ? aba : "movimentacoes";
-  const [ledger, donations, receipts, billData] = await Promise.all([
+  const withBills = tab === "contas" || tab === "movimentacoes";
+  const [ledger, donations, receipts, billData, files] = await Promise.all([
     loadLedger(ctx.supabase, ctx.orgId),
     tab === "dizimos" ? listDonations(ctx.supabase, ctx.orgId) : Promise.resolve([]),
     tab === "dizimos" ? listReceipts(ctx.supabase, ctx.orgId) : Promise.resolve([]),
-    tab === "contas" || tab === "movimentacoes" ? loadBills(ctx.supabase, ctx.orgId, isoDate(today())) : Promise.resolve({ bills: [], series: [] }),
+    withBills ? loadBills(ctx.supabase, ctx.orgId, isoDate(today())) : Promise.resolve({ bills: [], series: [] }),
+    withBills ? loadFiles(ctx.supabase, ctx.orgId) : Promise.resolve([]),
   ]);
-  return <FinanceBoard ledger={ledger} tab={tab} donations={donations} receipts={receipts} bills={billData.bills} series={billData.series} />;
+  return <FinanceBoard ledger={ledger} tab={tab} donations={donations} receipts={receipts} bills={billData.bills} series={billData.series} files={files} />;
 }

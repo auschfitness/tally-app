@@ -7,6 +7,7 @@ import { requireOrg, can, type DB } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { friendlyFinanceError } from "./domain";
 import { addDays, billsInScope, type Bill, type BillFrequency, type BillKind, type BillScope } from "./bills";
+import { FILES_BUCKET } from "./files";
 import { BILL_COLUMNS, SERIES_COLUMNS, extendSeries, toBill, type BillTemplate, toSeries } from "./queries";
 
 const DENIED = "Você não tem permissão para mexer nas finanças.";
@@ -120,6 +121,10 @@ export async function deleteBillAction(id: string, scope: BillScope = "one"): Pr
   const { target, bills } = found;
   if (target.status !== "open") return fail("Conta paga não se exclui. Desfaça o pagamento antes.");
   const doomed = billsInScope(bills, target, scope);
+  // O banco apaga os anexos em cascata; o arquivo no Storage sai aqui.
+  const { data: files } = await supabase.from("finance_files").select("path").eq("org_id", orgId).in("bill_id", doomed.map((b) => b.id));
+  const paths = (files ?? []).map((f) => f.path);
+  if (paths.length > 0) await supabase.storage.from(FILES_BUCKET).remove(paths);
   const del = await supabase.from("finance_bills").delete().eq("org_id", orgId).in("id", doomed.map((b) => b.id));
   if (del.error) return fail(toMessage(del.error));
   if (scope !== "one" && target.seriesId) {

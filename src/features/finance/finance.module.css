@@ -284,3 +284,36 @@
 @media (prefers-reduced-motion: reduce) {
   .resolveItem { transition: opacity 140ms ease; }
 }
+
+/* --- Comprovantes (spec 12, fase C) --- */
+.files { margin-top: var(--s-5); }
+.filesHead { font-size: var(--t-11); line-height: var(--lh-11); color: var(--text-2); font-weight: 500; margin-bottom: var(--s-2); }
+.fileList { list-style: none; margin: 0 0 var(--s-2); padding: 0; display: flex; flex-direction: column; gap: var(--s-1); }
+.fileItem { display: flex; align-items: center; gap: var(--s-2); }
+.fileOpen { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s-3); border: none; background: none; color: inherit; padding: var(--s-1); border-radius: var(--r-6); text-align: left; }
+.fileThumb { flex: none; width: 48px; height: 48px; border-radius: var(--r-6); object-fit: cover; background: var(--surface-2); }
+.fileIcon { display: inline-flex; align-items: center; justify-content: center; color: var(--text-2); }
+.fileName { flex: 1; min-width: 0; font-size: var(--t-13); line-height: var(--lh-13); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fileDel { flex: none; min-width: var(--control-h); min-height: var(--control-h); border: none; background: none; color: var(--text-2); border-radius: var(--r-6); font-size: var(--t-13); display: inline-flex; align-items: center; justify-content: center; padding: 0 var(--s-2); }
+.fileDelArmed { color: var(--red); font-weight: 500; }
+.drop { display: flex; align-items: center; justify-content: center; gap: var(--s-2); min-height: 3rem; padding: var(--s-3); border: 1.5px dashed var(--border); border-radius: var(--r-10); color: var(--text-2); font-size: var(--t-13); cursor: pointer; transition: background 100ms ease, border-color 100ms ease; }
+.dropOver { border-color: var(--blue); background: var(--action-soft); color: var(--blue); }
+.dropTouch { display: none; }
+@media (hover: none), (pointer: coarse) {
+  .dropDesk { display: none; }
+  .dropTouch { display: inline; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .fileOpen:hover, .fileDel:hover, .drop:hover { background: var(--surface-2); }
+}
+.clip { flex: none; color: var(--text-2); }
+
+.previewScrim { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: var(--s-4); background: color-mix(in srgb, var(--navylogo) 55%, transparent); opacity: 1; transition: opacity 200ms var(--ease); }
+@starting-style { .previewScrim { opacity: 0; } }
+.preview { display: flex; flex-direction: column; width: min(48rem, 100%); max-height: 100%; background: var(--surface); border-radius: var(--r-10); box-shadow: var(--e-2); overflow: hidden; transform: none; transition: transform 200ms var(--ease); }
+@starting-style { .preview { transform: scale(.96); } }
+.previewMedia { display: block; width: 100%; height: min(75vh, 60rem); object-fit: contain; border: none; background: var(--surface-2); }
+.previewFoot { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-3); }
+@media (prefers-reduced-motion: reduce) {
+  .preview { transition: none; }
+}

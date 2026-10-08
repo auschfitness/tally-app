@@ -7,6 +7,8 @@ import { brDate } from "@/lib/utils/date";
 import { money } from "@/lib/utils/money";
 import { voidTransactionAction } from "../actions";
 import type { Movement } from "../domain";
+import type { FinanceFile } from "../files";
+import { Attachments } from "./Attachments";
 import styles from "../finance.module.css";
 
 const KIND_LABEL: Record<Movement["kind"], string> = {
@@ -21,12 +23,16 @@ export function MovementDetail({
   movement,
   nameOf,
   currency,
+  files,
+  onFilesChanged,
   onVoided,
   onClose,
 }: {
   movement: Movement;
   nameOf: (id: string | null) => string;
   currency: string;
+  files: FinanceFile[];
+  onFilesChanged: () => void;
   onVoided: () => void;
   onClose: () => void;
 }) {
@@ -72,6 +78,7 @@ export function MovementDetail({
             Feito com várias partidas na Contabilidade. Para mudar, abra por lá.
           </p>
         ) : null}
+        {m.status === "posted" ? <Attachments files={files} target={{ entryId: m.id }} onChanged={onFilesChanged} /> : null}
         {error ? <div className="gerr">{error}</div> : null}
       </div>
       <div className={styles.panelFoot}>

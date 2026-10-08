@@ -6,6 +6,7 @@ import { money } from "@/lib/utils/money";
 import { isoDate, today } from "@/lib/utils/date";
 import { inPeriod, type PeriodRange } from "@/lib/utils/period";
 import { groupByDay, type AccountBalance, type LedgerAccount, type Movement } from "../domain";
+import { Paperclip } from "lucide-react";
 import { BankLogo } from "./BankLogo";
 import styles from "../finance.module.css";
 
@@ -32,6 +33,7 @@ export function MovementsTab({
   onImport,
   onClassify,
   pendingCount,
+  clipIds,
 }: {
   movements: Movement[];
   balances: AccountBalance[];
@@ -41,6 +43,7 @@ export function MovementsTab({
   nameOf: (id: string | null) => string;
   freshId: string | null;
   onOpen: (id: string) => void;
+  clipIds: Set<string>;
   onNew: () => void;
   onManageAccounts: () => void;
   onImport: () => void;
@@ -137,7 +140,7 @@ export function MovementsTab({
           <section key={day.date} className={styles.day}>
             <div className={styles.dayLabel}>{dayLabel(day.date, todayIso, yesterdayIso)}</div>
             {day.items.map((m) => (
-              <MovementRow key={m.id} movement={m} nameOf={nameOf} currency={currency} isFresh={m.id === freshId} onOpen={() => onOpen(m.id)} />
+              <MovementRow key={m.id} movement={m} nameOf={nameOf} currency={currency} isFresh={m.id === freshId} hasFile={clipIds.has(m.id)} onOpen={() => onOpen(m.id)} />
             ))}
           </section>
         ))
@@ -151,12 +154,14 @@ function MovementRow({
   nameOf,
   currency,
   isFresh,
+  hasFile,
   onOpen,
 }: {
   movement: Movement;
   nameOf: (id: string | null) => string;
   currency: string;
   isFresh: boolean;
+  hasFile: boolean;
   onOpen: () => void;
 }) {
   const counter = nameOf(m.counterId);
@@ -178,6 +183,7 @@ function MovementRow({
         <div className={styles.rowTitle}>{title}</div>
         <div className={styles.rowSub}>{parts.filter(Boolean).join(" · ")}</div>
       </div>
+      {hasFile ? <Paperclip size={14} className={styles.clip} aria-label="Tem comprovante" /> : null}
       <div className={`${styles.amount}${m.kind === "in" ? ` ${styles.in}` : ""}`}>
         {sign}
         {money(Math.abs(m.amount), currency)}

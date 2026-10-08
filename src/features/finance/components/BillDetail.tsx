@@ -13,6 +13,8 @@ import { deleteBillAction, payBillAction, unpayBillAction } from "../bill-action
 import { leafAccounts, type LedgerAccount } from "../domain";
 import { billsInScope, dueLabel, FREQUENCY_LABEL, type Bill, type BillScope, type BillSeries } from "../bills";
 import { ScopeMenu } from "./ScopeMenu";
+import { Attachments } from "./Attachments";
+import { boletoCode, type FinanceFile } from "../files";
 import styles from "../finance.module.css";
 
 function br(iso: string | null): string {
@@ -26,6 +28,8 @@ export function BillDetail({
   accounts,
   currency,
   nameOf,
+  files,
+  onFilesChanged,
   onEdit,
   onDone,
 }: {
@@ -35,6 +39,8 @@ export function BillDetail({
   accounts: LedgerAccount[];
   currency: string;
   nameOf: (id: string | null) => string;
+  files: FinanceFile[];
+  onFilesChanged: () => void;
   onEdit: () => void;
   onDone: (message: string) => void;
 }) {
@@ -115,6 +121,8 @@ export function BillDetail({
             </div>
           </div>
         )}
+
+        <Attachments files={files} target={{ billId: bill.id }} boleto={boletoCode(bill.notes)} onChanged={onFilesChanged} />
 
         {error ? <div className="gerr">{error}</div> : null}
 

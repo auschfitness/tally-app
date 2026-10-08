@@ -5,6 +5,7 @@
 // milhares de lançamentos.
 import type { DB } from "@/lib/auth/session";
 import { toMovement, type LedgerAccount, type LedgerEntry, type LedgerLine, type Movement } from "./domain";
+import { FILES_BUCKET, type FinanceFile } from "./files";
 import { addMonths, HORIZON_MONTHS, needsExtension, pendingOccurrences, type Bill, type BillFrequency, type BillKind, type BillSeries } from "./bills";
 
 export interface FinanceLedger {
@@ -209,4 +210,21 @@ export async function loadBills(supabase: DB, orgId: string, todayIso: string): 
     bills = (billRes.data ?? []).map(toBill);
   }
   return { bills, series };
+}
+
+// ── Comprovantes (spec 12, fase C) ───────────────────────────────────────────────────
+// ponytail: todos os anexos da org com URL assinada numa ida; filtrar por período quando
+// uma igreja passar de algumas centenas de comprovantes.
+export async function loadFiles(supabase: DB, orgId: string): Promise<FinanceFile[]> {
+  const { data, error } = await supabase
+    .from("finance_files")
+    .select("id, bill_id, journal_entry_id, path, name, mime")
+    .eq("org_id", orgId)
+    .order("created_at");
+  if (error) throw new Error(error.message);
+  const rows = data ?? [];
+  if (rows.length === 0) return [];
+  const { data: signed } = await supabase.storage.from(FILES_BUCKET).createSignedUrls(rows.map((r) => r.path), 3600);
+  const urlOf = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
+  return rows.map((r) => ({ id: r.id, billId: r.bill_id, entryId: r.journal_entry_id, name: r.name, mime: r.mime, url: urlOf.get(r.path) ?? "" }));
 }

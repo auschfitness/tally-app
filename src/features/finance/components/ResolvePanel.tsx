@@ -5,6 +5,7 @@
 // o círculo enche, aparece "Pago · Desfazer" por 5 s e só então ela recolhe.
 // A lista é uma foto de quando o painel abriu; o livro atrás se atualiza a cada pagamento.
 import { useEffect, useRef, useState } from "react";
+import { Paperclip } from "lucide-react";
 import { money } from "@/lib/utils/money";
 import { isoDate, today } from "@/lib/utils/date";
 import { payBillAction, unpayBillAction } from "../bill-actions";
@@ -24,6 +25,7 @@ export function ResolvePanel({
   nameOf,
   onChanged,
   onOpenBill,
+  clipIds,
 }: {
   bills: Bill[];
   kind: BillKind;
@@ -32,6 +34,7 @@ export function ResolvePanel({
   nameOf: (id: string | null) => string;
   onChanged: () => void;
   onOpenBill: (id: string) => void;
+  clipIds: Set<string>;
 }) {
   const todayIso = isoDate(today());
   const [items] = useState(() => weekBills(bills, todayIso, kind));
@@ -94,6 +97,7 @@ export function ResolvePanel({
                         {done ? (isIn ? "Recebido" : "Pago") : dueLabel(b.dueDate, todayIso)} · {nameOf(b.categoryId)}
                       </span>
                     </button>
+                    {clipIds.has(b.id) ? <Paperclip size={14} className={styles.clip} aria-label="Tem comprovante" /> : null}
                     <span className={`${styles.amount}${isIn ? ` ${styles.in}` : ""}`}>{money(b.amount, currency)}</span>
                     {done ? (
                       <button type="button" className={`link ${styles.resolveUndo}`} onClick={() => void undo(b)}>

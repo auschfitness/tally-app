@@ -1423,6 +1423,45 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_files: {
+        Row: {
+          bill_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          journal_entry_id: string | null
+          mime: string
+          name: string
+          org_id: string
+          path: string
+          size: number
+        }
+        Insert: {
+          bill_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          mime: string
+          name: string
+          org_id: string
+          path: string
+          size: number
+        }
+        Update: {
+          bill_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          mime?: string
+          name?: string
+          org_id?: string
+          path?: string
+          size?: number
+        }
+        Relationships: []
+      }
       finance_categories: {
         Row: {
           created_at: string
