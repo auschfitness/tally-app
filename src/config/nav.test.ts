@@ -3,9 +3,9 @@ import { STUDY_ONLY, studyOnlyRedirect } from "./nav";
 
 describe.runIf(STUDY_ONLY)("modo só Estudo", () => {
   it("manda as telas desligadas para a Bíblia", () => {
-    for (const p of ["/", "/sticks", "/finance/x", "/plans", "/communication"]) expect(studyOnlyRedirect(p)).toBe("/study/bible");
+    for (const p of ["/", "/sticks", "/groups", "/plans", "/communication"]) expect(studyOnlyRedirect(p)).toBe("/study/bible");
   });
-  it("deixa passar Estudo, Configurações, Admin e o que não é menu", () => {
-    for (const p of ["/study", "/study/bible/JHN/1", "/settings", "/admin", "/login", "/onboarding", "/convite/abc", "/financeiro"]) expect(studyOnlyRedirect(p)).toBeNull();
+  it("deixa passar Estudo, Finanças, Configurações, Admin e o que não é menu", () => {
+    for (const p of ["/study", "/study/bible/JHN/1", "/finance", "/finance/contador/entries", "/settings", "/admin", "/login", "/onboarding", "/convite/abc", "/financeiro"]) expect(studyOnlyRedirect(p)).toBeNull();
   });
 });

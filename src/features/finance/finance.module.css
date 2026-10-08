@@ -208,3 +208,5 @@
 @keyframes labelIn { from { opacity: .3; filter: blur(2px); } to { opacity: 1; filter: none; } }
 .reason { margin: var(--s-1) 0 0 calc(1.125rem + var(--s-2)); font-size: var(--t-11); line-height: var(--lh-11); color: var(--text-2); }
 .rulesLink { display: block; margin-left: auto; margin-bottom: var(--s-2); }
+.tabsRow { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.tabsRow::-webkit-scrollbar { display: none; }

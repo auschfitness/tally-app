@@ -14,7 +14,7 @@ const TABS: { key: FinanceTabKey; label: string; href: string }[] = [
 
 export function FinanceTabs({ active }: { active: FinanceTabKey }) {
   return (
-    <nav className={`tabs ${styles.noprint}`} aria-label="Seções de Finanças">
+    <nav className={`tabs ${styles.tabsRow} ${styles.noprint}`} aria-label="Seções de Finanças">
       {TABS.map((t) => (
         <Link
           key={t.key}

@@ -116,20 +116,25 @@ export interface StudyNavItem {
   key: string;
   label: string;
   href: string;
-  icon: "book" | "sermon" | "notes";
+  icon: "book" | "sermon" | "notes" | "finance";
   match: string[];
 }
 export const STUDY_ITEMS: StudyNavItem[] = [
   { key: "bible", label: "Bíblia", href: "/study/bible", icon: "book", match: ["/study/bible"] },
   { key: "sermons", label: "Sermões", href: "/study", icon: "sermon", match: ["/study", "/study/sermon", "/study/series", "/study/map"] },
   { key: "notes", label: "Notas", href: "/study/notes", icon: "notes", match: ["/study/notes"] },
+  // Finanças liberada pelo dono em 2026-10-08 (spec 10/11), mesmo no modo só Estudo.
+  { key: "finance", label: "Finanças", href: "/finance", icon: "finance", match: ["/finance"] },
 ];
+
+// Telas que continuam ligadas no modo só Estudo além do próprio Estudo.
+const STUDY_ONLY_KEEPS = ["/finance"];
 
 // Rotas desligadas no modo só Estudo: tudo que o menu lista, menos o próprio Estudo.
 // O fluxo antigo de e-mail (/communication) não está no menu, entra à mão.
 const OFF_HREFS = [...TOP_ITEMS, ...NAV_GROUPS.flatMap((g) => g.items), PLANS_ITEM]
   .map((i) => i.href)
-  .filter((h) => h !== STUDY_HREF)
+  .filter((h) => h !== STUDY_HREF && !STUDY_ONLY_KEEPS.includes(h))
   .concat("/communication");
 
 export function studyOnlyRedirect(pathname: string): string | null {
