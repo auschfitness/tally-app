@@ -35,6 +35,8 @@ const PROPER = new Set([
   "evangelho", "filipe", "galileia", "jerusalém", "jesus", "joão", "jordão", "lázaro",
   "maria", "natanael", "nicodemos", "páscoa", "pedro", "pilatos", "samaria", "samaritanos",
   "senhor", "sicar", "simão", "tabernáculos",
+  "abraão", "adão", "davi", "efésios", "efeso", "éfeso", "gentios", "israel", "judeus", "lei", "mateus",
+  "moisés", "paulo", "roma", "romanos",
 ]);
 
 const cap = (w: string): string => w.charAt(0).toLocaleUpperCase("pt-BR") + w.slice(1);
@@ -54,7 +56,7 @@ export function headingCase(caps: string): string {
     .join("");
 }
 
-const HEADING = /^(.+?)\.?\s*\((Jo\s+\d+\.\d+(?:-\d+)?)\)\s*$/u;
+const HEADING = /^(.+?)\.?\s*\(([1-3]?\p{L}{1,3}\s+\d+\.\d+(?:-\d+)?)\)\s*$/u;
 const isCaps = (s: string): boolean => /\p{Lu}/u.test(s) && s === s.toLocaleUpperCase("pt-BR");
 
 /** Um parágrafo do JFB: título de seção ou parágrafo com a frase citada em destaque. */

@@ -1,12 +1,14 @@
 "use client";
 
-// Aba "Comentário" (Frente C, spec 09): texto corrido do capítulo em João
+// Aba "Comentário" (Frente C, spec 09): texto corrido do capítulo
 // (Jamieson-Fausset-Brown, domínio público; Tyndale, CC BY-SA 4.0).
 // Segue o versículo selecionado com rolagem e marcação lateral.
 // Sem animação: trocas frequentes.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { chapterLabel, type ChapterRef } from "../../reader";
 import { listCommentariesAction } from "../../actions";
+import { bookByCode } from "@/lib/bible/books";
+import { usfmToOsis } from "@/lib/bible/osis";
 import type { BibleCommentaryItem } from "../../reader-queries";
 import {
   CMT_CREDIT,
@@ -27,7 +29,9 @@ interface CmtChunkData {
 }
 
 export function CommentaryTab({ refNow, verse }: { refNow: ChapterRef; verse: number | null }) {
-  const isJohn = refNow.book === "JHN" || refNow.book === "John";
+  const osis = usfmToOsis(refNow.book) ?? refNow.book;
+  // "jo" → "Jo", "1co" → "1Co" (primeira abreviação do livro, a sigla brasileira)
+  const abbr = (bookByCode(refNow.book)?.abbr[0] ?? refNow.book).replace(/[a-z]/, (c) => c.toUpperCase());
   const [items, setItems] = useState<BibleCommentaryItem[] | null>(null);
   const [err, setErr] = useState("");
   const [source, setSource] = useState<CmtSource>("jfb");
@@ -52,11 +56,10 @@ export function CommentaryTab({ refNow, verse }: { refNow: ChapterRef; verse: nu
   }
 
   useEffect(() => {
-    if (!isJohn) return;
     let alive = true;
     setItems(null);
     setErr("");
-    void listCommentariesAction("John", refNow.chapter).then((r) => {
+    void listCommentariesAction(osis, refNow.chapter).then((r) => {
       if (!alive) return;
       if (r.success) setItems(r.data);
       else {
@@ -67,7 +70,7 @@ export function CommentaryTab({ refNow, verse }: { refNow: ChapterRef; verse: nu
     return () => {
       alive = false;
     };
-  }, [isJohn, refNow.chapter]);
+  }, [osis, refNow.chapter]);
 
   const chapterData = useMemo(() => {
     if (!items) return { chunks: [] };
@@ -124,11 +127,11 @@ export function CommentaryTab({ refNow, verse }: { refNow: ChapterRef; verse: nu
     }
   }, [verse, activeChunkIndex, source]);
 
-  if (!isJohn) {
+  if (items != null && !err && items.length === 0) {
     return (
       <div ref={tabRef} data-testid="commentary-tab" className={styles.cmt}>
         <h2 className={styles.cmtTitle}>Comentário de {chapterLabel(refNow)}</h2>
-        <p className={styles.cmtNote}>Por enquanto os comentários estão disponíveis só no Evangelho de João.</p>
+        <p className={styles.cmtNote}>Ainda não há comentário para este capítulo. Por enquanto: Mateus, João, Romanos e Efésios.</p>
       </div>
     );
   }
@@ -157,7 +160,7 @@ export function CommentaryTab({ refNow, verse }: { refNow: ChapterRef; verse: nu
           <div className={styles.cmtBody} data-testid="commentary-body" data-source={source}>
             {chapterData.chunks.map((chunk, idx) => {
               const isCurrent = idx === activeChunkIndex;
-              const label = `Jo ${refNow.chapter}.${chunk.start}${chunk.end > chunk.start ? `-${chunk.end}` : ""}`;
+              const label = `${abbr} ${refNow.chapter}.${chunk.start}${chunk.end > chunk.start ? `-${chunk.end}` : ""}`;
               return (
                 <div
                   key={idx}

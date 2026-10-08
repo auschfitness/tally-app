@@ -59,7 +59,7 @@ for (const b of batches) {
       if (/—|–/.test(pt)) errors.push(`${e.id}: travessão longo; use vírgula, ponto ou hífen`);
       if (paras(pt) !== paras(en)) warns.push(`${e.id}: parágrafos ${paras(pt)} ≠ ${paras(en)}`);
       else if (lines(pt) !== lines(en)) warns.push(`${e.id}: linhas ${lines(pt)} ≠ ${lines(en)}`);
-      all.push({ id: e.id, source: e.source, chapter: e.chapter, verse: e.verse, kind: e.kind, text_en: en, text_pt: pt });
+      all.push({ id: e.id, book: e.book ?? "JHN", source: e.source, chapter: e.chapter, verse: e.verse, kind: e.kind, text_en: en, text_pt: pt });
     });
   }
   console.log(`lote ${b}: ${errors.length ? "FALHOU" : "ok"}`);

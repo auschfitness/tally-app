@@ -22,10 +22,12 @@ const supabase = createClient(url, key || anon, { auth: { persistSession: false 
 const file = path.join("scripts", "comments", "work", "comments-pt.json");
 const data = JSON.parse(fs.readFileSync(file, "utf8"));
 
+// USFM (build-batches) → OSIS (bible_commentary.book, igual ao que a aba consulta). Acrescente ao carregar livro novo.
+const OSIS = { JHN: "John", MAT: "Matt", ROM: "Rom", EPH: "Eph" };
 const rows = data.map((d) => ({
   id: d.id,
   source: d.source === "tyn" ? "tyndale" : d.source,
-  book: "John",
+  book: OSIS[d.book ?? "JHN"] ?? (() => { throw new Error(`livro sem OSIS: ${d.book}`); })(),
   chapter: d.chapter,
   verse_start: d.verse,
   verse_end: d.verse,
