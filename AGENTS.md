@@ -82,11 +82,11 @@ Concluído em 2026-10-03: 7.957 versículos no banco (239 capítulos gerados pel
 
 Spec 09. Concluído em 2026-10-03: fontes Jamieson-Fausset-Brown e Tyndale traduzidas integralmente para PT nos 21 capítulos de João (1.164 comentários na tabela bible_commentary). Aba Comentário disponível na área de trabalho e no menu "+ Nova aba", com créditos e badges de licença.
 
-### 4. Refazer a tela de login (FEITA em 2026-10-04 na branch, AGUARDANDO APROVAÇÃO do dono para publicar; prévias em docs/previews/login-*.png)
+### 4. Refazer a tela de login (FEITA e PUBLICADA, commit 1a93120)
 
 Pedido do dono: "a tela de login de modo geral tá bem ruim". Arquivos: `src/app/(auth)/login/` (page.tsx, LoginForm.tsx). Siga `docs/design-principles.md` e o visual novo do Estudo (menu lateral escuro, Literata no texto). Mostre uma prévia ao dono antes de publicar. O teste `e2e/auth.spec.ts` usa os placeholders "E-mail"/"Senha" e o botão "Entrar": mantenha-os ou ajuste o teste junto.
 
-### 4b. Polir o login + "Esqueci a senha" (FEITA em 2026-10-04 na branch, AGUARDANDO APROVAÇÃO do dono para publicar)
+### 4b. Polir o login + "Esqueci a senha" (FEITA e PUBLICADA, commit 2cbc4b6)
 
 Implementados o polimento do login, o botão de mostrar senha e os fluxos de recuperação e redefinição. Links de recuperação inválidos levam ao aviso de link expirado. Prévias em `docs/previews/`: `login-*.png`, `forgot-desktop-light.png`, `reset-desktop-light.png` e `reset-expired-desktop-light.png`. Não refazer. Publicar somente após o dono aprovar as prévias. O recebimento do e-mail real ainda depende de conferir a URL permitida no Supabase e testar com uma caixa de e-mail.
 
@@ -191,7 +191,7 @@ e E2E do leitor validados com sucesso. Banco de dados após carga: 243 MB (limit
 - Só o dono tem acesso ao painel: Supabase → Authentication → Email Templates → Reset Password → colar assunto e corpo → Save. Dar o passo a passo em 3 linhas.
 - Opcional na mesma leva, se o dono quiser: Confirm signup, Invite, Magic Link no mesmo visual.
 
-### 8. Telas fora da leitura com a régua 4d (FEITA na branch em 2026-10-07, commits 7405a61..c12686a, verify verde; prévias 8-antes/8-depois em docs/previews; AGUARDANDO APROVAÇÃO do dono para publicar na main)
+### 8. Telas fora da leitura com a régua 4d (FEITA e PUBLICADA em 2026-10-07, commits 7405a61..c12686a)
 
 Decisões do Fable sobre o que a auditoria levantou (NÃO reabrir):
 - Tokens `--r-6: 8px`, `--r-10: 14px` e a fonte Figtree vêm do manual da marca Mercy (commit 9ceafde). Ficam como estão.
@@ -242,7 +242,7 @@ Bloco F. Ajustes (`src/features/settings/**`, `settings.module.css`)
 
 Verificação (obrigatória, nesta ordem): `grep -rn "style={{" src/features/study/components src/features/settings "src/app/(dashboard)/study" | grep -v "STATUS_COLOR\|--level"` tem que voltar vazio (exceção: cores vindas de dados como `STATUS_COLOR`, que podem ficar via variável CSS). Depois `npm run verify` COM o dev server desligado. Depois subir `npx next dev -p 3010` e tirar as mesmas 32 prévias do passo 1 (mesmas rotas, 1280/390, claro/escuro, cookie `tally-theme`) em `docs/previews/8-depois-*.png`, com uma spec temporária e um config temporário sem `webServer`, apagando os dois no fim e parando o servidor. Não publicar: prévias vão para o dono aprovar.
 
-### 9. Sermões e Notas repensados (FEITA na branch em 2026-10-07, AGUARDANDO APROVAÇÃO do dono)
+### 9. Sermões e Notas repensados (FEITA e PUBLICADA em 2026-10-07, commits e0b84ae..fb793bc)
 
 Norte: skills emil-design-eng e apple-design. Régua 4d e decisões da tarefa 8 continuam valendo (botão de texto em pílula, `--r-6` controles, `--r-10` painéis, sem borda em repouso, 5 tamanhos de texto, Lucide 16/1.75, verde só em ação primária/link/seleção). Não mexer no editor de sermão (`SermonEditor.tsx`), na página da série (`series/[id]`), na leitura (`reader/**`) nem em `scripts/align/**`. Sem migration: só tela e as actions que já existem.
 
@@ -281,4 +281,4 @@ Concluído em 2026-10-08: todos os 110 lotes de comentários traduzidos e valida
 - AT passo 1: palavra em português ligada ao hebraico nos 39 livros. Os dados antigos de `bible_tagged_words` foram migrados para `bible_tagged_verses`: 23.145 versículos. Conferência integral em 2026-10-04: nenhum versículo faltando e nenhuma diferença frente aos TSVs estatístico + gabarito. A carga já está feita; cobertura de palavras portuguesas ligadas = 66,1%, portanto completar o sublinhado é uma melhoria distinta. Evidência: `docs/previews/at-carga-revisao.md`. Como refazer: `docs/backlog/estudo-referencia-raizes.md`, seção "Antigo Testamento".
 - NT: ligação, léxico em PT, dicionário UBS completo.
 - Lixeira de 30 dias, página Sermões, Notas, editor de sermão (spec 10), menu lateral novo.
-
+- Feito fora da fila e já no ar (2026-10-06 a 2026-10-09): rebrand Mercy (nome, selo do cordeiro, verde Pasto, Figtree; e7bd28a, 9ceafde), landing pública EN/PT com demo tocável (f639111), conforto de leitura (papel, tamanho da letra, sépia), busca por palavra na Bíblia, modo púlpito e impressão do sermão, instalar no celular e ler sem internet (2821cb1), Finanças inteiro (livro contábil, Dízimos, extrato OFX/CSV, contas a pagar/receber, fechamento do mês; specs 10-12 + d318bf8), comentários em português do NT e do AT inteiros (7856e45, 428ded2).
