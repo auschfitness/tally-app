@@ -101,7 +101,7 @@ export async function createStickAction(_prev: ActionResult, formData: FormData)
 
     if (parsed.data.group) await setGroupMembership(supabase, orgId, data.id, parsed.data.group);
 
-    revalidatePath("/sticks");
+    revalidatePath("/people");
     return ok(undefined);
   } catch (e) {
     return fail(toMessage(e));
@@ -123,7 +123,7 @@ export async function updateStickAction(_prev: ActionResult, formData: FormData)
 
     await setGroupMembership(supabase, orgId, id, parsed.data.group);
 
-    revalidatePath("/sticks");
+    revalidatePath("/people");
     return ok(undefined);
   } catch (e) {
     return fail(toMessage(e));
@@ -135,5 +135,5 @@ export async function archiveStickAction(formData: FormData): Promise<void> {
   if (!id) return;
   const { supabase } = await requireOrg();
   await supabase.from("sticks").update({ archived: true }).eq("id", id);
-  revalidatePath("/sticks");
+  revalidatePath("/people");
 }

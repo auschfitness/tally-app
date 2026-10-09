@@ -44,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "pessoas",
     label: "Pessoas",
     items: [
-      { key: "people", label: "Sticks", href: "/sticks", count: "people" },
+      { key: "people", label: "Pessoas", href: "/people", count: "people" },
       { key: "members", label: "Membros", href: "/members", feature: "members" },
       { key: "groups", label: "Células", href: "/groups" },
       { key: "teams", label: "Escalas", href: "/teams", feature: "teams" },
@@ -116,19 +116,21 @@ export interface StudyNavItem {
   key: string;
   label: string;
   href: string;
-  icon: "book" | "sermon" | "notes" | "finance";
+  icon: "book" | "sermon" | "notes" | "people" | "finance";
   match: string[];
 }
 export const STUDY_ITEMS: StudyNavItem[] = [
   { key: "bible", label: "Bíblia", href: "/study/bible", icon: "book", match: ["/study/bible"] },
   { key: "sermons", label: "Sermões", href: "/study", icon: "sermon", match: ["/study", "/study/sermon", "/study/series", "/study/map"] },
   { key: "notes", label: "Notas", href: "/study/notes", icon: "notes", match: ["/study/notes"] },
+  // Pessoas (spec 13): lista + ficha, só para a equipe (o RLS decide quem lê e quem edita).
+  { key: "people", label: "Pessoas", href: "/people", icon: "people", match: ["/people"] },
   // Finanças liberada pelo dono em 2026-10-08 (spec 10/11), mesmo no modo só Estudo.
   { key: "finance", label: "Finanças", href: "/finance", icon: "finance", match: ["/finance"] },
 ];
 
 // Telas que continuam ligadas no modo só Estudo além do próprio Estudo.
-const STUDY_ONLY_KEEPS = ["/finance"];
+const STUDY_ONLY_KEEPS = ["/finance", "/people"];
 
 // Rotas desligadas no modo só Estudo: tudo que o menu lista, menos o próprio Estudo.
 // O fluxo antigo de e-mail (/communication) não está no menu, entra à mão.

@@ -11,6 +11,10 @@ const nextConfig = {
   // Há outros lockfiles acima desta pasta (o app Vite legado e o home do usuário).
   // Fixa a raiz de tracing nesta app para o Next não inferir a pasta errada.
   outputFileTracingRoot: __dirname,
+  // /sticks virou /people (spec 13); a querystring segue junto.
+  async redirects() {
+    return [{ source: "/sticks", destination: "/people", permanent: false }];
+  },
   eslint: {
     // O lint roda no passo de verificação (npm run lint); não bloquear o build por lint.
     ignoreDuringBuilds: true,
