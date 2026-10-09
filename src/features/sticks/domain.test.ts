@@ -92,3 +92,115 @@ describe("relação (rótulos e visitante)", () => {
     expect(isVisitor("attendee")).toBe(false);
   });
 });
+
+// ---- Pessoas (spec 13) ----------------------------------------------------------------
+import {
+  ageLabel,
+  ageOn,
+  birthdayShort,
+  birthdaysIn,
+  filterPeople,
+  filtersQuery,
+  formatCpf,
+  formatPhone,
+  isValidCpf,
+  longDate,
+  NO_FILTERS,
+  normalize,
+  parseFilters,
+  personSubtitle,
+  statusValue,
+  whatsappLink,
+  type PersonLite,
+} from "./domain";
+
+const person = (o: Partial<PersonLite>): PersonLite => ({
+  id: "x", name: "Fulano", status: "member", office: "", phone: "", whatsapp: "", email: "", birthDate: null, archived: false, groupIds: [], ...o,
+});
+
+describe("CPF e telefone", () => {
+  it("valida dígitos verificadores e rejeita repetidos", () => {
+    expect(isValidCpf("529.982.247-25")).toBe(true);
+    expect(isValidCpf("52998224725")).toBe(true);
+    expect(isValidCpf("529.982.247-24")).toBe(false);
+    expect(isValidCpf("111.111.111-11")).toBe(false);
+    expect(isValidCpf("123")).toBe(false);
+  });
+  it("formata CPF e telefone do Brasil", () => {
+    expect(formatCpf("52998224725")).toBe("529.982.247-25");
+    expect(formatPhone("47999990000")).toBe("(47) 99999-0000");
+    expect(formatPhone("4733330000")).toBe("(47) 3333-0000");
+    expect(formatPhone("+5547999990000")).toBe("(47) 99999-0000");
+    expect(formatPhone("+1 555 0100")).toBe("+1 555 0100");
+  });
+  it("link do WhatsApp assume DDI 55 quando falta", () => {
+    expect(whatsappLink("(47) 99999-0000")).toBe("https://wa.me/5547999990000");
+    expect(whatsappLink("5547999990000")).toBe("https://wa.me/5547999990000");
+    expect(whatsappLink("")).toBe("");
+  });
+});
+
+describe("datas da ficha", () => {
+  const now = new Date(2026, 9, 9); // 9/out/2026
+  it("idade em anos completos", () => {
+    expect(ageOn("1990-10-09", now)).toBe(36);
+    expect(ageOn("1990-10-10", now)).toBe(35);
+    expect(ageOn(null, now)).toBeNull();
+    expect(ageLabel("2025-10-09", now)).toBe("1 ano");
+  });
+  it("aniversário curto e data por extenso", () => {
+    expect(birthdayShort("1990-10-12")).toBe("12 out");
+    expect(longDate("2020-03-08")).toBe("8 de março de 2020");
+  });
+  it("aniversariantes do mês em ordem de dia", () => {
+    const l = [person({ name: "B", birthDate: "1980-10-20" }), person({ name: "A", birthDate: "1990-10-02" }), person({ name: "C", birthDate: "1990-11-01" })];
+    expect(birthdaysIn(l, 10).map((p) => p.name)).toEqual(["A", "B"]);
+  });
+});
+
+describe("filtros da lista", () => {
+  const now = new Date(2026, 9, 9);
+  const list = [
+    person({ id: "1", name: "Ana Souza", status: "member", office: "Diácono(isa)", phone: "47999990000", birthDate: "1990-10-12", groupIds: ["g1"] }),
+    person({ id: "2", name: "Bruno Lima", status: "visitor_first", email: "bruno@x.com", birthDate: "1985-11-03" }),
+    person({ id: "3", name: "Álvaro Dias", status: "visitor_returning" }),
+    person({ id: "4", name: "Carla Reis", status: "inactive" }),
+    person({ id: "5", name: "Davi Paz", status: "member", archived: true }),
+    person({ id: "6", name: "Eva Nunes", status: "attendee", groupIds: ["g1", "g2"] }),
+  ];
+  const ids = (f: Partial<typeof NO_FILTERS>) => filterPeople(list, { ...NO_FILTERS, ...f }, now).map((p) => p.id);
+
+  it("sem filtro: ordem alfabética e sem arquivados", () => {
+    expect(ids({})).toEqual(["3", "1", "2", "4", "6"]);
+  });
+  it("situação: visitantes juntam os dois tipos; inativos trazem os arquivados", () => {
+    expect(ids({ s: "visitor" })).toEqual(["3", "2"]);
+    expect(ids({ s: "member" })).toEqual(["1"]);
+    expect(ids({ s: "inactive" })).toEqual(["4", "5"]);
+  });
+  it("busca ignora acento e acha por e-mail e telefone", () => {
+    expect(ids({ q: "alvaro" })).toEqual(["3"]);
+    expect(ids({ q: "bruno@x" })).toEqual(["2"]);
+    expect(ids({ q: "99999" })).toEqual(["1"]);
+  });
+  it("cargo, célula e aniversário somam", () => {
+    expect(ids({ cargo: "Diácono(isa)" })).toEqual(["1"]);
+    expect(ids({ celula: "g1" })).toEqual(["1", "6"]);
+    expect(ids({ celula: "sem" })).toEqual(["3", "2", "4"]);
+    expect(ids({ aniv: "este" })).toEqual(["1"]);
+    expect(ids({ aniv: "proximo" })).toEqual(["2"]);
+    expect(ids({ celula: "g1", s: "attendee" })).toEqual(["6"]);
+  });
+  it("vira querystring e volta igual", () => {
+    const f = { ...NO_FILTERS, s: "member" as const, cargo: "Pastor(a)", aniv: "este" as const, celula: "g1", q: "ana" };
+    const qs = filtersQuery(f);
+    expect(parseFilters(Object.fromEntries(new URLSearchParams(qs)))).toEqual(f);
+    expect(parseFilters({ s: "lixo", aniv: "x" })).toEqual(NO_FILTERS);
+  });
+  it("subtítulo da linha e rótulos", () => {
+    expect(personSubtitle(person({ office: "Diácono", phone: "47999990000" }))).toBe("Membro · Diácono · (47) 99999-0000");
+    expect(personSubtitle(person({ status: "visitor_returning" }))).toBe("Visitante");
+    expect(statusValue("visitor_returning")).toBe("visitor_first");
+    expect(normalize("Álvaro")).toBe("alvaro");
+  });
+});

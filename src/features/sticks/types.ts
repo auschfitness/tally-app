@@ -1,4 +1,4 @@
-import type { Relationship } from "./domain";
+import type { FamilyRole, PersonField, PersonLite, Relationship } from "./domain";
 
 // View model de uma Stick para a UI (campos próprios da tabela `sticks` +
 // grupo resolvido de group_members). Sub-campos ainda no app_state legado
@@ -32,4 +32,38 @@ export interface PersonInput {
   lastSeen: string;
   followup: boolean;
   email: string; // "" = sem e-mail
+}
+
+// ---- Pessoas (spec 13) ------------------------------------------------------------------
+// Linha da lista: o mínimo para filtrar, buscar e desenhar.
+export interface PersonListItem extends PersonLite {
+  photoUrl: string | null;
+}
+
+export interface FamilyMember {
+  stickId: string;
+  name: string;
+  role: FamilyRole;
+}
+
+export interface Family {
+  id: string;
+  name: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  members: FamilyMember[];
+}
+
+// Ficha inteira. `values` guarda o texto de cada campo editável ("" = vazio; datas em ISO;
+// líder como "true"/"false"), assim a tela desenha e salva todos do mesmo jeito.
+export interface PersonDetail {
+  id: string;
+  values: Record<PersonField, string>;
+  archived: boolean;
+  photoUrl: string | null;
+  family: Family | null;
+  tithes: { year: number; total: number; count: number; currency: string } | null; // null = sem acesso
 }

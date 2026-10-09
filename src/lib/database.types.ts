@@ -1737,6 +1737,11 @@ export type Database = {
       }
       households: {
         Row: {
+          address_line_1: string | null
+          address_line_2: string | null
+          city: string | null
+          postal_code: string | null
+          state: string | null
           address: string | null
           campus_id: string | null
           created_at: string
@@ -1746,6 +1751,11 @@ export type Database = {
           photo: string | null
         }
         Insert: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          city?: string | null
+          postal_code?: string | null
+          state?: string | null
           address?: string | null
           campus_id?: string | null
           created_at?: string
@@ -1755,6 +1765,11 @@ export type Database = {
           photo?: string | null
         }
         Update: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          city?: string | null
+          postal_code?: string | null
+          state?: string | null
           address?: string | null
           campus_id?: string | null
           created_at?: string
@@ -3646,6 +3661,80 @@ export type Database = {
           },
         ]
       }
+      people_lists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          filters: Json
+          id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          filters?: Json
+          id?: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          filters?: Json
+          id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_lists_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stick_documents: {
+        Row: {
+          cpf: string | null
+          org_id: string
+          rg: string | null
+          stick_id: string
+          updated_at: string
+        }
+        Insert: {
+          cpf?: string | null
+          org_id: string
+          rg?: string | null
+          stick_id: string
+          updated_at?: string
+        }
+        Update: {
+          cpf?: string | null
+          org_id?: string
+          rg?: string | null
+          stick_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stick_documents_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stick_documents_stick_id_fkey"
+            columns: ["stick_id"]
+            isOneToOne: true
+            referencedRelation: "sticks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stick_journey_records: {
         Row: {
           completed_stages: string[]
@@ -3726,6 +3815,12 @@ export type Database = {
       }
       sticks: {
         Row: {
+          admission_type: string | null
+          church_office: string | null
+          exit_date: string | null
+          exit_reason: string | null
+          marital_status: string | null
+          profession: string | null
           address_line_1: string | null
           address_line_2: string | null
           archive_reason: string | null
@@ -3772,6 +3867,12 @@ export type Database = {
           whatsapp_allowed: boolean
         }
         Insert: {
+          admission_type?: string | null
+          church_office?: string | null
+          exit_date?: string | null
+          exit_reason?: string | null
+          marital_status?: string | null
+          profession?: string | null
           address_line_1?: string | null
           address_line_2?: string | null
           archive_reason?: string | null
@@ -3818,6 +3919,12 @@ export type Database = {
           whatsapp_allowed?: boolean
         }
         Update: {
+          admission_type?: string | null
+          church_office?: string | null
+          exit_date?: string | null
+          exit_reason?: string | null
+          marital_status?: string | null
+          profession?: string | null
           address_line_1?: string | null
           address_line_2?: string | null
           archive_reason?: string | null

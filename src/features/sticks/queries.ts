@@ -2,8 +2,8 @@
 // UI). Só os campos necessários, tipadas, tratando ausência. RLS filtra por org;
 // o filtro explícito por org_id é defesa em profundidade, não substitui o RLS.
 import type { DB } from "@/lib/auth/session";
-import type { Person } from "./types";
-import { journeyCodeForPosition, type Relationship, RELATIONSHIPS } from "./domain";
+import type { Family, Person, PersonDetail, PersonListItem } from "./types";
+import { journeyCodeForPosition, statusValue, type FamilyRole, type PersonField, type Relationship, RELATIONSHIPS } from "./domain";
 
 function asRelationship(v: string): Relationship {
   return (RELATIONSHIPS as string[]).includes(v) ? (v as Relationship) : "member";
@@ -68,4 +68,153 @@ export async function listGroupNames(supabase: DB, orgId: string): Promise<strin
   const { data, error } = await supabase.from("groups").select("name").eq("org_id", orgId).order("name");
   if (error) throw new Error(error.message);
   return (data ?? []).map((g) => g.name);
+}
+
+// ---- Pessoas (spec 13) ------------------------------------------------------------------
+export const PHOTO_BUCKET = "people-photos";
+const SIGNED_SECONDS = 3600;
+
+async function signedPhotoUrls(supabase: DB, paths: string[]): Promise<Map<string, string>> {
+  const urls = new Map<string, string>();
+  if (!paths.length) return urls;
+  const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(paths, SIGNED_SECONDS);
+  for (const r of data ?? []) if (r.path && r.signedUrl) urls.set(r.path, r.signedUrl);
+  return urls;
+}
+
+// Lista de Pessoas: só os campos da lista, mais as células (grupos ativos) de cada um.
+// Arquivados vêm junto; quem decide mostrar é o filtro (chip Inativos).
+export async function listPeople(
+  supabase: DB,
+  orgId: string,
+): Promise<{ people: PersonListItem[]; groups: { id: string; name: string }[] }> {
+  const [sticksRes, membersRes, groupsRes] = await Promise.all([
+    supabase
+      .from("sticks")
+      .select("id, full_name, relationship_status, church_office, phone, whatsapp, email, birth_date, profile_photo, archived")
+      .eq("org_id", orgId)
+      .order("full_name"),
+    supabase.from("group_members").select("stick_id, group_id").eq("status", "active"),
+    supabase.from("groups").select("id, name").eq("org_id", orgId).eq("archived", false).order("name"),
+  ]);
+  if (sticksRes.error) throw new Error(sticksRes.error.message);
+
+  const groups = groupsRes.data ?? [];
+  const known = new Set(groups.map((g) => g.id));
+  const byStick = new Map<string, string[]>();
+  for (const m of membersRes.data ?? []) {
+    if (!known.has(m.group_id)) continue;
+    byStick.set(m.stick_id, [...(byStick.get(m.stick_id) ?? []), m.group_id]);
+  }
+  const rows = sticksRes.data ?? [];
+  const urls = await signedPhotoUrls(supabase, rows.flatMap((r) => (r.profile_photo ? [r.profile_photo] : [])));
+
+  return {
+    groups,
+    people: rows.map((r) => ({
+      id: r.id,
+      name: r.full_name,
+      status: asRelationship(r.relationship_status),
+      office: r.church_office ?? "",
+      phone: r.phone ?? "",
+      whatsapp: r.whatsapp ?? "",
+      email: r.email ?? "",
+      birthDate: r.birth_date,
+      archived: r.archived,
+      groupIds: byStick.get(r.id) ?? [],
+      photoUrl: r.profile_photo ? urls.get(r.profile_photo) ?? null : null,
+    })),
+  };
+}
+
+function asRole(v: string): FamilyRole {
+  return v === "head" || v === "spouse" || v === "child" ? v : "other";
+}
+
+// Ficha inteira. Documentos só chegam para quem tem members.manage (RLS: sem permissão, sem linha).
+// Dízimos do ano corrente só quando `withTithes` (quem tem finance.manage).
+export async function getPerson(supabase: DB, orgId: string, id: string, withTithes: boolean): Promise<PersonDetail | null> {
+  const { data: s, error } = await supabase.from("sticks").select("*").eq("org_id", orgId).eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!s) return null;
+
+  const year = new Date().getFullYear();
+  const [docRes, linkRes, titheRes] = await Promise.all([
+    supabase.from("stick_documents").select("cpf, rg").eq("stick_id", id).maybeSingle(),
+    supabase.from("household_members").select("household_id").eq("stick_id", id).maybeSingle(),
+    withTithes
+      ? supabase
+          .from("donations")
+          .select("amount, currency")
+          .eq("org_id", orgId)
+          .eq("stick_id", id)
+          .gte("donation_date", `${year}-01-01`)
+          .lte("donation_date", `${year}-12-31`)
+      : Promise.resolve(null),
+  ]);
+
+  let family: Family | null = null;
+  if (linkRes.data) {
+    const hh = linkRes.data.household_id;
+    const [hhRes, memRes] = await Promise.all([
+      supabase.from("households").select("*").eq("id", hh).maybeSingle(),
+      supabase.from("household_members").select("stick_id, relationship_type, sticks(full_name)").eq("household_id", hh),
+    ]);
+    if (hhRes.data) {
+      family = {
+        id: hhRes.data.id,
+        name: hhRes.data.name,
+        line1: hhRes.data.address_line_1 ?? "",
+        line2: hhRes.data.address_line_2 ?? "",
+        city: hhRes.data.city ?? "",
+        state: hhRes.data.state ?? "",
+        postalCode: hhRes.data.postal_code ?? "",
+        members: (memRes.data ?? []).map((m) => ({
+          stickId: m.stick_id,
+          name: m.sticks?.full_name ?? "",
+          role: asRole(m.relationship_type),
+        })),
+      };
+    }
+  }
+
+  const tithes = titheRes
+    ? {
+        year,
+        total: (titheRes.data ?? []).reduce((sum, d) => sum + (Number(d.amount) || 0), 0),
+        count: (titheRes.data ?? []).length,
+        currency: titheRes.data?.[0]?.currency ?? "BRL",
+      }
+    : null;
+
+  const values: Record<PersonField, string> = {
+    name: s.full_name,
+    phone: s.phone ?? "",
+    whatsapp: s.whatsapp ?? "",
+    email: s.email ?? "",
+    birthDate: s.birth_date ?? "",
+    gender: s.gender ?? "",
+    maritalStatus: s.marital_status ?? "",
+    profession: s.profession ?? "",
+    cpf: docRes.data?.cpf ?? "",
+    rg: docRes.data?.rg ?? "",
+    line1: s.address_line_1 ?? "",
+    line2: s.address_line_2 ?? "",
+    city: s.city ?? "",
+    state: s.state ?? "",
+    postalCode: s.postal_code ?? "",
+    status: statusValue(s.relationship_status),
+    firstVisit: s.first_visit_date ?? "",
+    conversionDate: s.conversion_date ?? "",
+    baptismDate: s.baptism_date ?? "",
+    admissionType: s.admission_type ?? "",
+    membershipDate: s.membership_date ?? "",
+    office: s.church_office ?? "",
+    isLeader: s.is_leader ? "true" : "false",
+    exitDate: s.exit_date ?? "",
+    exitReason: s.exit_reason ?? "",
+  };
+
+  const urls = await signedPhotoUrls(supabase, s.profile_photo ? [s.profile_photo] : []);
+  return { id: s.id, values, archived: s.archived, photoUrl: s.profile_photo ? urls.get(s.profile_photo) ?? null : null, family, tithes };
 }
