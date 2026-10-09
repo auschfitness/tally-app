@@ -50,3 +50,17 @@ Finanças > Movimentações > "Gerenciar contas"). Duas peças, ambas importante
 
 A decidir quando entrar: biblioteca de tour ou componente próprio; texto em PT e EN; onde guardar
 "já viu o tutorial" (por pessoa).
+
+## Varredura de vulnerabilidades da Anthropic (OSS Scanner), anotada em 2026-10-09
+
+Origem: https://www.anthropic.com/research/launching-opt-in-vuln-finding-service-for-open-source
+Serviço gratuito e opcional da Anthropic que usa os modelos mais fortes dela para achar falhas de
+segurança em código aberto. Os relatórios são gerados pelo modelo sem revisão humana prévia, então
+podem ter erro. Entrada por pull request em github.com/anthropics/oss-scanner, seguindo o modelo do repo.
+
+Ressalva: é para mantenedores de projetos open source de impacto crítico (critério parecido com o
+OSS-Fuzz), avaliado caso a caso. A Mercy hoje é repositório privado, então não se encaixa como está.
+
+Quando voltar: ver se algum pedaço da Mercy vira open source (ex.: dados/alinhamento bíblico em PT)
+e se teria peso para entrar; senão, usar a mesma ideia internamente (revisão de segurança com o
+Claude antes de abrir dados de membros, LGPD).
