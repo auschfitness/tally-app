@@ -68,7 +68,10 @@ for (const n of nums) {
     if (!Array.isArray(pt)) { err = "a resposta não era um array JSON [{ id, text_pt }]"; continue; }
     const cleaned = pt.map((x) => ({
       id: x.id,
-      text_pt: String(x.text_pt ?? "").replace(/[—–]/g, "-")
+      text_pt: String(x.text_pt ?? "")
+        .replace(/[—–]/g, "-")
+        .replace(/(\d{1,3}):(\d{1,3})/g, "$1.$2")
+        .replace(/&c\./g, "etc.")
     }));
     fs.writeFileSync(out, JSON.stringify(cleaned, null, 1));
     err = validate(n);

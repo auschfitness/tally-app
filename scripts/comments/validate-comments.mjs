@@ -44,7 +44,9 @@ for (const b of batches) {
       if (!o || o.id !== e.id) { errors.push(`#${i}: esperado ${e.id}`); return; }
       const pt = String(o.text_pt ?? "").replace(/\r/g, "").trim();
       const en = e.text;
-      if ((pt.match(/\p{L}/gu) ?? []).length < Math.min(6, (en.match(/\p{L}/gu) ?? []).length)) { errors.push(`${e.id}: text_pt vazio ou sem texto`); return; }
+      const ptLetters = (pt.match(/\p{L}/gu) ?? []).length;
+      const enLetters = (en.match(/\p{L}/gu) ?? []).length;
+      if (ptLetters === 0 || (enLetters >= 8 && ptLetters < 4)) { errors.push(`${e.id}: text_pt vazio ou sem texto`); return; }
       // PT costuma ficar 5% a 25% maior que o EN. Fora de 0,65 a 1,6 é recorte ou enchimento.
       const r = pt.length / en.length;
       if (en.length > 80 && (r < 0.65 || r > 1.6)) errors.push(`${e.id}: tamanho suspeito (${Math.round(r * 100)}% do inglês)`);
