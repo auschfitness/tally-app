@@ -3,7 +3,7 @@
 // o filtro explícito por org_id é defesa em profundidade, não substitui o RLS.
 import type { DB } from "@/lib/auth/session";
 import type { Family, Person, PersonDetail, PersonListItem } from "./types";
-import { journeyCodeForPosition, statusValue, type FamilyRole, type PersonField, type Relationship, RELATIONSHIPS } from "./domain";
+import { journeyCodeForPosition, PHOTO_BUCKET, statusValue, type FamilyRole, type PersonField, type Relationship, RELATIONSHIPS } from "./domain";
 
 function asRelationship(v: string): Relationship {
   return (RELATIONSHIPS as string[]).includes(v) ? (v as Relationship) : "member";
@@ -71,7 +71,6 @@ export async function listGroupNames(supabase: DB, orgId: string): Promise<strin
 }
 
 // ---- Pessoas (spec 13) ------------------------------------------------------------------
-export const PHOTO_BUCKET = "people-photos";
 const SIGNED_SECONDS = 3600;
 
 async function signedPhotoUrls(supabase: DB, paths: string[]): Promise<Map<string, string>> {
@@ -131,6 +130,26 @@ function asRole(v: string): FamilyRole {
   return v === "head" || v === "spouse" || v === "child" ? v : "other";
 }
 
+// Família (casa) com os membros e o endereço.
+export async function loadFamily(supabase: DB, householdId: string): Promise<Family | null> {
+  const [hhRes, memRes] = await Promise.all([
+    supabase.from("households").select("*").eq("id", householdId).maybeSingle(),
+    supabase.from("household_members").select("stick_id, relationship_type, sticks(full_name)").eq("household_id", householdId),
+  ]);
+  const h = hhRes.data;
+  if (!h) return null;
+  return {
+    id: h.id,
+    name: h.name,
+    line1: h.address_line_1 ?? "",
+    line2: h.address_line_2 ?? "",
+    city: h.city ?? "",
+    state: h.state ?? "",
+    postalCode: h.postal_code ?? "",
+    members: (memRes.data ?? []).map((m) => ({ stickId: m.stick_id, name: m.sticks?.full_name ?? "", role: asRole(m.relationship_type) })),
+  };
+}
+
 // Ficha inteira. Documentos só chegam para quem tem members.manage (RLS: sem permissão, sem linha).
 // Dízimos do ano corrente só quando `withTithes` (quem tem finance.manage).
 export async function getPerson(supabase: DB, orgId: string, id: string, withTithes: boolean): Promise<PersonDetail | null> {
@@ -153,30 +172,7 @@ export async function getPerson(supabase: DB, orgId: string, id: string, withTit
       : Promise.resolve(null),
   ]);
 
-  let family: Family | null = null;
-  if (linkRes.data) {
-    const hh = linkRes.data.household_id;
-    const [hhRes, memRes] = await Promise.all([
-      supabase.from("households").select("*").eq("id", hh).maybeSingle(),
-      supabase.from("household_members").select("stick_id, relationship_type, sticks(full_name)").eq("household_id", hh),
-    ]);
-    if (hhRes.data) {
-      family = {
-        id: hhRes.data.id,
-        name: hhRes.data.name,
-        line1: hhRes.data.address_line_1 ?? "",
-        line2: hhRes.data.address_line_2 ?? "",
-        city: hhRes.data.city ?? "",
-        state: hhRes.data.state ?? "",
-        postalCode: hhRes.data.postal_code ?? "",
-        members: (memRes.data ?? []).map((m) => ({
-          stickId: m.stick_id,
-          name: m.sticks?.full_name ?? "",
-          role: asRole(m.relationship_type),
-        })),
-      };
-    }
-  }
+  const family = linkRes.data ? await loadFamily(supabase, linkRes.data.household_id) : null;
 
   const tithes = titheRes
     ? {

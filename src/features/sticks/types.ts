@@ -21,19 +21,6 @@ export interface Person {
   userId: string | null; // conta ligada (auth.users) via sticks.user_id; nulo = ficha sem login
 }
 
-// Entrada validada de formulário (o que a UI pode enviar). O servidor deriva o
-// resto (org, campus_id, journey stage) — nunca confia no navegador.
-export interface PersonInput {
-  name: string;
-  relationship: Relationship;
-  isLeader: boolean;
-  campus: string;
-  group: string;
-  lastSeen: string;
-  followup: boolean;
-  email: string; // "" = sem e-mail
-}
-
 // ---- Pessoas (spec 13) ------------------------------------------------------------------
 // Linha da lista: o mínimo para filtrar, buscar e desenhar.
 export interface PersonListItem extends PersonLite {

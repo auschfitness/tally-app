@@ -1,74 +1,52 @@
 import { describe, it, expect } from "vitest";
-import { parsePersonInput } from "./schema";
+import { validateExit, validateField } from "./schema";
 
-function fd(entries: Record<string, string>): FormData {
-  const f = new FormData();
-  for (const [k, v] of Object.entries(entries)) f.set(k, v);
-  return f;
-}
-
-describe("parsePersonInput (validação de fronteira)", () => {
-  it("aceita entrada válida e normaliza tipos", () => {
-    const r = parsePersonInput(
-      fd({ name: "  Ruth Alves ", relationship: "member", campus: "Sede", group: "Célula A", lastSeen: "2026-07-01", isLeader: "on", followup: "" }),
-    );
-    expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect(r.data.name).toBe("Ruth Alves");
-      expect(r.data.relationship).toBe("member");
-      expect(r.data.isLeader).toBe(true);
-      expect(r.data.followup).toBe(false);
-    }
+describe("validateField (fronteira da ficha)", () => {
+  it("nome é obrigatório e vem aparado", () => {
+    expect(validateField("name", "   ")).toEqual({ ok: false, error: "Informe o nome." });
+    expect(validateField("name", "  Ruth Alves ")).toEqual({ ok: true, text: "Ruth Alves", value: "Ruth Alves" });
   });
-
-  it("rejeita nome vazio com erro de campo", () => {
-    const r = parsePersonInput(fd({ name: "   ", relationship: "member" }));
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.fieldErrors.name).toBeDefined();
+  it("vazio limpa campos opcionais (null)", () => {
+    expect(validateField("phone", "")).toEqual({ ok: true, text: "", value: null });
+    expect(validateField("maritalStatus", "")).toEqual({ ok: true, text: "", value: null });
   });
-
-  it("relação inválida cai para 'member' (nunca inventa enum)", () => {
-    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "hacker" }));
-    expect(r.ok).toBe(true);
-    if (r.ok) expect(r.data.relationship).toBe("member");
+  it("situação e líder não aceitam vazio; líder vira booleano", () => {
+    expect(validateField("status", "").ok).toBe(false);
+    expect(validateField("isLeader", "true")).toEqual({ ok: true, text: "true", value: true });
+    expect(validateField("isLeader", "false")).toEqual({ ok: true, text: "false", value: false });
   });
-
-  it("data de última presença malformada é erro de campo", () => {
-    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member", lastSeen: "01/07/2026" }));
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.fieldErrors.lastSeen).toBeDefined();
+  it("selects só aceitam as opções da lista", () => {
+    expect(validateField("maritalStatus", "married").ok).toBe(true);
+    expect(validateField("maritalStatus", "casado").ok).toBe(false);
+    expect(validateField("status", "visitor_returning").ok).toBe(false);
   });
-
-  it("exige nome completo: rejeita um nome só", () => {
-    for (const name of ["João", "Maria", "Ana P"]) {
-      const r = parsePersonInput(fd({ name, relationship: "member" }));
-      expect(r.ok, name).toBe(false);
-      if (!r.ok) expect(r.fieldErrors.name).toBeDefined();
-    }
+  it("CPF: dígitos verificadores; guarda só os dígitos", () => {
+    expect(validateField("cpf", "529.982.247-25")).toEqual({ ok: true, text: "52998224725", value: "52998224725" });
+    expect(validateField("cpf", "529.982.247-24")).toEqual({ ok: false, error: "CPF inválido." });
   });
-
-  it("exige nome completo: aceita nome e sobrenome", () => {
-    for (const name of ["João Silva", "Ana Souza", "Maria de Lurdes"]) {
-      const r = parsePersonInput(fd({ name, relationship: "member" }));
-      expect(r.ok, name).toBe(true);
-    }
+  it("e-mail e telefone", () => {
+    expect(validateField("email", "a@b").ok).toBe(false);
+    expect(validateField("email", "a@b.com").ok).toBe(true);
+    expect(validateField("phone", "(47) 99999-0000").ok).toBe(true);
+    expect(validateField("phone", "abc").ok).toBe(false);
+    expect(validateField("phone", "123").ok).toBe(false);
   });
-
-  it("e-mail é opcional: ausente vira string vazia", () => {
-    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member" }));
-    expect(r.ok).toBe(true);
-    if (r.ok) expect(r.data.email).toBe("");
+  it("datas: reais, e nascimento não pode ser futuro", () => {
+    expect(validateField("baptismDate", "2020-02-30").ok).toBe(false);
+    expect(validateField("baptismDate", "2020-02-29").ok).toBe(true);
+    expect(validateField("birthDate", "2030-01-01", "2026-10-09").ok).toBe(false);
+    expect(validateField("birthDate", "1990-01-01", "2026-10-09").ok).toBe(true);
   });
-
-  it("aceita e-mail válido e normaliza (trim)", () => {
-    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member", email: "  ana@igreja.com " }));
-    expect(r.ok).toBe(true);
-    if (r.ok) expect(r.data.email).toBe("ana@igreja.com");
+  it("UF em maiúsculas e CEP formatado", () => {
+    expect(validateField("state", "sc")).toEqual({ ok: true, text: "SC", value: "SC" });
+    expect(validateField("postalCode", "89200000")).toEqual({ ok: true, text: "89200-000", value: "89200-000" });
   });
+});
 
-  it("e-mail malformado é erro de campo", () => {
-    const r = parsePersonInput(fd({ name: "Ana Souza", relationship: "member", email: "ana(arroba)igreja" }));
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.fieldErrors.email).toBeDefined();
+describe("validateExit", () => {
+  it("exige data real e motivo da lista", () => {
+    expect(validateExit("2026-10-01", "moved").ok).toBe(true);
+    expect(validateExit("", "moved").ok).toBe(false);
+    expect(validateExit("2026-10-01", "x").ok).toBe(false);
   });
 });

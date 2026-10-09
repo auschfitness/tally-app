@@ -152,6 +152,8 @@ export const ROLE_OPTIONS: Opt = [
   ["child", "Filho(a)"],
   ["other", "Outro"],
 ];
+// Bucket privado das fotos (caminho <org>/<pessoa>.jpg).
+export const PHOTO_BUCKET = "people-photos";
 export const OFFICE_SUGGESTIONS = ["Membro", "Diácono(isa)", "Presbítero", "Pastor(a)", "Evangelista", "Missionário(a)", "Líder de ministério"];
 const YES_NO: Opt = [
   ["true", "Sim"],
@@ -188,7 +190,7 @@ export const FIELD_META = {
   profession: { label: "Profissão", kind: "text", column: "profession", max: 120 },
   cpf: { label: "CPF", kind: "cpf", column: null },
   rg: { label: "RG", kind: "text", column: null, max: 20 },
-  line1: { label: "Endereço", kind: "text", column: "address_line_1", max: 160 },
+  line1: { label: "Rua e número", kind: "text", column: "address_line_1", max: 160 },
   line2: { label: "Complemento", kind: "text", column: "address_line_2", max: 160 },
   city: { label: "Cidade", kind: "text", column: "city", max: 80 },
   state: { label: "UF", kind: "text", column: "state", max: 40 },

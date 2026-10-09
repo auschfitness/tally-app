@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import { PeopleScreen } from "@/features/sticks/components/PeopleScreen";
 
-// Ficha aberta direto pela URL. A tela de verdade chega com a lista e a ficha (A3/A4).
+// Ficha aberta direto pela URL: mesma tela, já com esta pessoa selecionada.
 export default async function PersonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  redirect(`/people?p=${encodeURIComponent(id)}`);
+  return <PeopleScreen sp={{}} forcedId={id} />;
 }
