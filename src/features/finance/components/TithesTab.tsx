@@ -1,8 +1,9 @@
 "use client";
 
-// Aba Dízimos (spec 10, fase 3): quem contribuiu no período, por pessoa. Tocar na pessoa
-// abre as contribuições dela com o recibo de cada uma e a declaração anual. Registrar é
-// o mesmo painel de lançamento (Entrada/Dízimos), então tudo cai no livro.
+// Aba Dízimos (spec 10, fase 3): quanto entrou em dízimos e ofertas no mês (o livro todo,
+// inclusive o que veio do banco sem nome) e, embaixo, quem contribuiu, por pessoa. Tocar na
+// pessoa abre as contribuições dela com o recibo de cada uma e a declaração anual. "Lançar
+// culto" registra vários de uma vez; o PIX com nome vira dízimo da pessoa no Classificar.
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { brDate, isoDate, today } from "@/lib/utils/date";
@@ -21,12 +22,16 @@ export function TithesTab({
   donations,
   receipts,
   range,
+  monthName,
+  givingTotal,
   currency,
   onRegister,
 }: {
   donations: Donation[];
   receipts: ReceiptListItem[];
   range: PeriodRange;
+  monthName: string;
+  givingTotal: number; // dízimos, ofertas e doações do mês no livro, com ou sem nome
   currency: string;
   onRegister: () => void;
 }) {
@@ -47,13 +52,16 @@ export function TithesTab({
   const donors = q ? allDonors.filter((t) => normalize(t.name).includes(q)) : allDonors;
   const opened = openKey ? allDonors.find((t) => t.key === openKey) : undefined;
 
-  if (donations.length === 0) {
+  const named = sumDonations(inRange);
+  const unnamed = Math.max(0, givingTotal - named);
+
+  if (donations.length === 0 && givingTotal === 0) {
     return (
       <div className={styles.empty}>
-        <div className={styles.emptyTitle}>Nenhum dízimo registrado ainda</div>
-        <p>Registre a contribuição com o nome da pessoa. Ela aparece aqui e o recibo sai pronto.</p>
+        <div className={styles.emptyTitle}>Nenhum dízimo em {monthName}</div>
+        <p>Depois do culto, lance os envelopes numa lista só: nome, valor, Enter. O PIX que chega com nome no extrato entra sozinho.</p>
         <button type="button" className={`btn ${styles.press}`} onClick={onRegister}>
-          Registrar dízimo
+          Lançar culto
         </button>
       </div>
     );
@@ -61,11 +69,16 @@ export function TithesTab({
 
   return (
     <>
-      <section className={styles.hero} aria-label="Total do período">
-        <div className={styles.heroLabel}>Contribuições no período</div>
-        <div className={styles.heroValue}>{money(sumDonations(inRange), currency)}</div>
+      <section className={styles.hero} aria-label="Total do mês">
+        <div className={styles.heroLabel}>Dízimos e ofertas em {monthName}</div>
+        <div className={styles.heroValue}>{money(Math.max(givingTotal, named), currency)}</div>
         <div className={styles.periodSummary}>
-          {allDonors.length === 1 ? "1 pessoa contribuiu" : `${allDonors.length} pessoas contribuíram`}
+          <b>{money(named, currency)}</b> de {allDonors.length === 1 ? "1 pessoa" : `${allDonors.length} pessoas`}
+          {unnamed >= 0.005 ? (
+            <>
+              {" "}· <b>{money(unnamed, currency)}</b> sem nome (ofertas do culto, PIX sem identificação)
+            </>
+          ) : null}
         </div>
       </section>
 
@@ -80,8 +93,8 @@ export function TithesTab({
 
       {donors.length === 0 ? (
         <div className={styles.empty}>
-          <div className={styles.emptyTitle}>{query ? "Ninguém com esse nome" : "Nada neste período"}</div>
-          <p>{query ? "Confira a grafia ou limpe a busca." : "Troque o período no topo para ver outros meses."}</p>
+          <div className={styles.emptyTitle}>{query ? "Ninguém com esse nome" : "Nenhuma contribuição com nome"}</div>
+          <p>{query ? "Confira a grafia ou limpe a busca." : "Use “Lançar culto” para os envelopes. PIX com nome no extrato entra aqui ao classificar."}</p>
         </div>
       ) : (
         donors.map((t) => (

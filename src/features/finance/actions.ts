@@ -184,3 +184,87 @@ export async function deactivateAccountAction(accountId: string): Promise<Action
   revalidateFinance();
   return ok(undefined);
 }
+
+// ── Lançar culto ─────────────────────────────────────────────────────────────────────
+// Vários dízimos de uma vez (envelopes) + as ofertas soltas do culto. Cada linha vira um
+// lançamento com a pessoa (recibo pronto); a oferta sem nome entra como um lançamento só.
+
+export interface CultoInput {
+  date: string;
+  accountId: string;
+  titheCategoryId: string;
+  offeringCategoryId: string | null;
+  method: string;
+  tithes: { stickId: string | null; name: string; amount: number }[];
+  offering: number;
+}
+
+const MAX_CULTO_ROWS = 300;
+
+export async function recordCultoAction(input: CultoInput): Promise<ActionResult<{ entryIds: string[]; failed: number; lastError: string }>> {
+  const tithes = (Array.isArray(input.tithes) ? input.tithes : [])
+    .map((t) => ({ stickId: t.stickId || null, name: String(t.name ?? "").trim().slice(0, 120), amount: Math.round(Number(t.amount) * 100) / 100 }))
+    .filter((t) => t.amount > 0);
+  const offering = Math.round(Number(input.offering) * 100) / 100;
+  if (tithes.length > MAX_CULTO_ROWS) return fail("Muitas linhas de uma vez.");
+  if (tithes.length === 0 && !(offering > 0)) return fail("Nada para lançar.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return fail("Data inválida.");
+
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  const { supabase, orgId } = ctx;
+
+  const entryIds: string[] = [];
+  let failed = 0;
+  let lastError = "";
+  const record = async (counter: string, amount: number, memo: string, donor?: { stickId: string | null; name: string }): Promise<void> => {
+    const { data, error } = await supabase.rpc("record_transaction", {
+      p_org: orgId,
+      p_kind: "in",
+      p_amount: amount,
+      p_date: input.date,
+      p_account: input.accountId,
+      p_counter: counter,
+      p_memo: memo,
+      p_method: input.method,
+      ...(donor?.stickId ? { p_donor_stick: donor.stickId } : donor?.name ? { p_donor_name: donor.name } : {}),
+    });
+    if (error || !data) {
+      failed++;
+      lastError = friendlyFinanceError(toMessage(error, "Não consegui lançar."));
+      return;
+    }
+    entryIds.push(data);
+    if (donor?.stickId) {
+      await supabase.from("timeline_events").insert({
+        org_id: orgId,
+        stick_id: donor.stickId,
+        event_type: "donation_recorded",
+        source_module: "finance",
+        source_record_id: data,
+        title: "Contribuição registrada",
+        summary: "Contribuição registrada",
+        occurred_at: new Date().toISOString(),
+      });
+    }
+  };
+
+  for (const t of tithes) await record(input.titheCategoryId, t.amount, t.name ? `Dízimo de ${t.name}` : "Dízimo", t);
+  if (offering > 0) await record(input.offeringCategoryId ?? input.titheCategoryId, offering, "Ofertas do culto");
+
+  revalidateFinance();
+  return ok({ entryIds, failed, lastError });
+}
+
+// Desfazer um lote inteiro (Lançar culto).
+export async function voidEntriesAction(entryIds: string[]): Promise<ActionResult> {
+  const ctx = await requireOrg();
+  if (!can(ctx, "finance.manage")) return fail(DENIED);
+  if (!Array.isArray(entryIds) || entryIds.length > MAX_CULTO_ROWS + 1) return fail("Nada para desfazer.");
+  for (const id of entryIds) {
+    const { error } = await ctx.supabase.rpc("void_journal_entry", { p_entry: id });
+    if (error) return fail(friendlyFinanceError(toMessage(error, "Não consegui desfazer.")));
+  }
+  revalidateFinance();
+  return ok(undefined);
+}

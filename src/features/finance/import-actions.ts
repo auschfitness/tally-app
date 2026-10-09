@@ -173,7 +173,7 @@ export async function listPendingAction(): Promise<ActionResult<PendingData>> {
 
 // Classifica em lote: cada linha vira um lançamento no livro (record_transaction) e fica
 // ligada a ele. Uma falha não derruba as outras; o resultado conta as duas.
-export async function classifyLinesAction(items: { id: string; counterId: string }[]): Promise<ActionResult<{ done: number; failed: number; lastError: string }>> {
+export async function classifyLinesAction(items: { id: string; counterId: string; donorStickId?: string | null; donorName?: string | null }[]): Promise<ActionResult<{ done: number; failed: number; lastError: string }>> {
   const ctx = await requireOrg();
   if (!can(ctx, "finance.manage")) return fail(DENIED);
   const { supabase, orgId } = ctx;
@@ -196,6 +196,9 @@ export async function classifyLinesAction(items: { id: string; counterId: string
       continue;
     }
     const amount = Number(line.amount);
+    // Entrada com nome (PIX do membro): vira contribuição da pessoa, com recibo.
+    const donorName = item.donorStickId ? null : String(item.donorName ?? "").trim().slice(0, 120) || null;
+    const hasDonor = amount > 0 && (item.donorStickId || donorName);
     const { data: entryId, error } = await supabase.rpc("record_transaction", {
       p_org: orgId,
       p_kind: amount > 0 ? "in" : "out",
@@ -204,6 +207,9 @@ export async function classifyLinesAction(items: { id: string; counterId: string
       p_account: line.account_id,
       p_counter: item.counterId,
       p_memo: line.description,
+      ...(hasDonor ? { p_method: /\bpix\b/i.test(line.description) ? "pix" : "transferencia" } : {}),
+      ...(hasDonor && item.donorStickId ? { p_donor_stick: item.donorStickId } : {}),
+      ...(hasDonor && donorName ? { p_donor_name: donorName } : {}),
     });
     if (error || !entryId) {
       failed++;
@@ -211,6 +217,18 @@ export async function classifyLinesAction(items: { id: string; counterId: string
       continue;
     }
     await supabase.from("bank_transactions").update({ status: "classified", journal_entry_id: entryId }).eq("id", item.id);
+    if (hasDonor && item.donorStickId) {
+      await supabase.from("timeline_events").insert({
+        org_id: orgId,
+        stick_id: item.donorStickId,
+        event_type: "donation_recorded",
+        source_module: "finance",
+        source_record_id: entryId,
+        title: "Contribuição registrada",
+        summary: "Contribuição registrada",
+        occurred_at: new Date().toISOString(),
+      });
+    }
     done++;
   }
   revalidatePath("/finance");

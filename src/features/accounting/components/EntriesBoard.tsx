@@ -32,7 +32,7 @@ export function EntriesBoard({ entries, currency }: { entries: JournalEntry[]; c
   );
 
   return (
-    <div className="panel">
+    <div className={`panel ${styles.flat}`}>
       <div className={styles.head}>
         <div className={styles.toolbar}>
           <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="accounting.entries" />

@@ -56,6 +56,14 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
   vencimento a ±5 dias, uma conta por linha) e `import-actions.ts#payBillFromLineAction`
   (`pay_bill` com data/valor do extrato + liga a linha). No Classificar aparece "É X de dd/mm?
   Sim, pagar"; a linha vem desmarcada para não ser lançada de novo.
+- Revisão de praticidade (2026-10-08): mês à vista com setas (`components/MonthNav.tsx`, no lugar
+  do menu de período); linhas do extrato sem categoria (`FinanceLedger.pending`) entram no saldo e
+  no dia delas, marcadas "Sem categoria"; "Qual é o banco?" na conta sem banco; nomes do extrato
+  limpos na tela (`bankText.ts#cleanMemo`, o original fica no detalhe). Dízimos: total do mês vem
+  do livro (com e sem nome); "Lançar culto" (`components/CultoForm.tsx`, `actions.ts#recordCultoAction`,
+  Desfazer anula o lote); PIX recebido com nome vira contribuição da pessoa no Classificar
+  (`bankText.ts#donorFromLine`). Abas: Movimentações, Contas, Dízimos, Relatórios (Fechamento
+  do mês + área do contador como sub-abas; a antiga Visão geral do contador redireciona).
 
 ## Banco
 - m65 (`finance_files`, bucket privado `finance-files` com pasta = org, `pay_bill`/`unpay_bill` levando os anexos),
@@ -66,5 +74,5 @@ tesoureiro: entrada, saída, transferência, saldo por conta.
 - `finance_entries` / `finance_categories` estão aposentadas: nada lê nem grava.
 
 ## Rota
-- `/finance`, `?aba=contas`, `?aba=dizimos`, `?aba=fechamento`; contador em `/finance/contador/*`
+- `/finance`, `?aba=contas`, `?aba=dizimos`, `?aba=fechamento` (Relatórios); contador em `/finance/contador/*` (sub-abas de Relatórios)
   (componentes de `features/accounting`; `/accounting/*` redireciona) (só `finance.manage`); recibo em `/finance/recibo/[id]`. As 5 fases da spec estão prontas; Finanças está liberada no menu (`STUDY_ONLY_KEEPS`).

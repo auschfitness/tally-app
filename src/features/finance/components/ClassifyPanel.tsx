@@ -5,13 +5,15 @@
 // categoria de algo novo? Um toque em "Sempre" lembra para as próximas; tocar de novo
 // ("✓ Sempre") esquece. "Regras" lista tudo que foi lembrado, com Esquecer em cada uma.
 // Linha que parece uma conta aberta (spec 12, fase D) oferece pagar a conta com ela.
+// PIX recebido com nome, classificado como dízimo/oferta, vira contribuição da pessoa.
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/shared/Select";
 import { brDate } from "@/lib/utils/date";
 import { money } from "@/lib/utils/money";
 import { classifyLinesAction, forgetRuleAction, ignoreLinesAction, linkLineAction, listPendingAction, payBillFromLineAction, rememberRuleAction, type PendingData } from "../import-actions";
-import { findManualMatch, leafAccounts, type BankLine, type CategoryRule, type LedgerAccount, type Movement } from "../domain";
+import { cleanMemo, donorFromLine, type LineDonor } from "../bankText";
+import { findManualMatch, isGivingCategory, leafAccounts, type BankLine, type CategoryRule, type LedgerAccount, type Movement } from "../domain";
 import { findBillMatch, type Bill } from "../bills";
 import { suggestFor, type Suggestion } from "../suggest";
 import styles from "../finance.module.css";
@@ -20,12 +22,14 @@ export function ClassifyPanel({
   accounts,
   movements,
   bills,
+  people,
   currency,
   onClose,
 }: {
   accounts: LedgerAccount[];
   movements: Movement[];
   bills: Bill[];
+  people: { id: string; name: string }[];
   currency: string;
   onClose: () => void;
 }) {
@@ -34,11 +38,12 @@ export function ClassifyPanel({
   const [manual, setManual] = useState<Record<string, string>>({}); // escolhas feitas à mão
   const [toggled, setToggled] = useState<Record<string, boolean>>({}); // marcações feitas à mão
   const [isShowingRules, setIsShowingRules] = useState(false);
+  const [notPerson, setNotPerson] = useState<Record<string, boolean>>({}); // "Não é pessoa"
   const [message, setMessage] = useState("");
   const [isSaving, startSaving] = useTransition();
 
   const nameOf = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
-  const revenue = leafAccounts(accounts, "revenue");
+  const revenue = useMemo(() => leafAccounts(accounts, "revenue"), [accounts]);
   const expense = leafAccounts(accounts, "expense");
 
   const load = useCallback(async () => {
@@ -57,14 +62,25 @@ export function ClassifyPanel({
   }, [load]);
 
   const linked = useMemo(() => new Set(data?.linkedEntryIds ?? []), [data]);
+  const donors = useMemo(() => {
+    const m = new Map<string, LineDonor>();
+    for (const line of data?.lines ?? []) {
+      const d = donorFromLine(line, people);
+      if (d) m.set(line.id, d);
+    }
+    return m;
+  }, [data, people]);
+  // PIX recebido de uma pessoa, sem outra pista: o mais provável é dízimo.
+  const titheId = useMemo(() => revenue.find((a) => /d[ií]zimo/i.test(a.name))?.id, [revenue]);
   const suggestions = useMemo(() => {
     const m = new Map<string, Suggestion>();
     for (const line of data?.lines ?? []) {
       const s = suggestFor(line, data?.rules ?? [], data?.history ?? [], accounts);
       if (s) m.set(line.id, s);
+      else if (titheId && donors.has(line.id)) m.set(line.id, { accountId: titheId, source: "known", reason: "Entrada de uma pessoa: parece dízimo" });
     }
     return m;
-  }, [data, accounts]);
+  }, [data, accounts, donors, titheId]);
 
   // Uma conta é oferecida a uma linha só (a primeira da fila que bate com ela).
   const billMatches = useMemo(() => {
@@ -79,6 +95,9 @@ export function ClassifyPanel({
     }
     return m;
   }, [data, bills]);
+
+  const givingIds = useMemo(() => new Set(accounts.filter((a) => a.type === "revenue" && isGivingCategory(a.name)).map((a) => a.id)), [accounts]);
+  const donorOf = (id: string): LineDonor | undefined => (notPerson[id] || !givingIds.has(choiceOf(id)) ? undefined : donors.get(id));
 
   const choiceOf = (id: string): string => manual[id] ?? suggestions.get(id)?.accountId ?? "";
   // Linha que bate com uma conta vem desmarcada: o caminho é "Sim, pagar", não lançar de novo.
@@ -131,7 +150,12 @@ export function ClassifyPanel({
   const classify = (): void => {
     setMessage("");
     startSaving(async () => {
-      const res = await classifyLinesAction(ready.map((l) => ({ id: l.id, counterId: choiceOf(l.id) })));
+      const res = await classifyLinesAction(
+        ready.map((l) => {
+          const d = donorOf(l.id);
+          return { id: l.id, counterId: choiceOf(l.id), donorStickId: d?.stickId ?? null, donorName: d && !d.stickId ? d.name : null };
+        }),
+      );
       if (!res.success) {
         setMessage(res.message);
         return;
@@ -205,7 +229,7 @@ export function ClassifyPanel({
                   onChange={() => setToggled((t) => ({ ...t, [line.id]: !isChecked(line.id) }))}
                 />
                 <span className={styles.rowTitle}>
-                  {brDate(line.date)} · {line.description || "Sem descrição"}
+                  {brDate(line.date)} · <span title={line.description}>{cleanMemo(line.description) || "Sem descrição"}</span>
                 </span>
                 <b className={`${styles.amount}${line.amount > 0 ? ` ${styles.in}` : ""}`}>
                   {line.amount > 0 ? "+" : "−"}
@@ -237,6 +261,15 @@ export function ClassifyPanel({
                 ) : null}
               </div>
               {suggestion && suggestion.accountId === choice ? <div className={styles.reason}>{suggestion.reason}</div> : null}
+              {donorOf(line.id) ? (
+                <div className={styles.donorHint}>
+                  De {donorOf(line.id)?.name}
+                  {donorOf(line.id)?.stickId ? <span>(cadastrada)</span> : null}
+                  <button type="button" className="link" onClick={() => setNotPerson((n) => ({ ...n, [line.id]: true }))}>
+                    Não é pessoa
+                  </button>
+                </div>
+              ) : null}
               {bill ? (
                 <div className={`${styles.matchHint} ${styles.billHint}`}>
                   É {bill.description} de {brDate(bill.dueDate).slice(0, 5)}?

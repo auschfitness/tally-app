@@ -55,7 +55,7 @@ export function ReportsBoard({
   }
 
   return (
-    <div className="panel">
+    <div className={`panel ${styles.flat}`}>
       <div className={styles.head}>
         <nav className="tabs2" aria-label="Relatório" style={{ margin: 0, border: "none" }}>
           <button type="button" className={`tab${tab === "trial" ? " on" : ""}`} onClick={() => setTab("trial")}>

@@ -32,7 +32,7 @@ export function EntryView({ entry, currency }: { entry: EntryDetail; currency: s
   }
 
   return (
-    <div className="panel">
+    <div className={`panel ${styles.flat}`}>
       <div className={styles.head}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

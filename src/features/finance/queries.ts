@@ -4,7 +4,7 @@
 // ponytail: livro inteiro numa ida; paginar por período quando uma igreja passar de alguns
 // milhares de lançamentos.
 import type { DB } from "@/lib/auth/session";
-import { toMovement, type LedgerAccount, type LedgerEntry, type LedgerLine, type Movement } from "./domain";
+import { toMovement, type BankLine, type LedgerAccount, type LedgerEntry, type LedgerLine, type Movement } from "./domain";
 import { FILES_BUCKET, type FinanceFile } from "./files";
 import { addMonths, HORIZON_MONTHS, needsExtension, pendingOccurrences, type Bill, type BillFrequency, type BillKind, type BillSeries } from "./bills";
 
@@ -17,7 +17,7 @@ export interface FinanceLedger {
   people: { id: string; name: string }[];
   currency: string;
   orgName: string;
-  pendingCount: number; // linhas de extrato esperando classificação
+  pending: BankLine[]; // linhas de extrato esperando categoria: já contam no saldo e aparecem no mês
 }
 
 export const ACCOUNT_COLUMNS = "id, code, name, type, parent_id, is_active, bank_code, is_default, statement_acct_id";
@@ -63,7 +63,7 @@ export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLe
     supabase.from("funds").select("id, name").eq("org_id", orgId).order("name"),
     supabase.from("sticks").select("id, full_name").eq("org_id", orgId).order("full_name"),
     supabase.from("organizations").select("name, currency, country").eq("id", orgId).maybeSingle(),
-    supabase.from("bank_transactions").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "pending"),
+    supabase.from("bank_transactions").select("id, account_id, posted_at, amount, description").eq("org_id", orgId).eq("status", "pending").order("posted_at", { ascending: false }),
   ]);
   if (accRes.error) throw new Error(accRes.error.message);
   if (entRes.error) throw new Error(entRes.error.message);
@@ -100,7 +100,7 @@ export async function loadLedger(supabase: DB, orgId: string): Promise<FinanceLe
     people: (stickRes.data ?? []).map((s) => ({ id: s.id, name: s.full_name })),
     currency: orgRes.data?.currency ?? (orgRes.data?.country === "US" ? "USD" : "BRL"),
     orgName: orgRes.data?.name ?? "",
-    pendingCount: pendingRes.count ?? 0,
+    pending: (pendingRes.data ?? []).map((r) => ({ id: r.id, accountId: r.account_id, date: r.posted_at, amount: Number(r.amount), description: r.description })),
   };
 }
 

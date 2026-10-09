@@ -1,15 +1,13 @@
 "use client";
 
-// Finanças (spec 10) — casca do módulo: cabeçalho com período e UMA ação primária, abas
-// (Movimentações · Dízimos), o painel de lançamento e o aviso com Desfazer. Salvar
-// nunca pede confirmação: mostra "Desfazer" por alguns segundos.
+// Finanças (spec 10) — casca do módulo: cabeçalho com UMA ação primária, abas, o mês à
+// vista ("‹ Outubro de 2026 ›"), os painéis e o aviso com Desfazer. Salvar nunca pede
+// confirmação: mostra "Desfazer" por alguns segundos.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PeriodFilter } from "@/components/shared/PeriodFilter";
-import { resolvePeriod, type PeriodRange, type PeriodValue } from "@/lib/utils/period";
-import { isoDate, today } from "@/lib/utils/date";
+import { inPeriod } from "@/lib/utils/period";
 import type { Donation, ReceiptListItem } from "@/features/giving/types";
-import { voidTransactionAction } from "../actions";
+import { voidEntriesAction } from "../actions";
 import { accountBalances, isGivingCategory, leafAccounts, type TxKind } from "../domain";
 import type { FinanceLedger } from "../queries";
 import { Panel } from "./Panel";
@@ -20,7 +18,9 @@ import { AccountsManager } from "./AccountsManager";
 import { ImportPanel } from "./ImportPanel";
 import { ClassifyPanel } from "./ClassifyPanel";
 import { TithesTab } from "./TithesTab";
-import { FinanceTabs, type FinanceTabKey } from "./FinanceTabs";
+import { FinanceTabs, ReportsTabs } from "./FinanceTabs";
+import { CultoForm } from "./CultoForm";
+import { MonthNav, monthLabel, monthRange, shiftMonth, thisMonth } from "./MonthNav";
 import { BillsTab } from "./BillsTab";
 import { BillForm } from "./BillForm";
 import { BillDetail } from "./BillDetail";
@@ -28,18 +28,18 @@ import { WeekStrip } from "./WeekStrip";
 import { ResolvePanel } from "./ResolvePanel";
 import type { Bill, BillKind, BillSeries } from "../bills";
 import type { FinanceFile } from "../files";
-import { ClosingTab, shiftMonth } from "./ClosingTab";
+import { ClosingTab } from "./ClosingTab";
 import styles from "../finance.module.css";
 
 const TOAST_MS = 6000;
 const SHORT_TOAST_MS = 2500;
 
-export type FinanceTab = Exclude<FinanceTabKey, "contador">;
+export type FinanceTab = "movimentacoes" | "contas" | "dizimos" | "fechamento";
 
-type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts" } | { mode: "import" } | { mode: "classify" } | { mode: "bill-new" } | { mode: "bill"; id: string } | { mode: "bill-edit"; id: string } | { mode: "resolve"; kind: BillKind } | null;
+type PanelState = { mode: "new"; kind?: TxKind; counterId?: string } | { mode: "view"; id: string } | { mode: "accounts"; pickBankFor?: string } | { mode: "culto" } | { mode: "import" } | { mode: "classify" } | { mode: "bill-new" } | { mode: "bill"; id: string } | { mode: "bill-edit"; id: string } | { mode: "resolve"; kind: BillKind } | null;
 interface ToastState {
   message: string;
-  undoEntryId?: string;
+  undoEntryIds?: string[];
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -65,12 +65,15 @@ export function FinanceBoard({
 }) {
   const router = useRouter();
   const { accounts, entries, lines, movements, currency } = ledger;
-  const [range, setRange] = useState<PeriodRange>(() => resolvePeriod("thisMonth", new Date()));
+  const [month, setMonth] = useState(thisMonth);
+  const range = useMemo(() => monthRange(month), [month]);
+  // "outubro" no ano corrente; "outubro de 2025" nos outros.
+  const monthName = month.slice(0, 4) === thisMonth().slice(0, 4) ? monthLabel(month).replace(/ de \d{4}$/, "") : monthLabel(month);
   const [panel, setPanelState] = useState<PanelState>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [freshId, setFreshId] = useState<string | null>(null);
   // Fechamento abre no mês passado: é o que o tesoureiro fecha no começo do mês.
-  const [closingMonth, setClosingMonth] = useState(() => shiftMonth(isoDate(today()).slice(0, 7), -1));
+  const [closingMonth, setClosingMonth] = useState(() => shiftMonth(thisMonth(), -1));
   const toastTimer = useRef<number | undefined>(undefined);
 
   // Abrir um painel tira o aviso da frente (no celular ele cobriria o botão Salvar).
@@ -82,21 +85,31 @@ export function FinanceBoard({
     setPanelState(next);
   }, []);
 
-  const onPeriod = useCallback((v: PeriodValue) => setRange({ from: v.from, to: v.to }), []);
   const balances = useMemo(() => accountBalances(accounts, entries, lines), [accounts, entries, lines]);
   const nameById = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
   const nameOf = useCallback((id: string | null) => (id && nameById.get(id)) || "", [nameById]);
   const clipIds = useMemo(() => new Set(files.flatMap((f) => [f.billId, f.entryId]).filter((id): id is string => !!id)), [files]);
-  const titheCategoryId = useMemo(
-    () => leafAccounts(accounts, "revenue").find((a) => isGivingCategory(a.name))?.id,
-    [accounts],
-  );
+  const revenue = useMemo(() => leafAccounts(accounts, "revenue"), [accounts]);
+  const titheCategoryId = revenue.find((a) => /d[ií]zimo/i.test(a.name))?.id ?? revenue.find((a) => isGivingCategory(a.name))?.id;
+  const offeringCategoryId = revenue.find((a) => /oferta/i.test(a.name))?.id ?? null;
+  // Conta que abre nos formulários: a padrão; sem padrão, a que mais tem lançamentos (o banco).
+  const preferredAccountId = useMemo(() => {
+    const assets = leafAccounts(accounts, "asset");
+    const marked = assets.find((a) => a.isDefault)?.id;
+    if (marked) return marked;
+    const uses = new Map<string, number>();
+    for (const m of movements) if (m.status === "posted" && m.accountId) uses.set(m.accountId, (uses.get(m.accountId) ?? 0) + 1);
+    return [...assets].sort((a, b) => (uses.get(b.id) ?? 0) - (uses.get(a.id) ?? 0))[0]?.id ?? "";
+  }, [accounts, movements]);
+  const givingTotal = useMemo(() => {
+    const giving = new Set(revenue.filter((a) => isGivingCategory(a.name)).map((a) => a.id));
+    return movements
+      .filter((m) => m.status === "posted" && m.kind === "in" && m.counterId && giving.has(m.counterId) && inPeriod(m.date, range))
+      .reduce((s, m) => s + m.amount, 0);
+  }, [movements, revenue, range]);
 
   const openNew = useCallback(
-    () =>
-      setPanel(
-        tab === "contas" ? { mode: "bill-new" } : tab === "dizimos" ? { mode: "new", kind: "in", counterId: titheCategoryId } : { mode: "new" },
-      ),
+    () => setPanel(tab === "contas" ? { mode: "bill-new" } : tab === "dizimos" && titheCategoryId ? { mode: "culto" } : { mode: "new" }),
     [setPanel, tab, titheCategoryId],
   );
 
@@ -124,13 +137,13 @@ export function FinanceBoard({
     close();
     setFreshId(entryId);
     router.refresh();
-    showToast({ message: "Lançamento salvo", undoEntryId: entryId }, TOAST_MS);
+    showToast({ message: "Lançamento salvo", undoEntryIds: [entryId] }, TOAST_MS);
   };
 
-  const undo = async (entryId: string): Promise<void> => {
+  const undo = async (entryIds: string[]): Promise<void> => {
     window.clearTimeout(toastTimer.current);
     setToast(null);
-    const res = await voidTransactionAction(entryId);
+    const res = await voidEntriesAction(entryIds);
     router.refresh();
     showToast({ message: res.success ? "Lançamento desfeito" : res.message }, SHORT_TOAST_MS);
   };
@@ -152,16 +165,14 @@ export function FinanceBoard({
             Imprimir / PDF
           </button>
         ) : (
-          <>
-            {tab === "contas" ? null : <PeriodFilter onChange={onPeriod} defaultPreset="thisMonth" storageKey="finance.period" align="right" />}
-            <button type="button" className={`btn ${styles.press}`} onClick={openNew} title="Atalho: N">
-              {tab === "contas" ? "Nova conta" : tab === "dizimos" ? "Registrar dízimo" : "Novo lançamento"}
-            </button>
-          </>
+          <button type="button" className={`btn ${styles.press}`} onClick={openNew} title="Atalho: N">
+            {tab === "contas" ? "Nova conta" : tab === "dizimos" ? "Lançar culto" : "Novo lançamento"}
+          </button>
         )}
       </div>
 
-      <FinanceTabs active={tab} />
+      {tab === "fechamento" ? <ReportsTabs active="fechamento" /> : <FinanceTabs active={tab} />}
+      {tab === "movimentacoes" || tab === "dizimos" ? <MonthNav month={month} onMonth={setMonth} /> : null}
 
       {tab === "fechamento" ? (
         <ClosingTab
@@ -178,27 +189,27 @@ export function FinanceBoard({
       ) : tab === "contas" ? (
         <BillsTab bills={bills} series={series} currency={currency} nameOf={nameOf} onOpen={(id) => setPanel({ mode: "bill", id })} onNew={openNew} clipIds={clipIds} />
       ) : tab === "dizimos" ? (
-        <TithesTab donations={donations} receipts={receipts} range={range} currency={currency} onRegister={openNew} />
+        <TithesTab donations={donations} receipts={receipts} range={range} monthName={monthName} givingTotal={givingTotal} currency={currency} onRegister={openNew} />
       ) : (
-        <>
-          {bills.length > 0 ? <WeekStrip bills={bills} currency={currency} onResolve={(kind) => setPanel({ mode: "resolve", kind })} /> : null}
-          <MovementsTab
-            movements={movements}
-            balances={balances}
-            accounts={accounts}
-            range={range}
-            currency={currency}
-            nameOf={nameOf}
-            freshId={freshId}
-            onOpen={(id) => setPanel({ mode: "view", id })}
-            onNew={openNew}
-            onManageAccounts={() => setPanel({ mode: "accounts" })}
-            onImport={() => setPanel({ mode: "import" })}
-            onClassify={() => setPanel({ mode: "classify" })}
-            pendingCount={ledger.pendingCount}
-            clipIds={clipIds}
-          />
-        </>
+        <MovementsTab
+          movements={movements}
+          pending={ledger.pending}
+          balances={balances}
+          accounts={accounts}
+          range={range}
+          monthName={monthName}
+          currency={currency}
+          nameOf={nameOf}
+          freshId={freshId}
+          weekStrip={bills.length > 0 ? <WeekStrip bills={bills} currency={currency} onResolve={(kind) => setPanel({ mode: "resolve", kind })} /> : null}
+          onOpen={(id) => setPanel({ mode: "view", id })}
+          onNew={openNew}
+          onManageAccounts={() => setPanel({ mode: "accounts" })}
+          onPickBank={(id) => setPanel({ mode: "accounts", pickBankFor: id })}
+          onImport={() => setPanel({ mode: "import" })}
+          onClassify={() => setPanel({ mode: "classify" })}
+          clipIds={clipIds}
+        />
       )}
 
       {panel?.mode === "resolve" ? (
@@ -229,6 +240,7 @@ export function FinanceBoard({
               currency={currency}
               initialKind={panel.kind}
               initialCounterId={panel.counterId}
+              preferredAccountId={preferredAccountId}
               onSaved={(id) => onSaved(id, close)}
               onCancel={close}
             />
@@ -237,8 +249,29 @@ export function FinanceBoard({
       ) : null}
 
       {panel?.mode === "accounts" ? (
-        <Panel title="Contas" onClose={() => setPanel(null)}>
-          {(close) => <AccountsManager accounts={accounts} balances={balances} movements={movements} currency={currency} onClose={close} />}
+        <Panel title="Bancos e caixa" onClose={() => setPanel(null)}>
+          {(close) => <AccountsManager accounts={accounts} balances={balances} movements={movements} currency={currency} pickBankFor={panel.pickBankFor} onClose={close} />}
+        </Panel>
+      ) : null}
+
+      {panel?.mode === "culto" && titheCategoryId ? (
+        <Panel title="Lançar culto" onClose={() => setPanel(null)}>
+          {(close) => (
+            <CultoForm
+              accounts={accounts}
+              people={ledger.people}
+              preferredAccountId={preferredAccountId}
+              titheCategoryId={titheCategoryId}
+              offeringCategoryId={offeringCategoryId}
+              currency={currency}
+              onSaved={(ids, message) => {
+                close();
+                router.refresh();
+                showToast({ message, undoEntryIds: ids }, TOAST_MS);
+              }}
+              onCancel={close}
+            />
+          )}
         </Panel>
       ) : null}
 
@@ -250,7 +283,7 @@ export function FinanceBoard({
 
       {panel?.mode === "classify" ? (
         <Panel title="Classificar extrato" onClose={() => setPanel(null)}>
-          {(close) => <ClassifyPanel accounts={accounts} movements={movements} bills={bills} currency={currency} onClose={close} />}
+          {(close) => <ClassifyPanel accounts={accounts} movements={movements} bills={bills} people={ledger.people} currency={currency} onClose={close} />}
         </Panel>
       ) : null}
 
@@ -311,8 +344,8 @@ export function FinanceBoard({
       {toast ? (
         <div className={styles.toast} role="status">
           <span>{toast.message}</span>
-          {toast.undoEntryId ? (
-            <button type="button" onClick={() => void undo(toast.undoEntryId ?? "")}>
+          {toast.undoEntryIds?.length ? (
+            <button type="button" onClick={() => void undo(toast.undoEntryIds ?? [])}>
               Desfazer
             </button>
           ) : null}

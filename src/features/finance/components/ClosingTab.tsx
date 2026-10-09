@@ -5,18 +5,8 @@
 import { money } from "@/lib/utils/money";
 import { brDate, isoDate, today } from "@/lib/utils/date";
 import { monthClose, type CategoryTotal, type LedgerAccount, type LedgerEntry, type LedgerLine, type Movement } from "../domain";
+import { MonthNav, monthLabel } from "./MonthNav";
 import styles from "../finance.module.css";
-
-export function monthLabel(month: string): string {
-  const [y, m] = month.split("-").map(Number);
-  return new Date(y ?? 0, (m ?? 1) - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-}
-
-export function shiftMonth(month: string, delta: number): string {
-  const [y, m] = month.split("-").map(Number);
-  const d = new Date(y ?? 0, (m ?? 1) - 1 + delta, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
 
 export function ClosingTab({
   month,
@@ -40,26 +30,11 @@ export function ClosingTab({
   nameOf: (id: string | null) => string;
 }) {
   const r = monthClose(month, accounts, entries, lines, movements);
-  const isCurrentOrFuture = month >= isoDate(today()).slice(0, 7);
   const fmt = (n: number): string => money(n, currency);
 
   return (
     <>
-      <div className={`${styles.monthNav} ${styles.noprint}`}>
-        <button type="button" className={`btn ghost ${styles.press}`} aria-label="Mês anterior" onClick={() => onMonth(shiftMonth(month, -1))}>
-          ‹
-        </button>
-        <span className={styles.monthName}>{monthLabel(month)}</span>
-        <button
-          type="button"
-          className={`btn ghost ${styles.press}`}
-          aria-label="Próximo mês"
-          disabled={isCurrentOrFuture}
-          onClick={() => onMonth(shiftMonth(month, 1))}
-        >
-          ›
-        </button>
-      </div>
+      <MonthNav month={month} onMonth={onMonth} />
 
       <article className={styles.report} aria-label={`Fechamento de ${monthLabel(month)}`}>
         <header className={styles.reportHead}>

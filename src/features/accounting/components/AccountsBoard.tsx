@@ -57,7 +57,7 @@ export function AccountsBoard({ accounts, usedIds }: { accounts: Account[]; used
   }
 
   return (
-    <div className="panel">
+    <div className={`panel ${styles.flat}`}>
       <div className={styles.head}>
         <div>
           <strong>Plano de contas</strong>

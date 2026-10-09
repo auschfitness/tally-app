@@ -19,6 +19,16 @@
 .account.on b { color: var(--blue); }
 .periodSummary { margin-top: var(--s-3); font-size: var(--t-13); color: var(--text-2); font-variant-numeric: tabular-nums; }
 .periodSummary b { color: var(--text); font-weight: 500; }
+.heroNote { margin-top: var(--s-1); font-size: var(--t-13); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.accountWrap { display: inline-flex; align-items: center; gap: var(--s-1) var(--s-2); flex-wrap: wrap; }
+.accountWrap .account { white-space: nowrap; }
+.whichBank { font-size: var(--t-13); }
+.monthSummary { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin: 0 0 var(--s-5); padding: 0 var(--s-3); font-size: var(--t-13); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.monthSummary > span { flex: 1; min-width: 12rem; }
+.monthSummary b { color: var(--text); font-weight: 500; }
+.monthSummary b.in { color: var(--green); }
+.noCategory { color: var(--warn); }
+.emptyActions { display: flex; gap: var(--s-2); justify-content: center; flex-wrap: wrap; }
 
 /* --- Extrato --- */
 .day { margin-bottom: var(--s-5); }
@@ -258,14 +268,13 @@
 }
 
 /* ── Esta semana + Resolver (spec 12, fase B) ───────────────────────────── */
-.week { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-bottom: var(--s-8); }
-.weekCard { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto auto; column-gap: var(--s-3); padding: var(--s-4); border-radius: var(--r-10); background: var(--surface-2); }
-.weekCard .heroLabel { grid-column: 1 / -1; }
-.weekValue { font-size: var(--t-22); line-height: var(--lh-22); letter-spacing: var(--track-tight); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; margin-top: var(--s-1); }
-.weekMeta { grid-column: 1; font-size: var(--t-13); line-height: var(--lh-13); color: var(--text-2); }
-.weekBtn { grid-column: 2; grid-row: 2 / 4; align-self: end; }
-.weekEmpty { grid-column: 1 / -1; margin-top: var(--s-2); font-size: var(--t-13); color: var(--text-2); }
-@media (max-width: 40rem) { .week { grid-template-columns: 1fr; } }
+.week { margin-bottom: var(--s-6); border-radius: var(--r-10); background: var(--surface-2); padding: var(--s-1) var(--s-4); }
+.weekRow { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-2) 0; }
+.weekRow + .weekRow { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.weekLine { display: flex; align-items: baseline; gap: var(--s-2); flex-wrap: wrap; font-size: var(--t-13); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.weekLine b { font-size: var(--t-17); line-height: var(--lh-17); font-weight: 600; color: var(--text); }
+.weekLine b.in { color: var(--green); }
+.weekEmpty { padding: var(--s-2) 0; font-size: var(--t-13); color: var(--text-2); }
 
 .resolveList { list-style: none; margin: 0 calc(-1 * var(--s-2)); padding: 0; }
 /* Recolher: grid 1fr → 0fr anima a altura sem medir (exceção curta à regra de só transform/opacity). */
@@ -321,3 +330,17 @@
 /* --- Extrato → conta (spec 12, fase D) --- */
 .billHint { color: var(--text-2); }
 .billHint span { font-variant-numeric: tabular-nums; }
+
+/* ── Lançar culto ───────────────────────────────────────────────────────── */
+.cultoHead { display: flex; align-items: baseline; justify-content: space-between; margin: var(--s-5) 0 var(--s-2); font-size: var(--t-13); font-weight: 500; color: var(--text); }
+.cultoRow { display: grid; grid-template-columns: 1fr 7.5rem 2rem; gap: var(--s-2); margin-bottom: var(--s-2); align-items: center; }
+.cultoRow input { min-width: 0; }
+.cultoRow input::-webkit-calendar-picker-indicator { display: none !important; }
+.cultoRow input:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; }
+.cultoKnown { color: var(--green); }
+.cultoDel { border: none; background: none; color: var(--text-2); font-size: var(--t-17); line-height: 1; height: var(--control-h); border-radius: var(--r-6); }
+@media (hover: hover) and (pointer: fine) { .cultoDel:hover { background: var(--surface-2); color: var(--text); } }
+.cultoAdd { margin: var(--s-1) 0 var(--s-5); }
+.cultoOffering input { max-width: 12rem; text-align: right; font-variant-numeric: tabular-nums; }
+.donorHint { display: flex; align-items: baseline; gap: var(--s-2); flex-wrap: wrap; margin: var(--s-2) 0 0 calc(1.125rem + var(--s-2)); font-size: var(--t-11); color: var(--green); }
+.donorHint span { color: var(--text-2); }

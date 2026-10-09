@@ -147,7 +147,7 @@ export function EntryEditor({
   const diffClass = balance.balanced ? styles.diffOk : styles.diffBad;
 
   return (
-    <div className="panel">
+    <div className={`panel ${styles.flat}`}>
       <div className={styles.entryGrid}>
         <div className="field">
           <label>Data</label>

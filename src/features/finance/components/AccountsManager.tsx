@@ -22,7 +22,7 @@ const normalize = (s: string): string => s.normalize("NFD").replace(/[̀-ͯ]/g, 
 
 function bankLabel(code: string): string {
   if (code === CASH_CODE) return "Dinheiro (caixa físico)";
-  if (code === OTHER_BANK_CODE) return "Outro banco";
+  if (code === OTHER_BANK_CODE) return "Outro banco (escreva o nome abaixo)";
   return bankByCode(code)?.name ?? "Banco";
 }
 
@@ -31,16 +31,18 @@ export function AccountsManager({
   balances,
   movements,
   currency,
+  pickBankFor,
   onClose,
 }: {
   accounts: LedgerAccount[];
   balances: AccountBalance[];
   movements: Movement[];
   currency: string;
+  pickBankFor?: string; // "Qual é o banco?": abre direto na grade de bancos para esta conta
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [view, setView] = useState<View>({ mode: "list" });
+  const [view, setView] = useState<View>(pickBankFor ? { mode: "pick", editingId: pickBankFor } : { mode: "list" });
   const [error, setError] = useState("");
   const [isSaving, startSaving] = useTransition();
   const assets = leafAccounts(accounts, "asset");
@@ -96,7 +98,7 @@ export function AccountsManager({
             <button
               type="button"
               className={`${styles.rowMain} ${styles.rowButton}`}
-              onClick={() => setView({ mode: "form", editingId: a.id, bankCode: a.bankCode ?? OTHER_BANK_CODE })}
+              onClick={() => setView(a.bankCode ? { mode: "form", editingId: a.id, bankCode: a.bankCode } : { mode: "pick", editingId: a.id })}
             >
               <div className={styles.rowTitle}>{a.name}</div>
               <div className={styles.rowSub}>
@@ -161,7 +163,7 @@ function BankPicker({ onPick, onBack }: { onPick: (bankCode: string) => void; on
           </button>
           <button type="button" className={`${styles.bankTile} ${styles.press}`} onClick={() => onPick(OTHER_BANK_CODE)}>
             <BankLogo bankCode={OTHER_BANK_CODE} />
-            Outro banco
+            Meu banco não está aqui
           </button>
         </div>
       </div>
@@ -195,7 +197,10 @@ function AccountForm({
   onDone: () => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(editing?.name ?? (bankCode === CASH_CODE ? "Caixa" : bankByCode(bankCode)?.name ?? ""));
+  const bankName = bankCode === CASH_CODE ? "Caixa" : (bankByCode(bankCode)?.name ?? "");
+  // A conta que veio do plano padrão ("Banco - Conta Corrente") ganha o nome do banco escolhido.
+  const isGenericName = !editing || (!editing.bankCode && /^banco\b/i.test(editing.name));
+  const [name, setName] = useState(isGenericName && bankName ? bankName : (editing?.name ?? ""));
   const [opening, setOpening] = useState<number | null>(openingAmount || null);
   const [date, setDate] = useState(openingDate);
   const [isDefault, setIsDefault] = useState(editing?.isDefault ?? isFirst);

@@ -60,6 +60,7 @@ export interface TransactionFormProps {
   currency: string;
   initialKind?: TxKind;
   initialCounterId?: string;
+  preferredAccountId?: string;
   onSaved: (entryId: string) => void;
   onCancel: () => void;
 }
@@ -81,7 +82,8 @@ export function TransactionForm(props: TransactionFormProps) {
     const preferred = assets.find((a) => a.isDefault)?.id;
     if (preferred) return preferred;
     const last = readLastAccount();
-    return assets.some((a) => a.id === last) ? last : (assets[0]?.id ?? "");
+    if (assets.some((a) => a.id === last)) return last;
+    return props.preferredAccountId || (assets[0]?.id ?? "");
   });
   const [counterId, setCounterId] = useState(props.initialCounterId ?? "");
   const [amount, setAmount] = useState<number | null>(null);
