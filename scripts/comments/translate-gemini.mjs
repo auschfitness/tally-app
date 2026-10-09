@@ -66,7 +66,11 @@ for (const n of nums) {
   for (let t = 1; t <= 4; t++) {
     const pt = await ask(input, err);
     if (!Array.isArray(pt)) { err = "a resposta não era um array JSON [{ id, text_pt }]"; continue; }
-    fs.writeFileSync(out, JSON.stringify(pt.map((x) => ({ id: x.id, text_pt: x.text_pt })), null, 1));
+    const cleaned = pt.map((x) => ({
+      id: x.id,
+      text_pt: String(x.text_pt ?? "").replace(/[—–]/g, "-")
+    }));
+    fs.writeFileSync(out, JSON.stringify(cleaned, null, 1));
     err = validate(n);
     if (!err) break;
   }
