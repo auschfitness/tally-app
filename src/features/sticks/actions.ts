@@ -4,11 +4,12 @@
 // sessão/org no servidor; 3) executa no Supabase (RLS é a barreira real);
 // 4) trata erro; 5) revalida a rota. Nada de user/org/campus vindo do navegador.
 import { revalidatePath } from "next/cache";
-import { requireOrg, type DB } from "@/lib/auth/session";
+import { requireOrg, type DB, type OrgContext } from "@/lib/auth/session";
 import { type ActionResult, ok, fail, toMessage } from "@/lib/errors";
 import { parsePersonInput } from "./schema";
 import { positionForJourneyCode } from "./domain";
 import type { PersonInput } from "./types";
+import { canEditPeople } from "./access";
 
 // Garante uma linha em `campuses` para o nome (campus pode existir só no legado).
 async function ensureCampusId(supabase: DB, orgId: string, name: string): Promise<string | null> {
@@ -136,4 +137,38 @@ export async function archiveStickAction(formData: FormData): Promise<void> {
   const { supabase } = await requireOrg();
   await supabase.from("sticks").update({ archived: true }).eq("id", id);
   revalidatePath("/people");
+}
+
+// ---- Pessoas (spec 13) ------------------------------------------------------------------
+const DENIED = "Você não tem permissão para editar pessoas.";
+
+async function editorOrg(): Promise<{ ctx: OrgContext } | { error: ActionResult<never> }> {
+  const ctx = await requireOrg();
+  return canEditPeople(ctx) ? { ctx } : { error: fail(DENIED) };
+}
+
+// Cria a ficha só com o nome provisório (a tela abre com o foco no nome). Situação padrão: Visitante.
+export async function createPersonAction(): Promise<ActionResult<{ id: string }>> {
+  const g = await editorOrg();
+  if ("error" in g) return g.error;
+  const { supabase, orgId } = g.ctx;
+  try {
+    const stageId = await stageIdForCode(supabase, "first_visit");
+    const { data, error } = await supabase
+      .from("sticks")
+      .insert({
+        org_id: orgId,
+        full_name: "Nova pessoa",
+        relationship_status: "visitor_first",
+        first_visit_date: new Date().toISOString().slice(0, 10),
+        source: "Adicionado manualmente",
+        journey_stage_id: stageId,
+      })
+      .select("id")
+      .single();
+    if (error || !data) return fail(toMessage(error, "Não consegui criar a pessoa."));
+    return ok({ id: data.id });
+  } catch (e) {
+    return fail(toMessage(e));
+  }
 }
