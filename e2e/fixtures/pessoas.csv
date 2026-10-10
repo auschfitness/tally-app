@@ -1,0 +1,6 @@
+Nome Completo;Celular;E-mail;Data de Nascimento;Sexo;Cargo;Batismo;Observação
+Importacao Teste Alfa;47988880001;alfa@teste.com;05/03/1985;Feminino;Diácono(isa);10/06/2010;primeira
+Importacao Teste Beta;(47) 98888-0002;;12/11/90;Masculino;;;segunda
+Importacao Teste Gama;47988880003;;1978-07-20;;Presbítero;;terceira
+Importacao Teste Alfa;47988880004;;;;;;repetida na planilha
+Importacao Teste Erro;47988880005;sem-arroba;;;;;e-mail errado

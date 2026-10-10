@@ -207,6 +207,8 @@ export function PersonProfile({
     <article className={styles.prof}>
       <div className={styles.profBar}>
         <span className={`${styles.saved}${saved ? " " + styles.savedOn : ""}`} aria-live="polite">{saved ? "Salvo" : ""}</span>
+        <Link href={`/people/${id}/ficha`} className="link">Imprimir ficha</Link>
+        {v.baptismDate ? <Link href={`/people/${id}/batismo`} className="link">Certificado de batismo</Link> : null}
         {canEdit ? (
           <Popover trigger={<UiIcon icon={MoreHorizontal} />} triggerClass="iconbtn" label="Mais ações da pessoa" align="right">
             {(close) =>
