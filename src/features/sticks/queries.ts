@@ -2,10 +2,11 @@
 // UI). Só os campos necessários, tipadas, tratando ausência. RLS filtra por org;
 // o filtro explícito por org_id é defesa em profundidade, não substitui o RLS.
 import type { DB } from "@/lib/auth/session";
-import type { Family, Person, PersonDetail, PersonListItem } from "./types";
-import { journeyCodeForPosition, PHOTO_BUCKET, statusValue, type FamilyRole, type PersonField, type Relationship, RELATIONSHIPS } from "./domain";
+import { rowToProfile } from "@/features/settings/fiscal";
+import type { Family, Person, PersonDetail, PersonListItem, SavedList } from "./types";
+import { journeyCodeForPosition, parseFilters, PHOTO_BUCKET, statusValue, type FamilyRole, type PersonField, type Relationship, RELATIONSHIPS } from "./domain";
 
-function asRelationship(v: string): Relationship {
+export function asRelationship(v: string): Relationship {
   return (RELATIONSHIPS as string[]).includes(v) ? (v as Relationship) : "member";
 }
 
@@ -213,4 +214,28 @@ export async function getPerson(supabase: DB, orgId: string, id: string, withTit
 
   const urls = await signedPhotoUrls(supabase, s.profile_photo ? [s.profile_photo] : []);
   return { id: s.id, values, archived: s.archived, photoUrl: s.profile_photo ? urls.get(s.profile_photo) ?? null : null, family, tithes };
+}
+
+// Listas salvas (filtros nomeados) da org. `filters` é o mesmo objeto da querystring da lista.
+export async function listPeopleLists(supabase: DB, orgId: string): Promise<SavedList[]> {
+  const { data, error } = await supabase.from("people_lists").select("id, name, filters").eq("org_id", orgId).order("created_at");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({ id: r.id, name: r.name, filters: filtersFromJson(r.filters) }));
+}
+
+export function filtersFromJson(json: unknown): SavedList["filters"] {
+  const o = json && typeof json === "object" && !Array.isArray(json) ? (json as Record<string, unknown>) : {};
+  const flat: Record<string, string> = {};
+  for (const [k, v] of Object.entries(o)) if (typeof v === "string") flat[k] = v;
+  return parseFilters(flat);
+}
+
+// Nome da igreja e cidade/UF (do cadastro fiscal, se houver) para as páginas de impressão.
+export async function loadChurch(supabase: DB, orgId: string): Promise<{ name: string; city: string; state: string }> {
+  const [orgRes, profRes] = await Promise.all([
+    supabase.from("organizations").select("name").eq("id", orgId).maybeSingle(),
+    supabase.from("org_fiscal_profiles").select("*").eq("org_id", orgId).maybeSingle(),
+  ]);
+  const p = rowToProfile(profRes.data);
+  return { name: orgRes.data?.name ?? "", city: p.address.city, state: p.address.state };
 }

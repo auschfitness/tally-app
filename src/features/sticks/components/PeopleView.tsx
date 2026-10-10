@@ -10,7 +10,9 @@ import { UiIcon } from "@/components/shared/UiIcon";
 import { createPersonAction } from "../actions";
 import { NO_FILTERS, filtersQuery, type PeopleFilters } from "../domain";
 import { useSwipeToClose } from "../swipe";
-import type { PersonDetail, PersonListItem } from "../types";
+import type { PersonDetail, PersonListItem, SavedList } from "../types";
+import { Panel } from "@/features/finance/components/Panel";
+import { ImportPeople } from "./ImportPeople";
 import { PeopleList } from "./PeopleList";
 import { PersonProfile } from "./PersonProfile";
 import styles from "../people.module.css";
@@ -29,6 +31,7 @@ export function PeopleView({
   initialSelected,
   initialDetail,
   initialMobileOpen,
+  initialLists,
   canEdit,
   canDocs,
   canFinance,
@@ -39,6 +42,7 @@ export function PeopleView({
   initialSelected: string | null;
   initialDetail: PersonDetail | null;
   initialMobileOpen: boolean;
+  initialLists: SavedList[];
   canEdit: boolean;
   canDocs: boolean;
   canFinance: boolean;
@@ -50,6 +54,8 @@ export function PeopleView({
   const [details, setDetails] = useState<Record<string, PersonDetail>>(initialDetail ? { [initialDetail.id]: initialDetail } : {});
   const [fresh, setFresh] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [lists, setLists] = useState(initialLists);
+  const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
   const pushed = useRef(false);
   const paneRef = useRef<HTMLDivElement>(null);
@@ -142,6 +148,9 @@ export function PeopleView({
         selectedId={sel}
         onSelect={(id) => select(id)}
         onNew={() => void create()}
+        onImport={() => setImporting(true)}
+        lists={lists}
+        onLists={setLists}
         canEdit={canEdit}
         creating={creating}
       />
@@ -169,6 +178,12 @@ export function PeopleView({
         ) : null}
         {error && detail ? <p className={styles.fErr} role="alert">{error}</p> : null}
       </div>
+
+      {importing ? (
+        <Panel title="Importar planilha" onClose={() => setImporting(false)}>
+          {(close) => <ImportPeople canDocs={canDocs} onClose={(changed) => (changed ? window.location.reload() : close())} />}
+        </Panel>
+      ) : null}
     </div>
   );
 }

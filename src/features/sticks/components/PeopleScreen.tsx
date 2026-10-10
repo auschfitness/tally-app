@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import { requireOrg, can } from "@/lib/auth/session";
 import { canEditPeople } from "../access";
 import { filterPeople, parseFilters } from "../domain";
-import { getPerson, listPeople } from "../queries";
+import { getPerson, listPeople, listPeopleLists } from "../queries";
 import { PeopleView } from "./PeopleView";
 
 export async function PeopleScreen({ sp, forcedId }: { sp: Record<string, string | string[] | undefined>; forcedId?: string }) {
   const ctx = await requireOrg();
-  const { people, groups } = await listPeople(ctx.supabase, ctx.orgId);
+  const [{ people, groups }, lists] = await Promise.all([listPeople(ctx.supabase, ctx.orgId), listPeopleLists(ctx.supabase, ctx.orgId)]);
   const filters = parseFilters(sp);
   const asked = forcedId ?? (typeof sp.p === "string" ? sp.p : null);
   const found = Boolean(asked && people.some((p) => p.id === asked));
@@ -26,6 +26,7 @@ export async function PeopleScreen({ sp, forcedId }: { sp: Record<string, string
       initialSelected={selected}
       initialDetail={detail}
       initialMobileOpen={found}
+      initialLists={lists}
       canEdit={canEditPeople(ctx)}
       canDocs={can(ctx, "members.manage")}
       canFinance={canFinance}

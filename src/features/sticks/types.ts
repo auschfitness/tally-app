@@ -1,4 +1,4 @@
-import type { FamilyRole, PersonField, PersonLite, Relationship } from "./domain";
+import type { FamilyRole, PeopleFilters, PersonField, PersonLite, Relationship } from "./domain";
 
 // View model de uma Stick para a UI (campos próprios da tabela `sticks` +
 // grupo resolvido de group_members). Sub-campos ainda no app_state legado
@@ -53,4 +53,11 @@ export interface PersonDetail {
   photoUrl: string | null;
   family: Family | null;
   tithes: { year: number; total: number; count: number; currency: string } | null; // null = sem acesso
+}
+
+// Lista salva: nome + filtros (o mesmo objeto da querystring).
+export interface SavedList {
+  id: string;
+  name: string;
+  filters: PeopleFilters;
 }

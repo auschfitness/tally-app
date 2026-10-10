@@ -246,9 +246,10 @@
 }
 .profBar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--s-3);
+  gap: var(--s-1) var(--s-3);
   min-height: var(--control-h);
 }
 .saved {
@@ -498,5 +499,88 @@ button.photo:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   button.photo:active {
     transform: none;
+  }
+}
+
+/* Listas salvas */
+.sl {
+  display: inline-flex;
+  align-items: center;
+}
+.slHint {
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  font-size: var(--t-13);
+  color: var(--text-2);
+}
+
+/* Importar planilha */
+.bar {
+  height: 0.5rem;
+  margin: var(--s-4) 0 var(--s-2);
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.barFill {
+  width: var(--p, 0%);
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--blue);
+  transition: width 200ms ease;
+}
+.impCounts {
+  margin: var(--s-2) 0 var(--s-4);
+  font-size: var(--t-15);
+  line-height: var(--lh-15);
+  font-weight: 500;
+}
+.impSample {
+  color: var(--text-2);
+}
+.impTableWrap {
+  overflow-x: auto;
+  border-radius: var(--r-10);
+  background: var(--surface-2);
+}
+.impTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+}
+.impTable th,
+.impTable td {
+  padding: var(--s-2) var(--s-3);
+  text-align: left;
+  white-space: nowrap;
+}
+.impTable th {
+  font-weight: 500;
+  color: var(--text-2);
+}
+.impErrors {
+  margin: var(--s-3) 0 0;
+  padding-left: var(--s-4);
+  font-size: var(--t-13);
+  line-height: var(--lh-13);
+  color: var(--coral);
+}
+.impMode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+}
+.impModeLabel {
+  margin-right: var(--s-2);
+  font-size: var(--t-13);
+  color: var(--text-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .barFill {
+    transition: none;
   }
 }

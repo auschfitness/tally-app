@@ -3,10 +3,17 @@
 // Lista de Pessoas (spec 13): busca, chips de situação (exclusivos) e chips com menu que somam
 // (cargo, aniversário, célula). Mesmo padrão da biblioteca de Sermões. Quem guarda os filtros
 // (e a URL) é o pai; aqui só se desenha e se avisa o que mudou.
-import { useMemo } from "react";
-import { birthdayShort, filterPeople, hasFilters, personSubtitle, initialsOf, type PeopleFilters } from "../domain";
-import type { PersonListItem } from "../types";
+import { useMemo, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
+import { UiIcon } from "@/components/shared/UiIcon";
+import { exportPeopleAction } from "../bulk-actions";
+import { saveCsv, slug } from "../download";
+import { SavedListsRow, SaveListButton } from "./SavedLists";
+import { birthdayShort, filterPeople, filtersQuery, hasFilters, personSubtitle, initialsOf, type PeopleFilters } from "../domain";
+import type { PersonListItem, SavedList } from "../types";
 import { Chip, MenuChip, MenuItem } from "@/features/study/components/FilterChips";
+import { Popover } from "@/features/study/components/Popover";
+import studyStyles from "@/features/study/study.module.css";
 import styles from "../people.module.css";
 
 const STATUS_CHIPS: ReadonlyArray<readonly [PeopleFilters["s"], string]> = [
@@ -26,6 +33,9 @@ export function PeopleList({
   selectedId,
   onSelect,
   onNew,
+  onImport,
+  lists,
+  onLists,
   canEdit,
   creating,
 }: {
@@ -36,6 +46,9 @@ export function PeopleList({
   selectedId: string | null;
   onSelect: (id: string) => void;
   onNew: () => void;
+  onImport: () => void;
+  lists: SavedList[];
+  onLists: (next: SavedList[]) => void;
   canEdit: boolean;
   creating: boolean;
 }) {
@@ -55,6 +68,14 @@ export function PeopleList({
   }, [active]);
   const withoutGroup = useMemo(() => active.filter((p) => p.groupIds.length === 0).length, [active]);
   const groupName = filters.celula === "sem" ? "Sem célula" : groups.find((g) => g.id === filters.celula)?.name ?? null;
+
+  const [notice, setNotice] = useState("");
+  async function exportIds(ids: string[], name?: string) {
+    setNotice("");
+    const r = await exportPeopleAction(ids);
+    if (!r.success) return void setNotice(r.message);
+    saveCsv(name ? `${slug(name)}-${r.data.filename.slice(-14)}` : r.data.filename, r.data.csv);
+  }
 
   const total = visible.length;
   const nothing = active.length === 0 && people.length === 0;
@@ -78,12 +99,26 @@ export function PeopleList({
         <h1 className="page">Pessoas</h1>
         {nothing ? null : <span className={styles.count}>{total} {total === 1 ? "pessoa" : "pessoas"}</span>}
         {nothing ? null : newButton}
+        {nothing ? null : (
+          <Popover trigger={<UiIcon icon={MoreHorizontal} />} triggerClass="iconbtn" label="Mais ações da lista" align="right">
+            {(close) => (
+              <>
+                {canEdit ? (
+                  <button type="button" role="menuitem" className={studyStyles.mi} onClick={() => { onImport(); close(); }}>Importar planilha</button>
+                ) : null}
+                <button type="button" role="menuitem" className={studyStyles.mi} disabled={visible.length === 0} onClick={() => { void exportIds(visible.map((p) => p.id)); close(); }}>Exportar lista</button>
+              </>
+            )}
+          </Popover>
+        )}
       </div>
+      {notice ? <p className={styles.fErr} role="alert">{notice}</p> : null}
 
       {nothing ? (
         <div className={styles.empty}>
           <p>Nenhuma pessoa ainda.</p>
           {newButton}
+          {canEdit ? <button type="button" className="btn ghost sm" onClick={onImport}>Importar planilha</button> : null}
         </div>
       ) : (
         <>
@@ -94,6 +129,15 @@ export function PeopleList({
             aria-label="Buscar por nome, telefone ou e-mail"
             value={filters.q}
             onChange={(e) => onFilters({ q: e.target.value })}
+          />
+
+          <SavedListsRow
+            lists={lists}
+            filters={filters}
+            canEdit={canEdit}
+            onApply={(f) => onFilters(f)}
+            onExport={(l) => void exportIds(filterPeople(people, l.filters, now).map((p) => p.id), l.name)}
+            onLists={onLists}
           />
 
           <div className={styles.chips} role="group" aria-label="Filtros">
@@ -131,6 +175,7 @@ export function PeopleList({
                 </>
               )}
             </MenuChip>
+            {canEdit && hasFilters(filters) && !lists.some((l) => filtersQuery(l.filters) === filtersQuery(filters)) ? <SaveListButton filters={filters} lists={lists} onLists={onLists} /> : null}
           </div>
 
           <div className={styles.rows} onKeyDown={onKey}>
