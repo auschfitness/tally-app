@@ -46,8 +46,8 @@ test.describe("auth SSR + render autenticado", () => {
     // Chega no app (Home protegida)
     await expect(page).toHaveURL(/\/$|\/study(\/bible.*)?$|\/onboarding$/);
 
-    // Modo só Estudo (src/config/nav.ts): Sticks desligado redireciona para a Bíblia.
-    await page.goto("/sticks");
+    // Modo só Estudo (src/config/nav.ts): Células (/groups) desligado redireciona para a Bíblia.
+    await page.goto("/groups");
     await expect(page).toHaveURL(/\/study\/bible\/[A-Z0-9]+\/\d+$/); // /study/bible pula para o capítulo
 
     // Logout pelo menu do perfil → volta pro login (sessão invalidada no servidor).
